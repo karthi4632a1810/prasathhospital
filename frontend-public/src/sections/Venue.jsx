@@ -126,10 +126,6 @@ export default function Venue({ event }) {
                   referrerPolicy="no-referrer-when-downgrade"
                   allowFullScreen
                 />
-                <span className="venue__pin-chip">
-                  <span className="venue__pin-dot" aria-hidden="true" />
-                  {venue.city || venue.name}
-                </span>
               </div>
             </div>
           )}
