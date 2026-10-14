@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Badge from '../components/ui/Badge';
+import { useTilt } from '../lib/useTilt';
 import './Speakers.css';
 
 /** Large photo panel; falls back to a giant initials monogram on an accent
@@ -26,9 +27,16 @@ function Avatar({ name, photoUrl }) {
 function SpeakerCard({ speaker }) {
   const [expanded, setExpanded] = useState(false);
   const hasBio = Boolean(speaker.bio);
+  const tilt = useTilt({ max: 8, scale: 1.015 });
 
   return (
-    <article className={`speaker ${speaker.isKeynote ? 'speaker--keynote' : ''}`}>
+    <article
+      ref={tilt.ref}
+      onMouseEnter={tilt.onMouseEnter}
+      onMouseMove={tilt.onMouseMove}
+      onMouseLeave={tilt.onMouseLeave}
+      className={`speaker ${speaker.isKeynote ? 'speaker--keynote' : ''}`}
+    >
       <div className="speaker__panel">
         <Avatar name={speaker.name} photoUrl={speaker.photoUrl} />
         {speaker.isKeynote && (

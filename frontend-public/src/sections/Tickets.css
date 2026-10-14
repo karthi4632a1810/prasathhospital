@@ -19,11 +19,13 @@
   border: 1px solid var(--ink-200);
   border-radius: var(--radius-xl);
   padding: var(--space-6);
-  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+  /* transform is owned by the JS tilt effect (useTilt) on this element —
+     left out of the transition list here so it doesn't fight that. */
+  transition: box-shadow var(--transition), border-color var(--transition);
+  will-change: transform;
 }
 
 .ticket:hover:not(.is-unavailable) {
-  transform: translateY(-2px);
   box-shadow: var(--shadow-md);
   border-color: var(--ink-300);
 }

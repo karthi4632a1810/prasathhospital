@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Button from '../components/ui/Button';
 import Badge, { RegistrationStateBadge } from '../components/ui/Badge';
 import { formatDateRange, formatDate, getCountdown } from '../lib/format';
-import HeroMotif from './HeroMotif';
+import HeroHelix3D from './HeroHelix3D';
 import './Hero.css';
 
 const MODE_LABEL = {
@@ -63,7 +63,7 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
   return (
     <section className="hero" id="top" style={heroStyle}>
       <div className="hero__glow" aria-hidden="true" />
-      <HeroMotif />
+      <HeroHelix3D />
 
       <div className="container hero__inner">
         <div className="hero__badges">

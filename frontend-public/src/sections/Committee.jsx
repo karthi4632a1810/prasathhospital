@@ -1,3 +1,4 @@
+import { useTilt } from '../lib/useTilt';
 import './Committee.css';
 
 /** Initials avatar used until a photo is uploaded in the CMS. `tone` tints
@@ -23,8 +24,15 @@ function Avatar({ name, photoUrl, tone }) {
 }
 
 function MemberCard({ member, tone, featured }) {
+  // Tilt is reserved for the featured leadership cards — a hook still has to
+  // run unconditionally, but the ref/handlers only attach when featured.
+  const tilt = useTilt({ max: 7, scale: 1.02 });
+  const tiltProps = featured
+    ? { ref: tilt.ref, onMouseEnter: tilt.onMouseEnter, onMouseMove: tilt.onMouseMove, onMouseLeave: tilt.onMouseLeave }
+    : {};
+
   return (
-    <div className={`committee-member ${featured ? 'committee-member--featured' : ''}`}>
+    <div className={`committee-member ${featured ? 'committee-member--featured' : ''}`} {...tiltProps}>
       <Avatar name={member.name} photoUrl={member.photoUrl} tone={tone} />
       <p className="committee-member__name">{member.name}</p>
       {member.role && <p className="committee-member__role">{member.role}</p>}

@@ -126,6 +126,10 @@
   padding: var(--space-6) var(--space-7);
   border-color: var(--accent-200, var(--accent-300));
   background: var(--accent-50);
+  /* transform is owned by the JS tilt effect (useTilt) on these two cards —
+     excluded here so the CSS lift doesn't fight it. */
+  transition: box-shadow var(--transition), border-color var(--transition);
+  will-change: transform;
   box-shadow: var(--shadow-xs);
 }
 

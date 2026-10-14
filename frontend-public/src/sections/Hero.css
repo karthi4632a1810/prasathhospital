@@ -27,66 +27,9 @@
   max-width: 860px;
 }
 
-/* DNA-helix line art filling the empty space to the right of the content
-   column on wide screens — hidden below that, where there's no room for it
-   without crowding the text. Sways very slowly, as if suspended. */
-.hero__motif {
-  display: none;
-  position: absolute;
-  top: 50%;
-  right: clamp(var(--space-6), 6vw, 110px);
-  width: clamp(140px, 14vw, 220px);
-  height: auto;
-  pointer-events: none;
-  opacity: 0.85;
-  transform-origin: 50% 50%;
-  animation: hero-motif-sway 9s ease-in-out infinite;
-}
-
-@keyframes hero-motif-sway {
-  0%, 100% { transform: translateY(-50%) rotate(-1.4deg); }
-  50% { transform: translateY(-50%) rotate(1.4deg); }
-}
-
-/* A light pulse travels the length of each strand on a loop — like a
-   signal moving through the helix. */
-.hero__motif-pulse {
-  offset-distance: 0%;
-}
-
-.hero__motif-pulse--a {
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.9));
-  animation: hero-motif-travel 6s linear infinite;
-}
-
-.hero__motif-pulse--b {
-  filter: drop-shadow(0 0 6px var(--gold-500));
-  animation: hero-motif-travel 7.5s linear infinite;
-  animation-delay: -3s;
-}
-
-@keyframes hero-motif-travel {
-  from { offset-distance: 0%; }
-  to { offset-distance: 100%; }
-}
-
-/* The gold "highlight" nodes breathe gently, each on its own delay. */
-.hero__motif-node--gold {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: hero-motif-node-pulse 2.6s ease-in-out infinite;
-}
-
-@keyframes hero-motif-node-pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.35); opacity: 0.7; }
-}
-
-@media (min-width: 1180px) {
-  .hero__motif {
-    display: block;
-  }
-}
+/* The hero's DNA-helix illustration (HeroHelix3D.jsx) owns its own CSS
+   file — it's a real 3D object built from many rotated elements, not a
+   single styleable block like the flat SVG it replaced. */
 
 .hero__badges {
   display: flex;

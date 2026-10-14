@@ -1,6 +1,7 @@
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import { formatCurrency, formatShortDate } from '../lib/format';
+import { useTilt } from '../lib/useTilt';
 import './Tickets.css';
 
 const KIND_META = {
@@ -34,9 +35,16 @@ function TicketCard({ ticket, onSelect, canRegister }) {
   const notice = saleNotice(ticket);
   const isAvailable = ticket.saleState === 'on-sale' && canRegister;
   const featured = ticket.kind === 'vip';
+  const tilt = useTilt({ max: 9, scale: 1.02 });
 
   return (
-    <article className={`ticket ${featured ? 'ticket--featured' : ''} ${!isAvailable ? 'is-unavailable' : ''}`}>
+    <article
+      ref={tilt.ref}
+      onMouseEnter={tilt.onMouseEnter}
+      onMouseMove={tilt.onMouseMove}
+      onMouseLeave={tilt.onMouseLeave}
+      className={`ticket ${featured ? 'ticket--featured' : ''} ${!isAvailable ? 'is-unavailable' : ''}`}
+    >
       {meta.label && (
         <span className={`ticket__ribbon ticket__ribbon--${meta.tone}`}>{meta.label}</span>
       )}
