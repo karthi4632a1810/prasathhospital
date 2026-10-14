@@ -49,11 +49,15 @@ export default function SiteHeader({ event, onRegister, canRegister, availableSe
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navItems.length]);
 
-  // Lock body scroll while the mobile drawer is open.
+  // Lock body scroll while the mobile drawer is open, and hide the sticky
+  // mobile CTA bar (a sibling component below in the page) so it doesn't
+  // show a second "Register Now" underneath the open drawer.
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : '';
+    document.body.classList.toggle('nav-drawer-open', menuOpen);
     return () => {
       document.body.style.overflow = '';
+      document.body.classList.remove('nav-drawer-open');
     };
   }, [menuOpen]);
 
@@ -64,6 +68,7 @@ export default function SiteHeader({ event, onRegister, canRegister, availableSe
   };
 
   return (
+    <>
     <header className={`site-header ${scrolled ? 'is-scrolled' : ''}`}>
       <div className="container site-header__inner">
         <a className="site-header__brand" href="#top" onClick={(e) => handleNavClick(e, 'top')}>
@@ -103,24 +108,30 @@ export default function SiteHeader({ event, onRegister, canRegister, availableSe
           </button>
         </div>
       </div>
-
-      {menuOpen && (
-        <>
-          <div className="site-header__scrim" onClick={() => setMenuOpen(false)} />
-          <nav className="site-header__drawer" aria-label="Mobile navigation">
-            {navItems.map((item) => (
-              <a key={item.id} href={`#${item.id}`} onClick={(e) => handleNavClick(e, item.id)}>
-                {item.label}
-              </a>
-            ))}
-            {canRegister && (
-              <Button variant="accent" fullWidth onClick={() => { setMenuOpen(false); onRegister(); }}>
-                Register Now
-              </Button>
-            )}
-          </nav>
-        </>
-      )}
     </header>
+
+    {/* Siblings of <header>, not children — <header> is position:sticky, which
+        (in current browser behavior) becomes the containing block for any
+        position:fixed descendant, collapsing a fixed scrim to zero height
+        instead of covering the viewport. Rendering these outside it keeps
+        them fixed to the real viewport. */}
+    {menuOpen && (
+      <>
+        <div className="site-header__scrim" onClick={() => setMenuOpen(false)} />
+        <nav className="site-header__drawer" aria-label="Mobile navigation">
+          {navItems.map((item) => (
+            <a key={item.id} href={`#${item.id}`} onClick={(e) => handleNavClick(e, item.id)}>
+              {item.label}
+            </a>
+          ))}
+          {canRegister && (
+            <Button variant="accent" fullWidth onClick={() => { setMenuOpen(false); onRegister(); }}>
+              Register Now
+            </Button>
+          )}
+        </nav>
+      </>
+    )}
+    </>
   );
 }

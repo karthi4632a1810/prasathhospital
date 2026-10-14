@@ -1,3 +1,7 @@
+body.nav-drawer-open .sticky-cta {
+  display: none !important;
+}
+
 .sticky-cta {
   position: fixed;
   left: 0;
