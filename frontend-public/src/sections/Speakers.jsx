@@ -81,9 +81,9 @@ export default function Speakers({ speakers }) {
       <div className="container">
         <div className="section-head section-head--center">
           <span className="section-eyebrow">Faculty</span>
-          <h2 className="section-title">Meet the speakers</h2>
+          <h2 className="section-title">Expected speakers</h2>
           <p className="section-subtitle">
-            {speakers.length} leading clinicians and researchers sharing evidence-based practice.
+            Invited faculty joining CIIM 2026 — session topics to be announced.
           </p>
         </div>
 

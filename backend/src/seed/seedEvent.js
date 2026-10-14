@@ -74,10 +74,14 @@ const eventData = {
     'Emerging Tech: innovations in embryology, AI in IVF and reproductive surgery',
   ],
 
-  // No real agenda speakers (with session topics) confirmed yet — only the
-  // organising/scientific committee roster. Speakers to be added once the
-  // scientific programme is finalised.
-  speakers: [],
+  // Expected faculty — invited, session topics/credentials/photos to follow
+  // once the scientific programme is finalised (photos added via the admin
+  // CMS Speakers tab).
+  speakers: [
+    { name: 'Dr Jathin Shah', credentials: '', designation: '', organization: '', topic: '', bio: '', photoUrl: '', isKeynote: false, order: 1 },
+    { name: 'Dr Rohit', credentials: '', designation: '', organization: '', topic: '', bio: '', photoUrl: '', isKeynote: false, order: 2 },
+    { name: 'Dr Jayesh Amin', credentials: '', designation: '', organization: '', topic: '', bio: '', photoUrl: '', isKeynote: false, order: 3 },
+  ],
 
   committee: [
     { name: 'Dr Geetha Haripriya', role: 'Organising Chairperson', group: 'leadership', photoUrl: '/assets/chairperson-geetha-haripriya.png', order: 1 },
