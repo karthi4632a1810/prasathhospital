@@ -327,8 +327,8 @@ const eventData = {
   },
 
   theme: {
-    primaryColor: '#0E5C8A',
-    accentColor: '#E4859B',
+    primaryColor: '#96291F',
+    accentColor: '#96291F',
     heroImageUrl: '',
     logoUrl: '/assets/prashanth-hospitals-crest.jpg',
   },

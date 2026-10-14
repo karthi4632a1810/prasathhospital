@@ -1,6 +1,6 @@
 .hero {
   position: relative;
-  background: var(--ink-900);
+  background: var(--navy-900);
   background-size: cover;
   background-position: center;
   color: var(--white);
@@ -17,7 +17,7 @@
   width: 820px;
   height: 820px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(234, 88, 12, 0.32) 0%, rgba(234, 88, 12, 0) 66%);
+  background: radial-gradient(circle, rgba(150, 41, 31, 0.38) 0%, rgba(150, 41, 31, 0) 66%);
   pointer-events: none;
   z-index: -1;
 }

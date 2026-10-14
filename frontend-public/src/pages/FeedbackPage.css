@@ -74,7 +74,7 @@
 }
 
 .star-rating__star.is-filled {
-  color: var(--warning-500);
+  color: var(--gold-500);
 }
 
 .feedback-field {

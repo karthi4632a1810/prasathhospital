@@ -42,7 +42,7 @@
 }
 
 .committee__group-title--organising .committee__group-dot {
-  background: var(--signal-600);
+  background: var(--navy-600);
 }
 
 .committee__grid {
@@ -90,16 +90,16 @@
   letter-spacing: 0.01em;
 }
 
-/* Restrained per-group tint — tells the two committees apart without
-   introducing a new accent color into the one-accent system. */
+/* Per-group tint from the crest's two other colors — tells the two
+   committees apart without inventing a color outside the logo's palette. */
 .committee-member__photo--scientific {
   background: var(--accent-50);
   color: var(--accent-700);
 }
 
 .committee-member__photo--organising {
-  background: var(--signal-100);
-  color: var(--signal-700);
+  background: var(--navy-100);
+  color: var(--navy-700);
 }
 
 .committee-member__photo--leadership {

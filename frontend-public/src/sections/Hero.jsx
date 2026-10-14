@@ -51,7 +51,7 @@ function Countdown({ target }) {
 export default function Hero({ event, onRegister, canRegister, onShare }) {
   const { venue, theme } = event;
   const heroStyle = theme?.heroImageUrl
-    ? { backgroundImage: `linear-gradient(135deg, rgba(16,17,20,0.92), rgba(49,46,129,0.82)), url(${theme.heroImageUrl})` }
+    ? { backgroundImage: `linear-gradient(135deg, rgba(16,21,43,0.92), rgba(61,16,13,0.82)), url(${theme.heroImageUrl})` }
     : undefined;
 
   const locationLine =

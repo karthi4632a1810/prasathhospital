@@ -1,38 +1,50 @@
 /* ==========================================================================
    Design tokens — Prashanth Hospitals event platform
-   Modern SaaS minimal: a near-monochrome neutral scale carrying almost all
-   of the UI, plus exactly one accent (indigo) for CTAs, links, focus and
-   active states. --brand-* and --accent-* intentionally share the same
-   ramp — the app used to treat them as two separate brand colors; unifying
-   their values is what makes "one accent" true everywhere without having
-   to touch every component that references either name.
+   Theme taken from the real Prashanth Hospitals crest, which has three
+   colors with three distinct jobs — not one flat accent:
+     - Crest red (the "Prashanth" wordmark + left shield half): the one
+       CTA/link/highlight accent, same role indigo/orange played before.
+     - Crest navy (right shield half): the dark foundation for full-bleed
+       sections (hero, footer, announcement bar) instead of near-black, plus
+       a lighter tint for secondary UI chips (e.g. the organising committee).
+     - Crest gold (the sunburst): reserved ONLY for small "live/signal"
+       touches — the tele-surgery badge, star ratings. Never ordinary UI
+       chrome, so it stays rare and keeps its impact.
+   --brand-* and --accent-* still share the same ramp (one accent, two names
+   used across older code) so no component needs to change which it reads.
    ========================================================================== */
 
 :root {
-  /* CIIM 2026's own brand: the orange from the announcement flyer, used for
-     both --brand-* and --accent-*. */
-  --brand-900: #7c2d12;
-  --brand-800: #9a3412;
-  --brand-700: #c2410c;
-  --brand-600: #ea580c;
-  --brand-500: #f97316;
-  --brand-300: #fdba74;
-  --brand-100: #ffedd5;
-  --brand-50: #fff7ed;
+  /* Crest red — the one accent, used for both --brand-* and --accent-*. */
+  --brand-900: #3d100d;
+  --brand-800: #5c1813;
+  --brand-700: #7a211a;
+  --brand-600: #96291f;
+  --brand-500: #b33a2c;
+  --brand-300: #dd8c7c;
+  --brand-100: #f5d9d1;
+  --brand-50: #fbeeea;
 
-  --accent-700: #c2410c;
-  --accent-600: #ea580c;
-  --accent-500: #f97316;
-  --accent-300: #fdba74;
-  --accent-100: #ffedd5;
-  --accent-50: #fff7ed;
+  --accent-700: #7a211a;
+  --accent-600: #96291f;
+  --accent-500: #b33a2c;
+  --accent-300: #dd8c7c;
+  --accent-100: #f5d9d1;
+  --accent-50: #fbeeea;
 
-  /* "Live" signal blue — the flyer's second accent. Used sparingly for
-     non-CTA informational accents (the live-link badge, the organising
-     committee's tint) so it never competes with the orange CTAs/highlights. */
-  --signal-700: #1d4ed8;
-  --signal-600: #2563eb;
-  --signal-100: #dbeafe;
+  /* Crest navy — the dark foundation for full-bleed sections, plus a
+     lighter tint (--navy-700/600/100) for secondary UI chips. */
+  --navy-900: #10152b;
+  --navy-700: #22305e;
+  --navy-600: #2c3c72;
+  --navy-100: #e3e6f2;
+
+  /* Crest gold — reserved for rare "live" highlights only: the tele-surgery
+     badge, star ratings. Kept out of ordinary buttons/links so it stays
+     special when it does appear. */
+  --gold-600: #b9770f;
+  --gold-500: #e2a530;
+  --gold-100: #fbedd2;
 
   /* Muted, de-emphasized — used only to distinguish one agenda category;
      deliberately closer to neutral than a competing hue. */
@@ -104,7 +116,7 @@
   --shadow-sm: 0 1px 3px rgba(16, 17, 20, 0.06), 0 1px 2px rgba(16, 17, 20, 0.04);
   --shadow-md: 0 4px 16px rgba(16, 17, 20, 0.06);
   --shadow-lg: 0 12px 32px rgba(16, 17, 20, 0.10);
-  --shadow-brand: 0 8px 20px rgba(234, 88, 12, 0.22);
+  --shadow-brand: 0 8px 20px rgba(150, 41, 31, 0.24);
 
   /* Layout */
   --container-max: 1180px;

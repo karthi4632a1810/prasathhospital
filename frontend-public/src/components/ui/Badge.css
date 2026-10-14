@@ -54,10 +54,10 @@
   color: var(--brand-800);
 }
 
-/* The flyer's "live link" blue — reserved for the tele-robotic surgery feed. */
+/* The crest's gold, reserved for "live" touches — the tele-robotic surgery feed. */
 .badge--signal {
-  background: var(--signal-100);
-  color: var(--signal-700);
+  background: var(--gold-100);
+  color: var(--gold-600);
 }
 
 .badge--signal .badge__dot {
@@ -65,7 +65,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--signal-600);
+  background: var(--gold-500);
   animation: badge-pulse 1.6s ease-in-out infinite;
 }
 
