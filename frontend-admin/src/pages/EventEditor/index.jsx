@@ -6,6 +6,7 @@ import DetailsTab from './DetailsTab';
 import VenueTab from './VenueTab';
 import ThemeSeoTab from './ThemeSeoTab';
 import SpeakersTab from './SpeakersTab';
+import CommitteeTab from './CommitteeTab';
 import AgendaTab from './AgendaTab';
 import SponsorsTab from './SponsorsTab';
 import FaqTab from './FaqTab';
@@ -19,6 +20,7 @@ const TABS = [
   { key: 'venue', label: 'Venue & Contact', Component: VenueTab },
   { key: 'theme', label: 'Theme & SEO', Component: ThemeSeoTab },
   { key: 'speakers', label: 'Speakers', Component: SpeakersTab },
+  { key: 'committee', label: 'Committee', Component: CommitteeTab },
   { key: 'agenda', label: 'Agenda', Component: AgendaTab },
   { key: 'sponsors', label: 'Sponsors', Component: SponsorsTab },
   { key: 'faqs', label: 'FAQ', Component: FaqTab },

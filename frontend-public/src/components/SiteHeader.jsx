@@ -4,7 +4,7 @@ import './SiteHeader.css';
 
 const NAV_ITEMS = [
   { id: 'about', label: 'About' },
-  { id: 'speakers', label: 'Speakers' },
+  { id: 'committee', label: 'Committee' },
   { id: 'agenda', label: 'Agenda' },
   { id: 'tickets', label: 'Passes' },
   { id: 'venue', label: 'Venue' },

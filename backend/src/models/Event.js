@@ -51,6 +51,21 @@ const AgendaDaySchema = new Schema(
   { _id: true }
 );
 
+const CommitteeMemberSchema = new Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    role: { type: String, trim: true, default: '' }, // e.g. "Organising Chairperson"
+    group: {
+      type: String,
+      enum: ['leadership', 'scientific', 'organising'],
+      default: 'organising',
+    },
+    photoUrl: { type: String, trim: true, default: '' },
+    order: { type: Number, default: 0 },
+  },
+  { _id: true }
+);
+
 const SponsorSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
@@ -209,6 +224,7 @@ const EventSchema = new Schema(
     virtualLink: { type: String, trim: true, default: '' },
 
     speakers: [SpeakerSchema],
+    committee: [CommitteeMemberSchema],
     agenda: [AgendaDaySchema],
     sponsors: [SponsorSchema],
     faqs: [FaqSchema],

@@ -8,6 +8,7 @@ const {
   updateEvent,
   deleteEvent,
   replaceSpeakers,
+  replaceCommittee,
   replaceAgenda,
   replaceSponsors,
   replaceFaqs,
@@ -27,6 +28,7 @@ router.patch('/:id', updateEvent);
 router.delete('/:id', deleteEvent);
 
 router.put('/:id/speakers', replaceSpeakers);
+router.put('/:id/committee', replaceCommittee);
 router.put('/:id/agenda', replaceAgenda);
 router.put('/:id/sponsors', replaceSponsors);
 router.put('/:id/faqs', replaceFaqs);

@@ -32,6 +32,16 @@ function serializeSpeaker(s) {
   };
 }
 
+function serializeCommitteeMember(m) {
+  return {
+    id: String(m._id),
+    name: m.name,
+    role: m.role,
+    group: m.group,
+    photoUrl: m.photoUrl,
+  };
+}
+
 function serializeAgendaDay(day) {
   return {
     id: String(day._id),
@@ -178,6 +188,7 @@ function serializeEventForPublic(event) {
 
     highlights: event.highlights || [],
     speakers: sortByOrder(event.speakers).map(serializeSpeaker),
+    committee: sortByOrder(event.committee).map(serializeCommitteeMember),
     agenda: [...(event.agenda || [])]
       .sort((a, b) => new Date(a.date) - new Date(b.date))
       .map(serializeAgendaDay),

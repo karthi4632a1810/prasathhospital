@@ -11,7 +11,7 @@ import { LoadingState, ErrorState, NotFoundState } from '../components/ui/States
 import Hero from '../sections/Hero';
 import ChairpersonWelcome from '../sections/ChairpersonWelcome';
 import About from '../sections/About';
-import Speakers from '../sections/Speakers';
+import Committee from '../sections/Committee';
 import Agenda from '../sections/Agenda';
 import Tickets from '../sections/Tickets';
 import Venue from '../sections/Venue';
@@ -77,7 +77,7 @@ export default function EventMicrosite() {
     if (!event) return [];
     const list = [];
     if (event.description || event.summary) list.push('about');
-    if (event.speakers?.length) list.push('speakers');
+    if (event.committee?.length) list.push('committee');
     if (event.agenda?.some((d) => d.items?.length)) list.push('agenda');
     if (ticketTypes.length) list.push('tickets');
     if (event.mode === 'virtual' || event.venue?.name) list.push('venue');
@@ -149,7 +149,7 @@ export default function EventMicrosite() {
           message={event.description}
         />
         <About event={event} />
-        <Speakers speakers={event.speakers} />
+        <Committee committee={event.committee} />
         <Agenda agenda={event.agenda} />
         <Tickets
           ticketTypes={ticketTypes}

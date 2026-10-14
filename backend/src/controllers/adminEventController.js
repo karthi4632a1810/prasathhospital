@@ -101,6 +101,7 @@ function replaceArrayField(field) {
 }
 
 const replaceSpeakers = replaceArrayField('speakers');
+const replaceCommittee = replaceArrayField('committee');
 const replaceAgenda = replaceArrayField('agenda');
 const replaceSponsors = replaceArrayField('sponsors');
 const replaceFaqs = replaceArrayField('faqs');
@@ -113,6 +114,7 @@ module.exports = {
   updateEvent,
   deleteEvent,
   replaceSpeakers,
+  replaceCommittee,
   replaceAgenda,
   replaceSponsors,
   replaceFaqs,
