@@ -27,6 +27,27 @@
   max-width: 860px;
 }
 
+/* DNA-helix line art filling the empty space to the right of the content
+   column on wide screens — hidden below that, where there's no room for it
+   without crowding the text. */
+.hero__motif {
+  display: none;
+  position: absolute;
+  top: 50%;
+  right: clamp(var(--space-6), 6vw, 110px);
+  transform: translateY(-50%);
+  width: clamp(140px, 14vw, 220px);
+  height: auto;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+@media (min-width: 1180px) {
+  .hero__motif {
+    display: block;
+  }
+}
+
 .hero__badges {
   display: flex;
   flex-wrap: wrap;
