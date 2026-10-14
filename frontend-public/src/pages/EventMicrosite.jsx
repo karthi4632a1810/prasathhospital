@@ -9,6 +9,7 @@ import ShareSheet from '../components/ShareSheet';
 import { LoadingState, ErrorState, NotFoundState } from '../components/ui/States';
 
 import Hero from '../sections/Hero';
+import ChairpersonWelcome from '../sections/ChairpersonWelcome';
 import About from '../sections/About';
 import Speakers from '../sections/Speakers';
 import Agenda from '../sections/Agenda';
@@ -141,14 +142,13 @@ export default function EventMicrosite() {
           canRegister={canRegister}
           onShare={() => setShareOpen(true)}
         />
-        <About
-          event={event}
-          signature={{
-            name: 'Dr. Geetha Haripriya',
-            title: 'Chairperson, Prashanth Fertility and Research Centre Pvt. Ltd.',
-            photoUrl: '/assets/chairperson-geetha-haripriya.png',
-          }}
+        <ChairpersonWelcome
+          name="Dr. Geetha Haripriya"
+          title="Chairperson, Prashanth Fertility and Research Centre Pvt. Ltd."
+          photoUrl="/assets/chairperson-geetha-haripriya.png"
+          message={event.description}
         />
+        <About event={event} />
         <Speakers speakers={event.speakers} />
         <Agenda agenda={event.agenda} />
         <Tickets

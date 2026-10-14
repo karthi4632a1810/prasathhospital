@@ -1,63 +1,20 @@
 import './About.css';
 
-function initials(name) {
-  return name
-    .replace(/^Dr\.?\s+/i, '')
-    .split(/\s+/)
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-}
-
-/** Renders the long-form description, splitting plain-text paragraphs on
- *  blank lines. Content is authored in the CMS (Module 2). `signature`
- *  attributes the welcome message to whoever wrote it (e.g. the chairperson),
- *  when the event page passes one in. */
-export default function About({ event, signature }) {
-  const paragraphs = (event.description || event.summary || '')
-    .split(/\n\s*\n/)
-    .map((p) => p.trim())
-    .filter(Boolean);
-
-  if (!paragraphs.length && !event.highlights?.length) return null;
+/** Conference highlights + organiser card. The long-form welcome message now
+ *  lives in ChairpersonWelcome, so this section only needs the "what's
+ *  included" and "who's running it" facts. */
+export default function About({ event }) {
+  if (!event.highlights?.length && !event.organizer?.name) return null;
 
   return (
     <section className="section about" id="about">
-      <div className="container about__grid">
-        <div className="about__content">
-          <div className="section-head">
-            <span className="section-eyebrow">About the event</span>
-            <h2 className="section-title">
-              {event.summary ? 'Why attend' : 'About this event'}
-            </h2>
-          </div>
-
-          {paragraphs.map((p, i) => (
-            <p className="about__paragraph" key={i}>
-              {p}
-            </p>
-          ))}
-
-          {signature?.name && (
-            <div className="about__signature">
-              <span className="about__signature-rule" aria-hidden="true" />
-              {signature.photoUrl ? (
-                <img className="about__signature-photo" src={signature.photoUrl} alt={signature.name} />
-              ) : (
-                <span className="about__signature-avatar" aria-hidden="true">
-                  {initials(signature.name)}
-                </span>
-              )}
-              <span className="about__signature-text">
-                <strong>{signature.name}</strong>
-                {signature.title && <span>{signature.title}</span>}
-              </span>
-            </div>
-          )}
+      <div className="container">
+        <div className="section-head section-head--center">
+          <span className="section-eyebrow">At a glance</span>
+          <h2 className="section-title">Conference highlights</h2>
         </div>
 
-        <aside className="about__aside">
+        <div className="about__grid">
           {event.highlights?.length > 0 && (
             <div className="about__card">
               <h3 className="about__card-title">What&apos;s included</h3>
@@ -93,7 +50,7 @@ export default function About({ event, signature }) {
               )}
             </div>
           )}
-        </aside>
+        </div>
       </div>
     </section>
   );

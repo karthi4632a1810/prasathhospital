@@ -1,84 +1,9 @@
 .about__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
-  gap: var(--space-12);
-  align-items: start;
-}
-
-.about__paragraph {
-  font-size: var(--text-lg);
-  color: var(--ink-700);
-  line-height: 1.75;
-}
-
-.about__signature {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  margin-top: var(--space-8);
-  padding-top: var(--space-8);
-  border-top: 1px solid var(--ink-200);
-  position: relative;
-}
-
-.about__signature-rule {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 56px;
-  height: 1px;
-  background: var(--accent-500);
-}
-
-.about__signature-avatar,
-.about__signature-photo {
-  flex-shrink: 0;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-}
-
-.about__signature-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--accent-100);
-  color: var(--accent-700);
-  font-family: var(--font-display);
-  font-weight: 650;
-  font-size: var(--text-base);
-}
-
-.about__signature-photo {
-  object-fit: cover;
-  border: 2px solid var(--white);
-  box-shadow: var(--shadow-sm);
-}
-
-.about__signature-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: var(--text-sm);
-}
-
-.about__signature-text strong {
-  font-family: var(--font-display);
-  font-size: var(--text-lg);
-  font-weight: 650;
-  color: var(--accent-700);
-}
-
-.about__signature-text span {
-  color: var(--ink-600);
-}
-
-.about__aside {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-  position: sticky;
-  top: calc(var(--header-height) + var(--space-6));
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: var(--space-6);
+  max-width: 900px;
+  margin-inline: auto;
 }
 
 .about__card {
@@ -145,15 +70,8 @@
   color: var(--accent-700);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 760px) {
   .about__grid {
     grid-template-columns: 1fr;
-    gap: var(--space-8);
-  }
-  .about__aside {
-    position: static;
-  }
-  .about__paragraph {
-    font-size: var(--text-base);
   }
 }
