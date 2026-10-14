@@ -27,9 +27,9 @@
   --accent-100: #ffedd5;
   --accent-50: #fff7ed;
 
-  /* "Live" signal blue — the flyer's second accent, reserved for the
-     cross-geography tele-robotic link so it never competes with the
-     orange CTAs/highlights. */
+  /* "Live" signal blue — the flyer's second accent. Used sparingly for
+     non-CTA informational accents (the live-link badge, the organising
+     committee's tint) so it never competes with the orange CTAs/highlights. */
   --signal-700: #1d4ed8;
   --signal-600: #2563eb;
   --signal-100: #dbeafe;
