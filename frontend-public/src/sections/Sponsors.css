@@ -1,5 +1,5 @@
 .sponsors__tier {
-  margin-bottom: var(--space-10);
+  margin-bottom: var(--space-12);
 }
 
 .sponsors__tier:last-child {
@@ -22,26 +22,28 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: var(--space-4);
+  gap: var(--space-5);
 }
 
 .sponsors__item {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 180px;
-  min-height: 84px;
+  min-width: 190px;
+  min-height: 92px;
   padding: var(--space-4) var(--space-6);
   background: var(--white);
   border: 1px solid var(--ink-200);
   border-radius: var(--radius-lg);
-  transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+  border-top: 3px solid var(--ink-200);
+  box-shadow: var(--shadow-xs);
+  transition: border-color var(--transition), box-shadow var(--transition);
+  will-change: transform;
 }
 
 .sponsors__item:hover {
-  border-color: var(--brand-300);
-  box-shadow: var(--shadow-sm);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .sponsors__item a {
@@ -66,36 +68,104 @@
   line-height: 1.35;
 }
 
-/* Title sponsor gets visual prominence. */
-.sponsors__tier--title .sponsors__item {
-  min-width: 260px;
-  min-height: 110px;
-  border-color: var(--accent-300);
-  background: var(--white);
+/* ---------- Tier accents — tiers get the color their name literally is,
+   drawn from the crest palette, so the hierarchy reads at a glance. ---------- */
+
+.sponsors__item--platinum {
+  border-top-color: var(--navy-600);
+}
+.sponsors__item--platinum:hover {
+  border-color: var(--navy-600);
 }
 
-.sponsors__tier--title .sponsors__name {
-  font-family: var(--font-display);
-  font-size: var(--text-xl);
-  color: var(--accent-700);
+.sponsors__item--gold {
+  border-top-color: var(--gold-500);
+}
+.sponsors__item--gold:hover {
+  border-color: var(--gold-500);
+}
+.sponsors__item--gold .sponsors__name {
+  color: var(--gold-600);
 }
 
-.sponsors__tier--title .sponsors__item img {
-  max-height: 72px;
+.sponsors__item--silver {
+  border-top-color: var(--ink-300);
+}
+.sponsors__item--silver:hover {
+  border-color: var(--ink-400);
 }
 
-.sponsors__tier--partner .sponsors__item {
+.sponsors__item--bronze {
+  border-top-color: var(--ink-400);
+}
+
+.sponsors__item--partner {
   min-width: 150px;
   min-height: 68px;
+  border-top-color: var(--ink-200);
+}
+
+/* ---------- Title sponsor: a full-width featured banner, not just a
+   bigger logo box. ---------- */
+
+.sponsors__tier--title .sponsors__list {
+  max-width: 720px;
+  margin-inline: auto;
+}
+
+.sponsors__item--title {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  min-height: 150px;
+  padding: var(--space-8) var(--space-10);
+  border: none;
+  border-radius: var(--radius-xl);
+  background:
+    linear-gradient(var(--white), var(--white)) padding-box,
+    linear-gradient(135deg, var(--accent-500), var(--gold-500), var(--navy-600)) border-box;
+  border: 2px solid transparent;
+  box-shadow: var(--shadow-md);
+}
+
+.sponsors__item--title::before {
+  content: 'Title Sponsor';
+  position: absolute;
+  top: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--navy-900);
+  color: var(--white);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: var(--space-1) var(--space-4);
+  border-radius: var(--radius-full);
+}
+
+.sponsors__item--title .sponsors__name {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 650;
+  color: var(--accent-700);
+  margin-top: var(--space-3);
+}
+
+.sponsors__item--title img {
+  max-height: 76px;
+  margin-top: var(--space-3);
 }
 
 @media (max-width: 480px) {
   .sponsors__item {
-    min-width: 140px;
-    min-height: 72px;
+    min-width: 150px;
+    min-height: 76px;
     padding: var(--space-3) var(--space-4);
   }
-  .sponsors__tier--title .sponsors__item {
-    min-width: 100%;
+  .sponsors__item--title {
+    min-width: 0;
+    width: 100%;
+    padding: var(--space-8) var(--space-5) var(--space-6);
   }
 }

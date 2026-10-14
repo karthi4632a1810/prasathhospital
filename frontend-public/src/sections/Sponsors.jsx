@@ -1,3 +1,4 @@
+import { useTilt } from '../lib/useTilt';
 import './Sponsors.css';
 
 const TIER_ORDER = ['title', 'platinum', 'gold', 'silver', 'bronze', 'partner'];
@@ -9,6 +10,33 @@ const TIER_LABEL = {
   bronze: 'Bronze Sponsors',
   partner: 'Supporting Partners',
 };
+
+function SponsorCard({ sponsor, tier }) {
+  const tilt = useTilt({ max: 6, scale: 1.02 });
+  const inner = sponsor.logoUrl ? (
+    <img src={sponsor.logoUrl} alt={sponsor.name} loading="lazy" />
+  ) : (
+    <span className="sponsors__name">{sponsor.name}</span>
+  );
+
+  return (
+    <li
+      ref={tilt.ref}
+      onMouseEnter={tilt.onMouseEnter}
+      onMouseMove={tilt.onMouseMove}
+      onMouseLeave={tilt.onMouseLeave}
+      className={`sponsors__item sponsors__item--${tier}`}
+    >
+      {sponsor.websiteUrl ? (
+        <a href={sponsor.websiteUrl} target="_blank" rel="noopener noreferrer" title={sponsor.name}>
+          {inner}
+        </a>
+      ) : (
+        inner
+      )}
+    </li>
+  );
+}
 
 export default function Sponsors({ sponsors }) {
   if (!sponsors?.length) return null;
@@ -30,27 +58,11 @@ export default function Sponsors({ sponsors }) {
 
         {grouped.map((group) => (
           <div className={`sponsors__tier sponsors__tier--${group.tier}`} key={group.tier}>
-            <h3 className="sponsors__tier-label">{group.label}</h3>
+            {group.tier !== 'title' && <h3 className="sponsors__tier-label">{group.label}</h3>}
             <ul className="sponsors__list">
-              {group.items.map((s) => {
-                const inner = s.logoUrl ? (
-                  <img src={s.logoUrl} alt={s.name} loading="lazy" />
-                ) : (
-                  <span className="sponsors__name">{s.name}</span>
-                );
-
-                return (
-                  <li className="sponsors__item" key={s.id}>
-                    {s.websiteUrl ? (
-                      <a href={s.websiteUrl} target="_blank" rel="noopener noreferrer" title={s.name}>
-                        {inner}
-                      </a>
-                    ) : (
-                      inner
-                    )}
-                  </li>
-                );
-              })}
+              {group.items.map((s) => (
+                <SponsorCard sponsor={s} tier={group.tier} key={s.id} />
+              ))}
             </ul>
           </div>
         ))}

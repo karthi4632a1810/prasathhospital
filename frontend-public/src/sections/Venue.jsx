@@ -1,9 +1,11 @@
 import Button from '../components/ui/Button';
 import { buildAddress } from '../lib/format';
+import { useTilt } from '../lib/useTilt';
 import './Venue.css';
 
 export default function Venue({ event }) {
   const { venue, mode, virtualLink } = event;
+  const mapTilt = useTilt({ max: 5, scale: 1.012 });
 
   // Online-only events get a joining panel instead of a map.
   if (mode === 'virtual') {
@@ -36,6 +38,9 @@ export default function Venue({ event }) {
 
   return (
     <section className="section section--alt venue" id="venue">
+      <div className="venue__glow venue__glow--navy" aria-hidden="true" />
+      <div className="venue__glow venue__glow--gold" aria-hidden="true" />
+
       <div className="container">
         <div className="section-head">
           <span className="section-eyebrow">Getting there</span>
@@ -43,7 +48,7 @@ export default function Venue({ event }) {
         </div>
 
         <div className="venue__grid">
-          <div className="venue__details">
+          <div className="venue__card">
             <h3 className="venue__name">{venue.name}</h3>
 
             {address && (
@@ -56,16 +61,26 @@ export default function Venue({ event }) {
               </p>
             )}
 
-            {venue.landmark && (
-              <p className="venue__meta">
-                <strong>Landmark:</strong> {venue.landmark}
-              </p>
-            )}
-
-            {venue.parkingInfo && (
-              <p className="venue__meta">
-                <strong>Parking:</strong> {venue.parkingInfo}
-              </p>
+            {(venue.landmark || venue.parkingInfo) && (
+              <div className="venue__chips">
+                {venue.landmark && (
+                  <span className="venue__chip">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M3 11 12 4l9 7M5 10v9h14v-9" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    {venue.landmark}
+                  </span>
+                )}
+                {venue.parkingInfo && (
+                  <span className="venue__chip">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="5" width="18" height="14" rx="2" />
+                      <path d="M9 8h3.5a2 2 0 0 1 0 4H9V8Zm0 4v4" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    {venue.parkingInfo}
+                  </span>
+                )}
+              </div>
             )}
 
             <div className="venue__actions">
@@ -96,14 +111,26 @@ export default function Venue({ event }) {
           </div>
 
           {venue.mapEmbedUrl && (
-            <div className="venue__map">
-              <iframe
-                src={venue.mapEmbedUrl}
-                title={`Map showing ${venue.name}`}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                allowFullScreen
-              />
+            <div
+              ref={mapTilt.ref}
+              onMouseEnter={mapTilt.onMouseEnter}
+              onMouseMove={mapTilt.onMouseMove}
+              onMouseLeave={mapTilt.onMouseLeave}
+              className="venue__map-frame"
+            >
+              <div className="venue__map">
+                <iframe
+                  src={venue.mapEmbedUrl}
+                  title={`Map showing ${venue.name}`}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
+                <span className="venue__pin-chip">
+                  <span className="venue__pin-dot" aria-hidden="true" />
+                  {venue.city || venue.name}
+                </span>
+              </div>
             </div>
           )}
         </div>
