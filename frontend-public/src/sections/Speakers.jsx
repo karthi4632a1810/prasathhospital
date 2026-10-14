@@ -2,7 +2,8 @@ import { useState } from 'react';
 import Badge from '../components/ui/Badge';
 import './Speakers.css';
 
-/** Initials avatar used when no photo has been uploaded in the CMS. */
+/** Large photo panel; falls back to a giant initials monogram on an accent
+ *  gradient when no photo has been uploaded in the CMS yet. */
 function Avatar({ name, photoUrl }) {
   const initials = name
     .replace(/^Dr\.?\s+/i, '')
@@ -28,7 +29,7 @@ function SpeakerCard({ speaker }) {
 
   return (
     <article className={`speaker ${speaker.isKeynote ? 'speaker--keynote' : ''}`}>
-      <div className="speaker__head">
+      <div className="speaker__panel">
         <Avatar name={speaker.name} photoUrl={speaker.photoUrl} />
         {speaker.isKeynote && (
           <Badge tone="accent" size="sm" className="speaker__flag">
