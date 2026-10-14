@@ -67,6 +67,9 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
         <div className="hero__badges">
           <Badge tone="light">{CATEGORY_LABEL[event.category] || 'Event'}</Badge>
           <Badge tone="light">{MODE_LABEL[event.mode] || 'In person'}</Badge>
+          <Badge tone="signal" icon={<span className="badge__dot" aria-hidden="true" />}>
+            Live Tele-Robotic Surgery
+          </Badge>
           <RegistrationStateBadge state={event.registrationState} seatsRemaining={event.seatsRemaining} />
         </div>
 

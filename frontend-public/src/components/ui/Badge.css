@@ -54,6 +54,26 @@
   color: var(--brand-800);
 }
 
+/* The flyer's "live link" blue — reserved for the tele-robotic surgery feed. */
+.badge--signal {
+  background: var(--signal-100);
+  color: var(--signal-700);
+}
+
+.badge--signal .badge__dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--signal-600);
+  animation: badge-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.75); }
+}
+
 /* On dark hero backgrounds. */
 .badge--light {
   background: rgba(255, 255, 255, 0.16);

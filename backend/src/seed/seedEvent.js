@@ -25,9 +25,9 @@ function daysFromNow(days, hours = 9, minutes = 0) {
 const eventData = {
   title: 'CIIM 2026',
   slug: SLUG,
-  tagline: '5th Annual Conference on Controversies in Infertility Management',
+  tagline: 'Breaking Boundaries, Elevating Surgical Precision & ART Outcomes',
   summary:
-    'The 5th annual CIIM, organised by Prashanth Fertility and Research Centre Pvt. Ltd. — an academic and scientific programme with high-impact debates, keynotes and a cultural fest, expected to draw 800+ delegates.',
+    'The 5th Annual Conference on Controversies in Infertility Management — in-person at The Leela Palace, Chennai, with live tele-transmission of a historic cross-geography robotic surgery demonstration. High-impact debates, masterclasses and emerging-tech sessions for 800+ delegates.',
   description:
     'Greetings from Dr. Geetha Haripriya, Chairperson, Prashanth Fertility and Research Centre Pvt. Ltd. We are delighted to welcome you to the prestigious 5th CIIM, to be held from November 21st – 22nd, 2026. CIIM 2026 will truly be an unforgettable conference for all who attend.\n\nThe conference aims to ideate, analyze, and share inventive, feasible, and implementable ways to encourage and disseminate knowledge, education, and research to make a high level of care available to women. The Organizing Committee is working hard to put together an educational and scientific program for what will be an academic extravaganza, packaged with cuisine to tantalize your taste buds, and a complete cultural fest.',
 
@@ -68,11 +68,10 @@ const eventData = {
   },
 
   highlights: [
-    '800+ delegates: gynecologists, IVF specialists, embryologists and clinical researchers',
-    'High-impact scientific debates and academic keynotes',
-    'Premium culinary experiences',
-    'An exclusive cultural fest',
-    'Two days at The Leela Palace, Chennai — 21st & 22nd November 2026',
+    'Live Tele-Robotics: streamed high-definition remote surgical demonstration',
+    'Debates & Panels: high-impact sessions on contested infertility & ART protocols',
+    'Masterclasses: hands-on insights led by renowned international & national faculty',
+    'Emerging Tech: innovations in embryology, AI in IVF and reproductive surgery',
   ],
 
   speakers: [
@@ -283,9 +282,9 @@ const eventData = {
 
   faqs: [
     {
-      question: 'Who should attend this summit?',
+      question: 'Who should attend CIIM 2026?',
       answer:
-        'Practising gynaecologists, fertility specialists, postgraduates in OBG, clinical embryologists, fertility counsellors and allied reproductive health professionals.',
+        'Reproductive medicine specialists & IVF consultants, gynaecological endoscopic & robotic surgeons, embryologists & clinical reproductive scientists, and obstetricians, gynaecologists & postgraduates.',
       order: 1,
     },
     {
@@ -338,10 +337,10 @@ const eventData = {
   ],
 
   contact: {
-    name: 'Delegate Helpdesk — Events Team',
+    name: 'CIIM 2026 Conference Secretariat',
     phone: '+914442279999',
     whatsapp: '+919840012345',
-    email: 'events@prashanthhospitals.com',
+    email: 'secretariat@ciim2026.com',
   },
 
   seo: {
