@@ -42,9 +42,13 @@ export default function About({ event, signature }) {
           {signature?.name && (
             <div className="about__signature">
               <span className="about__signature-rule" aria-hidden="true" />
-              <span className="about__signature-avatar" aria-hidden="true">
-                {initials(signature.name)}
-              </span>
+              {signature.photoUrl ? (
+                <img className="about__signature-photo" src={signature.photoUrl} alt={signature.name} />
+              ) : (
+                <span className="about__signature-avatar" aria-hidden="true">
+                  {initials(signature.name)}
+                </span>
+              )}
               <span className="about__signature-text">
                 <strong>{signature.name}</strong>
                 {signature.title && <span>{signature.title}</span>}

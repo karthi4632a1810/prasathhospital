@@ -30,19 +30,29 @@
   background: var(--accent-500);
 }
 
-.about__signature-avatar {
+.about__signature-avatar,
+.about__signature-photo {
   flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+}
+
+.about__signature-avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
   background: var(--accent-100);
   color: var(--accent-700);
   font-family: var(--font-display);
   font-weight: 650;
   font-size: var(--text-base);
+}
+
+.about__signature-photo {
+  object-fit: cover;
+  border: 2px solid var(--white);
+  box-shadow: var(--shadow-sm);
 }
 
 .about__signature-text {

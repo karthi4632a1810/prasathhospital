@@ -36,8 +36,10 @@
 }
 
 .site-header__mark {
-  display: inline-flex;
-  color: var(--brand-700);
+  display: block;
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
 }
 
 .site-header__brand-text {

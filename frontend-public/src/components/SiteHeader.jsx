@@ -66,22 +66,7 @@ export default function SiteHeader({ event, onRegister, canRegister, availableSe
     <header className={`site-header ${scrolled ? 'is-scrolled' : ''}`}>
       <div className="container site-header__inner">
         <a className="site-header__brand" href="#top" onClick={(e) => handleNavClick(e, 'top')}>
-          <span className="site-header__mark" aria-hidden="true">
-            <svg viewBox="0 0 32 32" width="30" height="30" fill="none">
-              <path
-                d="M16 3 5 8v8.5C5 23 9.7 28.2 16 29.5 22.3 28.2 27 23 27 16.5V8L16 3Z"
-                fill="currentColor"
-                opacity="0.14"
-              />
-              <path
-                d="M16 3 5 8v8.5C5 23 9.7 28.2 16 29.5 22.3 28.2 27 23 27 16.5V8L16 3Z"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinejoin="round"
-              />
-              <path d="M16 10.5v9M11.5 15h9" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" />
-            </svg>
-          </span>
+          <img className="site-header__mark" src="/assets/prashanth-hospitals-crest.jpg" alt="" width="34" height="34" />
           <span className="site-header__brand-text">
             <strong>Prashanth</strong>
             <span>Hospitals</span>

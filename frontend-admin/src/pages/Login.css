@@ -23,7 +23,10 @@
 }
 
 .login__brand-mark {
-  color: var(--accent-600);
+  display: block;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
 }
 
 .login__brand-name {

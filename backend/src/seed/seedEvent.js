@@ -48,7 +48,7 @@ const eventData = {
   organizer: {
     name: 'Prashanth Fertility and Research Centre Pvt. Ltd.',
     department: 'Prashanth Fertility',
-    logoUrl: '/assets/logo-prashanth.svg',
+    logoUrl: '/assets/prashanth-hospitals-crest.jpg',
     websiteUrl: 'https://www.prashanthhospitals.com',
   },
 
@@ -362,7 +362,7 @@ const eventData = {
     primaryColor: '#0E5C8A',
     accentColor: '#E4859B',
     heroImageUrl: '',
-    logoUrl: '/assets/logo-prashanth.svg',
+    logoUrl: '/assets/prashanth-hospitals-crest.jpg',
   },
 
   isFeatured: true,

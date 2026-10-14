@@ -30,7 +30,18 @@
 
 .shell__brand-mark {
   display: inline-flex;
-  color: var(--accent-500);
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  background: var(--white);
+  border-radius: var(--radius-md);
+}
+
+.shell__brand-mark img {
+  display: block;
+  object-fit: contain;
 }
 
 .shell__brand-text {

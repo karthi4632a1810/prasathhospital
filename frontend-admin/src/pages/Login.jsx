@@ -33,11 +33,7 @@ export default function Login() {
     <div className="login">
       <div className="login__panel">
         <div className="login__brand">
-          <span className="login__brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
-              <path d="M12 2.5 4 5.8v6c0 5 3.4 8.3 8 9.7 4.6-1.4 8-4.7 8-9.7v-6Z" />
-            </svg>
-          </span>
+          <img className="login__brand-mark" src="/assets/prashanth-hospitals-crest.jpg" alt="" width="32" height="32" />
           <div>
             <p className="login__brand-name">Prashanth Hospitals</p>
             <p className="login__brand-sub">Events Admin</p>

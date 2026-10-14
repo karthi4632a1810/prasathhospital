@@ -70,8 +70,8 @@ export default function AppShell({ children }) {
 
       <aside className="shell__sidebar" data-open={navOpen}>
         <div className="shell__brand">
-          <span className="shell__brand-mark" aria-hidden="true">
-            <IconShieldFilled />
+          <span className="shell__brand-mark">
+            <img src="/assets/prashanth-hospitals-crest.jpg" alt="" width="22" height="22" />
           </span>
           <span className="shell__brand-text">
             Prashanth
@@ -237,13 +237,6 @@ function IconMenu() {
   return (
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17" strokeLinecap="round" />
-    </svg>
-  );
-}
-function IconShieldFilled() {
-  return (
-    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-      <path d="M12 2.5 4 5.8v6c0 5 3.4 8.3 8 9.7 4.6-1.4 8-4.7 8-9.7v-6Z" />
     </svg>
   );
 }

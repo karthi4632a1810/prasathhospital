@@ -146,6 +146,7 @@ export default function EventMicrosite() {
           signature={{
             name: 'Dr. Geetha Haripriya',
             title: 'Chairperson, Prashanth Fertility and Research Centre Pvt. Ltd.',
+            photoUrl: '/assets/chairperson-geetha-haripriya.png',
           }}
         />
         <Speakers speakers={event.speakers} />
