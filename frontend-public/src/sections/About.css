@@ -11,6 +11,58 @@
   line-height: 1.75;
 }
 
+.about__signature {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+  padding-top: var(--space-8);
+  border-top: 1px solid var(--ink-200);
+  position: relative;
+}
+
+.about__signature-rule {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 56px;
+  height: 1px;
+  background: var(--accent-500);
+}
+
+.about__signature-avatar {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent-100);
+  color: var(--accent-700);
+  font-family: var(--font-display);
+  font-weight: 650;
+  font-size: var(--text-base);
+}
+
+.about__signature-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--text-sm);
+}
+
+.about__signature-text strong {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 650;
+  color: var(--accent-700);
+}
+
+.about__signature-text span {
+  color: var(--ink-600);
+}
+
 .about__aside {
   display: flex;
   flex-direction: column;

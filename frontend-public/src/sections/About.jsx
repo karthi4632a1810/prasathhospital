@@ -1,8 +1,20 @@
 import './About.css';
 
+function initials(name) {
+  return name
+    .replace(/^Dr\.?\s+/i, '')
+    .split(/\s+/)
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 /** Renders the long-form description, splitting plain-text paragraphs on
- *  blank lines. Content is authored in the CMS (Module 2). */
-export default function About({ event }) {
+ *  blank lines. Content is authored in the CMS (Module 2). `signature`
+ *  attributes the welcome message to whoever wrote it (e.g. the chairperson),
+ *  when the event page passes one in. */
+export default function About({ event, signature }) {
   const paragraphs = (event.description || event.summary || '')
     .split(/\n\s*\n/)
     .map((p) => p.trim())
@@ -26,6 +38,19 @@ export default function About({ event }) {
               {p}
             </p>
           ))}
+
+          {signature?.name && (
+            <div className="about__signature">
+              <span className="about__signature-rule" aria-hidden="true" />
+              <span className="about__signature-avatar" aria-hidden="true">
+                {initials(signature.name)}
+              </span>
+              <span className="about__signature-text">
+                <strong>{signature.name}</strong>
+                {signature.title && <span>{signature.title}</span>}
+              </span>
+            </div>
+          )}
         </div>
 
         <aside className="about__aside">

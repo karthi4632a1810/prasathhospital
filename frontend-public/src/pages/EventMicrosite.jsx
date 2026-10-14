@@ -15,6 +15,7 @@ import Agenda from '../sections/Agenda';
 import Tickets from '../sections/Tickets';
 import Venue from '../sections/Venue';
 import Sponsors from '../sections/Sponsors';
+import ExhibitStalls from '../sections/ExhibitStalls';
 import Faq from '../sections/Faq';
 import FinalCta from '../sections/FinalCta';
 
@@ -140,7 +141,13 @@ export default function EventMicrosite() {
           canRegister={canRegister}
           onShare={() => setShareOpen(true)}
         />
-        <About event={event} />
+        <About
+          event={event}
+          signature={{
+            name: 'Dr. Geetha Haripriya',
+            title: 'Chairperson, Prashanth Fertility and Research Centre Pvt. Ltd.',
+          }}
+        />
         <Speakers speakers={event.speakers} />
         <Agenda agenda={event.agenda} />
         <Tickets
@@ -150,6 +157,7 @@ export default function EventMicrosite() {
         />
         <Venue event={event} />
         <Sponsors sponsors={event.sponsors} />
+        <ExhibitStalls contactEmail={event.contact?.email} />
         <Faq faqs={event.faqs} contact={event.contact} />
         <FinalCta event={event} onRegister={scrollToTickets} canRegister={canRegister} />
       </main>
