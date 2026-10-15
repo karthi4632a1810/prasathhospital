@@ -10,8 +10,8 @@ const listAuditLog = asyncHandler(async (req, res) => {
   const skip = (page - 1) * limit;
 
   const filter = {};
-  if (req.query.action) filter.action = req.query.action;
-  if (req.query.entityType) filter.entityType = req.query.entityType;
+  if (req.query.action) filter.action = String(req.query.action);
+  if (req.query.entityType) filter.entityType = String(req.query.entityType);
 
   const [entries, total] = await Promise.all([
     AuditLog.find(filter).sort({ at: -1 }).skip(skip).limit(limit),

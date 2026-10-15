@@ -2,6 +2,7 @@
 
 const TicketType = require('../models/TicketType');
 const Event = require('../models/Event');
+const Registration = require('../models/Registration');
 const ApiError = require('../utils/ApiError');
 const { sendSuccess, asyncHandler } = require('../utils/response');
 const { serializeTicketTypeForAdmin } = require('../services/adminTicketTypeSerializer');
@@ -44,7 +45,7 @@ async function findOr404(id) {
 /** GET /api/v1/admin/ticket-types?event=<eventId> */
 const listTicketTypes = asyncHandler(async (req, res) => {
   const filter = {};
-  if (req.query.event) filter.event = req.query.event;
+  if (req.query.event) filter.event = String(req.query.event);
   const tickets = await TicketType.find(filter).sort({ event: 1, order: 1, price: 1 });
   return sendSuccess(res, tickets.map(serializeTicketTypeForAdmin));
 });
@@ -75,8 +76,8 @@ const updateTicketType = asyncHandler(async (req, res) => {
 /** DELETE /api/v1/admin/ticket-types/:id — only before anyone has bought one. */
 const deleteTicketType = asyncHandler(async (req, res) => {
   const ticket = await findOr404(req.params.id);
-  if (ticket.quantitySold > 0) {
-    throw ApiError.conflict('This pass has sales against it. Deactivate it instead of deleting.');
+  if (ticket.quantitySold > 0 || (await Registration.exists({ ticketType: ticket._id }))) {
+    throw ApiError.conflict('This pass has registrations against it. Deactivate it instead of deleting.');
   }
   await ticket.deleteOne();
   recordAudit(req, { action: 'ticketType.delete', entityType: 'TicketType', entityId: ticket._id, meta: { name: ticket.name } });

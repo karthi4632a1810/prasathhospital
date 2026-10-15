@@ -17,6 +17,10 @@ const app = express();
 // Behind reverse proxies: trust them so rate limiting and logging see real client IPs.
 app.set('trust proxy', env.trustProxy);
 app.disable('x-powered-by');
+// Plain key=value query parsing: the default "extended" parser turns
+// ?event[$ne]=x into an object, which would reach Mongo filters as an
+// operator. Every admin/public filter here only ever needs strings.
+app.set('query parser', 'simple');
 
 app.use(
   helmet({
@@ -61,7 +65,17 @@ app.use(
 // filenames are random and never reused.
 app.use(
   '/uploads',
-  express.static(uploadDir, { maxAge: '30d', immutable: true })
+  express.static(uploadDir, {
+    maxAge: '30d',
+    immutable: true,
+    // Uploaded files are images only, but an SVG can carry script. Serve
+    // everything here as an inert, sandboxed document so a hostile upload
+    // can never run in the site's or admin's origin.
+    setHeaders(res) {
+      res.set('X-Content-Type-Options', 'nosniff');
+      res.set('Content-Security-Policy', "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox");
+    },
+  })
 );
 
 app.get('/', (req, res) => {

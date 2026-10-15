@@ -70,6 +70,7 @@ const env = {
   publicLimitWindowMs: readInt('PUBLIC_LIMIT_WINDOW_MINUTES', 10) * 60 * 1000,
   couponValidateLimitMax: readInt('COUPON_VALIDATE_LIMIT_MAX', 20),
   registrationLimitMax: readInt('REGISTRATION_LIMIT_MAX', 10),
+  loginLimitMax: readInt('LOGIN_LIMIT_MAX', 20), // admin login attempts per IP per 15 min
 
   // --- Email (SMTP) — optional; unset means email delivery is "not_configured" ---
   smtpHost: read('SMTP_HOST', ''),

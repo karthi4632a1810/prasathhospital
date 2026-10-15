@@ -13,7 +13,8 @@
     "verify": "node tests/verify.js",
     "lint": "node --check src/server.js",
     "seed:coupons": "node src/seed/seedCoupons.js",
-    "test:flow": "node tests/coupon-flow.js"
+    "test:flow": "node tests/coupon-flow.js",
+    "test:functional": "node tests/functional.js"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -14,6 +14,7 @@ const env = require('../config/env');
  * confirmed registrations ever have one (see Registration.issueQrToken()).
  */
 async function findTicketOr404(qrToken) {
+  if (!/^[a-f0-9]{48}$/i.test(String(qrToken || ''))) throw ApiError.notFound('Ticket not found');
   const reg = await Registration.findOne({ qrToken })
     .populate('event', 'title startDate endDate venue mode timezone status')
     .populate('ticketType', 'name admitsCount')
@@ -57,6 +58,7 @@ const getTicketQrImage = asyncHandler(async (req, res) => {
 /** GET /api/v1/tickets/:qrToken/pdf */
 const getTicketPdf = asyncHandler(async (req, res) => {
   const reg = await findTicketOr404(req.params.qrToken);
+  if (reg.status !== 'confirmed') throw ApiError.conflict('This registration has been cancelled, so the ticket is no longer valid.');
   res.set('Content-Type', 'application/pdf');
   res.set('Content-Disposition', `inline; filename="${reg.registrationCode}.pdf"`);
   await streamTicketPdf(res, {
@@ -71,6 +73,7 @@ const getTicketPdf = asyncHandler(async (req, res) => {
 /** GET /api/v1/tickets/:qrToken/certificate.pdf — available once the event has concluded. */
 const getCertificatePdf = asyncHandler(async (req, res) => {
   const reg = await findTicketOr404(req.params.qrToken);
+  if (reg.status !== 'confirmed') throw ApiError.conflict('Certificates are only issued for confirmed registrations.');
   if (reg.event.status !== 'completed') {
     throw ApiError.conflict('Certificates are issued once the event has concluded.');
   }

@@ -272,8 +272,8 @@ EventSchema.virtual('registrationState').get(function registrationState() {
 
   if (this.status === 'cancelled') return 'cancelled';
   if (this.status === 'completed') return 'completed';
-  if (this.status !== 'published') return 'unavailable';
   if (this.status === 'registration-closed') return 'closed';
+  if (this.status !== 'published') return 'unavailable';
   if (this.endDate instanceof Date && this.endDate.getTime() < now) return 'completed';
   if (this.registrationOpensAt && this.registrationOpensAt.getTime() > now) return 'not-yet-open';
   if (this.registrationClosesAt && this.registrationClosesAt.getTime() < now) return 'closed';

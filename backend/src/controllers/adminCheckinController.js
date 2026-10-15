@@ -35,7 +35,8 @@ const STATUS_MESSAGES = {
  */
 const scanTicket = asyncHandler(async (req, res) => {
   const token = extractToken(req.body.qrToken);
-  if (!token || !/^[a-f0-9]{16,64}$/i.test(token)) throw ApiError.notFound('No ticket found for this code.');
+  if (!token) throw ApiError.badRequest('No QR token provided.');
+  if (!/^[a-f0-9]{16,64}$/i.test(token)) throw ApiError.notFound('No ticket found for this code.');
 
   const reg = await Registration.findOne({ qrToken: token })
     .populate('event', 'title')

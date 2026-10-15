@@ -30,6 +30,9 @@ const requireAuth = asyncHandler(async (req, res, next) => {
   if (!user || !user.isActive) {
     throw ApiError.unauthorized('Your session is no longer valid.');
   }
+  if (user.passwordChangedAt && payload.iat * 1000 < user.passwordChangedAt.getTime() - 1000) {
+    throw ApiError.unauthorized('Your password was changed. Please sign in again.');
+  }
 
   req.user = user;
   next();

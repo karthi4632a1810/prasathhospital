@@ -28,6 +28,9 @@ const UserSchema = new Schema(
     failedLoginAttempts: { type: Number, default: 0 },
     lockedUntil: { type: Date, default: null },
     lastLoginAt: { type: Date, default: null },
+    // Tokens issued before this moment are rejected (password reset ends
+    // every existing session for the account).
+    passwordChangedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

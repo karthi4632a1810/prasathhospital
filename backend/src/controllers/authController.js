@@ -31,9 +31,8 @@ const login = asyncHandler(async (req, res) => {
   if (!user || !user.isActive) throw invalidCredentials();
 
   if (user.lockedUntil && user.lockedUntil.getTime() > Date.now()) {
-    throw ApiError.forbidden(
-      `Too many failed attempts. Try again after ${user.lockedUntil.toLocaleTimeString('en-IN')}.`
-    );
+    const minutes = Math.max(Math.ceil((user.lockedUntil.getTime() - Date.now()) / 60000), 1);
+    throw ApiError.forbidden(`Too many failed attempts. Try again in ${minutes} minute${minutes === 1 ? '' : 's'}.`);
   }
 
   const valid = await comparePassword(password, user.passwordHash);

@@ -4,6 +4,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { login, me } = require('../controllers/authController');
 const { requireAuth } = require('../middleware/auth');
+const env = require('../config/env');
 
 const router = express.Router();
 
@@ -11,7 +12,7 @@ const router = express.Router();
 // slowing down hard against credential-stuffing, independent of lockout.
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: env.loginLimitMax,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: { message: 'Too many login attempts. Please try again shortly.' } },

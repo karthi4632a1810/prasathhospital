@@ -217,7 +217,7 @@ guessable code), `POST /admin/registrations/:id/resend-ticket` (replaced by
 
 ## 6. Test results
 
-**`npm run verify`** (no database): **112 passed, 0 failed**. It covers:
+**`npm run verify`** (no database): **120 passed, 0 failed** (after the QA pass). It covers:
 - route guards for every new admin route
 - removed payment routes returning 404
 - coupon model rules and code normalisation
@@ -261,6 +261,8 @@ counters are restored.
 **Not tested:** real email and WhatsApp delivery. No SMTP or Meta
 credentials were available, so only the `not_configured` path has run end to
 end. The sent and failed classification is covered by unit checks.
+
+A later QA pass added a full backend functional suite (`npm run test:functional`, 87/87) and fixed 19 bugs — see [QA-REPORT.md](QA-REPORT.md).
 
 ## 7. Setup
 

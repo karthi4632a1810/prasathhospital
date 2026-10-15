@@ -29,8 +29,8 @@ audit log of every admin action.
 **Backend** (`backend`) — Express 4 API, one `{success,data}` envelope,
 MongoDB/Mongoose, SMTP email + Meta WhatsApp Cloud API integrations that both
 degrade gracefully (clear "not configured" messaging, never a crash) until
-real credentials are supplied, a 112-check verification suite and a 19-case
-live end-to-end coupon flow test
+real credentials are supplied, a 120-check verification suite, an 87-case
+live functional suite and a 19-case coupon flow test (see docs/QA-REPORT.md)
 (`backend/tests/verify.js`) that needs no live database.
 
 **Docker** is the standard way to run all of it — `mongo`, `api`, `web`
@@ -159,7 +159,7 @@ credentials to `backend/.env` to turn them on. See
 cd backend && npm run verify
 ```
 
-Runs 112 checks across every module's models, serializers, auth/RBAC guards,
+Runs 120 checks across every module's models, serializers, auth/RBAC guards,
 coupon rules, delivery classification, QR/CSV utilities and HTTP layer — including that
 internal inventory counts and non-public passes never reach the browser.
 No database required.
@@ -192,7 +192,7 @@ prashanth-events/
 │   │   │                    ticketPdf, certificatePdf, csv
 │   │   ├── seed/            sample event + admin bootstrap
 │   │   └── dev/             mock API for DB-free frontend work
-│   └── tests/              verify.js (112 checks), coupon-flow.js (live E2E)
+│   └── tests/              verify.js (120), functional.js (87, live), coupon-flow.js (19, live)
 │
 ├── frontend-public/         attendee-facing microsite
 │   └── src/

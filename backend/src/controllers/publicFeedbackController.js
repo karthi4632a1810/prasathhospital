@@ -12,13 +12,16 @@ const { sendSuccess, asyncHandler } = require('../utils/response');
  * gate — no separate auth needed, same pattern as the ticket routes.
  */
 const submitFeedback = asyncHandler(async (req, res) => {
-  const { qrToken, rating, comments } = req.body;
+  const { rating, comments } = req.body || {};
+  const qrToken = typeof req.body?.qrToken === 'string' ? req.body.qrToken.trim() : '';
   if (!qrToken) throw ApiError.badRequest('A ticket reference is required.');
+  if (comments !== undefined && typeof comments !== 'string') throw ApiError.badRequest('Comments must be text.');
   const ratingNum = Number(rating);
   if (!Number.isInteger(ratingNum) || ratingNum < 1 || ratingNum > 5) {
     throw ApiError.badRequest('Rating must be a whole number from 1 to 5.');
   }
 
+  if (!/^[a-f0-9]{48}$/i.test(qrToken)) throw ApiError.notFound('Ticket not found');
   const reg = await Registration.findOne({ qrToken });
   if (!reg) throw ApiError.notFound('Ticket not found');
   if (reg.status !== 'confirmed') {
@@ -31,7 +34,7 @@ const submitFeedback = asyncHandler(async (req, res) => {
       event: reg.event,
       registration: reg._id,
       rating: ratingNum,
-      comments: comments || '',
+      comments: (comments || '').slice(0, 2000),
     });
   } catch (err) {
     if (err.code === 11000) {

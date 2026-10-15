@@ -1,6 +1,9 @@
 'use strict';
 
 const Event = require('../models/Event');
+const TicketType = require('../models/TicketType');
+const Coupon = require('../models/Coupon');
+const Registration = require('../models/Registration');
 const ApiError = require('../utils/ApiError');
 const { sendSuccess, asyncHandler } = require('../utils/response');
 const { serializeEventForAdmin, serializeEventAdminCard } = require('../services/adminEventSerializer');
@@ -82,6 +85,14 @@ const deleteEvent = asyncHandler(async (req, res) => {
   if (event.status !== 'draft') {
     throw ApiError.conflict('Only draft events can be deleted. Set status to "cancelled" instead.');
   }
+  const [registrations, coupons] = await Promise.all([
+    Registration.countDocuments({ event: event._id }),
+    Coupon.countDocuments({ event: event._id }),
+  ]);
+  if (registrations > 0 || coupons > 0) {
+    throw ApiError.conflict('This event has registrations or coupons. Cancel it instead of deleting.');
+  }
+  await TicketType.deleteMany({ event: event._id });
   await event.deleteOne();
   recordAudit(req, { action: 'event.delete', entityType: 'Event', entityId: event._id, meta: { title: event.title } });
   return sendSuccess(res, null, { status: 200, message: 'Event deleted' });

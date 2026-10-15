@@ -48,9 +48,14 @@ async function statsByCompany(companyIds) {
   return stats;
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 function applyEditableFields(company, body) {
   for (const field of EDITABLE_FIELDS) {
-    if (field in body) company[field] = field === 'isActive' ? Boolean(body[field]) : String(body[field] ?? '');
+    if (field in body) company[field] = field === 'isActive' ? Boolean(body[field]) : String(body[field] ?? '').trim();
+  }
+  if (company.contactEmail && !EMAIL_RE.test(company.contactEmail)) {
+    throw ApiError.badRequest('Contact email is not a valid email address.');
   }
 }
 

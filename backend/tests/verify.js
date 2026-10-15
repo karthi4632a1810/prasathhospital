@@ -718,6 +718,57 @@ const base = 'http://127.0.0.1:5099';
     return k;
   });
 
+  console.log('\n=== 15. Hardening regressions (bug-fix pass) ===');
+
+  r = await (async () => {
+    const res = await fetch(base + '/api/v1/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ qrToken: { $ne: null }, rating: 5 }),
+    });
+    return { res, body: await res.json() };
+  })();
+  check('feedback rejects an object qrToken (NoSQL injection) before any DB lookup', () => {
+    assert(r.res.status === 400, 'status ' + r.res.status);
+    return r.body.error.message;
+  });
+
+  for (const path of ['/api/v1/tickets/not-a-token', '/api/v1/tickets/zz/pdf', '/api/v1/tickets/x/certificate.pdf']) {
+    // eslint-disable-next-line no-await-in-loop
+    const res = await fetch(base + path);
+    check(`GET ${path} with a malformed token -> 404 before any DB lookup`, () => {
+      assert(res.status === 404, 'status ' + res.status);
+      return '404';
+    });
+  }
+
+  check('query strings are parsed flat (no operator objects)', () => {
+    assert(app.get('query parser') === 'simple', 'query parser is ' + app.get('query parser'));
+    return 'simple';
+  });
+
+  check('upload extension comes from the MIME type allow-list', () => {
+    const { ALLOWED_TYPES } = require('../src/middleware/upload');
+    assert(ALLOWED_TYPES['image/png'] === '.png' && ALLOWED_TYPES['image/jpeg'] === '.jpg', 'mapping');
+    assert(!ALLOWED_TYPES['text/html'], 'html allowed');
+    return Object.values(ALLOWED_TYPES).join(' ');
+  });
+
+  check('"registration-closed" events report registrationState "closed"', () => {
+    const ev = new Event({ title: 'x', status: 'registration-closed', startDate: days(10), endDate: days(11) });
+    assert(ev.registrationState === 'closed', 'got ' + ev.registrationState);
+    return 'closed';
+  });
+
+  r = await (async () => {
+    const res = await fetch(base + '/api/v1/admin/checkin/events');
+    return { res };
+  })();
+  check('GET /api/v1/admin/checkin/events without a token -> 401', () => {
+    assert(r.res.status === 401, 'status ' + r.res.status);
+    return 'guarded';
+  });
+
   server.close();
   console.log(`\n=== ${pass} passed, ${fail} failed ===\n`);
   process.exit(fail ? 1 : 0);

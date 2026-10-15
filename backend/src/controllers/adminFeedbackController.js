@@ -8,6 +8,7 @@ const { sendSuccess, asyncHandler } = require('../utils/response');
 /** GET /api/v1/admin/feedback?event=<eventId> */
 const listFeedback = asyncHandler(async (req, res) => {
   if (!req.query.event) throw ApiError.badRequest('An "event" id is required.');
+  if (!Types.ObjectId.isValid(String(req.query.event))) throw ApiError.badRequest('Invalid event id.');
 
   const [feedback, avgAgg] = await Promise.all([
     Feedback.find({ event: req.query.event })
