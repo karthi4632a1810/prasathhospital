@@ -109,8 +109,8 @@ export default function DashboardOverview() {
                     <YAxis allowDecimals={false} tick={{ fill: 'var(--ink-500)', fontSize: 12 }} axisLine={false} tickLine={false} width={32} />
                     <Tooltip cursor={{ fill: 'var(--brand-50)' }} contentStyle={{ border: '1px solid var(--ink-200)', borderRadius: 8, fontSize: 13 }} />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="confirmed" name="Confirmed" fill="var(--brand-600)" radius={[4, 4, 0, 0]} maxBarSize={44} />
-                    <Bar dataKey="checkedIn" name="Checked in" fill="var(--success-500)" radius={[4, 4, 0, 0]} maxBarSize={44} />
+                    <Bar isAnimationActive={false} dataKey="confirmed" name="Confirmed" fill="var(--brand-600)" radius={[4, 4, 0, 0]} maxBarSize={44} />
+                    <Bar isAnimationActive={false} dataKey="checkedIn" name="Checked in" fill="var(--success-500)" radius={[4, 4, 0, 0]} maxBarSize={44} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

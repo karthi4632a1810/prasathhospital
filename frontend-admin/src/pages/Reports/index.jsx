@@ -129,8 +129,8 @@ export default function Reports() {
                     <XAxis dataKey="date" tick={{ fill: 'var(--ink-500)', fontSize: 12 }} axisLine={{ stroke: 'var(--ink-200)' }} tickLine={false} />
                     <YAxis allowDecimals={false} tick={{ fill: 'var(--ink-500)', fontSize: 12 }} axisLine={false} tickLine={false} width={32} />
                     <Tooltip contentStyle={{ border: '1px solid var(--ink-200)', borderRadius: 8, fontSize: 13 }} />
-                    <Area type="monotone" dataKey="confirmed" name="Confirmed" stroke="var(--brand-600)" fill="var(--brand-100)" strokeWidth={2} />
-                    <Area type="monotone" dataKey="cancelled" name="Cancelled" stroke="var(--danger-500)" fill="var(--danger-100)" strokeWidth={2} />
+                    <Area isAnimationActive={false} type="monotone" dataKey="confirmed" name="Confirmed" stroke="var(--brand-600)" fill="var(--brand-100)" strokeWidth={2} />
+                    <Area isAnimationActive={false} type="monotone" dataKey="cancelled" name="Cancelled" stroke="var(--danger-500)" fill="var(--danger-100)" strokeWidth={2} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>

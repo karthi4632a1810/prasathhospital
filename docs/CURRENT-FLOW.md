@@ -116,6 +116,7 @@ Reports, the audit log and feedback stay available.
 | **Ticket email** | ⏳ Needs SMTP settings in `backend/.env` — until then shows "Not configured" and can be sent later from the admin |
 | **WhatsApp ticket delivery** | ⏳ Needs Meta WhatsApp API credentials (and an approved template for production) — same "Not configured" fallback |
 | Sample Yamaha / Bajaj coupons | ✅ `npm run seed:coupons` (YAMAHA2026, BAJAJ2026 — 50 places each) |
+| **Demo data (live site)** | ⚠️ 6 demo companies, 7 coupons, 107 registrations, feedback — loaded with `npm run seed:demo`. **Remove before launch:** `npm run seed:demo -- --clear` (only removes demo-tagged records) |
 | Stall booking | ✉️ Email only |
 | Agenda | ⚠️ Sample programme — replace with the real one |
 | Secretariat phone number | ⚠️ Placeholder |

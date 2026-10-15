@@ -14,7 +14,8 @@
     "lint": "node --check src/server.js",
     "seed:coupons": "node src/seed/seedCoupons.js",
     "test:flow": "node tests/coupon-flow.js",
-    "test:functional": "node tests/functional.js"
+    "test:functional": "node tests/functional.js",
+    "seed:demo": "node src/seed/seedDemo.js"
   },
   "engines": {
     "node": ">=18.0.0"
