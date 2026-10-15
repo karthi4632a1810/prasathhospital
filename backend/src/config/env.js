@@ -66,18 +66,28 @@ const env = {
   // --- Uploads (Module 2) ---
   uploadDir: read('UPLOAD_DIR', 'uploads'),
 
-  // --- Ticketing / holds (Module 3-4) ---
-  ticketHoldMinutes: readInt('TICKET_HOLD_MINUTES', 15),
+  // --- Public coupon/registration abuse limits (per IP, per window) ---
+  publicLimitWindowMs: readInt('PUBLIC_LIMIT_WINDOW_MINUTES', 10) * 60 * 1000,
+  couponValidateLimitMax: readInt('COUPON_VALIDATE_LIMIT_MAX', 20),
+  registrationLimitMax: readInt('REGISTRATION_LIMIT_MAX', 10),
 
-  // --- Payments (Module 6) ---
-  razorpayKeyId: read('RAZORPAY_KEY_ID', ''),
-  razorpayKeySecret: read('RAZORPAY_KEY_SECRET', ''),
-  razorpayWebhookSecret: read('RAZORPAY_WEBHOOK_SECRET', ''),
+  // --- Email (SMTP) — optional; unset means email delivery is "not_configured" ---
+  smtpHost: read('SMTP_HOST', ''),
+  smtpPort: readInt('SMTP_PORT', 587),
+  smtpSecure: read('SMTP_SECURE', 'false') === 'true', // true for port 465
+  smtpUser: read('SMTP_USER', ''),
+  smtpPass: read('SMTP_PASS', ''),
+  mailFrom: read('MAIL_FROM', ''), // e.g. "CIIM 2026 <tickets@ciim2026.com>"
+  mailReplyTo: read('MAIL_REPLY_TO', ''),
 
   // --- WhatsApp (Module 8) ---
   whatsappPhoneNumberId: read('WHATSAPP_PHONE_NUMBER_ID', ''),
   whatsappAccessToken: read('WHATSAPP_ACCESS_TOKEN', ''),
   whatsappApiVersion: read('WHATSAPP_API_VERSION', 'v20.0'),
+  // Approved Meta template for business-initiated messages. Body params, in
+  // order: {{1}} name, {{2}} event, {{3}} registration ID, {{4}} ticket link.
+  whatsappTemplateName: read('WHATSAPP_TEMPLATE_NAME', ''),
+  whatsappTemplateLanguage: read('WHATSAPP_TEMPLATE_LANGUAGE', 'en'),
 };
 
 env.isProduction = env.nodeEnv === 'production';

@@ -16,7 +16,8 @@ const env = require('../config/env');
 async function findTicketOr404(qrToken) {
   const reg = await Registration.findOne({ qrToken })
     .populate('event', 'title startDate endDate venue mode timezone status')
-    .populate('ticketType', 'name admitsCount');
+    .populate('ticketType', 'name admitsCount')
+    .populate('company', 'name');
   if (!reg) throw ApiError.notFound('Ticket not found');
   return reg;
 }
@@ -31,7 +32,12 @@ const getTicket = asyncHandler(async (req, res) => {
   return sendSuccess(res, {
     registrationCode: reg.registrationCode,
     status: reg.status,
-    attendee: reg.attendee,
+    attendee: { name: reg.attendee.name, email: reg.attendee.email, phone: reg.attendee.phone },
+    company: reg.company ? { name: reg.company.name } : null,
+    couponCode: reg.couponCode || '',
+    amountPaid: reg.pricing?.totalAmount ?? 0,
+    currency: reg.pricing?.currency || 'INR',
+    registeredAt: reg.createdAt,
     checkedInAt: reg.checkedInAt,
     certificateIssuedAt: reg.certificateIssuedAt,
     event: reg.event,
@@ -58,6 +64,7 @@ const getTicketPdf = asyncHandler(async (req, res) => {
     ticketType: reg.ticketType,
     registration: reg,
     checkInUrl: checkInUrlFor(reg.qrToken),
+    companyName: reg.company?.name || '',
   });
 });
 

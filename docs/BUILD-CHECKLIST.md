@@ -6,6 +6,11 @@ Playwright screenshots for UI-heavy modules). See
 `README.md` for the module summary table and `docs/API.md` for the endpoint
 reference as it grows.
 
+> **Update (Oct 2026):** Modules 5 (promo codes) and 6 (Razorpay payments) were
+> later replaced by company-coupon registration at ₹0 — see
+> [COUPON-REGISTRATION.md](COUPON-REGISTRATION.md). The sections below are kept
+> as the historical build record.
+
 ## Foundation — Auth & RBAC ✅
 
 - [x] `User` model + `bcryptjs`/`jsonwebtoken` utils + `requireAuth`/`requireRole` middleware

@@ -1,24 +1,39 @@
 'use strict';
 
-const { sendWhatsAppMessage } = require('./client');
+const { sendWhatsAppMessage, sendWhatsAppTemplate } = require('./client');
 const env = require('../../config/env');
 
+function ticketUrlFor(registration) {
+  return `${env.publicSiteUrl.replace(/\/$/, '')}/tickets/${registration.qrToken}`;
+}
+
 /**
- * Fires the post-confirmation WhatsApp message. Called from both the
- * free-registration instant-confirm path (Module 3) and the payment
- * confirm path (Module 6) — always await-with-catch at the call site so a
- * WhatsApp outage never fails the registration/payment response itself.
+ * Sends the confirmation + ticket link on WhatsApp. Uses the approved
+ * template named in WHATSAPP_TEMPLATE_NAME when set (required by Meta for
+ * business-initiated messages), and a plain text message otherwise.
+ * Never throws — see client.js for the result shape.
  */
-function sendTicketConfirmation({ event, ticketType, registration }) {
-  const ticketUrl = `${env.publicSiteUrl}/tickets/${registration.qrToken}`;
+function sendTicketConfirmation({ event, ticketType, registration, companyName }) {
+  const ticketUrl = ticketUrlFor(registration);
+
+  if (env.whatsappTemplateName) {
+    return sendWhatsAppTemplate({
+      to: registration.attendee.phone,
+      name: env.whatsappTemplateName,
+      language: env.whatsappTemplateLanguage,
+      bodyParams: [registration.attendee.name, event.title, registration.registrationCode, ticketUrl],
+    });
+  }
+
   const text =
     `Hi ${registration.attendee.name}! 🎉\n\n` +
     `Your registration for *${event.title}* is confirmed.\n\n` +
+    `Registration ID: ${registration.registrationCode}\n` +
     `Pass: ${ticketType.name}\n` +
-    `Reference: ${registration.registrationCode}\n\n` +
-    `View your digital ticket & QR code:\n${ticketUrl}`;
+    (companyName ? `Sponsored by: ${companyName}\n` : '') +
+    `\nYour QR ticket:\n${ticketUrl}`;
 
   return sendWhatsAppMessage({ to: registration.attendee.phone, text });
 }
 
-module.exports = { sendTicketConfirmation };
+module.exports = { sendTicketConfirmation, ticketUrlFor };

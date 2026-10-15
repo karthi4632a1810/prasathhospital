@@ -6,7 +6,11 @@ process.env.NODE_ENV = 'development';
 const mongoose = require('mongoose');
 const Event = require('../src/models/Event');
 const TicketType = require('../src/models/TicketType');
-const PromoCode = require('../src/models/PromoCode');
+const Coupon = require('../src/models/Coupon');
+const Company = require('../src/models/Company');
+const { classifyResult } = require('../src/services/delivery');
+const { couponPricing, cleanAttendee } = require('../src/controllers/publicRegistrationController');
+const { buildRegistrationFilter, buildSort } = require('../src/services/registrationQuery');
 const Registration = require('../src/models/Registration');
 const {
   serializeEventForPublic,
@@ -423,16 +427,21 @@ const base = 'http://127.0.0.1:5099';
     ['POST', '/api/v1/admin/ticket-types'],
     ['PATCH', '/api/v1/admin/ticket-types/000000000000000000000000'],
     ['DELETE', '/api/v1/admin/ticket-types/000000000000000000000000'],
-    ['GET', '/api/v1/admin/promo'],
-    ['POST', '/api/v1/admin/promo'],
-    ['PATCH', '/api/v1/admin/promo/000000000000000000000000'],
-    ['DELETE', '/api/v1/admin/promo/000000000000000000000000'],
+    ['GET', '/api/v1/admin/companies'],
+    ['POST', '/api/v1/admin/companies'],
+    ['PATCH', '/api/v1/admin/companies/000000000000000000000000'],
+    ['DELETE', '/api/v1/admin/companies/000000000000000000000000'],
+    ['GET', '/api/v1/admin/coupons'],
+    ['POST', '/api/v1/admin/coupons'],
+    ['PATCH', '/api/v1/admin/coupons/000000000000000000000000'],
+    ['DELETE', '/api/v1/admin/coupons/000000000000000000000000'],
     ['GET', '/api/v1/admin/registrations'],
     ['GET', '/api/v1/admin/registrations/000000000000000000000000'],
     ['PATCH', '/api/v1/admin/registrations/000000000000000000000000'],
     ['POST', '/api/v1/admin/registrations/000000000000000000000000/cancel'],
-    ['GET', '/api/v1/admin/payments'],
-    ['POST', '/api/v1/admin/registrations/000000000000000000000000/resend-ticket'],
+    ['GET', '/api/v1/admin/registrations/export.csv'],
+    ['POST', '/api/v1/admin/registrations/000000000000000000000000/deliveries/email'],
+    ['POST', '/api/v1/admin/registrations/000000000000000000000000/deliveries/whatsapp'],
     ['POST', '/api/v1/admin/checkin/scan'],
     ['GET', '/api/v1/admin/checkin/stats'],
     ['GET', '/api/v1/admin/reports/overview'],
@@ -441,7 +450,9 @@ const base = 'http://127.0.0.1:5099';
     ['PATCH', '/api/v1/admin/users/000000000000000000000000'],
     ['DELETE', '/api/v1/admin/users/000000000000000000000000'],
     ['GET', '/api/v1/admin/reports/export/registrations.csv'],
-    ['GET', '/api/v1/admin/reports/export/payments.csv'],
+    ['GET', '/api/v1/admin/reports/breakdown'],
+    ['GET', '/api/v1/admin/reports/export/companies.csv'],
+    ['GET', '/api/v1/admin/reports/export/coupons.csv'],
     ['GET', '/api/v1/admin/feedback'],
     ['GET', '/api/v1/admin/audit-log'],
   ];
@@ -487,58 +498,95 @@ const base = 'http://127.0.0.1:5099';
     return 'issued';
   });
 
-  console.log('\n=== 8. Payments: dev-safe when unconfigured, HMAC math ===');
+  console.log('\n=== 8. Payment gateway removed; coupon endpoints validate input ===');
+
+  for (const path of ['/api/v1/payments/orders', '/api/v1/payments/verify', '/api/v1/payments/webhook', '/api/v1/promo/validate']) {
+    // eslint-disable-next-line no-await-in-loop
+    const res = await fetch(base + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    check(`POST ${path} no longer exists -> 404`, () => {
+      assert(res.status === 404, 'status ' + res.status);
+      return 'removed';
+    });
+  }
+
+  check('razorpay is no longer a dependency', () => {
+    const pkg = require('../package.json');
+    assert(!pkg.dependencies.razorpay, 'razorpay still listed');
+    return 'gone';
+  });
 
   r = await (async () => {
-    const res = await fetch(base + '/api/v1/payments/orders', {
+    const res = await fetch(base + '/api/v1/coupons/validate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ registrationId: '000000000000000000000000' }),
+      body: JSON.stringify({ code: '   ' }),
     });
     return { res, body: await res.json() };
   })();
-  check('order creation refuses cleanly when Razorpay keys are unset (409, not 500 — must survive prod 5xx message masking)', () => {
-    assert(r.res.status === 409, 'status ' + r.res.status);
-    assert(/not configured/i.test(r.body.error.message), r.body.error.message);
+  check('coupon validate rejects a blank code before any DB lookup', () => {
+    assert(r.res.status === 400, 'status ' + r.res.status);
     return r.body.error.message;
   });
 
   r = await (async () => {
-    const res = await fetch(base + '/api/v1/payments/verify', {
+    const res = await fetch(base + '/api/v1/registrations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ razorpay_order_id: 'x', razorpay_payment_id: 'y', razorpay_signature: 'z' }),
+      body: JSON.stringify({ eventSlug: 'x', ticketTypeId: 'y', attendee: { name: 'Dr A', email: 'a@b.co', phone: '9876543210' } }),
     });
     return { res, body: await res.json() };
   })();
-  check('payment verify refuses cleanly when Razorpay keys are unset', () => {
-    assert(r.res.status === 409, 'status ' + r.res.status);
+  check('registration without a coupon code -> 400', () => {
+    assert(r.res.status === 400, 'status ' + r.res.status);
+    assert(/coupon/i.test(r.body.error.message), r.body.error.message);
     return r.body.error.message;
   });
 
-  r = await (async () => {
-    const res = await fetch(base + '/api/v1/payments/webhook', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ event: 'payment.captured' }),
-    });
-    return { res, body: await res.json() };
-  })();
-  check('webhook acks 200 (not a retry-storm 4xx/5xx) when unconfigured', () => {
-    assert(r.res.status === 200, 'status ' + r.res.status);
-    return 'acked';
+  check('attendee cleaning normalizes and validates', () => {
+    const a = cleanAttendee({ name: '  Dr.  Priya  S ', email: ' PRIYA@Example.COM ', phone: '+91 98765-43210' });
+    assert(a.name === 'Dr. Priya S' && a.email === 'priya@example.com' && a.phone === '+919876543210', JSON.stringify(a));
+    let threw = 0;
+    for (const bad of [
+      { name: 'A', email: 'a@b.co', phone: '9876543210' },
+      { name: 'Dr A', email: 'nope', phone: '9876543210' },
+      { name: 'Dr A', email: 'a@b.co', phone: '12345' },
+    ]) {
+      try { cleanAttendee(bad); } catch { threw += 1; }
+    }
+    assert(threw === 3, 'expected 3 rejections, got ' + threw);
+    return 'ok';
   });
 
-  check('Razorpay-documented HMAC formula matches a known-good fixture', () => {
-    // From Razorpay's own docs example: signature = HMAC_SHA256(order_id + "|" + payment_id, secret)
-    const crypto = require('crypto');
-    const secret = 'test_secret';
-    const orderId = 'order_ABC123';
-    const paymentId = 'pay_XYZ789';
-    const expected = crypto.createHmac('sha256', secret).update(`${orderId}|${paymentId}`).digest('hex');
-    const recomputed = crypto.createHmac('sha256', secret).update(`${orderId}|${paymentId}`).digest('hex');
-    assert(expected === recomputed && expected.length === 64, 'HMAC mismatch or wrong length');
-    return 'sha256 hex, 64 chars';
+  check('coupon pricing covers price + GST, final amount is 0', () => {
+    const p = couponPricing({ price: 2500, priceWithTax: 2950, currency: 'INR' });
+    assert(p.totalAmount === 0 && p.discountAmount === 2950 && p.taxAmount === 450, JSON.stringify(p));
+    assert(p.basePrice + p.taxAmount - p.discountAmount === 0, 'does not reconcile');
+    return 'base 2500 + tax 450 - discount 2950 = 0';
+  });
+
+  check('delivery only reports "sent" when the provider accepted the message', () => {
+    assert(classifyResult('email', { sent: true, messageId: '<id@x>' }).status === 'sent');
+    assert(classifyResult('email', { sent: false, reason: 'not_configured' }).status === 'not_configured');
+    assert(classifyResult('email', { sent: false, reason: 'smtp_error', retryable: true, error: 'timeout' }).status === 'retryable');
+    assert(classifyResult('email', { sent: false, reason: 'smtp_error', retryable: false, error: '550' }).status === 'failed');
+    assert(classifyResult('whatsapp', { sent: false, reason: 'network_error' }).status === 'retryable');
+    assert(classifyResult('whatsapp', { sent: false, reason: 'api_error', httpStatus: 429 }).status === 'retryable');
+    assert(classifyResult('whatsapp', { sent: false, reason: 'api_error', httpStatus: 400, error: 'bad number' }).status === 'failed');
+    assert(classifyResult('whatsapp', { sent: false, reason: 'not_configured' }).status === 'not_configured');
+    return 'sent / failed / retryable / not_configured';
+  });
+
+  check('registration filters build safe queries', () => {
+    const f = buildRegistrationFilter({ status: 'confirmed', emailStatus: 'pending', checkedIn: 'no', q: 'a.b(c', from: '2026-11-01', to: '2026-11-02' });
+    assert(f.status === 'confirmed' && f.checkedInAt === null, 'status/checkedIn');
+    assert(f['delivery.email.status'].$in.includes(null), 'pending includes legacy');
+    assert(f.$or[0]['attendee.name'].source === 'a\\.b\\(c', 'regex escaped: ' + f.$or[0]['attendee.name'].source);
+    assert(f.createdAt.$lt - f.createdAt.$gte === 2 * 86400000, 'inclusive to-date');
+    let threw = false;
+    try { buildRegistrationFilter({ status: '$ne' }); } catch { threw = true; }
+    assert(threw, 'unknown status accepted');
+    assert(JSON.stringify(buildSort('-name')) === JSON.stringify({ 'attendee.name': -1, _id: 1 }));
+    return 'ok';
   });
 
   console.log('\n=== 9. QR ticket generation ===');
@@ -620,46 +668,54 @@ const base = 'http://127.0.0.1:5099';
     });
   }
 
-  console.log('\n=== 14. PromoCode model: discount math & validity window ===');
+  console.log('\n=== 14. Coupon & Company models ===');
 
-  const mkPromo = (o) => new PromoCode({ event: new mongoose.Types.ObjectId(), code: 'X', value: 10, ...o });
-
-  check('percent discount rounds to the nearest paisa', () => {
-    const p = mkPromo({ type: 'percent', value: 15 });
-    assert(p.computeDiscount(2500) === 375, 'got ' + p.computeDiscount(2500));
-    return '15% of Rs.2500 = Rs.375';
+  const mkCoupon = (o) => new Coupon({
+    event: new mongoose.Types.ObjectId(),
+    company: new mongoose.Types.ObjectId(),
+    code: 'yamaha26',
+    maxAllowedRegistrations: 5,
+    ...o,
   });
 
-  check('flat discount never exceeds the base price', () => {
-    const p = mkPromo({ type: 'flat', value: 5000 });
-    assert(p.computeDiscount(2500) === 2500, 'got ' + p.computeDiscount(2500));
-    return 'capped at Rs.2500';
+  check('coupon codes are stored uppercase (case-insensitive matching)', () => {
+    const c = mkCoupon();
+    assert(c.code === 'YAMAHA26', c.code);
+    assert(Coupon.normalizeCode('  yamaha26 ') === 'YAMAHA26');
+    return 'yamaha26 -> YAMAHA26';
   });
 
-  check('code outside its date window is not valid now', () => {
-    const p = mkPromo({ validFrom: days(1) });
-    assert(p.isValidNow === false, 'expected invalid before validFrom');
-    return 'not-yet-open';
+  check('unavailableReason covers inactive / not started / expired / exhausted', () => {
+    assert(mkCoupon().unavailableReason() === null, 'fresh coupon should be usable');
+    assert(mkCoupon({ isActive: false }).unavailableReason() === 'inactive');
+    assert(mkCoupon({ startDate: days(2) }).unavailableReason() === 'not_started');
+    assert(mkCoupon({ startDate: days(-10), expiryDate: days(-1) }).unavailableReason() === 'expired');
+    assert(mkCoupon({ usageCount: 5 }).unavailableReason() === 'exhausted');
+    return 'all four';
   });
 
-  check('code past its max uses is not valid now', () => {
-    const p = mkPromo({ maxUses: 5, usedCount: 5 });
-    assert(p.isValidNow === false, 'expected invalid once exhausted');
-    assert(p.usesRemaining === 0);
-    return 'exhausted';
+  check('remaining never goes negative', () => {
+    assert(mkCoupon({ usageCount: 7 }).remaining === 0);
+    assert(mkCoupon({ usageCount: 2 }).remaining === 3);
+    return 'ok';
   });
 
-  check('unlimited-use code (maxUses 0) always has uses remaining', () => {
-    const p = mkPromo({ maxUses: 0, usedCount: 999 });
-    assert(p.usesRemaining === null, 'got ' + p.usesRemaining);
-    return 'unlimited';
+  check('rejects expiry before start and bad code characters', () => {
+    const err = mkCoupon({ startDate: days(10), expiryDate: days(5), code: 'bad code!' }).validateSync();
+    assert(err && err.errors.expiryDate && err.errors.code, 'expected both errors');
+    return 'expiryDate + code';
   });
 
-  check('rejects validTo before validFrom', () => {
-    const p = mkPromo({ validFrom: days(10), validTo: days(5) });
-    const err = p.validateSync();
-    assert(err && err.errors.validTo, 'expected a validation error');
-    return err.errors.validTo.message;
+  await checkAsync('company nameKey is case/space-insensitive', async () => {
+    const c = new Company({ name: '  Yamaha   Motor ' });
+    await c.validate();
+    assert(c.name === 'Yamaha Motor' && c.nameKey === 'yamaha motor', c.nameKey);
+  });
+
+  check('registration activeKey is per event + lowercased email', () => {
+    const k = Registration.activeKeyFor('abc', ' Priya@Example.com ');
+    assert(k === 'abc:priya@example.com', k);
+    return k;
   });
 
   server.close();

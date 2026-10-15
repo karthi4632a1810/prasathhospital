@@ -1,7 +1,7 @@
 'use strict';
 
 const express = require('express');
-const { scanTicket, getCheckinStats } = require('../controllers/adminCheckinController');
+const { scanTicket, getCheckinStats, listCheckinEvents } = require('../controllers/adminCheckinController');
 const { requireAuth, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
@@ -11,5 +11,6 @@ router.use(requireAuth, requireRole('superadmin', 'manager', 'checkin_staff'));
 
 router.post('/scan', scanTicket);
 router.get('/stats', getCheckinStats);
+router.get('/events', listCheckinEvents);
 
 module.exports = router;

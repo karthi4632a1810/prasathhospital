@@ -53,14 +53,10 @@ export const api = {
   listEvents: (query = '', opts) => request(`/public/events${query}`, opts),
   getTicketTypes: (slug, opts) =>
     request(`/public/events/${encodeURIComponent(slug)}/ticket-types`, opts),
-  validatePromo: (code, ticketTypeId, opts) =>
-    request('/promo/validate', { method: 'POST', body: JSON.stringify({ code, ticketTypeId }), ...opts }),
+  validateCoupon: (payload, opts) =>
+    request('/coupons/validate', { method: 'POST', body: JSON.stringify(payload), ...opts }),
   register: (payload, opts) =>
     request('/registrations', { method: 'POST', body: JSON.stringify(payload), ...opts }),
-  createPaymentOrder: (registrationId, opts) =>
-    request('/payments/orders', { method: 'POST', body: JSON.stringify({ registrationId }), ...opts }),
-  verifyPayment: (payload, opts) =>
-    request('/payments/verify', { method: 'POST', body: JSON.stringify(payload), ...opts }),
   getTicket: (qrToken, opts) => request(`/tickets/${encodeURIComponent(qrToken)}`, opts),
   submitFeedback: (payload, opts) =>
     request('/feedback', { method: 'POST', body: JSON.stringify(payload), ...opts }),

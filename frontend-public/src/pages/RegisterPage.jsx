@@ -1,19 +1,28 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
 import Button from '../components/ui/Button';
-import Badge from '../components/ui/Badge';
 import { LoadingState, ErrorState, NotFoundState } from '../components/ui/States';
 
 import { api, ApiError } from '../lib/api';
-import { formatCurrency } from '../lib/format';
+import { formatAmount } from '../lib/format';
 import { captureCampaign, getCampaign } from '../lib/campaign';
-import { openRazorpayCheckout } from '../lib/razorpay';
 import './RegisterPage.css';
 
 const DEFAULT_SLUG = import.meta.env.VITE_DEFAULT_EVENT_SLUG || 'fertility-gynaecology-summit-2026';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+
+/** One key per form session, so a double-clicked or retried submit can't register twice. */
+function newIdempotencyKey() {
+  if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+  const bytes = new Uint8Array(16);
+  window.crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+const EMPTY_FORM = { name: '', phone: '', email: '' };
 
 export default function RegisterPage() {
   const params = useParams();
@@ -23,13 +32,15 @@ export default function RegisterPage() {
 
   const [state, setState] = useState({ status: 'loading', data: null, error: null });
   const [ticketTypeId, setTicketTypeId] = useState('');
-  const [form, setForm] = useState({ name: '', email: '', phone: '', participantType: '' });
-  const [promoCode, setPromoCode] = useState('');
-  const [promoResult, setPromoResult] = useState(null); // { valid, reason?, discountAmount? }
-  const [promoChecking, setPromoChecking] = useState(false);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [couponCode, setCouponCode] = useState('');
+  const [coupon, setCoupon] = useState(null); // validated preview for the current code + pass
+  const [couponError, setCouponError] = useState('');
+  const [checking, setChecking] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
-  const [result, setResult] = useState(null); // the created registration
+  const [result, setResult] = useState(null);
+  const idempotencyKey = useRef(newIdempotencyKey());
 
   useEffect(() => {
     captureCampaign();
@@ -50,42 +61,64 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (!ticketTypes.length) return;
-    const preselected = preselectedCode && ticketTypes.find((t) => t.code === preselectedCode);
-    setTicketTypeId((preselected || ticketTypes[0]).id);
+    const onSale = ticketTypes.filter((t) => t.saleState === 'on-sale');
+    const preselected = preselectedCode && onSale.find((t) => t.code === preselectedCode);
+    setTicketTypeId((preselected || onSale[0] || ticketTypes[0]).id);
   }, [ticketTypes, preselectedCode]);
 
   const selectedTicket = ticketTypes.find((t) => t.id === ticketTypeId) || null;
 
-  async function handleApplyPromo() {
-    if (!promoCode.trim() || !selectedTicket) return;
-    setPromoChecking(true);
-    setPromoResult(null);
+  function resetCoupon() {
+    setCoupon(null);
+    setCouponError('');
+  }
+
+  function updateField(field, value) {
+    setForm((f) => ({ ...f, [field]: value }));
+    setSubmitError('');
+  }
+
+  async function handleValidate() {
+    const code = couponCode.trim();
+    if (!code || !selectedTicket) return;
+    setChecking(true);
+    resetCoupon();
     try {
-      const res = await api.validatePromo(promoCode.trim(), selectedTicket.id);
-      setPromoResult(res.data);
+      const res = await api.validateCoupon({ code, eventSlug: slug, ticketTypeId: selectedTicket.id });
+      setCoupon(res.data);
     } catch (err) {
-      setPromoResult({ valid: false, reason: err.message });
+      setCouponError(err instanceof ApiError ? err.message : 'Could not check this coupon. Please try again.');
     } finally {
-      setPromoChecking(false);
+      setChecking(false);
     }
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!selectedTicket) return;
+    if (!selectedTicket || !coupon) return;
     setSubmitting(true);
     setSubmitError('');
     try {
       const res = await api.register({
         eventSlug: slug,
         ticketTypeId: selectedTicket.id,
-        attendee: form,
-        promoCode: promoResult?.valid ? promoCode.trim() : undefined,
+        attendee: { name: form.name.trim(), phone: form.phone.trim(), email: form.email.trim() },
+        couponCode: coupon.code,
+        idempotencyKey: idempotencyKey.current,
         campaignSource: getCampaign().source,
       });
       setResult(res.data);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
-      setSubmitError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.');
+      const message = err instanceof ApiError ? err.message : 'Something went wrong. Please try again.';
+      // A coupon problem found at submit time (e.g. the last slot went
+      // seconds ago) invalidates the preview, so the button locks again.
+      if (err instanceof ApiError && /coupon/i.test(message)) {
+        setCoupon(null);
+        setCouponError(message);
+      } else {
+        setSubmitError(message);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -128,41 +161,14 @@ export default function RegisterPage() {
       <>
         <SiteHeader event={event} canRegister={false} availableSections={[]} />
         <main id="main" className="register-page">
-          <div className="register-success">
-            <div className="register-success__icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <path d="m5 12.5 4.5 4.5L19 7.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <h1>{result.status === 'confirmed' ? "You're registered!" : 'Registration received'}</h1>
-            <p className="register-success__code">
-              Reference code <strong>{result.registrationCode}</strong>
-            </p>
-
-            {result.status === 'confirmed' ? (
-              <>
-                <p className="register-success__note">
-                  A confirmation with your digital ticket will also be sent to{' '}
-                  <strong>{result.attendee.email}</strong> and on WhatsApp shortly.
-                </p>
-                <Button variant="primary" href={`/tickets/${result.qrToken}`}>
-                  View your ticket
-                </Button>
-                <div style={{ marginTop: 16 }}>
-                  <Button variant="secondary" href={`/events/${slug}`}>
-                    Back to event
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <PendingPaymentPanel registration={result} onConfirmed={setResult} eventSlug={slug} />
-            )}
-          </div>
+          <RegistrationSuccess result={result} event={event} slug={slug} />
         </main>
         <SiteFooter event={event} />
       </>
     );
   }
+
+  const canSubmit = Boolean(coupon) && Boolean(selectedTicket) && !submitting;
 
   return (
     <>
@@ -175,111 +181,130 @@ export default function RegisterPage() {
             </Link>
             <h1 className="register-page__title">Register</h1>
             <p className="register-page__subtitle">
-              Every pass includes a digital ticket with a unique QR code.
+              Registration is by sponsor coupon. Enter the code from your company to receive your QR
+              ticket instantly — there is nothing to pay.
             </p>
 
             <form onSubmit={handleSubmit} className="register-form">
-              <label className="register-field">
-                <span>Select your pass</span>
-                <select
-                  value={ticketTypeId}
-                  onChange={(e) => {
-                    setTicketTypeId(e.target.value);
-                    setPromoResult(null);
-                  }}
-                  required
-                >
-                  {ticketTypes.map((t) => (
-                    <option key={t.id} value={t.id} disabled={t.saleState !== 'on-sale'}>
-                      {t.name} — {t.isFree ? 'Free' : formatCurrency(t.priceWithTax)}
-                      {t.saleState !== 'on-sale' ? ` (${t.saleState.replace('-', ' ')})` : ''}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {ticketTypes.length > 1 && (
+                <label className="register-field">
+                  <span>Pass</span>
+                  <select
+                    value={ticketTypeId}
+                    onChange={(e) => {
+                      setTicketTypeId(e.target.value);
+                      resetCoupon();
+                    }}
+                    required
+                  >
+                    {ticketTypes.map((t) => (
+                      <option key={t.id} value={t.id} disabled={t.saleState !== 'on-sale'}>
+                        {t.name}
+                        {t.saleState !== 'on-sale' ? ` (${t.saleState.replace('-', ' ')})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
 
               <label className="register-field">
                 <span>Full name</span>
                 <input
                   required
+                  minLength={2}
+                  maxLength={120}
+                  autoComplete="name"
                   value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  onChange={(e) => updateField('name', e.target.value)}
                   placeholder="Dr. Jane Doe"
                 />
               </label>
 
               <div className="register-field-row">
                 <label className="register-field">
-                  <span>Email</span>
+                  <span>Mobile number</span>
+                  <input
+                    required
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    pattern="[0-9+ \(\)\-]{10,20}"
+                    title="10-digit mobile number, optionally with country code"
+                    value={form.phone}
+                    onChange={(e) => updateField('phone', e.target.value)}
+                    placeholder="98765 43210"
+                  />
+                  <small className="register-field__hint">Your ticket is also sent here on WhatsApp.</small>
+                </label>
+                <label className="register-field">
+                  <span>Email address</span>
                   <input
                     type="email"
                     required
+                    maxLength={160}
+                    autoComplete="email"
                     value={form.email}
-                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                    onChange={(e) => updateField('email', e.target.value)}
                     placeholder="you@example.com"
-                  />
-                </label>
-                <label className="register-field">
-                  <span>Phone (WhatsApp preferred)</span>
-                  <input
-                    required
-                    value={form.phone}
-                    onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                    placeholder="98765 43210"
                   />
                 </label>
               </div>
 
-              <label className="register-field">
-                <span>Participant type (optional)</span>
-                <input
-                  value={form.participantType}
-                  onChange={(e) => setForm((f) => ({ ...f, participantType: e.target.value }))}
-                  placeholder="e.g. PG Student"
-                />
-              </label>
-
-              <label className="register-field">
-                <span>Promo code (optional)</span>
+              <div className="register-field">
+                <label htmlFor="coupon-code">
+                  <span className="register-field__label">Coupon code</span>
+                </label>
                 <div className="register-promo">
                   <input
-                    value={promoCode}
+                    id="coupon-code"
+                    required
+                    maxLength={32}
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    spellCheck={false}
+                    value={couponCode}
                     onChange={(e) => {
-                      setPromoCode(e.target.value.toUpperCase());
-                      setPromoResult(null);
+                      setCouponCode(e.target.value.toUpperCase());
+                      resetCoupon();
                     }}
-                    placeholder="e.g. EARLYBIRD"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !coupon) {
+                        e.preventDefault();
+                        handleValidate();
+                      }
+                    }}
+                    placeholder="e.g. COMPANY2026"
+                    aria-describedby="coupon-status"
+                    aria-invalid={couponError ? 'true' : undefined}
                   />
                   <Button
                     type="button"
                     variant="secondary"
-                    size="sm"
-                    onClick={handleApplyPromo}
-                    disabled={!promoCode.trim() || promoChecking}
+                    onClick={handleValidate}
+                    disabled={!couponCode.trim() || checking || Boolean(coupon)}
                   >
-                    {promoChecking ? 'Checking…' : 'Apply'}
+                    {checking ? 'Checking…' : coupon ? 'Validated' : 'Validate'}
                   </Button>
                 </div>
-                {promoResult && (
-                  <div className="register-promo-result">
-                    <Badge tone={promoResult.valid ? 'success' : 'danger'} size="sm">
-                      {promoResult.valid
-                        ? `Code applied — ${formatCurrency(promoResult.discountAmount)} off`
-                        : promoResult.reason}
-                    </Badge>
-                  </div>
-                )}
-              </label>
 
-              {submitError && <p className="register-error">{submitError}</p>}
+                <div id="coupon-status" aria-live="polite">
+                  {couponError && <p className="coupon-error">{couponError}</p>}
+                  {coupon && <CouponSummary coupon={coupon} />}
+                </div>
+              </div>
 
-              {selectedTicket && (
-                <OrderSummary ticket={selectedTicket} promoResult={promoResult} />
+              {submitError && (
+                <p className="register-error" role="alert">
+                  {submitError}
+                </p>
               )}
 
-              <Button type="submit" variant="primary" size="lg" fullWidth disabled={submitting || !selectedTicket}>
-                {submitting ? 'Submitting…' : selectedTicket?.isFree ? 'Confirm free registration' : 'Continue'}
+              <Button type="submit" variant="primary" size="lg" fullWidth disabled={!canSubmit}>
+                {submitting ? 'Registering…' : 'Complete Registration'}
               </Button>
+              {!coupon && (
+                <p className="register-form__hint">Validate your coupon code to complete registration.</p>
+              )}
             </form>
           </div>
         </div>
@@ -289,109 +314,100 @@ export default function RegisterPage() {
   );
 }
 
-function PendingPaymentPanel({ registration, onConfirmed, eventSlug }) {
-  const [paying, setPaying] = useState(false);
-  const [error, setError] = useState('');
-  const [notConfigured, setNotConfigured] = useState(false);
-
-  async function handlePayNow() {
-    setPaying(true);
-    setError('');
-    try {
-      const orderRes = await api.createPaymentOrder(registration.id);
-      const order = orderRes.data;
-
-      const checkoutResult = await openRazorpayCheckout({
-        key: order.keyId,
-        amount: order.amount,
-        currency: order.currency,
-        order_id: order.orderId,
-        name: 'Prashanth Hospitals',
-        description: `Registration ${order.registrationCode}`,
-        prefill: {
-          name: order.attendee?.name,
-          email: order.attendee?.email,
-          contact: order.attendee?.phone,
-        },
-        theme: { color: '#C63F2D' },
-      });
-
-      const verifyRes = await api.verifyPayment({
-        razorpay_order_id: checkoutResult.razorpay_order_id,
-        razorpay_payment_id: checkoutResult.razorpay_payment_id,
-        razorpay_signature: checkoutResult.razorpay_signature,
-      });
-      onConfirmed(verifyRes.data);
-    } catch (err) {
-      if (err instanceof ApiError && /not configured/i.test(err.message)) {
-        setNotConfigured(true);
-      } else {
-        setError(err.message || 'Something went wrong. Please try again.');
-      }
-    } finally {
-      setPaying(false);
-    }
-  }
-
+function CouponSummary({ coupon }) {
   return (
-    <>
-      <p className="register-success__note">
-        Your pass is reserved for a short while for{' '}
-        <strong>{formatCurrency(registration.pricing.totalAmount)}</strong>.
-      </p>
-
-      {notConfigured ? (
-        <p className="register-success__note">
-          Online payment is being enabled shortly — our team will reach out on WhatsApp/phone to
-          complete your registration.
-        </p>
-      ) : (
-        <>
-          {error && <p className="register-error" style={{ textAlign: 'left' }}>{error}</p>}
-          <Button variant="primary" size="lg" onClick={handlePayNow} disabled={paying} fullWidth>
-            {paying ? 'Opening payment…' : `Pay ${formatCurrency(registration.pricing.totalAmount)}`}
-          </Button>
-        </>
-      )}
-
-      <div style={{ marginTop: 16 }}>
-        <Button variant="secondary" href={`/events/${eventSlug}`}>
-          Back to event
-        </Button>
+    <div className="coupon-card">
+      <div className="coupon-card__head">
+        <span className="coupon-card__check" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4">
+            <path d="m5 12.5 4.5 4.5L19 7.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+        <strong>Valid coupon</strong>
+        <span className="coupon-card__code">{coupon.code}</span>
       </div>
-    </>
+      <dl className="coupon-card__rows">
+        <div>
+          <dt>Company</dt>
+          <dd>{coupon.companyName}</dd>
+        </div>
+        <div>
+          <dt>Original amount</dt>
+          <dd>{formatAmount(coupon.originalAmount, coupon.currency)}</dd>
+        </div>
+        <div className="coupon-card__discount">
+          <dt>Discount</dt>
+          <dd>−{formatAmount(coupon.discountAmount, coupon.currency)}</dd>
+        </div>
+        <div className="coupon-card__total">
+          <dt>Final payable</dt>
+          <dd>{formatAmount(coupon.finalAmount, coupon.currency)}</dd>
+        </div>
+      </dl>
+    </div>
   );
 }
 
-function OrderSummary({ ticket, promoResult }) {
-  const base = ticket.price;
-  const discount = promoResult?.valid ? promoResult.discountAmount : 0;
-  const subtotal = Math.max(base - discount, 0);
-  const tax = ticket.taxPercent ? Math.round(subtotal * (ticket.taxPercent / 100) * 100) / 100 : 0;
-  const total = subtotal + tax;
+function RegistrationSuccess({ result, event, slug }) {
+  const ticketPath = `/tickets/${result.qrToken}`;
+  const qrUrl = `${API_BASE}/api/v1/tickets/${result.qrToken}/qr.png`;
+  const pdfUrl = `${API_BASE}/api/v1/tickets/${result.qrToken}/pdf`;
+
+  const rows = [
+    ['Registration ID', result.registrationCode],
+    ['Name', result.attendee.name],
+    ['Mobile', result.attendee.phone],
+    ['Email', result.attendee.email],
+    ['Company', result.company?.name],
+    ['Coupon', result.couponCode],
+    ['Pass', result.ticketType?.name],
+    ['Amount paid', formatAmount(result.pricing?.totalAmount ?? 0, result.pricing?.currency)],
+  ].filter(([, value]) => value);
 
   return (
-    <div className="order-summary">
-      <div className="order-summary__row">
-        <span>{ticket.name}</span>
-        <span>{formatCurrency(base)}</span>
+    <div className="register-success register-success--ticket">
+      <div className="register-success__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="m5 12.5 4.5 4.5L19 7.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </div>
-      {discount > 0 && (
-        <div className="order-summary__row order-summary__row--discount">
-          <span>Promo discount</span>
-          <span>-{formatCurrency(discount)}</span>
-        </div>
-      )}
-      {tax > 0 && (
-        <div className="order-summary__row">
-          <span>GST ({ticket.taxPercent}%)</span>
-          <span>{formatCurrency(tax)}</span>
-        </div>
-      )}
-      <div className="order-summary__row order-summary__row--total">
-        <span>Total</span>
-        <span>{total === 0 ? 'Free' : formatCurrency(total)}</span>
+      <h1>You're registered!</h1>
+      <p className="register-success__lead">
+        Your registration for <strong>{event.title}</strong> is <span className="status-pill">Confirmed</span>
+      </p>
+
+      <div className="register-success__qr">
+        <img src={qrUrl} alt={`QR ticket for ${result.registrationCode}`} width={200} height={200} />
+        <p>Show this QR code at the registration desk</p>
       </div>
+
+      <dl className="register-success__details">
+        {rows.map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="register-success__actions">
+        <Button variant="primary" href={pdfUrl} external>
+          Download ticket (PDF)
+        </Button>
+        <Button variant="secondary" href={ticketPath}>
+          Open ticket page
+        </Button>
+      </div>
+
+      <p className="register-success__note">
+        We're also sending your ticket to <strong>{result.attendee.email}</strong> and to{' '}
+        <strong>{result.attendee.phone}</strong> on WhatsApp. If it doesn't arrive, this page and the
+        PDF are your ticket — bookmark the ticket page.
+      </p>
+
+      <Button variant="ghost" href={`/events/${slug}`}>
+        Back to event
+      </Button>
     </div>
   );
 }

@@ -42,16 +42,7 @@ app.use(
 );
 
 app.use(compression());
-// The Razorpay webhook signature is computed over the exact raw request
-// bytes, so we capture them here rather than re-serializing req.body later.
-app.use(
-  express.json({
-    limit: '1mb',
-    verify: (req, res, buf) => {
-      req.rawBody = buf;
-    },
-  })
-);
+app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(morgan(env.isProduction ? 'combined' : 'dev'));
 

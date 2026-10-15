@@ -38,13 +38,22 @@ services:
         sync: false
       - key: ADMIN_BOOTSTRAP_PASSWORD
         sync: false
-      - key: RAZORPAY_KEY_ID
+      # Ticket email (optional — blank SMTP_HOST skips email delivery).
+      - key: SMTP_HOST
         sync: false
-      - key: RAZORPAY_KEY_SECRET
+      - key: SMTP_PORT
         sync: false
-      - key: RAZORPAY_WEBHOOK_SECRET
+      - key: SMTP_SECURE
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: MAIL_FROM
         sync: false
       - key: WHATSAPP_PHONE_NUMBER_ID
         sync: false
       - key: WHATSAPP_ACCESS_TOKEN
+        sync: false
+      - key: WHATSAPP_TEMPLATE_NAME
         sync: false

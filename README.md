@@ -1,13 +1,13 @@
 # Prashanth Hospitals — Fertility & Gynaecology Event Management Platform
 
 A complete digital platform for running Fertility & Gynaecology events: a premium
-public microsite, registration and ticketing, payments, WhatsApp delivery,
+public microsite, company-coupon registration and ticketing, email + WhatsApp delivery,
 event-day QR check-in, and an admin dashboard.
 
 This repository was delivered **module by module**, all 15 tracked in
 [`docs/BUILD-CHECKLIST.md`](docs/BUILD-CHECKLIST.md) with what was built and
 how each was actually verified (not just "it returns 200" — real registrations,
-real payments-flow testing, real screenshots).
+real end-to-end flow tests, real screenshots).
 
 ---
 
@@ -15,21 +15,22 @@ real payments-flow testing, real screenshots).
 
 **Public microsite** (`frontend-public`) — branded hero with a live countdown,
 speakers, agenda, sponsors, FAQ, SEO/JSON-LD, WhatsApp-first sharing, and the
-full attendee journey: pick a pass → register → pay (Razorpay) → get a QR
-ticket + PDF → check in on event day → leave feedback → download a
+full attendee journey: enter details + company coupon → validate (₹0.00) →
+instantly confirmed QR ticket + PDF, sent by email and WhatsApp → check in on event day → leave feedback → download a
 certificate once the event concludes.
 
 **Admin dashboard** (`frontend-admin`) — a separate app, same design system,
 behind JWT auth with three roles (`superadmin`/`manager`/`checkin_staff`
-enforced server-side, not just hidden nav): Event CMS, ticket types, promo
-codes, registrations, a read-only payments ledger, a camera-based check-in
+enforced server-side, not just hidden nav): Event CMS, passes, companies,
+coupons, registrations with delivery tracking and retry, a camera-based check-in
 scanner, live stats + charts, CSV export, feedback, user management and an
 audit log of every admin action.
 
 **Backend** (`backend`) — Express 4 API, one `{success,data}` envelope,
-MongoDB/Mongoose, Razorpay + Meta WhatsApp Cloud API integrations that both
+MongoDB/Mongoose, SMTP email + Meta WhatsApp Cloud API integrations that both
 degrade gracefully (clear "not configured" messaging, never a crash) until
-real credentials are supplied, and a 98-check verification suite
+real credentials are supplied, a 112-check verification suite and a 19-case
+live end-to-end coupon flow test
 (`backend/tests/verify.js`) that needs no live database.
 
 **Docker** is the standard way to run all of it — `mongo`, `api`, `web`
@@ -45,8 +46,8 @@ locally and in production (see [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)).
 | 2   | Event CMS                 | **Done** |
 | 3   | Registration Management   | **Done** |
 | 4   | Ticketing & Pass Types    | **Done** |
-| 5   | Promo Code Management     | **Done** |
-| 6   | Payment Gateway           | **Done** |
+| 5   | Promo Code Management     | Replaced by company coupons |
+| 6   | Payment Gateway           | Removed — coupon registration at ₹0 |
 | 7   | Digital Ticket & QR       | **Done** |
 | 8   | WhatsApp Integration      | **Done** |
 | 9   | Event-Day Check-in        | **Done** |
@@ -141,8 +142,10 @@ docker compose exec api npm run seed:admin    # bootstraps the first superadmin
 # API:       http://localhost:8080/api/v1/health
 ```
 
-Payments (Razorpay) and WhatsApp sends stay dev-safe with no configuration —
-add real test-mode keys to `backend/.env` to turn them on. See
+There is no payment gateway — registration is by company coupon at ₹0 (see
+[`docs/COUPON-REGISTRATION.md`](docs/COUPON-REGISTRATION.md)). Email and
+WhatsApp sends stay dev-safe with no configuration — add SMTP / Meta
+credentials to `backend/.env` to turn them on. See
 [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for the production setup
 (TLS, backups, CI).
 
@@ -156,8 +159,8 @@ add real test-mode keys to `backend/.env` to turn them on. See
 cd backend && npm run verify
 ```
 
-Runs 98 checks across every module's models, serializers, auth/RBAC guards,
-payment signature math, QR/CSV utilities and HTTP layer — including that
+Runs 112 checks across every module's models, serializers, auth/RBAC guards,
+coupon rules, delivery classification, QR/CSV utilities and HTTP layer — including that
 internal inventory counts and non-public passes never reach the browser.
 No database required.
 
@@ -177,19 +180,19 @@ prashanth-events/
 ├── backend/
 │   ├── src/
 │   │   ├── config/          env, database connection, upload path
-│   │   ├── models/          Event, TicketType, User, Registration, Payment,
-│   │   │                    PromoCode, Feedback, AuditLog
+│   │   ├── models/          Event, TicketType, User, Registration, Company,
+│   │   │                    Coupon, Feedback, AuditLog (+ legacy Payment, PromoCode)
 │   │   ├── controllers/     public + admin (adminEvent, adminRegistration,
 │   │   │                    adminCheckin, adminUser, adminAuditLog, …)
-│   │   ├── services/        serializers, inventory holds, promo evaluation,
-│   │   │                    razorpay client, whatsapp client, audit log
+│   │   ├── services/        serializers, inventory, coupons, delivery,
+│   │   │                    email (SMTP), whatsapp client, audit log
 │   │   ├── routes/          one file per resource, mounted in routes/index.js
 │   │   ├── middleware/      auth (JWT + RBAC), upload, error handling
 │   │   ├── utils/           logger, ApiError, response envelope, qrcode,
 │   │   │                    ticketPdf, certificatePdf, csv
 │   │   ├── seed/            sample event + admin bootstrap
 │   │   └── dev/             mock API for DB-free frontend work
-│   └── tests/verify.js      98-check verification suite
+│   └── tests/              verify.js (112 checks), coupon-flow.js (live E2E)
 │
 ├── frontend-public/         attendee-facing microsite
 │   └── src/
@@ -197,14 +200,14 @@ prashanth-events/
 │       ├── pages/           EventMicrosite, RegisterPage, TicketPage,
 │       │                    FeedbackPage
 │       ├── components/      header, footer, sticky CTA, share sheet, UI kit
-│       ├── lib/             api client, payments (Razorpay Checkout),
+│       ├── lib/             api client,
 │       │                    campaign tracking, formatting
 │       └── styles/          design tokens + global styles
 │
 ├── frontend-admin/          staff-facing dashboard (separate app, same tokens)
 │   └── src/
-│       ├── pages/           EventEditor, TicketTypes, PromoCodes,
-│       │                    Registrations, Payments, CheckIn, Reports,
+│       ├── pages/           EventEditor, TicketTypes, Companies, Coupons,
+│       │                    Registrations, CheckIn, Reports,
 │       │                    Feedback, Users, AuditLog
 │       ├── components/      sidebar shell, protected routes, UI kit
 │       └── lib/             per-resource API clients, auth context
@@ -228,5 +231,6 @@ prashanth-events/
 
 ---
 
-© Prashanth Hospitals. All rights reserved.#   p r a s h a n t h  
+© Prashanth Hospitals. All rights reserved.#   p r a s h a n t h 
+ 
  

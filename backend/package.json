@@ -11,7 +11,9 @@
     "seed:admin": "node src/seed/seedAdmin.js",
     "mock": "node src/dev/mockApi.js",
     "verify": "node tests/verify.js",
-    "lint": "node --check src/server.js"
+    "lint": "node --check src/server.js",
+    "seed:coupons": "node src/seed/seedCoupons.js",
+    "test:flow": "node tests/coupon-flow.js"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -28,9 +30,9 @@
     "mongoose": "^8.6.0",
     "morgan": "^1.10.0",
     "multer": "^2.4.0",
+    "nodemailer": "^10.1.1",
     "pdfkit": "^0.20.2",
     "qrcode": "^1.5.4",
-    "razorpay": "^2.9.8",
     "slugify": "^1.6.6"
   },
   "devDependencies": {

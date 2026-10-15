@@ -134,7 +134,7 @@ export default function Tickets({ ticketTypes, onSelect, canRegister }) {
         </div>
 
         <p className="tickets__note">
-          Prices are per registration. Have a promo code? You can apply it at checkout.
+          Registration is by sponsor coupon — enter your company's coupon code when you register and your pass is free.
         </p>
       </div>
     </section>

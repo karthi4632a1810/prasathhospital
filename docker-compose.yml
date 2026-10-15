@@ -37,7 +37,7 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
-    # Secrets (JWT_SECRET, RAZORPAY_*, WHATSAPP_*, ADMIN_BOOTSTRAP_*) live in
+    # Secrets (JWT_SECRET, SMTP_*, WHATSAPP_*, ADMIN_BOOTSTRAP_*) live in
     # backend/.env so they never need hand-listing here; structural values
     # that differ between this compose file and plain `npm run dev` stay
     # explicit below and win over the file.

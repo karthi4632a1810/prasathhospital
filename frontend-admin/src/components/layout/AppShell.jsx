@@ -3,6 +3,10 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
 import './AppShell.css';
 
+// Roles that run day-to-day operations. Check-in staff only get the
+// dashboard numbers and the scanner (enforced again on every API route).
+export const OPS_ROLES = ['superadmin', 'manager'];
+
 const NAV_GROUPS = [
   {
     label: 'Overview',
@@ -11,28 +15,28 @@ const NAV_GROUPS = [
   {
     label: 'Content',
     items: [
-      { to: '/event', label: 'Event CMS', icon: IconEdit },
-      { to: '/ticket-types', label: 'Ticket Types', icon: IconTicket },
-      { to: '/promo-codes', label: 'Promo Codes', icon: IconTag },
+      { to: '/event', label: 'Event CMS', icon: IconEdit, roles: OPS_ROLES },
+      { to: '/ticket-types', label: 'Passes', icon: IconTicket, roles: OPS_ROLES },
     ],
   },
   {
-    label: 'Sales',
+    label: 'Registrations',
     items: [
-      { to: '/registrations', label: 'Registrations', icon: IconUsers },
-      { to: '/payments', label: 'Payments', icon: IconCard },
+      { to: '/registrations', label: 'Registrations', icon: IconUsers, roles: OPS_ROLES },
+      { to: '/companies', label: 'Companies', icon: IconBuilding, roles: OPS_ROLES },
+      { to: '/coupons', label: 'Coupons', icon: IconTag, roles: OPS_ROLES },
     ],
   },
   {
     label: 'Event day',
     items: [
       { to: '/checkin', label: 'Check-in', icon: IconScan },
-      { to: '/feedback', label: 'Feedback', icon: IconStar },
+      { to: '/feedback', label: 'Feedback', icon: IconStar, roles: OPS_ROLES },
     ],
   },
   {
     label: 'Insights',
-    items: [{ to: '/reports', label: 'Reports', icon: IconChart }],
+    items: [{ to: '/reports', label: 'Reports', icon: IconChart, roles: OPS_ROLES }],
   },
   {
     label: 'System',
@@ -80,7 +84,7 @@ export default function AppShell({ children }) {
         </div>
 
         <nav className="shell__nav">
-          {NAV_GROUPS.map((group) => (
+          {NAV_GROUPS.filter((group) => group.items.some((item) => !item.roles || item.roles.includes(user?.role))).map((group) => (
             <div className="shell__nav-group" key={group.label}>
               <p className="shell__nav-label">{group.label}</p>
               {group.items
@@ -179,11 +183,11 @@ function IconUsers() {
     </svg>
   );
 }
-function IconCard() {
+function IconBuilding() {
   return (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <rect x="2.5" y="5.5" width="19" height="13" rx="2" />
-      <path d="M2.5 10h19" />
+      <path d="M4 20.5V5a1.5 1.5 0 0 1 1.5-1.5h8A1.5 1.5 0 0 1 15 5v15.5M15 9.5h3.5A1.5 1.5 0 0 1 20 11v9.5M2.5 20.5h19" />
+      <path d="M7.5 7.5h4M7.5 11h4M7.5 14.5h4" strokeLinecap="round" />
     </svg>
   );
 }

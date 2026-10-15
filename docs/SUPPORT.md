@@ -10,7 +10,7 @@ day-to-day, plus escalation guidance for problems that need a developer.
 ### Find a specific attendee
 
 **Admin → Registrations** → search box matches name, email, phone or
-registration code. Filter by status (confirmed / pending payment /
+registration code. Filter by status (confirmed / cancelled /
 cancelled) if you know it.
 
 ### Check someone in without scanning a QR code
@@ -31,10 +31,12 @@ attendee's own confirmation page carry it.
 
 ### Cancel a registration
 
-**Admin → Registrations** → expand the row → **Cancel registration**. This
-correctly releases whatever inventory it was holding (a pass reservation if
-still pending payment, or a confirmed sale + event seat) — never cancel by
-editing the database directly, or the pass/event capacity counts will drift.
+**Admin → Registrations** → open the row → **Cancel this registration…** and
+give a reason. This voids the QR (check-in will refuse it), releases the pass
+unit and event seat, and gives the coupon place back to the company — all
+audit-logged. Never cancel by editing the database directly, or the
+coupon/pass/event counts will drift. Checked-in registrations can't be
+cancelled.
 
 ### Manage who can access the admin dashboard
 
@@ -44,10 +46,10 @@ editing the database directly, or the pass/event capacity counts will drift.
 |-----------------|--------------------------------------------------------|
 | `superadmin` | Everything, including managing other users |
 | `manager` | Everything except Users & Roles / Audit Log |
-| `checkin_staff` | Only the Check-in scanner — nothing else, by design |
+| `checkin_staff` | Dashboard numbers and the Check-in scanner — nothing else |
 
 Use `checkin_staff` for event-day volunteers who shouldn't see attendee
-payment details or be able to edit the event.
+lists, coupons or exports, or be able to edit the event.
 
 ### Reset a user's password
 
@@ -100,13 +102,20 @@ restore before you need it**, not during an incident.
 
 ## Troubleshooting
 
-**"Online payments are not configured yet" on the registration page** — this
-is expected until `RAZORPAY_KEY_ID`/`RAZORPAY_KEY_SECRET` are set in
-`backend/.env`. The registration itself still succeeds (`pending_payment`
-status); the attendee sees a message that the team will follow up, and staff
-can complete the payment offline and confirm it manually if needed (see
-"manually confirming a payment" below), or just wait until real keys are
-added — nothing is lost.
+**Email or WhatsApp shows "not configured"** — the server has no SMTP
+settings / WhatsApp API credentials yet. Registrations still succeed and the
+attendee sees their QR on screen. Once credentials are in `backend/.env`,
+filter Registrations by delivery status and use "Send email" / "Retry
+WhatsApp" on each one.
+
+**A delivery shows "failed" or "retry"** — open the registration; the
+Delivery attempts table shows the provider's error. "Retry" means a
+temporary error (network, rate limit) — just retry. "Failed" needs the cause
+fixed first (bad number/email, unapproved WhatsApp template).
+
+**A delegate's coupon is rejected** — check Coupons: inactive, expired, not
+started, fully used, or its company deactivated. Codes are case-insensitive.
+Raise the limit or extend the expiry there; never edit `usageCount` by hand.
 
 **WhatsApp tickets aren't sending** — check `WHATSAPP_PHONE_NUMBER_ID`/
 `WHATSAPP_ACCESS_TOKEN` are set in `backend/.env`. Without them the platform
@@ -116,25 +125,14 @@ reason if they *are* set and it's still not sending (commonly: the access
 token expired, or the recipient is outside your WhatsApp Business account's
 messaging window and needs an approved template, not a plain-text send).
 
-**A payment succeeded in Razorpay but the registration is still
-"pending_payment"** — Razorpay's webhook is the source of truth and can lag
-a few seconds behind the checkout popup closing. If it's been longer than a
-minute, check `docker compose logs api | grep webhook` for a signature or
-processing error, and confirm the webhook URL registered in the Razorpay
-dashboard matches `https://<your-domain>/api/v1/payments/webhook` with the
-right `RAZORPAY_WEBHOOK_SECRET`.
-
 **Admin login works locally but not on the deployed domain (CORS error)** —
 `CORS_ORIGINS` in `backend/.env` (or the `environment:` block in
 `docker-compose.yml`) must list the *exact* admin origin, e.g.
 `https://admin.events.example.com` — no trailing slash, matching scheme.
 
 **"This pass just sold out" but the numbers don't look right** — check
-**Admin → Ticket Types** for the pass's sold/held counts. A `held` count
-that isn't dropping usually means abandoned checkouts are still within their
-`TICKET_HOLD_MINUTES` window (default 15) — they'll release automatically;
-lower `TICKET_HOLD_MINUTES` in `backend/.env` if that's too generous for a
-high-demand event.
+**Admin → Passes** for the sold count. Cancelling a registration releases
+its pass unit, event seat and coupon place automatically.
 
 **Uploaded images (speaker photos, sponsor logos) show broken after a
 redeploy** — confirm the `uploads_data` Docker volume wasn't accidentally

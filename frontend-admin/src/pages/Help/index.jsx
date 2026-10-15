@@ -2,34 +2,49 @@ import { useAuth } from '../../lib/auth';
 
 const TASKS = [
   {
-    title: 'Find a specific attendee',
-    body: 'Registrations → search box matches name, email, phone or registration code.',
-    to: '/registrations',
+    title: 'Set up a sponsoring company',
+    body: 'Companies → "Add company". Then Coupons → "New coupon", pick the company, set the code and how many delegates it covers.',
+    to: '/companies',
+    roles: ['superadmin', 'manager'],
   },
   {
-    title: 'Check someone in without scanning',
-    body: 'Check-in → paste their registration code or QR token into the manual-entry box.',
-    to: '/checkin',
+    title: 'Stop a coupon from being used',
+    body: 'Coupons → "Deactivate". It stops working immediately; registrations already made with it are kept. Deactivating a company stops all of its coupons.',
+    to: '/coupons',
+    roles: ['superadmin', 'manager'],
+  },
+  {
+    title: 'Find a specific attendee',
+    body: 'Registrations → search matches name, email, mobile, registration ID or coupon code. Filter by company, coupon, status or delivery status.',
+    to: '/registrations',
+    roles: ['superadmin', 'manager'],
   },
   {
     title: "Resend someone's ticket",
-    body: 'Registrations → expand their row → "Resend ticket (WhatsApp)". If WhatsApp isn\'t configured yet, copy their ticket link and send it manually.',
+    body: 'Registrations → open the row → Delivery → "Resend email" or "Retry WhatsApp". Every attempt and its error is listed under Delivery attempts.',
     to: '/registrations',
+    roles: ['superadmin', 'manager'],
   },
   {
     title: 'Cancel a registration',
-    body: 'Registrations → expand the row → "Cancel registration". This releases the pass/seat correctly — never edit the database directly.',
+    body: 'Registrations → open the row → "Cancel this registration…" with a reason. The QR stops working and the coupon place goes back to the company.',
     to: '/registrations',
+    roles: ['superadmin', 'manager'],
+  },
+  {
+    title: 'Check someone in without scanning',
+    body: 'Check-in → paste their QR token or ticket link into the manual-entry box.',
+    to: '/checkin',
   },
   {
     title: 'Add or reset an admin user',
-    body: 'Users & roles → create a new account, or use the 🔑 icon to reset a password. checkin_staff accounts can only reach Check-in.',
+    body: 'Users & roles → create a new account, or use the 🔑 icon to reset a password. checkin_staff accounts only see the Dashboard and Check-in.',
     to: '/users',
     roles: ['superadmin'],
   },
   {
     title: 'See who changed what',
-    body: 'Audit Log lists every admin action — who, what, when — across the whole dashboard.',
+    body: 'Audit Log lists every admin action — coupon changes, cancellations, delivery retries, exports — with who and when.',
     to: '/audit-log',
     roles: ['superadmin'],
   },
@@ -37,20 +52,20 @@ const TASKS = [
 
 const TROUBLESHOOTING = [
   {
-    q: '"Online payments are not configured yet" on the registration page',
-    a: 'Expected until Razorpay keys are added to the server. The registration still succeeds as "pending payment" — nothing is lost.',
+    q: 'Email or WhatsApp shows "Not configured"',
+    a: 'The server has no SMTP settings (email) or WhatsApp API credentials yet. Registrations still succeed and the attendee sees their QR on screen. Once credentials are added, use "Send email" / "Retry WhatsApp" on each registration.',
   },
   {
-    q: "WhatsApp tickets aren't sending",
-    a: 'Expected if WhatsApp credentials aren\'t configured yet — sends are logged, not sent, rather than failing. Use the ticket link directly in the meantime.',
+    q: 'WhatsApp shows "Failed"',
+    a: 'Open the registration and read the error under Delivery attempts. A wrong number or an unapproved message template needs fixing first; "Retry" status means a temporary error — try again shortly.',
   },
   {
-    q: 'A payment succeeded but the registration still shows "pending payment"',
-    a: 'The payment webhook can lag a few seconds behind checkout. If it\'s been longer than a minute, this needs a developer to check the server logs.',
+    q: 'A delegate says their coupon is "not valid"',
+    a: 'Check Coupons: the code may be inactive, expired, not started yet, fully used, or its company deactivated. Codes are not case-sensitive.',
   },
   {
-    q: '"This pass just sold out" but the numbers look wrong',
-    a: 'Check Ticket Types for the sold/held split — a high "held" count is usually abandoned checkouts that will release automatically within the hold window.',
+    q: '"This email address is already registered"',
+    a: 'Each email can hold one active registration per event. Find the existing one in Registrations and resend the ticket, or cancel it first if it was a mistake.',
   },
 ];
 

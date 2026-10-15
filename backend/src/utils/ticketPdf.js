@@ -1,5 +1,6 @@
 'use strict';
 
+const { PassThrough } = require('stream');
 const PDFDocument = require('pdfkit');
 const { generateQrPngBuffer } = require('./qrcode');
 
@@ -28,7 +29,7 @@ function formatDateRange(startDate, endDate) {
  * stream). Kept intentionally simple — no external image assets — so it
  * works the same in every environment without shipping a template file.
  */
-async function streamTicketPdf(res, { event, ticketType, registration, checkInUrl }) {
+async function streamTicketPdf(res, { event, ticketType, registration, checkInUrl, companyName = '' }) {
   const doc = new PDFDocument({ size: 'A5', layout: 'landscape', margin: 0 });
   doc.pipe(res);
 
@@ -100,6 +101,16 @@ async function streamTicketPdf(res, { event, ticketType, registration, checkInUr
     .fontSize(11)
     .text(`${ticketType.admitsCount} ${ticketType.admitsCount > 1 ? 'delegates' : 'delegate'}`, bodyX, 158);
 
+  if (companyName) {
+    doc
+      .fillColor(INK_MUTED)
+      .fontSize(9)
+      .text('Sponsored by', bodyX, 185)
+      .fillColor(INK)
+      .fontSize(11)
+      .text(companyName, bodyX, 198, { width: bodyTextWidth });
+  }
+
   doc
     .fillColor(INK_MUTED)
     .fontSize(9)
@@ -113,4 +124,18 @@ async function streamTicketPdf(res, { event, ticketType, registration, checkInUr
   doc.end();
 }
 
-module.exports = { streamTicketPdf };
+/** Same ticket, collected into a Buffer — used for the email attachment. */
+async function renderTicketPdfBuffer(options) {
+  const sink = new PassThrough();
+  const chunks = [];
+  sink.on('data', (chunk) => chunks.push(chunk));
+  const done = new Promise((resolve, reject) => {
+    sink.on('end', resolve);
+    sink.on('error', reject);
+  });
+  await streamTicketPdf(sink, options);
+  await done;
+  return Buffer.concat(chunks);
+}
+
+module.exports = { streamTicketPdf, renderTicketPdfBuffer };

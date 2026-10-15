@@ -10,7 +10,9 @@ const AttendeeSchema = new Schema(
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, trim: true, lowercase: true },
     phone: { type: String, required: true, trim: true },
-    participantType: { type: String, trim: true, default: '' }, // e.g. "PG Student"
+    // Legacy: the coupon flow no longer asks for this. Kept so historical
+    // registrations still load and export unchanged.
+    participantType: { type: String, trim: true, default: '' },
   },
   { _id: false }
 );
@@ -26,10 +28,43 @@ const PricingSchema = new Schema(
   { _id: false }
 );
 
+const DELIVERY_STATUSES = ['pending', 'sent', 'failed', 'retryable', 'not_configured'];
+
+/** Current state of one delivery channel (email or WhatsApp). */
+const DeliveryChannelSchema = new Schema(
+  {
+    status: { type: String, enum: DELIVERY_STATUSES, default: 'pending' },
+    attempts: { type: Number, default: 0, min: 0 },
+    lastAttemptAt: { type: Date, default: null },
+    sentAt: { type: Date, default: null },
+    error: { type: String, default: '' },
+    providerMessageId: { type: String, default: '' },
+  },
+  { _id: false }
+);
+
+/** One row per send attempt — the history admins see when diagnosing a failure. */
+const DeliveryAttemptSchema = new Schema(
+  {
+    channel: { type: String, enum: ['email', 'whatsapp'], required: true },
+    status: { type: String, enum: DELIVERY_STATUSES, required: true },
+    at: { type: Date, default: Date.now },
+    error: { type: String, default: '' },
+    providerMessageId: { type: String, default: '' },
+    trigger: { type: String, enum: ['auto', 'admin'], default: 'auto' },
+    actorName: { type: String, default: '' },
+  },
+  { _id: false }
+);
+
 /**
- * One attendee's registration for one pass. Payment (Module 6), the
- * QR/PDF ticket (Module 7) and check-in (Module 9) all key off this
- * document rather than introducing their own attendee records.
+ * One attendee's registration for one pass. The ticket (QR/PDF), delivery
+ * and check-in all key off this document.
+ *
+ * Since the coupon flow, every new registration is created `confirmed` at
+ * ₹0 with a coupon + company attached. `pending_payment`/`refunded` and the
+ * `payment`/`promoCode` refs stay in the schema only so registrations made
+ * under the old paid flow still load.
  */
 const RegistrationSchema = new Schema(
   {
@@ -37,24 +72,46 @@ const RegistrationSchema = new Schema(
     ticketType: { type: Schema.Types.ObjectId, ref: 'TicketType', required: true },
 
     attendee: { type: AttendeeSchema, required: true },
-    promoCode: { type: Schema.Types.ObjectId, ref: 'PromoCode', default: null },
+    coupon: { type: Schema.Types.ObjectId, ref: 'Coupon', default: null, index: true },
+    company: { type: Schema.Types.ObjectId, ref: 'Company', default: null, index: true },
+    couponCode: { type: String, default: '' }, // snapshot, survives coupon edits
     pricing: { type: PricingSchema, required: true },
 
     status: {
       type: String,
       enum: ['pending_payment', 'confirmed', 'cancelled', 'refunded'],
-      default: 'pending_payment',
+      default: 'confirmed',
       index: true,
     },
 
+    // Legacy refs from the retired paid flow (read-only history).
+    promoCode: { type: Schema.Types.ObjectId, ref: 'PromoCode', default: null },
     payment: { type: Schema.Types.ObjectId, ref: 'Payment', default: null },
 
     registrationCode: { type: String, unique: true, index: true },
     qrToken: { type: String, unique: true, sparse: true, index: true },
 
+    // Client-generated per form session, so a double-clicked or retried
+    // submit returns the first registration instead of creating a second.
+    idempotencyKey: { type: String, unique: true, sparse: true },
+    // `${event}:${email}` while the registration is active, unset on
+    // cancel. The unique index makes "one active registration per email
+    // per event" hold even under concurrent submits.
+    activeKey: { type: String, unique: true, sparse: true },
+
+    delivery: {
+      email: { type: DeliveryChannelSchema, default: () => ({}) },
+      whatsapp: { type: DeliveryChannelSchema, default: () => ({}) },
+    },
+    deliveryLog: { type: [DeliveryAttemptSchema], default: [] },
+
     checkedInAt: { type: Date, default: null },
     checkedInBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     certificateIssuedAt: { type: Date, default: null },
+
+    cancelledAt: { type: Date, default: null },
+    cancelledBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    cancellationReason: { type: String, trim: true, default: '' },
 
     campaignSource: { type: String, trim: true, default: '' },
     notes: { type: String, trim: true, default: '' },
@@ -63,7 +120,17 @@ const RegistrationSchema = new Schema(
 );
 
 RegistrationSchema.index({ event: 1, status: 1 });
+RegistrationSchema.index({ event: 1, createdAt: -1 });
 RegistrationSchema.index({ 'attendee.email': 1 });
+RegistrationSchema.index({ 'attendee.phone': 1 });
+RegistrationSchema.index({ 'delivery.email.status': 1 });
+RegistrationSchema.index({ 'delivery.whatsapp.status': 1 });
+
+RegistrationSchema.statics.DELIVERY_STATUSES = DELIVERY_STATUSES;
+
+RegistrationSchema.statics.activeKeyFor = function activeKeyFor(eventId, email) {
+  return `${String(eventId)}:${String(email).trim().toLowerCase()}`;
+};
 
 RegistrationSchema.virtual('isFree').get(function isFree() {
   return this.pricing.totalAmount === 0;
@@ -76,7 +143,7 @@ RegistrationSchema.pre('validate', function assignCodesOnCreate(next) {
   next();
 });
 
-/** Generates the ticket's scan token. Called once, when a registration is confirmed. */
+/** Generates the ticket's scan token (48 hex chars of CSPRNG output). Called once, at confirmation. */
 RegistrationSchema.methods.issueQrToken = function issueQrToken() {
   this.qrToken = crypto.randomBytes(24).toString('hex');
   return this.qrToken;

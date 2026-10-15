@@ -6,9 +6,9 @@ import Login from './pages/Login';
 import DashboardOverview from './pages/DashboardOverview';
 import EventEditor from './pages/EventEditor';
 import TicketTypes from './pages/TicketTypes';
-import PromoCodes from './pages/PromoCodes';
+import Companies from './pages/Companies';
+import Coupons from './pages/Coupons';
 import Registrations from './pages/Registrations';
-import Payments from './pages/Payments';
 import CheckIn from './pages/CheckIn';
 import Users from './pages/Users';
 import Reports from './pages/Reports';
@@ -16,6 +16,8 @@ import Feedback from './pages/Feedback';
 import AuditLog from './pages/AuditLog';
 import Help from './pages/Help';
 import ComingSoon from './pages/ComingSoon';
+
+const OPS = ['superadmin', 'manager'];
 
 function Shielded({ children, roles }) {
   return (
@@ -33,14 +35,14 @@ export default function App() {
           <Route path="/login" element={<Login />} />
 
           <Route path="/" element={<Shielded><DashboardOverview /></Shielded>} />
-          <Route path="/event" element={<Shielded><EventEditor /></Shielded>} />
-          <Route path="/ticket-types" element={<Shielded><TicketTypes /></Shielded>} />
-          <Route path="/promo-codes" element={<Shielded><PromoCodes /></Shielded>} />
-          <Route path="/registrations" element={<Shielded><Registrations /></Shielded>} />
-          <Route path="/payments" element={<Shielded><Payments /></Shielded>} />
+          <Route path="/event" element={<Shielded roles={OPS}><EventEditor /></Shielded>} />
+          <Route path="/ticket-types" element={<Shielded roles={OPS}><TicketTypes /></Shielded>} />
+          <Route path="/companies" element={<Shielded roles={OPS}><Companies /></Shielded>} />
+          <Route path="/coupons" element={<Shielded roles={OPS}><Coupons /></Shielded>} />
+          <Route path="/registrations" element={<Shielded roles={OPS}><Registrations /></Shielded>} />
           <Route path="/checkin" element={<Shielded><CheckIn /></Shielded>} />
-          <Route path="/feedback" element={<Shielded><Feedback /></Shielded>} />
-          <Route path="/reports" element={<Shielded><Reports /></Shielded>} />
+          <Route path="/feedback" element={<Shielded roles={OPS}><Feedback /></Shielded>} />
+          <Route path="/reports" element={<Shielded roles={OPS}><Reports /></Shielded>} />
           <Route
             path="/users"
             element={<Shielded roles={['superadmin']}><Users /></Shielded>}

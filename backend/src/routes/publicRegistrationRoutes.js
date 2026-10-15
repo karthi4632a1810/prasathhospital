@@ -1,11 +1,11 @@
 'use strict';
 
 const express = require('express');
-const { createRegistration, getRegistrationByCode } = require('../controllers/publicRegistrationController');
+const { createRegistration } = require('../controllers/publicRegistrationController');
+const { registrationLimiter } = require('../middleware/rateLimits');
 
 const router = express.Router();
 
-router.post('/', createRegistration);
-router.get('/:code', getRegistrationByCode);
+router.post('/', registrationLimiter, createRegistration);
 
 module.exports = router;

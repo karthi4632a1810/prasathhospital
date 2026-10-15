@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { eventApi } from '../../lib/eventApi';
 import { checkinApi } from '../../lib/checkinApi';
 import { LoadingState } from '../../components/ui/States';
 import Button from '../../components/ui/Button';
@@ -19,8 +18,8 @@ export default function CheckIn() {
   const busyRef = useRef(false); // guards against double-processing while a scan is in flight
 
   useEffect(() => {
-    eventApi
-      .list()
+    checkinApi
+      .events()
       .then((res) => {
         setEvents(res.data);
         if (res.data.length > 0) setEventId((id) => id || res.data[0].id);
@@ -184,7 +183,9 @@ export default function CheckIn() {
               <div className="checkin-result__icon">✓</div>
               <h3>Checked in</h3>
               <p className="checkin-result__name">{scanResult.attendee?.name}</p>
-              <p className="checkin-result__meta">{scanResult.ticketType?.name} · {scanResult.registrationCode}</p>
+              <p className="checkin-result__meta">
+                {[scanResult.company?.name, scanResult.ticketType?.name, scanResult.registrationCode].filter(Boolean).join(' · ')}
+              </p>
             </>
           )}
 
@@ -194,6 +195,7 @@ export default function CheckIn() {
               <h3>Already checked in</h3>
               <p className="checkin-result__name">{scanResult.attendee?.name}</p>
               <p className="checkin-result__meta">
+                {scanResult.company?.name ? `${scanResult.company.name} · ` : ''}
                 {scanResult.ticketType?.name} · at{' '}
                 {new Date(scanResult.checkedInAt).toLocaleTimeString('en-IN')}
               </p>

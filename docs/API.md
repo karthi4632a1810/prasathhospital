@@ -250,18 +250,19 @@ admin UI hiding a nav item is a convenience, not the security boundary.
 |---------------------------|------------------------------|:---:|:---:|:---:|
 | Event CMS | `/admin/events`, `/admin/uploads` | ✅ | ✅ | ❌ |
 | Ticket types | `/admin/ticket-types` | ✅ | ✅ | ❌ |
-| Promo codes | `/admin/promo` | ✅ | ✅ | ❌ |
-| Registrations | `/admin/registrations` | ✅ | ✅ | ❌ |
-| Payments (read-only) | `/admin/payments` | ✅ | ✅ | ❌ |
-| Reports & CSV export | `/admin/reports` | ✅ | ✅ | ❌ |
+| Companies | `/admin/companies` | ✅ | ✅ | ❌ |
+| Coupons | `/admin/coupons` | ✅ | ✅ | ❌ |
+| Registrations (incl. delivery retry, cancel, CSV) | `/admin/registrations` | ✅ | ✅ | ❌ |
+| Dashboard stats (aggregates only) | `/admin/reports/overview` | ✅ | ✅ | ✅ |
+| Reports & CSV export | `/admin/reports/*` (rest) | ✅ | ✅ | ❌ |
 | Feedback | `/admin/feedback` | ✅ | ✅ | ❌ |
 | Event-day check-in | `/admin/checkin` | ✅ | ✅ | ✅ |
 | Users & roles | `/admin/users` | ✅ | ❌ | ❌ |
 | Audit log | `/admin/audit-log` | ✅ | ❌ | ❌ |
 
-A `checkin_staff` account exists for exactly one purpose — scanning tickets
-on event day — and is deliberately locked out of everything else, including
-read-only views of registrations or payments.
+A `checkin_staff` account exists for event day: it sees the dashboard's
+aggregate numbers and the scanner, and is locked out of everything that
+shows attendee lists, coupons or exports.
 
 ### Endpoint index
 
@@ -275,12 +276,20 @@ above. Full request/response shapes are in each controller's JSDoc comment
 | `/admin/auth` | Foundation | `POST /login`, `GET /me` |
 | `/admin/events`, `/admin/uploads` | 2 | Event CMS + image upload |
 | `/admin/ticket-types` | 4 | Pass CRUD |
-| `/admin/promo`, `/promo/validate` | 5 | Promo codes (admin + public preview) |
-| `/registrations`, `/admin/registrations` | 3 | Registration create (public) + management (admin) |
-| `/payments`, `/admin/payments` | 6 | Razorpay order/verify/webhook + read-only ledger |
+| `/coupons/validate` | Coupons | Public coupon preview (rate-limited per IP) |
+| `/registrations` | Coupons | `POST` — coupon registration, ₹0, confirmed immediately (rate-limited) |
+| `/admin/companies`, `/admin/coupons` | Coupons | Company + coupon CRUD |
+| `/admin/registrations` | 3, Coupons | List/filter/sort, detail, cancel, `export.csv`, `deliveries/:channel` retry |
 | `/tickets` | 7 | QR image, PDF ticket, certificate — keyed by `qrToken` |
-| `/admin/checkin` | 9 | Scan + live stats |
-| `/admin/reports` | 10, 11 | Overview stats + CSV export |
+| `/admin/checkin` | 9 | Scan + live stats + minimal event list |
+| `/admin/reports` | 10, 11 | Overview, company/coupon breakdown, CSV exports |
 | `/admin/users` | 10, 13 | User/role management, superadmin-only |
 | `/feedback`, `/admin/feedback` | 12 | Submit (public, `qrToken`-gated) + list (admin) |
 | `/admin/audit-log` | 13 | Who did what, superadmin-only |
+
+### Coupon registration flow (no payment gateway)
+
+The Razorpay/promo-code flow was removed. Every registration now redeems a
+company coupon, costs ₹0 and is confirmed immediately. See
+[COUPON-REGISTRATION.md](COUPON-REGISTRATION.md) for the full endpoint list,
+request/response shapes, error codes and migration notes.

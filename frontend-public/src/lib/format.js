@@ -104,3 +104,13 @@ export function buildAddress(venue) {
     .filter(Boolean)
     .join(', ');
 }
+
+/** Exact rupee amount with paise — "₹2,950.00", "₹0.00". Used where "Free" would hide the maths. */
+export function formatAmount(amount, currency = 'INR') {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount ?? 0);
+}

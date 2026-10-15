@@ -30,8 +30,8 @@ Do these in order (the API URL is needed by the Vercel step, so the API goes fir
 2. **Render (API)** — *New → Blueprint*, pick this repo; it reads `render.yaml`.
    Fill in the `sync: false` values: `MONGODB_URI`, `ADMIN_BOOTSTRAP_EMAIL`,
    `ADMIN_BOOTSTRAP_PASSWORD` (use a strong one — **not** the `.env.example`
-   default), and leave Razorpay/WhatsApp blank until you have real keys
-   (they degrade to a clear "not configured" message). `JWT_SECRET` is
+   default), and leave SMTP/WhatsApp blank until you have real credentials
+   (registrations still work; deliveries show "not configured"). `JWT_SECRET` is
    generated for you. Note the service URL, e.g. `https://prashanth-events-api.onrender.com`.
    The persistent disk needs a paid instance (`starter`).
 3. **Vercel (two projects)** — *Add New → Project*, import the same repo twice:
@@ -53,9 +53,12 @@ Do these in order (the API URL is needed by the Vercel step, so the API goes fir
    # npm run seed  # sample CIIM event with DEMO speakers/passes/agenda - skip for a real launch
    ```
    For a real launch, create the event and passes in the admin CMS instead.
-6. **Razorpay** (when ready) — set the three `RAZORPAY_*` vars, then in the Razorpay
-   dashboard add a webhook to `https://<render-host>/api/v1/payments/webhook`
-   with the same secret as `RAZORPAY_WEBHOOK_SECRET`.
+6. **Email + WhatsApp** (when ready) — set `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`,
+   `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` for ticket emails, and
+   `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_TEMPLATE_NAME`
+   for WhatsApp. Then retry any "not configured" deliveries from Registrations.
+   Optionally run `npm run seed:coupons` for sample Yamaha/Bajaj coupons — real
+   companies and coupons are created in the admin dashboard.
 7. **Custom domains** — add them in each Vercel project; update `PUBLIC_SITE_URL`
    and `CORS_ORIGINS` on Render to match.
 
@@ -146,15 +149,26 @@ JWT_EXPIRES_IN=7d
 ADMIN_BOOTSTRAP_EMAIL=admin@yourdomain.com
 ADMIN_BOOTSTRAP_PASSWORD=<set-a-strong-one-time-password>
 
-# Module 6 — leave blank until you have real Razorpay keys; payments
-# degrade gracefully (a clear "not configured" message) until then.
-RAZORPAY_KEY_ID=
-RAZORPAY_KEY_SECRET=
-RAZORPAY_WEBHOOK_SECRET=
+# Public abuse limits (per IP, per window) for coupon validate / register.
+PUBLIC_LIMIT_WINDOW_MINUTES=10
+COUPON_VALIDATE_LIMIT_MAX=20
+REGISTRATION_LIMIT_MAX=10
 
-# Module 8 — same dev-safe degradation without these.
+# Ticket email over SMTP — blank SMTP_HOST means email shows "not configured";
+# registrations are never blocked by it.
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=
+SMTP_PASS=
+MAIL_FROM="CIIM 2026 <tickets@yourdomain.com>"
+MAIL_REPLY_TO=
+
+# WhatsApp (Meta Cloud API) — same graceful degradation without these.
 WHATSAPP_PHONE_NUMBER_ID=
 WHATSAPP_ACCESS_TOKEN=
+WHATSAPP_TEMPLATE_NAME=
+WHATSAPP_TEMPLATE_LANGUAGE=en
 ```
 
 > `PUBLIC_SITE_URL` must be the real HTTPS domain — canonical URLs, QR
@@ -256,8 +270,8 @@ Then in a browser:
 
 - [ ] Microsite loads and all sections render; deep link `/events/<slug>` works on a hard refresh
 - [ ] Admin login works at the admin domain; superadmin can reach every nav item
-- [ ] A `checkin_staff` test account is correctly restricted to Check-in only
-- [ ] Registration → (test-mode) payment → ticket → certificate flow works end to end
+- [ ] A `checkin_staff` test account sees only Dashboard and Check-in
+- [ ] Coupon registration → ticket (email + WhatsApp) → check-in → certificate works end to end
 - [ ] Share the microsite URL in WhatsApp — the preview card shows title/description/image
 - [ ] Check an invalid slug returns "Event not found", not a blank screen
 - [ ] Test on a real phone, not just a resized browser window
@@ -318,13 +332,15 @@ even while the reverse proxy still serves the static page.
 
 ## Notes on third-party integrations
 
-- **Payments (Module 6):** the app runs fully without Razorpay keys — order
-  creation returns a clear "not configured" message instead of erroring.
-  Once you have real keys, also register the webhook URL
-  (`https://events.example.com/api/v1/payments/webhook`) in the Razorpay
-  dashboard and set `RAZORPAY_WEBHOOK_SECRET` to match.
-- **WhatsApp (Module 8):** same dev-safe degradation. Sends are logged, not
-  sent, until `WHATSAPP_PHONE_NUMBER_ID`/`WHATSAPP_ACCESS_TOKEN` are set.
+- **Payments:** there is no payment gateway. Registration is by company
+  coupon at ₹0 (see `docs/COUPON-REGISTRATION.md`).
+- **Email (SMTP):** any SMTP provider (Gmail Workspace, SES, SendGrid, Zoho…).
+  Without `SMTP_HOST`/`MAIL_FROM`, email delivery is recorded as
+  `not_configured` and can be retried from the admin once set.
+- **WhatsApp (Module 8):** same degradation until `WHATSAPP_PHONE_NUMBER_ID`/
+  `WHATSAPP_ACCESS_TOKEN` are set. Use an approved template
+  (`WHATSAPP_TEMPLATE_NAME`) in production — Meta drops plain-text
+  business-initiated messages outside a 24h window.
 - **Uploads (Module 2):** stored in the `uploads_data` Docker volume, served
   by the `api` container at `/uploads` and proxied by `web`/`admin`'s NGINX
   configs. Back it up alongside the database (see above).

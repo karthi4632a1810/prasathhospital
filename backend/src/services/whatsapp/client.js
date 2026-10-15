@@ -4,6 +4,7 @@ const env = require('../../config/env');
 const logger = require('../../utils/logger');
 
 let warned = false;
+const REQUEST_TIMEOUT_MS = 10000;
 
 function isConfigured() {
   return Boolean(env.whatsappPhoneNumberId && env.whatsappAccessToken);
@@ -17,25 +18,21 @@ function normalizePhone(phone) {
 }
 
 /**
- * Sends a free-form WhatsApp text message via Meta's Cloud API. Real
- * integration, dev-safe: with no WHATSAPP_PHONE_NUMBER_ID/ACCESS_TOKEN set
- * this logs and no-ops rather than throwing, exactly like the Razorpay
- * client in Module 6 — the app works the same with or without live
- * credentials, and callers never need to branch on "is WhatsApp on".
+ * Posts one message to Meta's WhatsApp Cloud API. Real integration,
+ * dev-safe: with no WHATSAPP_PHONE_NUMBER_ID/ACCESS_TOKEN this logs and
+ * returns `not_configured` instead of throwing, so a registration never
+ * fails because WhatsApp is off.
  *
- * Note: Meta requires an approved message template for the first
- * business-initiated message to a number (outside a 24h customer-service
- * window). This sends a plain text message, which works against test
- * numbers / within an open window; swap in a template call here once the
- * organizer's WhatsApp Business template is approved.
+ * Result: `{ sent: true, messageId }` only when Meta accepted the message,
+ * otherwise `{ sent: false, reason, httpStatus?, error? }` where reason is
+ * not_configured | api_error | network_error.
  */
-async function sendWhatsAppMessage({ to, text }) {
+async function postMessage(to, message) {
   if (!isConfigured()) {
     if (!warned) {
-      logger.warn('WhatsApp is not configured (WHATSAPP_PHONE_NUMBER_ID/ACCESS_TOKEN missing) — messages are logged, not sent.');
+      logger.warn('WhatsApp is not configured (WHATSAPP_PHONE_NUMBER_ID/ACCESS_TOKEN missing) — messages are skipped.');
       warned = true;
     }
-    logger.info(`[WhatsApp no-op] would message ${to}: ${text}`);
     return { sent: false, reason: 'not_configured' };
   }
 
@@ -48,26 +45,44 @@ async function sendWhatsAppMessage({ to, text }) {
         Authorization: `Bearer ${env.whatsappAccessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        to: normalizePhone(to),
-        type: 'text',
-        text: { body: text, preview_url: true },
-      }),
+      body: JSON.stringify({ messaging_product: 'whatsapp', to: normalizePhone(to), ...message }),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
 
     const body = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      logger.error(`WhatsApp send failed (${response.status})`, body);
-      return { sent: false, reason: 'api_error', details: body };
+      const error = body?.error?.message || `HTTP ${response.status}`;
+      logger.error(`WhatsApp send failed (${response.status}): ${error}`);
+      return { sent: false, reason: 'api_error', httpStatus: response.status, error };
     }
 
-    return { sent: true, messageId: body.messages?.[0]?.id };
+    const messageId = body.messages?.[0]?.id;
+    if (!messageId) return { sent: false, reason: 'api_error', httpStatus: response.status, error: 'No message id returned' };
+    return { sent: true, messageId };
   } catch (err) {
     logger.error('WhatsApp send threw', err);
-    return { sent: false, reason: 'network_error' };
+    return { sent: false, reason: 'network_error', error: err.name === 'TimeoutError' ? 'Request timed out' : err.message };
   }
 }
 
-module.exports = { sendWhatsAppMessage, isConfigured, normalizePhone };
+/** Free-form text. Only delivered inside a 24h customer-service window (or to test numbers). */
+function sendWhatsAppMessage({ to, text }) {
+  return postMessage(to, { type: 'text', text: { body: text, preview_url: true } });
+}
+
+/** Approved template — required for the first business-initiated message to a number. */
+function sendWhatsAppTemplate({ to, name, language, bodyParams = [] }) {
+  return postMessage(to, {
+    type: 'template',
+    template: {
+      name,
+      language: { code: language },
+      components: [
+        { type: 'body', parameters: bodyParams.map((text) => ({ type: 'text', text: String(text) })) },
+      ],
+    },
+  });
+}
+
+module.exports = { sendWhatsAppMessage, sendWhatsAppTemplate, isConfigured, normalizePhone };

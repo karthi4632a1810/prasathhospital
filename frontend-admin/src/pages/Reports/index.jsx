@@ -1,130 +1,226 @@
 import { useCallback, useEffect, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
-import { eventApi } from '../../lib/eventApi';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { useEvents, EventSelect } from '../../lib/useEvents';
 import { reportApi } from '../../lib/reportApi';
-import { formatCurrency } from '../../lib/format';
+import { formatDateTime } from '../../lib/format';
 import { LoadingState, ErrorState, EmptyState } from '../../components/ui/States';
 import Button from '../../components/ui/Button';
-import Badge from '../../components/ui/Badge';
+import { CouponStateBadge, UsageBar } from '../../components/StatusBadges';
 
 export default function Reports() {
-  const [events, setEvents] = useState(null);
-  const [eventId, setEventId] = useState(null);
-  const [overview, setOverview] = useState(null);
+  const { events, eventId, setEventId, error: eventsError } = useEvents();
+  const [range, setRange] = useState({ from: '', to: '' });
+  const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [exporting, setExporting] = useState('');
+  const [exportError, setExportError] = useState('');
 
-  useEffect(() => {
-    eventApi
-      .list()
-      .then((res) => {
-        setEvents(res.data);
-        if (res.data.length > 0) setEventId((id) => id || res.data[0].id);
-      })
-      .catch((err) => setError(err.message));
-  }, []);
+  const params = { event: eventId, from: range.from, to: range.to };
 
   const load = useCallback(() => {
     if (!eventId) return;
-    setOverview(null);
-    reportApi.overview(eventId).then((res) => setOverview(res.data)).catch((err) => setError(err.message));
-  }, [eventId]);
+    setError(null);
+    reportApi
+      .breakdown({ event: eventId, from: range.from, to: range.to })
+      .then((res) => setData(res.data))
+      .catch((err) => setError(err.message));
+  }, [eventId, range.from, range.to]);
 
   useEffect(load, [load]);
 
   async function handleExport(type) {
     setExporting(type);
+    setExportError('');
     try {
-      if (type === 'registrations') await reportApi.exportRegistrations(eventId);
-      else await reportApi.exportPayments(eventId);
+      if (type === 'registrations') await reportApi.exportRegistrations(params);
+      if (type === 'companies') await reportApi.exportCompanies(params);
+      if (type === 'coupons') await reportApi.exportCoupons(params);
     } catch (err) {
-      setError(err.message);
+      setExportError(err.message);
     } finally {
       setExporting('');
     }
   }
 
-  if (error) return <ErrorState message={error} onRetry={load} />;
+  if (eventsError) return <ErrorState message={eventsError} />;
   if (events === null) return <LoadingState label="Loading events…" />;
   if (events.length === 0) return <EmptyState title="No events yet" message="Create an event in the Event CMS first." />;
+
+  const totals = data
+    ? data.companies.reduce(
+        (acc, c) => ({
+          confirmed: acc.confirmed + c.confirmed,
+          cancelled: acc.cancelled + c.cancelled,
+          checkedIn: acc.checkedIn + c.checkedIn,
+          emailSent: acc.emailSent + c.emailSent,
+          emailFailed: acc.emailFailed + c.emailFailed,
+          whatsappSent: acc.whatsappSent + c.whatsappSent,
+          whatsappFailed: acc.whatsappFailed + c.whatsappFailed,
+        }),
+        { confirmed: 0, cancelled: 0, checkedIn: 0, emailSent: 0, emailFailed: 0, whatsappSent: 0, whatsappFailed: 0 }
+      )
+    : null;
+
+  const ExportButton = ({ type, label }) => (
+    <Button variant="secondary" size="sm" onClick={() => handleExport(type)} disabled={Boolean(exporting)}>
+      {exporting === type ? 'Exporting…' : label}
+    </Button>
+  );
 
   return (
     <div>
       <div className="page-header">
         <div>
           <h2 className="page-header__title">Reports</h2>
-          <p className="page-header__subtitle">How this event is performing, and full data exports.</p>
+          <p className="page-header__subtitle">Company-wise and coupon-wise registrations, delivery and check-in.</p>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
-          {events.length > 1 && (
-            <select className="field__select" value={eventId || ''} onChange={(e) => setEventId(e.target.value)}>
-              {events.map((ev) => <option key={ev.id} value={ev.id}>{ev.title}</option>)}
-            </select>
+        <EventSelect events={events} eventId={eventId} onChange={setEventId} />
+      </div>
+
+      <div className="card" style={{ marginBottom: 'var(--space-5)' }}>
+        <div className="toolbar">
+          <label className="field">
+            <span className="field__label">From</span>
+            <input className="field__input" type="date" value={range.from} onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))} />
+          </label>
+          <label className="field">
+            <span className="field__label">To</span>
+            <input className="field__input" type="date" value={range.to} onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))} />
+          </label>
+          {(range.from || range.to) && (
+            <Button variant="ghost" size="sm" onClick={() => setRange({ from: '', to: '' })}>Clear dates</Button>
           )}
-          <Button variant="secondary" size="sm" onClick={() => handleExport('registrations')} disabled={exporting === 'registrations'}>
-            {exporting === 'registrations' ? 'Exporting…' : 'Export registrations CSV'}
-          </Button>
-          <Button variant="secondary" size="sm" onClick={() => handleExport('payments')} disabled={exporting === 'payments'}>
-            {exporting === 'payments' ? 'Exporting…' : 'Export payments CSV'}
-          </Button>
+          <div className="toolbar__actions" style={{ flexWrap: 'wrap' }}>
+            <ExportButton type="registrations" label="Registrations CSV" />
+            <ExportButton type="companies" label="Companies CSV" />
+            <ExportButton type="coupons" label="Coupons CSV" />
+          </div>
         </div>
       </div>
 
-      {overview === null ? (
+      {exportError && <div className="notice notice--error">{exportError}</div>}
+      {(range.from || range.to) && (
+        <div className="notice notice--info">
+          Registration counts are limited to {range.from || 'the start'} – {range.to || 'today'}. Coupon allocation, usage and remaining are whole-coupon figures.
+        </div>
+      )}
+
+      {error ? (
+        <ErrorState message={error} onRetry={load} />
+      ) : !data ? (
         <LoadingState label="Loading report…" />
       ) : (
         <>
           <div className="stat-grid">
-            <StatTile label="Confirmed" value={overview.registrations.confirmed} />
-            <StatTile label="Pending payment" value={overview.registrations.pending} />
-            <StatTile label="Cancelled / refunded" value={overview.registrations.cancelled} />
-            <StatTile label="Total revenue" value={formatCurrency(overview.revenue)} />
+            <StatTile label="Confirmed" value={totals.confirmed} />
+            <StatTile label="Cancelled" value={totals.cancelled} />
+            <StatTile label="Checked in" value={totals.checkedIn} meta={`${Math.max(totals.confirmed - totals.checkedIn, 0)} remaining`} />
+            <StatTile label="Email" value={totals.emailSent} meta={`sent · ${totals.emailFailed} failed`} />
+            <StatTile label="WhatsApp" value={totals.whatsappSent} meta={`sent · ${totals.whatsappFailed} failed`} />
           </div>
 
-          <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
-            <div className="card__header">
-              <h3 className="card__title">Revenue by pass</h3>
-              <Badge tone="info" size="sm">{overview.checkIn.rate}% checked in</Badge>
-            </div>
-            <div className="card__body">
-              {overview.byTicketType.length === 0 ? (
-                <EmptyState title="No confirmed registrations yet" message="Revenue breakdown appears once passes are confirmed." />
-              ) : overview.revenue === 0 ? (
-                // Every confirmed pass is free — a bar chart with an all-zero
-                // dataset has no real scale to draw (recharts would otherwise
-                // fabricate a 0-4 axis that reads as currency and misleads).
-                <EmptyState
-                  title="No paid revenue yet"
-                  message={`${overview.registrations.confirmed} confirmed registration${overview.registrations.confirmed === 1 ? '' : 's'}, all on free passes.`}
-                />
-              ) : (
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={overview.byTicketType} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
+          {data.daily.length > 0 && (
+            <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
+              <div className="card__header"><h3 className="card__title">Registrations by date</h3></div>
+              <div className="card__body">
+                <ResponsiveContainer width="100%" height={240}>
+                  <AreaChart data={data.daily} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--ink-100)" vertical={false} />
-                    <XAxis dataKey="name" tick={{ fill: 'var(--ink-500)', fontSize: 12 }} axisLine={{ stroke: 'var(--ink-200)' }} tickLine={false} />
-                    <YAxis tick={{ fill: 'var(--ink-500)', fontSize: 12 }} axisLine={false} tickLine={false} width={64} tickFormatter={(v) => formatCurrency(v)} />
-                    <Tooltip
-                      cursor={{ fill: 'var(--brand-50)' }}
-                      contentStyle={{ border: '1px solid var(--ink-200)', borderRadius: 8, fontSize: 13 }}
-                      formatter={(value) => [formatCurrency(value), 'Revenue']}
-                    />
-                    <Bar dataKey="revenue" fill="var(--brand-600)" radius={[4, 4, 0, 0]} maxBarSize={56} />
-                  </BarChart>
+                    <XAxis dataKey="date" tick={{ fill: 'var(--ink-500)', fontSize: 12 }} axisLine={{ stroke: 'var(--ink-200)' }} tickLine={false} />
+                    <YAxis allowDecimals={false} tick={{ fill: 'var(--ink-500)', fontSize: 12 }} axisLine={false} tickLine={false} width={32} />
+                    <Tooltip contentStyle={{ border: '1px solid var(--ink-200)', borderRadius: 8, fontSize: 13 }} />
+                    <Area type="monotone" dataKey="confirmed" name="Confirmed" stroke="var(--brand-600)" fill="var(--brand-100)" strokeWidth={2} />
+                    <Area type="monotone" dataKey="cancelled" name="Cancelled" stroke="var(--danger-500)" fill="var(--danger-100)" strokeWidth={2} />
+                  </AreaChart>
                 </ResponsiveContainer>
-              )}
+              </div>
             </div>
-          </div>
+          )}
+
+          <ReportTable
+            title="By company"
+            rows={data.companies}
+            empty="No companies with coupons or registrations for this event yet."
+            first={{ label: 'Company', render: (r) => <strong>{r.name}</strong> }}
+          />
+          <ReportTable
+            title="By coupon"
+            rows={data.coupons}
+            empty="No coupons for this event yet."
+            first={{
+              label: 'Coupon',
+              render: (r) => (
+                <>
+                  <strong className="mono">{r.code}</strong>
+                  <span className="sub">{r.companyName}</span>
+                </>
+              ),
+            }}
+            extra={{ label: 'State', render: (r) => <CouponStateBadge state={r.state} /> }}
+          />
         </>
       )}
     </div>
   );
 }
 
-function StatTile({ label, value }) {
+function ReportTable({ title, rows, empty, first, extra }) {
+  return (
+    <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
+      <div className="card__header"><h3 className="card__title">{title}</h3></div>
+      {rows.length === 0 ? (
+        <div className="card__body muted">{empty}</div>
+      ) : (
+        <div className="data-table-wrap" style={{ border: 0, borderRadius: 0 }}>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>{first.label}</th>
+                {extra && <th>{extra.label}</th>}
+                <th>Allocated / used</th>
+                <th className="num">Confirmed</th>
+                <th className="num">Cancelled</th>
+                <th className="num">Checked in</th>
+                <th className="num">Email ✓ / ✕</th>
+                <th className="num">WhatsApp ✓ / ✕</th>
+                <th>Registrations</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.id || 'legacy'}>
+                  <td>{first.render(r)}</td>
+                  {extra && <td>{extra.render(r)}</td>}
+                  <td>{r.allocated > 0 ? <UsageBar used={r.used} allocated={r.allocated} /> : <span className="muted">—</span>}</td>
+                  <td className="num">{r.confirmed}</td>
+                  <td className="num">{r.cancelled}</td>
+                  <td className="num">{r.checkedIn}</td>
+                  <td className="num">{r.emailSent} / {r.emailFailed}</td>
+                  <td className="num">{r.whatsappSent} / {r.whatsappFailed}</td>
+                  <td className="muted" style={{ fontSize: 'var(--text-xs)', whiteSpace: 'nowrap' }}>
+                    {r.firstRegistrationAt ? (
+                      <>
+                        {formatDateTime(r.firstRegistrationAt)}
+                        <br />→ {formatDateTime(r.lastRegistrationAt)}
+                      </>
+                    ) : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatTile({ label, value, meta }) {
   return (
     <div className="stat-tile">
       <p className="stat-tile__label">{label}</p>
       <p className="stat-tile__value">{value}</p>
+      {meta && <p className="stat-tile__meta">{meta}</p>}
     </div>
   );
 }

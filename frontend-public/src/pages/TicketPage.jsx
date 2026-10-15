@@ -38,6 +38,7 @@ export default function TicketPage() {
   const pdfUrl = `${BASE_URL}/api/v1/tickets/${qrToken}/pdf`;
   const certificateUrl = `${BASE_URL}/api/v1/tickets/${qrToken}/certificate.pdf`;
   const eventCompleted = ticket.event.status === 'completed';
+  const isCancelled = ticket.status !== 'confirmed';
 
   return (
     <>
@@ -64,29 +65,45 @@ export default function TicketPage() {
                 <p className="ticket-card__value">{ticket.attendee.name}</p>
                 <p className="ticket-card__label" style={{ marginTop: 12 }}>Pass</p>
                 <p className="ticket-card__value">{ticket.ticketType.name}</p>
-                <p className="ticket-card__label" style={{ marginTop: 12 }}>Reference</p>
+                <p className="ticket-card__label" style={{ marginTop: 12 }}>Registration ID</p>
                 <p className="ticket-card__value">{ticket.registrationCode}</p>
+                {ticket.company?.name && (
+                  <>
+                    <p className="ticket-card__label" style={{ marginTop: 12 }}>Company</p>
+                    <p className="ticket-card__value">{ticket.company.name}</p>
+                  </>
+                )}
+                {ticket.couponCode && (
+                  <>
+                    <p className="ticket-card__label" style={{ marginTop: 12 }}>Coupon</p>
+                    <p className="ticket-card__value">{ticket.couponCode}</p>
+                  </>
+                )}
 
-                <div style={{ marginTop: 20 }}>
-                  {ticket.checkedInAt ? (
-                    <Badge tone="success">Checked in</Badge>
-                  ) : (
-                    <Badge tone="info">Not checked in yet</Badge>
-                  )}
+                <div className="ticket-card__badges">
+                  {isCancelled ? <Badge tone="danger">Cancelled</Badge> : <Badge tone="success">Confirmed</Badge>}
+                  {!isCancelled &&
+                    (ticket.checkedInAt ? (
+                      <Badge tone="success">Checked in</Badge>
+                    ) : (
+                      <Badge tone="info">Not checked in yet</Badge>
+                    ))}
                 </div>
               </div>
 
-              <div className="ticket-card__qr">
+              <div className={isCancelled ? 'ticket-card__qr is-void' : 'ticket-card__qr'}>
                 <img src={qrImageUrl} alt="Ticket QR code" width={180} height={180} />
-                <p>Present this at check-in</p>
+                <p>{isCancelled ? 'This ticket is no longer valid' : 'Present this at check-in'}</p>
               </div>
             </div>
 
             <div className="ticket-card__actions">
-              <Button variant="primary" href={pdfUrl} external>
-                Download PDF ticket
-              </Button>
-              {eventCompleted && (
+              {!isCancelled && (
+                <Button variant="primary" href={pdfUrl} external>
+                  Download PDF ticket
+                </Button>
+              )}
+              {eventCompleted && !isCancelled && (
                 <Button variant="secondary" href={certificateUrl} external>
                   Download certificate
                 </Button>
