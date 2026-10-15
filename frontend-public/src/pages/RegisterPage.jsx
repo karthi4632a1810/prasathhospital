@@ -313,7 +313,7 @@ function PendingPaymentPanel({ registration, onConfirmed, eventSlug }) {
           email: order.attendee?.email,
           contact: order.attendee?.phone,
         },
-        theme: { color: '#96291F' },
+        theme: { color: '#C63F2D' },
       });
 
       const verifyRes = await api.verifyPayment({

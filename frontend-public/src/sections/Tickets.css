@@ -15,10 +15,12 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  background: var(--white);
-  border: 1px solid var(--ink-200);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.015));
+  border: 1px solid var(--line);
   border-radius: var(--radius-xl);
-  padding: var(--space-6);
+  padding: var(--space-7) var(--space-6) var(--space-6);
+  box-shadow: var(--edge-light), var(--shadow-sm);
+  backdrop-filter: var(--glass-blur);
   /* transform is owned by the JS tilt effect (useTilt) on this element —
      left out of the transition list here so it doesn't fight that. */
   transition: box-shadow var(--transition), border-color var(--transition);
@@ -26,18 +28,25 @@
 }
 
 .ticket:hover:not(.is-unavailable) {
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--edge-light), var(--shadow-lg);
   border-color: var(--ink-300);
 }
 
 .ticket--featured {
-  border-color: var(--accent-500);
-  box-shadow: 0 0 0 1px var(--accent-500), var(--shadow-md);
+  border: 1px solid transparent;
+  background:
+    linear-gradient(180deg, rgba(40, 22, 30, 0.95), rgba(14, 18, 38, 0.95)) padding-box,
+    linear-gradient(160deg, #ff8a72, #e5533f 35%, #e2a530 70%, #6f84de) border-box;
+  box-shadow: var(--shadow-lg), 0 0 70px rgba(229, 83, 63, 0.25);
+}
+
+.ticket--featured:hover:not(.is-unavailable) {
+  border-color: transparent;
+  box-shadow: var(--shadow-lg), 0 0 90px rgba(229, 83, 63, 0.38);
 }
 
 .ticket.is-unavailable {
-  opacity: 0.72;
-  background: var(--ink-50);
+  opacity: 0.6;
 }
 
 /* ---------- Ribbon ---------- */
@@ -56,18 +65,20 @@
 }
 
 .ticket__ribbon--accent {
-  background: var(--accent-600);
+  background: var(--grad-red);
   color: var(--white);
+  box-shadow: var(--shadow-brand);
 }
 
 .ticket__ribbon--brand {
-  background: var(--ink-900);
-  color: var(--white);
+  background: var(--grad-gold);
+  color: #2b1d04;
+  box-shadow: var(--shadow-gold);
 }
 
 .ticket__ribbon--success {
   background: var(--success-500);
-  color: var(--white);
+  color: #04301a;
 }
 
 /* ---------- Head ---------- */
@@ -97,16 +108,19 @@
   gap: var(--space-1);
   padding-bottom: var(--space-5);
   margin-bottom: var(--space-5);
-  border-bottom: 1px solid var(--ink-200);
+  border-bottom: 1px solid var(--line);
 }
 
 .ticket__amount {
   font-family: var(--font-display);
-  font-size: var(--text-4xl);
-  font-weight: 650;
-  letter-spacing: -0.03em;
+  font-size: var(--text-5xl);
+  font-weight: 800;
+  letter-spacing: -0.045em;
   font-variant-numeric: tabular-nums;
-  color: var(--ink-900);
+  background: var(--grad-title);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   line-height: 1.1;
 }
 
@@ -191,4 +205,10 @@
   .ticket__amount {
     font-size: var(--text-3xl);
   }
+}
+
+.ticket--featured .ticket__amount {
+  background: linear-gradient(120deg, #ffffff 0%, #ff9c86 60%, #f2c463 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
 }

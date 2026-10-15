@@ -5,8 +5,10 @@
 }
 
 .speaker {
-  background: var(--white);
-  border: 1px solid var(--ink-200);
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+  border: 1px solid var(--line);
+  box-shadow: var(--edge-light), var(--shadow-sm);
   border-radius: var(--radius-xl);
   overflow: hidden;
   /* transform is owned by the JS tilt effect (useTilt) on this element —
@@ -18,7 +20,7 @@
 }
 
 .speaker:hover {
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-lg), 0 0 50px rgba(229, 83, 63, 0.15);
   border-color: var(--accent-300);
 }
 
@@ -32,7 +34,33 @@
   position: relative;
   aspect-ratio: 4 / 5;
   overflow: hidden;
-  background: linear-gradient(155deg, var(--accent-50) 0%, var(--accent-100) 100%);
+  background:
+    radial-gradient(circle at 50% 40%, rgba(229, 83, 63, 0.35), transparent 60%),
+    radial-gradient(circle at 80% 90%, rgba(111, 132, 222, 0.3), transparent 55%),
+    linear-gradient(160deg, #1a2140, #0b1022);
+}
+
+/* Fine concentric rings behind the monogram — a lens/ultrasound echo. */
+.speaker__panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 26px);
+  mask-image: radial-gradient(circle at 50% 42%, #000 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(circle at 50% 42%, #000 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Fade the panel into the card body. */
+.speaker__panel::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 35%;
+  background: linear-gradient(to bottom, transparent, rgba(11, 16, 34, 0.85));
+  pointer-events: none;
 }
 
 .speaker__photo {
@@ -54,10 +82,16 @@
   width: 100%;
   height: 100%;
   font-family: var(--font-display);
-  font-size: 4.25rem;
-  font-weight: 650;
-  letter-spacing: 0.01em;
-  color: var(--accent-600);
+  position: relative;
+  z-index: 1;
+  font-size: 5rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  background: linear-gradient(160deg, #ffffff 20%, #f08672 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 10px 30px rgba(229, 83, 63, 0.45));
   transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -67,6 +101,7 @@
 
 .speaker__flag {
   position: absolute;
+  z-index: 2;
   top: var(--space-4);
   left: var(--space-4);
   box-shadow: var(--shadow-sm);
@@ -91,7 +126,7 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--accent-600);
+  color: var(--accent-700);
   margin-bottom: var(--space-3);
 }
 

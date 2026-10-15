@@ -1,23 +1,27 @@
 .btn {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
   font-family: var(--font-body);
-  font-weight: 600;
+  font-weight: 650;
+  letter-spacing: -0.005em;
   text-align: center;
-  border: 1.5px solid transparent;
-  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
   cursor: pointer;
-  transition: background var(--transition), color var(--transition),
-    border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+  transition: background var(--transition), color var(--transition), border-color var(--transition),
+    transform var(--transition), box-shadow var(--transition), filter var(--transition);
   white-space: nowrap;
   text-decoration: none;
   line-height: 1;
 }
 
 .btn:hover:not(.is-disabled):not(:disabled) {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .btn:active:not(.is-disabled):not(:disabled) {
@@ -26,7 +30,7 @@
 
 .btn.is-disabled,
 .btn:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
   transform: none !important;
 }
@@ -34,21 +38,21 @@
 /* ---------- Sizes ---------- */
 
 .btn--sm {
-  padding: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-5);
   font-size: var(--text-sm);
-  min-height: 38px;
+  min-height: 40px;
 }
 
 .btn--md {
-  padding: var(--space-3) var(--space-6);
+  padding: var(--space-3) var(--space-7);
   font-size: var(--text-base);
-  min-height: 46px;
+  min-height: 48px;
 }
 
 .btn--lg {
-  padding: var(--space-4) var(--space-8);
+  padding: var(--space-4) var(--space-10);
   font-size: var(--text-lg);
-  min-height: 56px;
+  min-height: 58px;
 }
 
 .btn--full {
@@ -56,43 +60,62 @@
 }
 
 /* ---------- Variants ----------
-   primary  = the monochrome workhorse (form submits, "back to X", retry)
-   accent   = the one indigo highlight, reserved for the actual marketing
-              CTA (Register Now, in the header/hero/sticky bar/final CTA)
-   secondary/ghost = neutral, so the accent stays rare and meaningful */
-
-.btn--primary {
-  background: var(--ink-900);
-  color: var(--white);
-  box-shadow: var(--shadow-sm);
-}
-
-.btn--primary:hover:not(.is-disabled):not(:disabled) {
-  background: var(--ink-800);
-  color: var(--white);
-}
+   accent    = the marketing CTA (Register Now): crest-red gradient + glow
+   primary   = the workhorse: a bright white pill, high contrast on dark
+   secondary = glass, for the quieter second action beside a primary
+   ghost     = text-only */
 
 .btn--accent {
-  background: var(--accent-600);
+  background: var(--grad-red);
   color: var(--white);
-  box-shadow: var(--shadow-brand);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: var(--shadow-brand), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+/* A slow light sweep across the CTA on hover — the "polished metal" cue. */
+.btn--accent::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.28) 50%, transparent 70%);
+  translate: -120% 0;
+  transition: translate 700ms var(--ease-out);
 }
 
 .btn--accent:hover:not(.is-disabled):not(:disabled) {
-  background: var(--accent-700);
   color: var(--white);
+  filter: brightness(1.08);
+  box-shadow: 0 14px 40px rgba(229, 83, 63, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.btn--accent:hover:not(.is-disabled):not(:disabled)::after {
+  translate: 120% 0;
+}
+
+.btn--primary {
+  background: var(--ink-900);
+  color: var(--bg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.btn--primary:hover:not(.is-disabled):not(:disabled) {
+  background: var(--white);
+  color: var(--bg);
+  box-shadow: 0 10px 30px rgba(255, 255, 255, 0.14);
 }
 
 .btn--secondary {
-  background: var(--white);
-  color: var(--ink-800);
-  border-color: var(--ink-200);
+  background: var(--surface-2);
+  color: var(--ink-900);
+  border-color: var(--ink-300);
+  backdrop-filter: var(--glass-blur);
 }
 
 .btn--secondary:hover:not(.is-disabled):not(:disabled) {
-  background: var(--ink-50);
-  border-color: var(--ink-300);
-  color: var(--ink-900);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: var(--white);
 }
 
 .btn--ghost {
@@ -105,29 +128,29 @@
   color: var(--ink-900);
 }
 
-/* For use on dark hero backgrounds. */
 .btn--outline-light {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
   color: var(--white);
-  border-color: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(6px);
+  border-color: rgba(255, 255, 255, 0.28);
+  backdrop-filter: var(--glass-blur);
 }
 
 .btn--outline-light:hover:not(.is-disabled):not(:disabled) {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: var(--white);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.5);
   color: var(--white);
 }
 
-/* WhatsApp's own brand green — a deliberate, legible exception to the
-   one-accent rule, since it needs to be instantly recognizable as WhatsApp. */
+/* WhatsApp's own brand green — a deliberate exception to the accent rule,
+   since it needs to be instantly recognizable as WhatsApp. */
 .btn--whatsapp {
   background: #25d366;
   color: #04301a;
+  box-shadow: 0 10px 28px rgba(37, 211, 102, 0.25);
 }
 
 .btn--whatsapp:hover:not(.is-disabled):not(:disabled) {
-  background: #1eb955;
+  background: #2fe073;
   color: #04301a;
 }
 

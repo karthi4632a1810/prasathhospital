@@ -60,6 +60,21 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
       ? 'Online — joining link shared on registration'
       : [venue?.name, venue?.city].filter(Boolean).join(', ') || 'Venue to be announced';
 
+  // Headline numbers, all derived from real event data — nothing invented.
+  const days =
+    event.startDate && event.endDate
+      ? Math.round((new Date(event.endDate).setHours(0, 0, 0, 0) - new Date(event.startDate).setHours(0, 0, 0, 0)) / 86400000) + 1
+      : 0;
+  const facultyCount = (event.speakers?.length || 0) + (event.committee?.length || 0);
+  const stats = [
+    event.capacity > 0 && { value: `${event.capacity}+`, label: 'Delegates' },
+    days > 0 && { value: String(days), label: days === 1 ? 'Day' : 'Days' },
+    facultyCount > 0 && { value: String(facultyCount), label: 'Faculty & committee' },
+  ].filter(Boolean);
+
+  // A trailing year in the title ("CIIM 2026") gets its own gradient.
+  const titleMatch = /^(.*?)\s*(\d{4})$/.exec(event.title || '');
+
   return (
     <section className="hero" id="top" style={heroStyle}>
       <div className="hero__glow" aria-hidden="true" />
@@ -75,7 +90,15 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
           <RegistrationStateBadge state={event.registrationState} seatsRemaining={event.seatsRemaining} />
         </div>
 
-        <h1 className="hero__title">{event.title}</h1>
+        <h1 className="hero__title">
+          {titleMatch ? (
+            <>
+              {titleMatch[1]} <span className="hero__title-year">{titleMatch[2]}</span>
+            </>
+          ) : (
+            event.title
+          )}
+        </h1>
 
         {event.tagline && <p className="hero__tagline">{event.tagline}</p>}
 
@@ -133,17 +156,15 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
           </Button>
         </div>
 
-        {event.highlights?.length > 0 && (
-          <ul className="hero__highlights">
-            {event.highlights.slice(0, 4).map((h) => (
-              <li key={h}>
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true">
-                  <path d="m5 12.5 4.5 4.5L19 7.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                {h}
-              </li>
+        {stats.length > 0 && (
+          <dl className="hero__stats">
+            {stats.map((s) => (
+              <div className="hero__stat" key={s.label}>
+                <dt className="hero__stat-label">{s.label}</dt>
+                <dd className="hero__stat-value">{s.value}</dd>
+              </div>
             ))}
-          </ul>
+          </dl>
         )}
 
         {event.registrationClosesAt && event.registrationState === 'open' && (
@@ -151,12 +172,6 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
             Registration closes on {formatDate(event.registrationClosesAt, { weekday: 'short', month: 'short' })}
           </p>
         )}
-      </div>
-
-      <div className="hero__wave" aria-hidden="true">
-        <svg viewBox="0 0 1440 60" preserveAspectRatio="none">
-          <path d="M0 60V28c180 22 360 30 540 22S1080 8 1260 14s180 12 180 12v34H0Z" fill="currentColor" />
-        </svg>
       </div>
     </section>
   );

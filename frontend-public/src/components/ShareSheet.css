@@ -2,8 +2,8 @@
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(15, 26, 36, 0.55);
-  backdrop-filter: blur(3px);
+  background: rgba(3, 5, 12, 0.72);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14,10 +14,11 @@
 .share-sheet {
   width: 100%;
   max-width: 440px;
-  background: var(--white);
+  background: var(--surface-solid);
+  border: 1px solid var(--line);
   border-radius: var(--radius-xl);
   padding: var(--space-6);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-lg), var(--edge-light);
   animation: slide-up 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -80,15 +81,15 @@
 }
 
 .share-option--whatsapp {
-  background: #e7f9ee;
-  border-color: #9fe3bb;
-  color: #0b6b35;
+  background: rgba(37, 211, 102, 0.12);
+  border-color: rgba(37, 211, 102, 0.35);
+  color: #4ade80;
 }
 
 .share-option--whatsapp:hover {
-  background: #d3f4e0;
+  background: rgba(37, 211, 102, 0.2);
   border-color: #25d366;
-  color: #08502a;
+  color: #86efac;
 }
 
 .share-sheet__link {
@@ -111,7 +112,7 @@
 .share-sheet__link button {
   padding: var(--space-3) var(--space-5);
   border: none;
-  background: var(--brand-700);
+  background: var(--grad-red);
   color: var(--white);
   border-radius: var(--radius-md);
   font-weight: 600;
@@ -121,7 +122,7 @@
 }
 
 .share-sheet__link button:hover {
-  background: var(--brand-800);
+  filter: brightness(1.1);
 }
 
 .share-sheet__link button.is-copied {

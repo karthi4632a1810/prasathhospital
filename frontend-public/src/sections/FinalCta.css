@@ -1,8 +1,8 @@
 .final-cta {
   position: relative;
-  background: var(--navy-900);
+  background: transparent;
   color: var(--white);
-  padding-block: var(--space-20);
+  padding-block: var(--space-28);
   text-align: center;
   overflow: hidden;
   isolation: isolate;
@@ -10,14 +10,34 @@
 
 .final-cta__glow {
   position: absolute;
-  bottom: -220px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
-  width: 760px;
-  height: 460px;
-  background: radial-gradient(ellipse, rgba(150, 41, 31, 0.34) 0%, rgba(150, 41, 31, 0) 70%);
+  width: 720px;
+  height: 720px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(229, 83, 63, 0.4), rgba(226, 165, 48, 0.25), rgba(111, 132, 222, 0.35), rgba(229, 83, 63, 0.4));
+  filter: blur(90px);
+  opacity: 0.55;
   pointer-events: none;
   z-index: -1;
+  animation: final-cta-spin 22s linear infinite;
+}
+
+@keyframes final-cta-spin {
+  to { rotate: 360deg; }
+}
+
+/* Hairline glow across the top edge of the band. */
+.final-cta::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  translate: -50% 0;
+  width: min(900px, 90%);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(229, 83, 63, 0.7), transparent);
 }
 
 .final-cta__inner {
@@ -25,15 +45,21 @@
 }
 
 .final-cta__title {
-  font-size: var(--text-4xl);
-  color: var(--white);
-  margin-bottom: var(--space-4);
+  font-size: clamp(2.5rem, 5.5vw, 4.5rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  margin-bottom: var(--space-5);
+  background: linear-gradient(180deg, #ffffff 35%, #b9c2d8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .final-cta__text {
   font-size: var(--text-lg);
-  color: rgba(255, 255, 255, 0.85);
-  margin-bottom: var(--space-8);
+  color: var(--ink-700);
+  margin-bottom: var(--space-10);
 }
 
 .final-cta__actions {
@@ -46,7 +72,7 @@
 .final-cta__scarcity {
   font-size: var(--text-sm);
   font-weight: 600;
-  color: var(--accent-300);
+  color: var(--gold-600);
 }
 
 @media (max-width: 640px) {

@@ -1,81 +1,92 @@
 /* ==========================================================================
    Design tokens — Prashanth Hospitals event platform
-   Theme taken from the real Prashanth Hospitals crest, which has three
-   colors with three distinct jobs — not one flat accent:
-     - Crest red (the "Prashanth" wordmark + left shield half): the one
-       CTA/link/highlight accent, same role indigo/orange played before.
-     - Crest navy (right shield half): the dark foundation for full-bleed
-       sections (hero, footer, announcement bar) instead of near-black, plus
-       a lighter tint for secondary UI chips (e.g. the organising committee).
-     - Crest gold (the sunburst): reserved ONLY for small "live/signal"
-       touches — the tele-surgery badge, star ratings. Never ordinary UI
-       chrome, so it stays rare and keeps its impact.
-   --brand-* and --accent-* still share the same ramp (one accent, two names
-   used across older code) so no component needs to change which it reads.
+   Immersive dark luxury, built on the Prashanth Hospitals crest's three
+   colors (red, navy, gold).
+
+   Every color ramp is a *dark-mode* scale that keeps each step's ROLE from
+   the light theme it replaced: low steps (50-200) are faint fills and
+   hairline borders, high steps (600-900) are foreground text. That's what
+   lets components written against the old light scale ("text in ink-900,
+   border in ink-200, tint in accent-50") render correctly on a dark page
+   without each one being rewritten — only the handful that used a step
+   outside its role (e.g. a dark text step as a button fill) needed fixing.
    ========================================================================== */
 
 :root {
-  /* Crest red — the one accent, used for both --brand-* and --accent-*. */
-  --brand-900: #3d100d;
-  --brand-800: #5c1813;
-  --brand-700: #7a211a;
-  --brand-600: #96291f;
-  --brand-500: #b33a2c;
-  --brand-300: #dd8c7c;
-  --brand-100: #f5d9d1;
-  --brand-50: #fbeeea;
+  color-scheme: dark;
 
-  --accent-700: #7a211a;
-  --accent-600: #96291f;
-  --accent-500: #b33a2c;
-  --accent-300: #dd8c7c;
-  --accent-100: #f5d9d1;
-  --accent-50: #fbeeea;
+  /* ---------- Foundations ---------- */
+  --bg: #070b18; /* page base — deep midnight navy */
+  --surface: rgba(255, 255, 255, 0.035); /* glass card */
+  --surface-2: rgba(255, 255, 255, 0.065); /* raised / hovered glass */
+  --surface-solid: #0e1428; /* opaque panel (drawers, sheets, sticky bars) */
+  --line: rgba(255, 255, 255, 0.09);
+  --glass-blur: blur(18px) saturate(140%);
 
-  /* Crest navy — the dark foundation for full-bleed sections, plus a
-     lighter tint (--navy-700/600/100) for secondary UI chips. */
-  --navy-900: #10152b;
-  --navy-700: #22305e;
-  --navy-600: #2c3c72;
-  --navy-100: #e3e6f2;
+  --grad-crest: linear-gradient(120deg, #e5533f 0%, #e2a530 50%, #6f84de 100%);
+  --grad-red: linear-gradient(135deg, #ea5b46 0%, #b8321f 100%);
+  --grad-gold: linear-gradient(135deg, #f6d27a 0%, #e2a530 55%, #b9770f 100%);
+  --grad-title: linear-gradient(180deg, #ffffff 0%, #c7cee0 100%);
 
-  /* Crest gold — reserved for rare "live" highlights only: the tele-surgery
-     badge, star ratings. Kept out of ordinary buttons/links so it stays
-     special when it does appear. */
-  --gold-600: #b9770f;
+  /* ---------- Crest red — the one accent (--brand-* and --accent-* share it) */
+  --brand-900: #fbd3cb;
+  --brand-800: #f5a495;
+  --brand-700: #f08672; /* readable red/coral for text on dark */
+  --brand-600: #c63f2d; /* solid fills (white text passes contrast) */
+  --brand-500: #e5533f; /* vivid — dots, borders, glows */
+  --brand-300: rgba(229, 83, 63, 0.45);
+  --brand-100: rgba(229, 83, 63, 0.16);
+  --brand-50: rgba(229, 83, 63, 0.08);
+
+  --accent-900: #fbd3cb;
+  --accent-800: #f5a495;
+  --accent-700: #f08672;
+  --accent-600: #c63f2d;
+  --accent-500: #e5533f;
+  --accent-300: rgba(229, 83, 63, 0.45);
+  --accent-100: rgba(229, 83, 63, 0.16);
+  --accent-50: rgba(229, 83, 63, 0.08);
+
+  /* ---------- Crest navy — dark bands, plus a periwinkle tint for chips */
+  --navy-900: #0a0f21;
+  --navy-700: #aab6ec;
+  --navy-600: #6f84de;
+  --navy-100: rgba(111, 132, 222, 0.16);
+
+  /* ---------- Crest gold — reserved for rare "live" highlights only */
+  --gold-600: #f2c463;
   --gold-500: #e2a530;
-  --gold-100: #fbedd2;
+  --gold-100: rgba(226, 165, 48, 0.15);
 
-  /* Muted, de-emphasized — used only to distinguish one agenda category;
-     deliberately closer to neutral than a competing hue. */
-  --teal-600: #5b6472;
-  --teal-100: #edeff2;
+  /* Muted, de-emphasized — one agenda category only */
+  --teal-600: #9aa3b8;
+  --teal-100: rgba(255, 255, 255, 0.06);
 
-  /* Neutrals — near-monochrome base */
-  --ink-900: #101114;
-  --ink-800: #1a1b1f;
-  --ink-700: #2e3038;
-  --ink-600: #4b4e57;
-  --ink-500: #6b6f79;
-  --ink-400: #9296a1;
-  --ink-300: #c1c4cb;
-  --ink-200: #e1e3e8;
-  --ink-100: #eff0f3;
-  --ink-50: #f8f9fb;
+  /* ---------- Neutrals (dark scale: 900 = brightest text, 50 = faintest fill) */
+  --ink-900: #f4f6fb;
+  --ink-800: #e3e7f0;
+  --ink-700: #c3c9d8;
+  --ink-600: #9aa3b8;
+  --ink-500: #7b8499;
+  --ink-400: #5b6479;
+  --ink-300: rgba(255, 255, 255, 0.18);
+  --ink-200: rgba(255, 255, 255, 0.1);
+  --ink-100: rgba(255, 255, 255, 0.06);
+  --ink-50: rgba(255, 255, 255, 0.03);
   --white: #ffffff;
 
-  /* Status — functional, kept distinct from the brand accent */
-  --success-700: #15803d;
+  /* ---------- Status (tints + readable foregrounds) */
+  --success-700: #4ade80;
   --success-500: #22c55e;
-  --success-100: #dcfce7;
-  --warning-700: #b45309;
+  --success-100: rgba(34, 197, 94, 0.15);
+  --warning-700: #fbbf24;
   --warning-500: #f59e0b;
-  --warning-100: #fef3c7;
-  --danger-700: #b91c1c;
+  --warning-100: rgba(245, 158, 11, 0.15);
+  --danger-700: #f87171;
   --danger-500: #ef4444;
-  --danger-100: #fee2e2;
+  --danger-100: rgba(239, 68, 68, 0.15);
 
-  /* Typography — one family throughout, hierarchy via weight/size/tracking */
+  /* ---------- Typography */
   --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
@@ -87,51 +98,58 @@
   --text-2xl: 1.5rem;
   --text-3xl: 1.875rem;
   --text-4xl: 2.25rem;
-  --text-5xl: 2.75rem;
-  --text-6xl: 3.25rem;
+  --text-5xl: 3rem;
+  --text-6xl: 4rem;
 
-  /* Spacing */
+  /* ---------- Spacing */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
   --space-4: 1rem;
   --space-5: 1.25rem;
   --space-6: 1.5rem;
+  --space-7: 1.75rem;
   --space-8: 2rem;
   --space-10: 2.5rem;
   --space-12: 3rem;
+  --space-14: 3.5rem;
   --space-16: 4rem;
   --space-20: 5rem;
   --space-24: 6rem;
+  --space-28: 7rem;
 
-  /* Radii — tighter than a "pill everything" system */
+  /* ---------- Radii */
   --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
   --radius-full: 999px;
 
-  /* Elevation — soft and restrained */
-  --shadow-xs: 0 1px 2px rgba(16, 17, 20, 0.04);
-  --shadow-sm: 0 1px 3px rgba(16, 17, 20, 0.06), 0 1px 2px rgba(16, 17, 20, 0.04);
-  --shadow-md: 0 4px 16px rgba(16, 17, 20, 0.06);
-  --shadow-lg: 0 12px 32px rgba(16, 17, 20, 0.10);
-  --shadow-brand: 0 8px 20px rgba(150, 41, 31, 0.24);
+  /* ---------- Elevation — deeper on dark, plus colored glows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 14px 34px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 28px 64px rgba(0, 0, 0, 0.55);
+  --shadow-brand: 0 10px 32px rgba(229, 83, 63, 0.38);
+  --shadow-gold: 0 10px 32px rgba(226, 165, 48, 0.3);
+  /* the 1px top-edge highlight that makes glass read as glass */
+  --edge-light: inset 0 1px 0 rgba(255, 255, 255, 0.07);
 
-  /* Layout */
+  /* ---------- Layout */
   --container-max: 1180px;
   --container-pad: var(--space-6);
-  --header-height: 68px;
+  --header-height: 72px;
 
-  --transition: 140ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: 160ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (max-width: 640px) {
   :root {
     --container-pad: var(--space-4);
     --text-5xl: 2.25rem;
-    --text-6xl: 2.5rem;
-    --header-height: 58px;
+    --text-6xl: 2.75rem;
+    --header-height: 60px;
   }
 }
 

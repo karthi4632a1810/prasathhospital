@@ -179,6 +179,7 @@ function serializeEventForPublic(event) {
     registrationClosesAt: event.registrationClosesAt,
 
     registrationState: event.registrationState,
+    capacity: event.capacity || 0,
     seatsRemaining: event.seatsRemaining,
     isSoldOut: event.isSoldOut,
 

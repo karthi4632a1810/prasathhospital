@@ -24,6 +24,7 @@ import FinalCta from '../sections/FinalCta';
 import { api } from '../lib/api';
 import { useSeo } from '../lib/useSeo';
 import { captureCampaign, withCampaignParams } from '../lib/campaign';
+import { useRevealOnScroll } from '../lib/useRevealOnScroll';
 
 const DEFAULT_SLUG = import.meta.env.VITE_DEFAULT_EVENT_SLUG || 'fertility-gynaecology-summit-2026';
 
@@ -69,6 +70,7 @@ export default function EventMicrosite() {
   const ticketTypes = state.data?.ticketTypes || [];
 
   useSeo(event?.seo, event?.jsonLd);
+  useRevealOnScroll(state.status === 'ready');
 
   const canRegister = event?.registrationState === 'open';
 

@@ -10,16 +10,19 @@
 }
 
 .faq-item {
-  border: 1px solid var(--ink-200);
+  border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  background: var(--white);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+  box-shadow: var(--edge-light);
+  backdrop-filter: var(--glass-blur);
   overflow: hidden;
   transition: border-color var(--transition), box-shadow var(--transition);
 }
 
 .faq-item.is-open {
   border-color: var(--brand-300);
-  box-shadow: var(--shadow-sm);
+  background: linear-gradient(180deg, rgba(229, 83, 63, 0.09), rgba(255, 255, 255, 0.015));
+  box-shadow: var(--edge-light), var(--shadow-md), 0 0 40px rgba(229, 83, 63, 0.1);
 }
 
 .faq-item__heading {
@@ -50,8 +53,15 @@
 
 .faq-item__icon {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent-100);
+  border: 1px solid rgba(229, 83, 63, 0.3);
   flex-shrink: 0;
-  color: var(--brand-600);
+  color: var(--accent-700);
   transition: transform var(--transition);
 }
 
@@ -73,11 +83,17 @@
 /* ---------- Contact block ---------- */
 
 .faq__contact {
-  margin-top: var(--space-10);
-  padding: var(--space-8);
-  background: var(--brand-50);
-  border: 1px solid var(--brand-100);
-  border-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
+  margin-top: var(--space-12);
+  padding: var(--space-10) var(--space-8);
+  border: 1px solid transparent;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(229, 83, 63, 0.22), transparent 65%) padding-box,
+    linear-gradient(180deg, #141b35, #0b1022) padding-box,
+    linear-gradient(135deg, rgba(229, 83, 63, 0.6), rgba(226, 165, 48, 0.35), rgba(111, 132, 222, 0.4)) border-box;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
   text-align: center;
 }
 
@@ -104,18 +120,19 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-5);
-  background: var(--white);
-  border: 1px solid var(--ink-200);
+  background: var(--surface-2);
+  border: 1px solid var(--ink-300);
   border-radius: var(--radius-full);
   font-size: var(--text-sm);
   font-weight: 600;
-  color: var(--ink-700);
+  color: var(--ink-900);
   transition: all var(--transition);
 }
 
 .faq__contact-link:hover {
   border-color: var(--brand-500);
-  color: var(--brand-700);
+  color: var(--white);
+  box-shadow: 0 0 24px rgba(229, 83, 63, 0.25);
   transform: translateY(-1px);
 }
 

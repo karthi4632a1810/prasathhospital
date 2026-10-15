@@ -33,17 +33,18 @@
   min-width: 190px;
   min-height: 92px;
   padding: var(--space-4) var(--space-6);
-  background: var(--white);
-  border: 1px solid var(--ink-200);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015));
+  border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  border-top: 3px solid var(--ink-200);
-  box-shadow: var(--shadow-xs);
+  border-top: 2px solid var(--ink-300);
+  box-shadow: var(--edge-light), var(--shadow-sm);
+  backdrop-filter: var(--glass-blur);
   transition: border-color var(--transition), box-shadow var(--transition);
   will-change: transform;
 }
 
 .sponsors__item:hover {
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--edge-light), var(--shadow-md);
 }
 
 .sponsors__item a {
@@ -61,8 +62,8 @@
 }
 
 .sponsors__name {
-  font-weight: 600;
-  color: var(--ink-700);
+  font-weight: 650;
+  color: var(--ink-800);
   text-align: center;
   font-size: var(--text-sm);
   line-height: 1.35;
@@ -76,6 +77,7 @@
 }
 .sponsors__item--platinum:hover {
   border-color: var(--navy-600);
+  box-shadow: var(--edge-light), var(--shadow-md), 0 0 36px rgba(111, 132, 222, 0.22);
 }
 
 .sponsors__item--gold {
@@ -83,6 +85,7 @@
 }
 .sponsors__item--gold:hover {
   border-color: var(--gold-500);
+  box-shadow: var(--edge-light), var(--shadow-md), 0 0 36px rgba(226, 165, 48, 0.2);
 }
 .sponsors__item--gold .sponsors__name {
   color: var(--gold-600);
@@ -122,10 +125,11 @@
   border: none;
   border-radius: var(--radius-xl);
   background:
-    linear-gradient(var(--white), var(--white)) padding-box,
+    radial-gradient(ellipse at 50% 120%, rgba(229, 83, 63, 0.28), transparent 60%) padding-box,
+    linear-gradient(180deg, #161d38, #0c1124) padding-box,
     linear-gradient(135deg, var(--accent-500), var(--gold-500), var(--navy-600)) border-box;
-  border: 2px solid transparent;
-  box-shadow: var(--shadow-md);
+  border: 1.5px solid transparent;
+  box-shadow: var(--shadow-lg), 0 0 70px rgba(229, 83, 63, 0.18);
 }
 
 .sponsors__item--title::before {
@@ -134,8 +138,9 @@
   top: var(--space-4);
   left: 50%;
   transform: translateX(-50%);
-  background: var(--navy-900);
-  color: var(--white);
+  background: var(--grad-gold);
+  color: #2b1d04;
+  box-shadow: var(--shadow-gold);
   font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -146,9 +151,13 @@
 
 .sponsors__item--title .sponsors__name {
   font-family: var(--font-display);
-  font-size: var(--text-2xl);
-  font-weight: 650;
-  color: var(--accent-700);
+  font-size: var(--text-3xl);
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  background: linear-gradient(120deg, #ffffff 0%, #ff9c86 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   margin-top: var(--space-3);
 }
 

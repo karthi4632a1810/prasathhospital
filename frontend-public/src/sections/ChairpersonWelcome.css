@@ -1,84 +1,141 @@
 .chairperson-welcome__grid {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(240px, 340px) minmax(0, 1fr);
-  gap: var(--space-12);
+  grid-template-columns: minmax(240px, 360px) minmax(0, 1fr);
+  gap: var(--space-14);
   align-items: center;
+  padding: var(--space-12);
+  border-radius: 28px;
+  /* gradient hairline border via the padding-box/border-box trick */
+  border: 1px solid transparent;
+  background:
+    linear-gradient(160deg, rgba(20, 28, 54, 0.92), rgba(10, 15, 33, 0.92)) padding-box,
+    linear-gradient(135deg, rgba(229, 83, 63, 0.55), rgba(226, 165, 48, 0.35) 40%, rgba(111, 132, 222, 0.35)) border-box;
+  box-shadow: var(--shadow-lg), var(--edge-light);
+  overflow: hidden;
+}
+
+/* A soft red bloom behind the portrait side. */
+.chairperson-welcome__grid::before {
+  content: '';
+  position: absolute;
+  top: -200px;
+  left: -160px;
+  width: 560px;
+  height: 560px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(229, 83, 63, 0.22), transparent 65%);
+  pointer-events: none;
 }
 
 .chairperson-welcome__photo-wrap {
   position: relative;
-}
-
-.chairperson-welcome__photo-wrap::before {
-  content: '';
-  position: absolute;
-  inset: var(--space-4) calc(var(--space-4) * -1) calc(var(--space-4) * -1) var(--space-4);
-  background: var(--accent-50);
-  border-radius: var(--radius-xl);
-  z-index: 0;
+  padding: 6px;
+  border-radius: 24px;
+  background: var(--grad-crest);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 0 0 60px rgba(229, 83, 63, 0.18);
 }
 
 .chairperson-welcome__photo {
   position: relative;
-  z-index: 1;
   display: block;
   width: 100%;
   aspect-ratio: 4 / 5;
   object-fit: cover;
   object-position: top center;
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
+  border-radius: 19px;
+  background: #f6e9ee;
 }
 
 .chairperson-welcome__content {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
 }
 
+/* An oversized decorative quotation mark behind the message. */
+.chairperson-welcome__content::before {
+  content: '\201C';
+  position: absolute;
+  top: -80px;
+  right: -10px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 260px;
+  line-height: 1;
+  background: var(--grad-red);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  opacity: 0.22;
+  pointer-events: none;
+}
+
 .chairperson-welcome__content .section-eyebrow {
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-5);
 }
 
 .chairperson-welcome__paragraph {
-  font-size: var(--text-xl);
-  color: var(--ink-800);
-  line-height: 1.7;
+  position: relative;
+  font-size: var(--text-lg);
+  color: var(--ink-700);
+  line-height: 1.8;
   margin-bottom: var(--space-5);
 }
 
 .chairperson-welcome__paragraph:first-of-type {
-  font-family: var(--font-display);
+  font-size: clamp(1.2rem, 1.7vw, 1.45rem);
   font-weight: 500;
+  line-height: 1.6;
   color: var(--ink-900);
 }
 
 .chairperson-welcome__byline {
+  position: relative;
   margin-top: var(--space-4);
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--ink-200);
+  padding-top: var(--space-6);
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+}
+
+.chairperson-welcome__byline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 64px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--grad-crest);
 }
 
 .chairperson-welcome__byline strong {
   font-family: var(--font-display);
-  font-size: var(--text-lg);
-  font-weight: 650;
-  color: var(--accent-700);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--white);
 }
 
 .chairperson-welcome__byline span {
   font-size: var(--text-sm);
-  color: var(--ink-600);
+  color: var(--gold-600);
+}
+
+@media (max-width: 960px) {
+  .chairperson-welcome__grid {
+    gap: var(--space-10);
+    padding: var(--space-10) var(--space-8);
+  }
 }
 
 @media (max-width: 860px) {
   .chairperson-welcome__grid {
     grid-template-columns: 1fr;
-    gap: var(--space-8);
+    padding: var(--space-8) var(--space-5);
+    border-radius: var(--radius-xl);
   }
 
   .chairperson-welcome__photo-wrap {
@@ -91,11 +148,23 @@
     text-align: center;
   }
 
+  .chairperson-welcome__content::before {
+    top: -60px;
+    right: 50%;
+    transform: translateX(50%);
+    font-size: 200px;
+  }
+
   .chairperson-welcome__paragraph {
-    font-size: var(--text-lg);
+    font-size: var(--text-base);
   }
 
   .chairperson-welcome__byline {
     align-items: center;
+  }
+
+  .chairperson-welcome__byline::before {
+    left: 50%;
+    transform: translateX(-50%);
   }
 }

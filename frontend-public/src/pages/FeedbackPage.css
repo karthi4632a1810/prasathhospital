@@ -1,7 +1,6 @@
 .feedback-page {
   min-height: 60vh;
   padding-block: var(--space-16);
-  background: var(--ink-50);
 }
 
 .feedback-page__grid {
@@ -9,11 +8,12 @@
 }
 
 .feedback-card {
-  background: var(--white);
-  border: 1px solid var(--ink-200);
-  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--line);
+  backdrop-filter: var(--glass-blur);
+  border-radius: var(--radius-xl);
   padding: var(--space-8);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--edge-light), var(--shadow-lg);
 }
 
 .feedback-card--success {
@@ -37,7 +37,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--accent-600);
+  color: var(--gold-600);
   margin-bottom: var(--space-2);
 }
 
@@ -63,7 +63,7 @@
   border: none;
   font-size: 44px;
   line-height: 1;
-  color: var(--ink-200);
+  color: var(--ink-400);
   cursor: pointer;
   transition: color var(--transition), transform var(--transition);
   padding: 0;
@@ -75,6 +75,7 @@
 
 .star-rating__star.is-filled {
   color: var(--gold-500);
+  text-shadow: 0 0 18px rgba(226, 165, 48, 0.6);
 }
 
 .feedback-field {
@@ -93,8 +94,10 @@
 .feedback-field textarea {
   font: inherit;
   padding: var(--space-3) var(--space-4);
-  border: 1.5px solid var(--ink-200);
+  border: 1px solid var(--ink-300);
   border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink-900);
   resize: vertical;
 }
 

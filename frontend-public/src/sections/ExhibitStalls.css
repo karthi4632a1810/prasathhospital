@@ -15,8 +15,11 @@
 }
 
 .exhibit-stall {
-  background: var(--white);
-  border: 1px solid var(--ink-200);
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015));
+  border: 1px solid var(--line);
+  box-shadow: var(--edge-light), var(--shadow-sm);
+  backdrop-filter: var(--glass-blur);
   border-radius: var(--radius-xl);
   padding: var(--space-6);
   text-align: center;
@@ -24,8 +27,8 @@
 }
 
 .exhibit-stall:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+  box-shadow: var(--edge-light), var(--shadow-lg);
   border-color: var(--ink-300);
 }
 
@@ -40,10 +43,13 @@
 
 .exhibit-stall__price {
   font-family: var(--font-display);
-  font-size: var(--text-3xl);
-  font-weight: 650;
-  letter-spacing: -0.02em;
-  color: var(--ink-900);
+  font-size: var(--text-4xl);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  background: var(--grad-title);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .exhibit-stall__regs {
@@ -64,20 +70,36 @@
   font-size: var(--text-sm);
   color: var(--ink-600);
   padding-top: var(--space-2);
-  border-top: 1px solid var(--ink-100);
+  border-top: 1px solid var(--line);
 }
 
 .exhibit-stall--platinum {
-  border-color: var(--accent-500);
-  box-shadow: 0 0 0 1px var(--accent-500), var(--shadow-sm);
+  border: 1px solid transparent;
+  background:
+    linear-gradient(180deg, rgba(40, 22, 30, 0.95), rgba(14, 18, 38, 0.95)) padding-box,
+    linear-gradient(160deg, #ff8a72, #e5533f 35%, #e2a530 70%, #6f84de) border-box;
+  box-shadow: var(--shadow-lg), 0 0 60px rgba(229, 83, 63, 0.22);
 }
 
 .exhibit-stall--platinum .exhibit-stall__price {
-  color: var(--accent-700);
+  background: linear-gradient(120deg, #ffffff 0%, #ff9c86 60%, #f2c463 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.exhibit-stall--gold .exhibit-stall__price {
+  background: var(--grad-gold);
+  -webkit-background-clip: text;
+  background-clip: text;
 }
 
 .exhibit-stalls__cta {
   display: flex;
   justify-content: center;
   margin-top: var(--space-10);
+}
+
+.exhibit-stall--platinum:hover {
+  border-color: transparent;
+  box-shadow: var(--shadow-lg), 0 0 80px rgba(229, 83, 63, 0.32);
 }

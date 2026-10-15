@@ -1,6 +1,20 @@
 .site-footer {
-  background: var(--navy-900);
+  position: relative;
+  background: rgba(4, 7, 16, 0.75);
+  border-top: 1px solid var(--line);
   color: rgba(255, 255, 255, 0.82);
+}
+
+.site-footer::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  translate: -50% 0;
+  width: min(700px, 80%);
+  height: 1px;
+  background: var(--grad-crest);
+  opacity: 0.7;
 }
 
 .site-footer__inner {
@@ -66,7 +80,7 @@
 
 .site-footer__contact a {
   font-size: var(--text-sm);
-  color: var(--brand-300);
+  color: var(--accent-700);
 }
 
 .site-footer__contact a:hover {
@@ -96,7 +110,7 @@
   font-family: var(--font-display);
   font-style: italic;
   font-size: var(--text-sm) !important;
-  color: var(--accent-300) !important;
+  color: var(--gold-600) !important;
 }
 
 @media (max-width: 768px) {
