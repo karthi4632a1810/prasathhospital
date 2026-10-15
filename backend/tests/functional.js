@@ -439,6 +439,34 @@ async function main() {
     eq(acmeCoupon.state, 'active', 'state');
   });
 
+  await test('generate-code: unique, prefixed with the company name', async () => {
+    expectStatus(await get('/admin/coupons/generate-code', manager.token), 400, 'no company: ');
+    expectStatus(await get(`/admin/coupons/generate-code?company=${ZERO_ID}`, manager.token), 404, 'unknown company: ');
+    expectStatus(await get(`/admin/coupons/generate-code?company=${acme.id}`, staff.token), 403, 'staff: ');
+    const codes = new Set();
+    for (let i = 0; i < 15; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      const r = expectStatus(await get(`/admin/coupons/generate-code?company=${acme.id}`, manager.token), 200);
+      assert(/^FT-[A-Z0-9]{6}$/.test(r.body.data.code) || /^FTACME/.test(r.body.data.code), `format ${r.body.data.code}`);
+      codes.add(r.body.data.code);
+    }
+    eq(codes.size, 15, 'distinct codes');
+  });
+
+  await test('creating a coupon with a blank code generates a unique one', async () => {
+    const a = expectStatus(await post('/admin/coupons', { event: eventId, company: globex.id, code: '', maxAllowedRegistrations: 2 }, manager.token), 201).body.data;
+    const b = expectStatus(await post('/admin/coupons', { event: eventId, company: globex.id, maxAllowedRegistrations: 2 }, manager.token), 201).body.data;
+    created.coupons.push(a.id, b.id);
+    assert(/^FTGLOBEX-[A-Z0-9]{6}$/.test(a.code), `format ${a.code}`);
+    assert(a.code !== b.code, 'codes collided');
+    const v = expectStatus(await post('/coupons/validate', { code: a.code.toLowerCase(), eventSlug: evBody.slug, ticketTypeId: passId }), 200);
+    eq(v.body.data.companyName, globex.name, 'generated code validates for its company');
+    const audit = await db.collection('auditlogs').findOne({ entityId: oid(a.id), action: 'coupon.create' });
+    eq(audit?.meta?.generated, true, 'audit marks generated');
+    expectStatus(await del(`/admin/coupons/${a.id}`, manager.token), 200);
+    expectStatus(await del(`/admin/coupons/${b.id}`, manager.token), 200);
+  });
+
   await test('duplicate code (any case) → 409', async () => {
     expectStatus(await post('/admin/coupons', { event: eventId, company: globex.id, code: C('a').toLowerCase(), maxAllowedRegistrations: 1 }, manager.token), 409);
   });

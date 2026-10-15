@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { couponApi } from '../../lib/couponApi';
 import { companyApi } from '../../lib/companyApi';
 import { useEvents, EventSelect } from '../../lib/useEvents';
@@ -191,10 +191,32 @@ function CouponForm({ coupon, eventId, companies, onClose, onSaved }) {
   }));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [generating, setGenerating] = useState(false);
+  const customCode = useRef(false); // true once the admin types their own code
   const used = coupon?.usageCount || 0;
   const locked = used > 0; // code + company frozen once redeemed
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  const generate = useCallback(async (companyId) => {
+    if (!companyId) return;
+    setGenerating(true);
+    try {
+      const res = await couponApi.generateCode(companyId);
+      customCode.current = false;
+      setForm((f) => ({ ...f, code: res.data.code }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setGenerating(false);
+    }
+  }, []);
+
+  // New coupons start with a generated code, and get a fresh one when the
+  // company changes — unless the admin has typed their own.
+  useEffect(() => {
+    if (!coupon && !customCode.current) generate(form.company);
+  }, [coupon, form.company, generate]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -267,19 +289,32 @@ function CouponForm({ coupon, eventId, companies, onClose, onSaved }) {
         <div className="field-row">
           <label className="field">
             <span className="field__label">Coupon code *</span>
-            <input
-              className="field__input mono"
-              required
-              minLength={4}
-              maxLength={32}
-              pattern="[A-Za-z0-9_\-]{4,32}"
-              title="4–32 letters, numbers, - or _"
-              value={form.code}
-              disabled={locked}
-              onChange={(e) => setForm((f) => ({ ...f, code: e.target.value.toUpperCase() }))}
-              autoFocus={!coupon}
-            />
-            <span className="field__hint">4–32 letters, numbers, “-” or “_”.</span>
+            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+              <input
+                className="field__input mono"
+                style={{ flex: 1, minWidth: 0 }}
+                required
+                minLength={4}
+                maxLength={32}
+                pattern="[A-Za-z0-9_\-]{4,32}"
+                title="4–32 letters, numbers, - or _"
+                value={form.code}
+                disabled={locked}
+                placeholder={generating ? 'Generating…' : ''}
+                onChange={(e) => {
+                  customCode.current = true;
+                  setForm((f) => ({ ...f, code: e.target.value.toUpperCase() }));
+                }}
+              />
+              {!locked && (
+                <Button variant="secondary" size="sm" onClick={() => generate(form.company)} disabled={generating || !form.company}>
+                  {generating ? '…' : 'Generate'}
+                </Button>
+              )}
+            </div>
+            <span className="field__hint">
+              {coupon ? '4–32 letters, numbers, “-” or “_”.' : 'Auto-generated and unique for the company. You can edit it or press Generate for another.'}
+            </span>
           </label>
           <label className="field">
             <span className="field__label">Company *</span>

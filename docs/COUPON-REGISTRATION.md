@@ -181,6 +181,7 @@ Existing and unchanged: `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ACCESS_TOKEN`,
 | `POST /api/v1/coupons/validate` | public, rate-limited | `{ code, eventSlug, ticketTypeId }` → `{ valid, code, companyName, originalAmount, discountAmount, finalAmount: 0, currency }` |
 | `GET/POST /api/v1/admin/companies`, `PATCH/DELETE /api/v1/admin/companies/:id` | superadmin, manager | Delete only if unused; otherwise deactivate |
 | `GET/POST /api/v1/admin/coupons`, `PATCH/DELETE /api/v1/admin/coupons/:id` | superadmin, manager | Filters: `event`, `company`, `state`, `q`. Delete only if never used |
+| `GET /api/v1/admin/coupons/generate-code?company=` | superadmin, manager | Fresh unique code prefixed with the company name, e.g. `YAMAHA-7KQ93X`. Creating a coupon with a blank `code` also generates one |
 | `GET /api/v1/admin/registrations/export.csv` | superadmin, manager | Same filters as the list |
 | `POST /api/v1/admin/registrations/:id/deliveries/:channel` | superadmin, manager | `channel` = `email` \| `whatsapp`; returns the outcome + updated registration |
 | `GET /api/v1/admin/reports/breakdown` | superadmin, manager | Company and coupon tables + daily counts; `from`/`to` |

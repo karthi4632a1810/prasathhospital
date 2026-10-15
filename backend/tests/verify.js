@@ -435,6 +435,7 @@ const base = 'http://127.0.0.1:5099';
     ['POST', '/api/v1/admin/coupons'],
     ['PATCH', '/api/v1/admin/coupons/000000000000000000000000'],
     ['DELETE', '/api/v1/admin/coupons/000000000000000000000000'],
+    ['GET', '/api/v1/admin/coupons/generate-code'],
     ['GET', '/api/v1/admin/registrations'],
     ['GET', '/api/v1/admin/registrations/000000000000000000000000'],
     ['PATCH', '/api/v1/admin/registrations/000000000000000000000000'],
@@ -767,6 +768,38 @@ const base = 'http://127.0.0.1:5099';
   check('GET /api/v1/admin/checkin/events without a token -> 401', () => {
     assert(r.res.status === 401, 'status ' + r.res.status);
     return 'guarded';
+  });
+
+  console.log('\n=== 16. Coupon code generation ===');
+
+  const { buildCode, companyPrefix, ALPHABET } = require('../src/services/couponCode');
+
+  check('prefix comes from the company name', () => {
+    assert(companyPrefix('Yamaha Motor India') === 'YAMAHA', companyPrefix('Yamaha Motor India'));
+    assert(companyPrefix('Bajaj Auto') === 'BAJAJ', companyPrefix('Bajaj Auto'));
+    assert(companyPrefix('L&T Finance') === 'LTFINANC', companyPrefix('L&T Finance'));
+    assert(companyPrefix('Tata-Steel Ltd.') === 'TATA', companyPrefix('Tata-Steel Ltd.'));
+    assert(companyPrefix('!!!') === 'CPN', companyPrefix('!!!'));
+    return 'YAMAHA / BAJAJ / LTFINANC / TATA / CPN';
+  });
+
+  check('generated codes are valid coupon codes with no look-alike characters', () => {
+    for (let i = 0; i < 200; i += 1) {
+      const code = buildCode('Yamaha Motor India');
+      assert(/^YAMAHA-[A-Z0-9]{6}$/.test(code), code);
+      assert(!/[01OIL]/.test(code.split('-')[1]), 'look-alike in ' + code);
+      const c = new Coupon({ event: new mongoose.Types.ObjectId(), company: new mongoose.Types.ObjectId(), code, maxAllowedRegistrations: 1 });
+      assert(!c.validateSync(), 'model rejected ' + code);
+    }
+    assert(!/[01OIL]/.test(ALPHABET), 'alphabet');
+    return 'e.g. ' + buildCode('Bajaj Auto');
+  });
+
+  check('10,000 generated codes are all distinct', () => {
+    const seen = new Set();
+    for (let i = 0; i < 10000; i += 1) seen.add(buildCode('Yamaha'));
+    assert(seen.size === 10000, 'collisions: ' + (10000 - seen.size));
+    return '10000 unique';
   });
 
   server.close();

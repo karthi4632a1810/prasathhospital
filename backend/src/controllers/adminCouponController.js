@@ -7,6 +7,7 @@ const Registration = require('../models/Registration');
 const ApiError = require('../utils/ApiError');
 const { sendSuccess, asyncHandler } = require('../utils/response');
 const { recordAudit } = require('../services/auditLog');
+const { generateUniqueCouponCode } = require('../services/couponCode');
 
 const CODE_RE = /^[A-Z0-9_-]{4,32}$/;
 
@@ -109,7 +110,6 @@ const createCoupon = asyncHandler(async (req, res) => {
   const body = req.body || {};
   if (!body.event) throw ApiError.badRequest('An "event" id is required.');
   if (!body.company) throw ApiError.badRequest('Please choose a company.');
-  if (!('code' in body)) throw ApiError.badRequest('A coupon code is required.');
   if (!('maxAllowedRegistrations' in body)) throw ApiError.badRequest('Max registrations is required.');
 
   const [event, company] = await Promise.all([
@@ -120,17 +120,38 @@ const createCoupon = asyncHandler(async (req, res) => {
   if (!company) throw ApiError.notFound('Company not found');
   if (!company.isActive) throw ApiError.conflict(`${company.name} is inactive. Activate the company first.`);
 
-  const changes = cleanChanges(body);
+  // A blank code means "generate one": unique, prefixed with the company name.
+  const autoCode = !String(body.code ?? '').trim();
+  const changes = cleanChanges(autoCode ? { ...body, code: await generateUniqueCouponCode(company.name) } : body);
   await assertCodeFree(changes.code);
 
-  const coupon = await Coupon.create({ ...changes, event: event._id, company: company._id, createdBy: req.user._id });
+  let coupon;
+  try {
+    coupon = await Coupon.create({ ...changes, event: event._id, company: company._id, createdBy: req.user._id });
+  } catch (err) {
+    // Another admin took the same code between the check and the insert.
+    if (err && err.code === 11000) throw ApiError.conflict(`Coupon code ${changes.code} is already in use. Try again.`);
+    throw err;
+  }
   recordAudit(req, {
     action: 'coupon.create',
     entityType: 'Coupon',
     entityId: coupon._id,
-    meta: { code: coupon.code, company: company.name, maxAllowedRegistrations: coupon.maxAllowedRegistrations },
+    meta: { code: coupon.code, company: company.name, maxAllowedRegistrations: coupon.maxAllowedRegistrations, generated: autoCode },
   });
   return sendSuccess(res, serializeCoupon(await populated(Coupon.findById(coupon._id))), { status: 201 });
+});
+
+/**
+ * GET /api/v1/admin/coupons/generate-code?company=<id>
+ * A fresh unique code for the company ("YAMAHA-7KQ93X") to prefill the
+ * form. Nothing is reserved — the create call re-checks uniqueness.
+ */
+const generateCode = asyncHandler(async (req, res) => {
+  if (!req.query.company) throw ApiError.badRequest('Please choose a company.');
+  const company = await Company.findById(String(req.query.company)).select('name');
+  if (!company) throw ApiError.notFound('Company not found');
+  return sendSuccess(res, { code: await generateUniqueCouponCode(company.name) });
 });
 
 /**
@@ -186,4 +207,4 @@ const deleteCoupon = asyncHandler(async (req, res) => {
   return sendSuccess(res, null, { message: 'Coupon deleted' });
 });
 
-module.exports = { listCoupons, createCoupon, updateCoupon, deleteCoupon, couponState };
+module.exports = { listCoupons, createCoupon, updateCoupon, deleteCoupon, generateCode, couponState };
