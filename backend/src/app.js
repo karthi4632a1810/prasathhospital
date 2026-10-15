@@ -10,6 +10,7 @@ const rateLimit = require('express-rate-limit');
 const env = require('./config/env');
 const { uploadDir } = require('./config/uploadPath');
 const routes = require('./routes');
+const { serveStoredUpload } = require('./controllers/adminUploadController');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -63,6 +64,9 @@ app.use(
 
 // Event/speaker/sponsor imagery uploaded via the CMS. Long-cached since
 // filenames are random and never reused.
+// CMS images live in MongoDB (/uploads/<id>.<ext>); older files uploaded
+// before that still come from the disk mount below.
+app.use('/uploads', serveStoredUpload);
 app.use(
   '/uploads',
   express.static(uploadDir, {

@@ -866,6 +866,9 @@ async function main() {
   await test('PNG upload → 201; served as an image (not index.html) on BOTH sites, sandboxed', async () => {
     const r = expectStatus(await upload(PNG, 'image/png', 'logo.png'), 201);
     created.uploads.push(r.body.data.url);
+    assert(/^\/uploads\/[a-f0-9]{24}\.png$/.test(r.body.data.url), `stored-upload url ${r.body.data.url}`);
+    const stored = await db.collection('uploads').findOne({ _id: oid(r.body.data.url.slice(9, 33)) });
+    eq(stored?.contentType, 'image/png', 'stored in MongoDB');
     for (const origin of [API, ADMIN_URL]) {
       // eslint-disable-next-line no-await-in-loop
       const img = await fetch(`${origin}${r.body.data.url}`);
@@ -940,15 +943,9 @@ async function main() {
   const userIds = (await db.collection('users').find({ email: new RegExp(`^ft-.*-${RUN.toLowerCase()}@example\\.com$`) }).project({ _id: 1 }).toArray()).map((u) => u._id);
   await db.collection('users').deleteMany({ _id: { $in: userIds } });
   await db.collection('auditlogs').deleteMany({ $or: [{ actor: { $in: userIds } }, { entityId: { $in: [...regIds, ...userIds, ev] } }] });
-  try {
-    // Uploaded test images live in the api container's volume.
-    // eslint-disable-next-line global-require
-    const { execFileSync } = require('child_process');
-    const files = created.uploads.map((u) => `/app${u}`);
-    if (files.length) execFileSync('docker', ['exec', 'prashanth-api', 'rm', '-f', ...files], { stdio: 'ignore' });
-  } catch {
-    console.log('  (could not remove uploaded test images — not running under docker compose?)');
-  }
+  // Uploaded test images are stored in MongoDB (uploads collection).
+  const uploadIds = created.uploads.map((u) => (/\/uploads\/([a-f0-9]{24})\./.exec(u) || [])[1]).filter(Boolean).map(oid);
+  await db.collection('uploads').deleteMany({ _id: { $in: uploadIds } });
   console.log(`\nCleanup: test event, ${regIds.length} registrations, coupons, companies and ${userIds.length} users removed.`);
 
   await mongoose.disconnect();

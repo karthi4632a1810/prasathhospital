@@ -795,11 +795,14 @@ const base = 'http://127.0.0.1:5099';
     return 'e.g. ' + buildCode('Bajaj Auto');
   });
 
-  check('10,000 generated codes are all distinct', () => {
+  check('generated codes almost never repeat (DB check catches the rare repeat)', () => {
+    // ~887M combinations per company: 10,000 draws expect ~0.06 repeats
+    // (birthday bound), so a handful would mean the randomness is broken.
     const seen = new Set();
     for (let i = 0; i < 10000; i += 1) seen.add(buildCode('Yamaha'));
-    assert(seen.size === 10000, 'collisions: ' + (10000 - seen.size));
-    return '10000 unique';
+    const repeats = 10000 - seen.size;
+    assert(repeats <= 2, 'too many repeats: ' + repeats);
+    return `${repeats} repeats in 10000`;
   });
 
   server.close();

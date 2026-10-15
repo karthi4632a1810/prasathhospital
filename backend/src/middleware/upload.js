@@ -1,9 +1,7 @@
 'use strict';
 
-const crypto = require('crypto');
 const multer = require('multer');
 const ApiError = require('../utils/ApiError');
-const { uploadDir } = require('../config/uploadPath');
 
 // MIME type -> stored extension. The extension comes from here, never from
 // the uploaded file's name, so "photo.html" sent as image/png is saved as
@@ -16,12 +14,9 @@ const ALLOWED_TYPES = {
 };
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${ALLOWED_TYPES[file.mimetype]}`);
-  },
-});
+// Kept in memory and written to MongoDB by the controller (see models/Upload.js):
+// the host's disk is not persistent, the database is.
+const storage = multer.memoryStorage();
 
 function fileFilter(req, file, cb) {
   if (!ALLOWED_TYPES[file.mimetype]) {
