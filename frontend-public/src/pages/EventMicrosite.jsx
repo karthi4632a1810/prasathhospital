@@ -116,12 +116,7 @@ export default function EventMicrosite() {
   }
 
   if (state.status === 'error') {
-    return (
-      <ErrorState
-        message={state.error?.message}
-        onRetry={() => load()}
-      />
-    );
+    return <ErrorState message={state.error?.message} onRetry={() => load()} />;
   }
 
   return (
@@ -156,11 +151,7 @@ export default function EventMicrosite() {
         <Speakers speakers={event.speakers} />
         <Committee committee={event.committee} />
         <Agenda agenda={event.agenda} />
-        <Tickets
-          ticketTypes={ticketTypes}
-          onSelect={goToRegistration}
-          canRegister={canRegister}
-        />
+        <Tickets ticketTypes={ticketTypes} onSelect={goToRegistration} canRegister={canRegister} />
         <Venue event={event} />
         <Sponsors sponsors={event.sponsors} />
         <ExhibitStalls contactEmail={event.contact?.email} />

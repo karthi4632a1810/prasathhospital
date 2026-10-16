@@ -20,73 +20,141 @@ export default function VenueTab({ event, onSaved }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
       <div className="card">
-        <div className="card__header"><h3 className="card__title">Venue</h3></div>
+        <div className="card__header">
+          <h3 className="card__title">Venue</h3>
+        </div>
         <div className="card__body">
           <div className="field-row">
-            <label className="field"><span className="field__label">Name</span>
-              <input className="field__input" value={venue.name} onChange={v('name')} /></label>
-            <label className="field"><span className="field__label">Landmark</span>
-              <input className="field__input" value={venue.landmark} onChange={v('landmark')} /></label>
+            <label className="field">
+              <span className="field__label">Name</span>
+              <input className="field__input" value={venue.name} onChange={v('name')} />
+            </label>
+            <label className="field">
+              <span className="field__label">Landmark</span>
+              <input className="field__input" value={venue.landmark} onChange={v('landmark')} />
+            </label>
           </div>
           <div className="field-row">
-            <label className="field"><span className="field__label">Address line 1</span>
-              <input className="field__input" value={venue.addressLine1} onChange={v('addressLine1')} /></label>
-            <label className="field"><span className="field__label">Address line 2</span>
-              <input className="field__input" value={venue.addressLine2} onChange={v('addressLine2')} /></label>
+            <label className="field">
+              <span className="field__label">Address line 1</span>
+              <input
+                className="field__input"
+                value={venue.addressLine1}
+                onChange={v('addressLine1')}
+              />
+            </label>
+            <label className="field">
+              <span className="field__label">Address line 2</span>
+              <input
+                className="field__input"
+                value={venue.addressLine2}
+                onChange={v('addressLine2')}
+              />
+            </label>
           </div>
           <div className="field-row">
-            <label className="field"><span className="field__label">City</span>
-              <input className="field__input" value={venue.city} onChange={v('city')} /></label>
-            <label className="field"><span className="field__label">State</span>
-              <input className="field__input" value={venue.state} onChange={v('state')} /></label>
-            <label className="field"><span className="field__label">Pincode</span>
-              <input className="field__input" value={venue.pincode} onChange={v('pincode')} /></label>
+            <label className="field">
+              <span className="field__label">City</span>
+              <input className="field__input" value={venue.city} onChange={v('city')} />
+            </label>
+            <label className="field">
+              <span className="field__label">State</span>
+              <input className="field__input" value={venue.state} onChange={v('state')} />
+            </label>
+            <label className="field">
+              <span className="field__label">Pincode</span>
+              <input className="field__input" value={venue.pincode} onChange={v('pincode')} />
+            </label>
           </div>
           <div className="field-row">
-            <label className="field"><span className="field__label">Google Maps embed URL</span>
-              <input className="field__input" value={venue.mapEmbedUrl} onChange={v('mapEmbedUrl')} /></label>
-            <label className="field"><span className="field__label">Google Maps link</span>
-              <input className="field__input" value={venue.mapLink} onChange={v('mapLink')} /></label>
+            <label className="field">
+              <span className="field__label">Google Maps embed URL</span>
+              <input
+                className="field__input"
+                value={venue.mapEmbedUrl}
+                onChange={v('mapEmbedUrl')}
+              />
+            </label>
+            <label className="field">
+              <span className="field__label">Google Maps link</span>
+              <input className="field__input" value={venue.mapLink} onChange={v('mapLink')} />
+            </label>
           </div>
-          <label className="field"><span className="field__label">Parking info</span>
-            <input className="field__input" value={venue.parkingInfo} onChange={v('parkingInfo')} /></label>
-          <label className="field"><span className="field__label">Virtual join link (for virtual/hybrid events)</span>
-            <input className="field__input" value={virtualLink} onChange={(e) => setVirtualLink(e.target.value)} /></label>
+          <label className="field">
+            <span className="field__label">Parking info</span>
+            <input className="field__input" value={venue.parkingInfo} onChange={v('parkingInfo')} />
+          </label>
+          <label className="field">
+            <span className="field__label">Virtual join link (for virtual/hybrid events)</span>
+            <input
+              className="field__input"
+              value={virtualLink}
+              onChange={(e) => setVirtualLink(e.target.value)}
+            />
+          </label>
         </div>
       </div>
 
       <div className="card">
-        <div className="card__header"><h3 className="card__title">Contact</h3></div>
+        <div className="card__header">
+          <h3 className="card__title">Contact</h3>
+        </div>
         <div className="card__body">
           <div className="field-row">
-            <label className="field"><span className="field__label">Name</span>
-              <input className="field__input" value={contact.name} onChange={c('name')} /></label>
-            <label className="field"><span className="field__label">Phone</span>
-              <input className="field__input" value={contact.phone} onChange={c('phone')} /></label>
+            <label className="field">
+              <span className="field__label">Name</span>
+              <input className="field__input" value={contact.name} onChange={c('name')} />
+            </label>
+            <label className="field">
+              <span className="field__label">Phone</span>
+              <input className="field__input" value={contact.phone} onChange={c('phone')} />
+            </label>
           </div>
           <div className="field-row">
-            <label className="field"><span className="field__label">WhatsApp</span>
-              <input className="field__input" value={contact.whatsapp} onChange={c('whatsapp')} /></label>
-            <label className="field"><span className="field__label">Email</span>
-              <input className="field__input" value={contact.email} onChange={c('email')} /></label>
+            <label className="field">
+              <span className="field__label">WhatsApp</span>
+              <input className="field__input" value={contact.whatsapp} onChange={c('whatsapp')} />
+            </label>
+            <label className="field">
+              <span className="field__label">Email</span>
+              <input className="field__input" value={contact.email} onChange={c('email')} />
+            </label>
           </div>
         </div>
       </div>
 
       <div className="card">
-        <div className="card__header"><h3 className="card__title">Organizer</h3></div>
+        <div className="card__header">
+          <h3 className="card__title">Organizer</h3>
+        </div>
         <div className="card__body">
           <div className="field-row">
-            <label className="field"><span className="field__label">Name</span>
-              <input className="field__input" value={organizer.name} onChange={o('name')} /></label>
-            <label className="field"><span className="field__label">Department</span>
-              <input className="field__input" value={organizer.department} onChange={o('department')} /></label>
+            <label className="field">
+              <span className="field__label">Name</span>
+              <input className="field__input" value={organizer.name} onChange={o('name')} />
+            </label>
+            <label className="field">
+              <span className="field__label">Department</span>
+              <input
+                className="field__input"
+                value={organizer.department}
+                onChange={o('department')}
+              />
+            </label>
           </div>
           <div className="field-row">
-            <label className="field"><span className="field__label">Logo URL</span>
-              <input className="field__input" value={organizer.logoUrl} onChange={o('logoUrl')} /></label>
-            <label className="field"><span className="field__label">Website URL</span>
-              <input className="field__input" value={organizer.websiteUrl} onChange={o('websiteUrl')} /></label>
+            <label className="field">
+              <span className="field__label">Logo URL</span>
+              <input className="field__input" value={organizer.logoUrl} onChange={o('logoUrl')} />
+            </label>
+            <label className="field">
+              <span className="field__label">Website URL</span>
+              <input
+                className="field__input"
+                value={organizer.websiteUrl}
+                onChange={o('websiteUrl')}
+              />
+            </label>
           </div>
         </div>
       </div>
@@ -98,8 +166,16 @@ export default function VenueTab({ event, onSaved }) {
 
 function emptyVenue() {
   return {
-    name: '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '',
-    landmark: '', mapEmbedUrl: '', mapLink: '', parkingInfo: '',
+    name: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: '',
+    state: '',
+    pincode: '',
+    landmark: '',
+    mapEmbedUrl: '',
+    mapLink: '',
+    parkingInfo: '',
   };
 }
 function emptyContact() {

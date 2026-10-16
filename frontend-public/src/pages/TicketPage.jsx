@@ -22,7 +22,9 @@ export default function TicketPage() {
     api
       .getTicket(qrToken)
       .then((res) => setState({ status: 'ready', data: res.data, error: null }))
-      .catch((err) => setState({ status: err.status === 404 ? 'not-found' : 'error', data: null, error: err }));
+      .catch((err) =>
+        setState({ status: err.status === 404 ? 'not-found' : 'error', data: null, error: err })
+      );
   }, [qrToken]);
 
   if (state.status === 'loading') return <LoadingState />;
@@ -30,7 +32,12 @@ export default function TicketPage() {
     return <NotFoundState message="This ticket link is invalid or has expired." />;
   }
   if (state.status === 'error') {
-    return <ErrorState message={state.error?.message} onRetry={() => setState({ status: 'loading', data: null, error: null })} />;
+    return (
+      <ErrorState
+        message={state.error?.message}
+        onRetry={() => setState({ status: 'loading', data: null, error: null })}
+      />
+    );
   }
 
   const ticket = state.data;
@@ -55,7 +62,9 @@ export default function TicketPage() {
             <p className="ticket-card__datetime">
               {formatDate(ticket.event.startDate)} · {formatTime(ticket.event.startDate)}
             </p>
-            {ticket.event.venue?.name && <p className="ticket-card__venue">{ticket.event.venue.name}</p>}
+            {ticket.event.venue?.name && (
+              <p className="ticket-card__venue">{ticket.event.venue.name}</p>
+            )}
 
             <div className="ticket-card__divider" />
 
@@ -63,25 +72,37 @@ export default function TicketPage() {
               <div>
                 <p className="ticket-card__label">Attendee</p>
                 <p className="ticket-card__value">{ticket.attendee.name}</p>
-                <p className="ticket-card__label" style={{ marginTop: 12 }}>Pass</p>
+                <p className="ticket-card__label" style={{ marginTop: 12 }}>
+                  Pass
+                </p>
                 <p className="ticket-card__value">{ticket.ticketType.name}</p>
-                <p className="ticket-card__label" style={{ marginTop: 12 }}>Registration ID</p>
+                <p className="ticket-card__label" style={{ marginTop: 12 }}>
+                  Registration ID
+                </p>
                 <p className="ticket-card__value">{ticket.registrationCode}</p>
                 {ticket.company?.name && (
                   <>
-                    <p className="ticket-card__label" style={{ marginTop: 12 }}>Company</p>
+                    <p className="ticket-card__label" style={{ marginTop: 12 }}>
+                      Company
+                    </p>
                     <p className="ticket-card__value">{ticket.company.name}</p>
                   </>
                 )}
                 {ticket.couponCode && (
                   <>
-                    <p className="ticket-card__label" style={{ marginTop: 12 }}>Coupon</p>
+                    <p className="ticket-card__label" style={{ marginTop: 12 }}>
+                      Coupon
+                    </p>
                     <p className="ticket-card__value">{ticket.couponCode}</p>
                   </>
                 )}
 
                 <div className="ticket-card__badges">
-                  {isCancelled ? <Badge tone="danger">Cancelled</Badge> : <Badge tone="success">Confirmed</Badge>}
+                  {isCancelled ? (
+                    <Badge tone="danger">Cancelled</Badge>
+                  ) : (
+                    <Badge tone="success">Confirmed</Badge>
+                  )}
                   {!isCancelled &&
                     (ticket.checkedInAt ? (
                       <Badge tone="success">Checked in</Badge>

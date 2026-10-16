@@ -29,7 +29,10 @@ export default function CheckIn() {
 
   const loadStats = useCallback(() => {
     if (!eventId) return;
-    checkinApi.stats(eventId).then((res) => setStats(res.data)).catch(() => {});
+    checkinApi
+      .stats(eventId)
+      .then((res) => setStats(res.data))
+      .catch(() => {});
   }, [eventId]);
 
   useEffect(loadStats, [loadStats]);
@@ -104,7 +107,10 @@ export default function CheckIn() {
       cancelled = true;
       const instance = scannerRef.current;
       if (instance) {
-        instance.stop().then(() => instance.clear()).catch(() => {});
+        instance
+          .stop()
+          .then(() => instance.clear())
+          .catch(() => {});
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -123,11 +129,21 @@ export default function CheckIn() {
       <div className="page-header">
         <div>
           <h2 className="page-header__title">Check-in</h2>
-          <p className="page-header__subtitle">Scan a ticket's QR code, or enter the code manually.</p>
+          <p className="page-header__subtitle">
+            Scan a ticket's QR code, or enter the code manually.
+          </p>
         </div>
         {events.length > 1 && (
-          <select className="field__select" value={eventId || ''} onChange={(e) => setEventId(e.target.value)}>
-            {events.map((ev) => <option key={ev.id} value={ev.id}>{ev.title}</option>)}
+          <select
+            className="field__select"
+            value={eventId || ''}
+            onChange={(e) => setEventId(e.target.value)}
+          >
+            {events.map((ev) => (
+              <option key={ev.id} value={ev.id}>
+                {ev.title}
+              </option>
+            ))}
           </select>
         )}
       </div>
@@ -151,7 +167,9 @@ export default function CheckIn() {
 
       <div className="checkin-grid">
         <div className="card">
-          <div className="card__header"><h3 className="card__title">Scanner</h3></div>
+          <div className="card__header">
+            <h3 className="card__title">Scanner</h3>
+          </div>
           <div className="card__body">
             <div id={scannerDivId} className="checkin-camera" />
             {cameraStatus === 'unavailable' && (
@@ -159,7 +177,9 @@ export default function CheckIn() {
                 Camera not available in this browser/device — use manual entry below.
               </p>
             )}
-            {cameraStatus === 'starting' && <p className="checkin-camera__hint">Starting camera…</p>}
+            {cameraStatus === 'starting' && (
+              <p className="checkin-camera__hint">Starting camera…</p>
+            )}
 
             <form onSubmit={handleManualSubmit} className="checkin-manual">
               <input
@@ -184,7 +204,13 @@ export default function CheckIn() {
               <h3>Checked in</h3>
               <p className="checkin-result__name">{scanResult.attendee?.name}</p>
               <p className="checkin-result__meta">
-                {[scanResult.company?.name, scanResult.ticketType?.name, scanResult.registrationCode].filter(Boolean).join(' · ')}
+                {[
+                  scanResult.company?.name,
+                  scanResult.ticketType?.name,
+                  scanResult.registrationCode,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
               </p>
             </>
           )}

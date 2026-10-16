@@ -24,7 +24,10 @@ export default function AuditLog() {
 
   const load = useCallback(() => {
     setError(null);
-    auditLogApi.list({ limit: 100 }).then((res) => setResult(res)).catch((err) => setError(err.message));
+    auditLogApi
+      .list({ limit: 100 })
+      .then((res) => setResult(res))
+      .catch((err) => setError(err.message));
   }, []);
 
   useEffect(load, [load]);
@@ -40,13 +43,18 @@ export default function AuditLog() {
         <div>
           <h2 className="page-header__title">Audit Log</h2>
           <p className="page-header__subtitle">
-            {result.meta ? `${result.meta.total} events` : 'Who did what, across the whole admin dashboard.'}
+            {result.meta
+              ? `${result.meta.total} events`
+              : 'Who did what, across the whole admin dashboard.'}
           </p>
         </div>
       </div>
 
       {entries.length === 0 ? (
-        <EmptyState title="No activity yet" message="Admin actions (creating events, editing passes, cancelling registrations, etc.) will appear here." />
+        <EmptyState
+          title="No activity yet"
+          message="Admin actions (creating events, editing passes, cancelling registrations, etc.) will appear here."
+        />
       ) : (
         <div className="data-table-wrap">
           <table className="data-table">
@@ -64,11 +72,18 @@ export default function AuditLog() {
                 <tr key={e._id}>
                   <td style={{ whiteSpace: 'nowrap' }}>{formatDateTime(e.at)}</td>
                   <td>{e.actorName}</td>
-                  <td><Badge tone={toneFor(e.action)} size="sm">{e.action}</Badge></td>
-                  <td style={{ fontFamily: 'monospace', fontSize: 'var(--text-xs)' }}>
-                    {e.entityType}{e.entityId ? ` #${String(e.entityId).slice(-6)}` : ''}
+                  <td>
+                    <Badge tone={toneFor(e.action)} size="sm">
+                      {e.action}
+                    </Badge>
                   </td>
-                  <td style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)', maxWidth: 320 }}>
+                  <td style={{ fontFamily: 'monospace', fontSize: 'var(--text-xs)' }}>
+                    {e.entityType}
+                    {e.entityId ? ` #${String(e.entityId).slice(-6)}` : ''}
+                  </td>
+                  <td
+                    style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)', maxWidth: 320 }}
+                  >
                     {e.meta ? JSON.stringify(e.meta) : '—'}
                   </td>
                 </tr>

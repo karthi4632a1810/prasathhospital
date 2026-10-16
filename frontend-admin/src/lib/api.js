@@ -56,7 +56,10 @@ async function request(path, { signal, body, headers, ...options } = {}) {
     });
   } catch (err) {
     if (err.name === 'AbortError') throw err;
-    throw new ApiError('We could not reach the server. Please check your connection and try again.', 0);
+    throw new ApiError(
+      'We could not reach the server. Please check your connection and try again.',
+      0
+    );
   }
 
   let payload = null;
@@ -80,7 +83,8 @@ async function request(path, { signal, body, headers, ...options } = {}) {
 }
 
 export const api = {
-  login: (email, password) => request('/admin/auth/login', { method: 'POST', body: { email, password } }),
+  login: (email, password) =>
+    request('/admin/auth/login', { method: 'POST', body: { email, password } }),
   me: () => request('/admin/auth/me'),
 };
 

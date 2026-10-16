@@ -85,7 +85,9 @@ export default function Help() {
       </div>
 
       <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
-        <div className="card__header"><h3 className="card__title">Common tasks</h3></div>
+        <div className="card__header">
+          <h3 className="card__title">Common tasks</h3>
+        </div>
         <div className="card__body" style={{ display: 'grid', gap: 'var(--space-3)' }}>
           {TASKS.filter((t) => !t.roles || t.roles.includes(user?.role)).map((task) => (
             <a
@@ -99,20 +101,30 @@ export default function Help() {
                 color: 'inherit',
               }}
             >
-              <strong style={{ display: 'block', color: 'var(--ink-900)', marginBottom: 4 }}>{task.title}</strong>
-              <span style={{ fontSize: 'var(--text-sm)', color: 'var(--ink-500)' }}>{task.body}</span>
+              <strong style={{ display: 'block', color: 'var(--ink-900)', marginBottom: 4 }}>
+                {task.title}
+              </strong>
+              <span style={{ fontSize: 'var(--text-sm)', color: 'var(--ink-500)' }}>
+                {task.body}
+              </span>
             </a>
           ))}
         </div>
       </div>
 
       <div className="card">
-        <div className="card__header"><h3 className="card__title">Troubleshooting</h3></div>
+        <div className="card__header">
+          <h3 className="card__title">Troubleshooting</h3>
+        </div>
         <div className="card__body" style={{ display: 'grid', gap: 'var(--space-5)' }}>
           {TROUBLESHOOTING.map((item) => (
             <div key={item.q}>
-              <p style={{ margin: '0 0 4px', fontWeight: 600, color: 'var(--ink-900)' }}>{item.q}</p>
-              <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--ink-600)' }}>{item.a}</p>
+              <p style={{ margin: '0 0 4px', fontWeight: 600, color: 'var(--ink-900)' }}>
+                {item.q}
+              </p>
+              <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--ink-600)' }}>
+                {item.a}
+              </p>
             </div>
           ))}
         </div>

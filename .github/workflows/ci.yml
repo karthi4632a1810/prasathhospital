@@ -36,6 +36,10 @@ jobs:
           cache-dependency-path: frontend-public/package-lock.json
       - run: npm ci
         working-directory: frontend-public
+      - run: npm run lint
+        working-directory: frontend-public
+      - run: npm run lint:css
+        working-directory: frontend-public
       - run: npm run build
         working-directory: frontend-public
 
@@ -50,6 +54,10 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend-admin/package-lock.json
       - run: npm ci
+        working-directory: frontend-admin
+      - run: npm run lint
+        working-directory: frontend-admin
+      - run: npm run lint:css
         working-directory: frontend-admin
       - run: npm run build
         working-directory: frontend-admin

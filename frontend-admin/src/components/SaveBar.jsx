@@ -24,8 +24,12 @@ export function useSaveBar(onSave) {
       <Button variant="primary" onClick={save} disabled={status === 'saving'}>
         {status === 'saving' ? 'Saving…' : 'Save changes'}
       </Button>
-      {status === 'saved' && <span className="tab-save-bar__status tab-save-bar__status--success">Saved</span>}
-      {status === 'error' && <span className="tab-save-bar__status tab-save-bar__status--error">{message}</span>}
+      {status === 'saved' && (
+        <span className="tab-save-bar__status tab-save-bar__status--success">Saved</span>
+      )}
+      {status === 'error' && (
+        <span className="tab-save-bar__status tab-save-bar__status--error">{message}</span>
+      )}
     </div>
   );
 

@@ -32,7 +32,14 @@ export function ErrorState({ title, message, onRetry }) {
   return (
     <div className="state-message" role="alert">
       <div className="state-message__icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <svg
+          viewBox="0 0 24 24"
+          width="40"
+          height="40"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        >
           <circle cx="12" cy="12" r="9" />
           <path d="M12 7.5v5.5M12 16.2v.3" strokeLinecap="round" />
         </svg>
@@ -59,7 +66,14 @@ export function NotFoundState({ message }) {
   return (
     <div className="state-message">
       <div className="state-message__icon state-message__icon--muted" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <svg
+          viewBox="0 0 24 24"
+          width="40"
+          height="40"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        >
           <path d="M3 7.5h18v12a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19.5v-12Z" />
           <path d="M3 7.5 5.5 3h13L21 7.5M12 11.5v5M9.5 14h5" strokeLinecap="round" />
         </svg>

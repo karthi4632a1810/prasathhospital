@@ -40,7 +40,10 @@ export default function DetailsTab({ event, onSaved }) {
       registrationClosesAt: fromDateTimeLocal(form.registrationClosesAt),
       capacity: Number(form.capacity) || 0,
       isFeatured: form.isFeatured,
-      highlights: form.highlights.split('\n').map((s) => s.trim()).filter(Boolean),
+      highlights: form.highlights
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean),
     });
     onSaved(res.data);
   });
@@ -57,12 +60,22 @@ export default function DetailsTab({ event, onSaved }) {
 
         <label className="field">
           <span className="field__label">Tagline</span>
-          <input className="field__input" value={form.tagline} onChange={set('tagline')} maxLength={220} />
+          <input
+            className="field__input"
+            value={form.tagline}
+            onChange={set('tagline')}
+            maxLength={220}
+          />
         </label>
 
         <label className="field">
           <span className="field__label">Summary</span>
-          <textarea className="field__textarea" value={form.summary} onChange={set('summary')} maxLength={600} />
+          <textarea
+            className="field__textarea"
+            value={form.summary}
+            onChange={set('summary')}
+            maxLength={600}
+          />
         </label>
 
         <label className="field">
@@ -80,7 +93,9 @@ export default function DetailsTab({ event, onSaved }) {
             <span className="field__label">Category</span>
             <select className="field__select" value={form.category} onChange={set('category')}>
               {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>
+                  {c}
+                </option>
               ))}
             </select>
           </label>
@@ -89,7 +104,9 @@ export default function DetailsTab({ event, onSaved }) {
             <span className="field__label">Mode</span>
             <select className="field__select" value={form.mode} onChange={set('mode')}>
               {MODES.map((m) => (
-                <option key={m} value={m}>{m}</option>
+                <option key={m} value={m}>
+                  {m}
+                </option>
               ))}
             </select>
           </label>
@@ -98,7 +115,9 @@ export default function DetailsTab({ event, onSaved }) {
             <span className="field__label">Status</span>
             <select className="field__select" value={form.status} onChange={set('status')}>
               {STATUSES.map((s) => (
-                <option key={s} value={s}>{s}</option>
+                <option key={s} value={s}>
+                  {s}
+                </option>
               ))}
             </select>
           </label>
@@ -107,11 +126,21 @@ export default function DetailsTab({ event, onSaved }) {
         <div className="field-row">
           <label className="field">
             <span className="field__label">Start date &amp; time</span>
-            <input type="datetime-local" className="field__input" value={form.startDate} onChange={set('startDate')} />
+            <input
+              type="datetime-local"
+              className="field__input"
+              value={form.startDate}
+              onChange={set('startDate')}
+            />
           </label>
           <label className="field">
             <span className="field__label">End date &amp; time</span>
-            <input type="datetime-local" className="field__input" value={form.endDate} onChange={set('endDate')} />
+            <input
+              type="datetime-local"
+              className="field__input"
+              value={form.endDate}
+              onChange={set('endDate')}
+            />
           </label>
         </div>
 
@@ -139,7 +168,13 @@ export default function DetailsTab({ event, onSaved }) {
         <div className="field-row">
           <label className="field">
             <span className="field__label">Capacity</span>
-            <input type="number" min="0" className="field__input" value={form.capacity} onChange={set('capacity')} />
+            <input
+              type="number"
+              min="0"
+              className="field__input"
+              value={form.capacity}
+              onChange={set('capacity')}
+            />
             <span className="field__hint">0 = unlimited</span>
           </label>
 
@@ -158,7 +193,11 @@ export default function DetailsTab({ event, onSaved }) {
 
         <label className="field">
           <span className="field__label">Highlights (one per line)</span>
-          <textarea className="field__textarea" value={form.highlights} onChange={set('highlights')} />
+          <textarea
+            className="field__textarea"
+            value={form.highlights}
+            onChange={set('highlights')}
+          />
         </label>
 
         {SaveBar}

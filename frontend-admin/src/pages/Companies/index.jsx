@@ -6,7 +6,14 @@ import Badge from '../../components/ui/Badge';
 import Drawer from '../../components/ui/Drawer';
 import { UsageBar } from '../../components/StatusBadges';
 
-const EMPTY = { name: '', contactName: '', contactEmail: '', contactPhone: '', notes: '', isActive: true };
+const EMPTY = {
+  name: '',
+  contactName: '',
+  contactEmail: '',
+  contactPhone: '',
+  notes: '',
+  isActive: true,
+};
 
 export default function Companies() {
   const [companies, setCompanies] = useState(null);
@@ -47,24 +54,39 @@ export default function Companies() {
       <div className="page-header">
         <div>
           <h2 className="page-header__title">Companies</h2>
-          <p className="page-header__subtitle">Sponsoring companies whose coupons cover their delegates’ registrations.</p>
+          <p className="page-header__subtitle">
+            Sponsoring companies whose coupons cover their delegates’ registrations.
+          </p>
         </div>
         <Button variant="primary" size="sm" onClick={() => setEditing('new')}>
           + Add company
         </Button>
       </div>
 
-      {flash && <div className="notice notice--success" role="status">{flash}</div>}
+      {flash && (
+        <div className="notice notice--success" role="status">
+          {flash}
+        </div>
+      )}
 
       <div className="card" style={{ marginBottom: 'var(--space-5)' }}>
         <div className="toolbar">
           <label className="field field--grow">
             <span className="field__label">Search</span>
-            <input className="field__input" placeholder="Company name…" value={q} onChange={(e) => setQ(e.target.value)} />
+            <input
+              className="field__input"
+              placeholder="Company name…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
           </label>
           <label className="field">
             <span className="field__label">Status</span>
-            <select className="field__select" value={active} onChange={(e) => setActive(e.target.value)}>
+            <select
+              className="field__select"
+              value={active}
+              onChange={(e) => setActive(e.target.value)}
+            >
               <option value="">All</option>
               <option value="true">Active</option>
               <option value="false">Inactive</option>
@@ -78,7 +100,11 @@ export default function Companies() {
       ) : companies.length === 0 ? (
         <EmptyState
           title={q || active ? 'No companies match' : 'No companies yet'}
-          message={q || active ? 'Try a different search.' : 'Add the first sponsoring company, then create coupons for it.'}
+          message={
+            q || active
+              ? 'Try a different search.'
+              : 'Add the first sponsoring company, then create coupons for it.'
+          }
         />
       ) : (
         <div className="data-table-wrap">
@@ -99,19 +125,33 @@ export default function Companies() {
                 <tr key={c.id}>
                   <td>
                     <strong>{c.name}</strong>
-                    {c.notes && <span className="sub">{c.notes.length > 60 ? `${c.notes.slice(0, 60)}…` : c.notes}</span>}
+                    {c.notes && (
+                      <span className="sub">
+                        {c.notes.length > 60 ? `${c.notes.slice(0, 60)}…` : c.notes}
+                      </span>
+                    )}
                   </td>
                   <td>
                     {c.contactName || <span className="muted">—</span>}
                     {(c.contactEmail || c.contactPhone) && (
-                      <span className="sub">{[c.contactEmail, c.contactPhone].filter(Boolean).join(' · ')}</span>
+                      <span className="sub">
+                        {[c.contactEmail, c.contactPhone].filter(Boolean).join(' · ')}
+                      </span>
                     )}
                   </td>
                   <td className="num">{c.couponCount}</td>
-                  <td>{c.allocated > 0 ? <UsageBar used={c.used} allocated={c.allocated} /> : <span className="muted">No coupons</span>}</td>
+                  <td>
+                    {c.allocated > 0 ? (
+                      <UsageBar used={c.used} allocated={c.allocated} />
+                    ) : (
+                      <span className="muted">No coupons</span>
+                    )}
+                  </td>
                   <td className="num">{c.registrations}</td>
                   <td>
-                    <Badge tone={c.isActive ? 'success' : 'neutral'} size="sm">{c.isActive ? 'Active' : 'Inactive'}</Badge>
+                    <Badge tone={c.isActive ? 'success' : 'neutral'} size="sm">
+                      {c.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
                   </td>
                   <td style={{ textAlign: 'right' }}>
                     <Button variant="ghost" size="sm" onClick={() => setEditing(c)}>
@@ -156,7 +196,9 @@ function CompanyForm({ company, onClose, onSaved }) {
       isActive: form.isActive,
     };
     try {
-      const res = company ? await companyApi.update(company.id, body) : await companyApi.create(body);
+      const res = company
+        ? await companyApi.update(company.id, body)
+        : await companyApi.create(body);
       onSaved(res.data, company ? `${res.data.name} updated.` : `${res.data.name} added.`);
     } catch (err) {
       setError(err.message);
@@ -165,7 +207,12 @@ function CompanyForm({ company, onClose, onSaved }) {
   }
 
   async function handleDelete() {
-    if (!window.confirm(`Delete ${company.name}? This only works if it has no coupons or registrations.`)) return;
+    if (
+      !window.confirm(
+        `Delete ${company.name}? This only works if it has no coupons or registrations.`
+      )
+    )
+      return;
     setSaving(true);
     setError('');
     try {
@@ -181,54 +228,107 @@ function CompanyForm({ company, onClose, onSaved }) {
     <Drawer
       open
       title={company ? `Edit ${company.name}` : 'Add company'}
-      subtitle={company ? `${company.couponCount} coupons · ${company.registrations} confirmed registrations` : undefined}
+      subtitle={
+        company
+          ? `${company.couponCount} coupons · ${company.registrations} confirmed registrations`
+          : undefined
+      }
       onClose={onClose}
       footer={
         <>
           {company && (
-            <Button variant="ghost" size="sm" onClick={handleDelete} disabled={saving} style={{ marginRight: 'auto' }}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDelete}
+              disabled={saving}
+              style={{ marginRight: 'auto' }}
+            >
               Delete
             </Button>
           )}
           <Button variant="secondary" size="sm" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
-          <Button variant="primary" size="sm" type="submit" form="company-form" disabled={saving || !form.name.trim()}>
+          <Button
+            variant="primary"
+            size="sm"
+            type="submit"
+            form="company-form"
+            disabled={saving || !form.name.trim()}
+          >
             {saving ? 'Saving…' : company ? 'Save changes' : 'Add company'}
           </Button>
         </>
       }
     >
       <form id="company-form" onSubmit={handleSubmit}>
-        {error && <div className="notice notice--error" role="alert">{error}</div>}
+        {error && (
+          <div className="notice notice--error" role="alert">
+            {error}
+          </div>
+        )}
         <label className="field">
           <span className="field__label">Company name *</span>
-          <input className="field__input" required maxLength={120} value={form.name} onChange={set('name')} autoFocus />
+          <input
+            className="field__input"
+            required
+            maxLength={120}
+            value={form.name}
+            onChange={set('name')}
+            autoFocus
+          />
         </label>
         <div className="field-row">
           <label className="field">
             <span className="field__label">Contact person</span>
-            <input className="field__input" maxLength={120} value={form.contactName} onChange={set('contactName')} />
+            <input
+              className="field__input"
+              maxLength={120}
+              value={form.contactName}
+              onChange={set('contactName')}
+            />
           </label>
           <label className="field">
             <span className="field__label">Contact phone</span>
-            <input className="field__input" maxLength={20} value={form.contactPhone} onChange={set('contactPhone')} />
+            <input
+              className="field__input"
+              maxLength={20}
+              value={form.contactPhone}
+              onChange={set('contactPhone')}
+            />
           </label>
         </div>
         <label className="field">
           <span className="field__label">Contact email</span>
-          <input className="field__input" type="email" maxLength={160} value={form.contactEmail} onChange={set('contactEmail')} />
+          <input
+            className="field__input"
+            type="email"
+            maxLength={160}
+            value={form.contactEmail}
+            onChange={set('contactEmail')}
+          />
         </label>
         <label className="field">
           <span className="field__label">Notes</span>
-          <textarea className="field__textarea" maxLength={1000} value={form.notes} onChange={set('notes')} />
+          <textarea
+            className="field__textarea"
+            maxLength={1000}
+            value={form.notes}
+            onChange={set('notes')}
+          />
         </label>
         <label className="checkbox">
-          <input type="checkbox" checked={form.isActive} onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))} />
+          <input
+            type="checkbox"
+            checked={form.isActive}
+            onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
+          />
           Active
         </label>
         <p className="field__hint" style={{ marginTop: 'var(--space-2)' }}>
-          Deactivating a company stops all of its coupons from being redeemed. Existing registrations are kept.
+          Deactivating a company stops all of its coupons from being redeemed. Existing
+          registrations are kept.
         </p>
       </form>
     </Drawer>

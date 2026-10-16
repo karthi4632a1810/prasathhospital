@@ -27,7 +27,14 @@ export function ErrorState({ title, message, onRetry }) {
   return (
     <div className="state-panel state-panel--error" role="alert">
       <div className="state-panel__icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <svg
+          viewBox="0 0 24 24"
+          width="32"
+          height="32"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        >
           <circle cx="12" cy="12" r="9" />
           <path d="M12 7.5v5.5M12 16.2v.3" strokeLinecap="round" />
         </svg>

@@ -1,9 +1,9 @@
 .final-cta {
   position: relative;
-  background: transparent;
-  color: var(--white);
   padding-block: var(--space-28);
+  color: var(--white);
   text-align: center;
+  background: transparent;
   overflow: hidden;
   isolation: isolate;
 }
@@ -12,20 +12,28 @@
   position: absolute;
   top: 50%;
   left: 50%;
+  z-index: -1;
   width: 720px;
   height: 720px;
-  translate: -50% -50%;
+  background: conic-gradient(
+    from 0deg,
+    rgb(229 83 63 / 40%),
+    rgb(226 165 48 / 25%),
+    rgb(111 132 222 / 35%),
+    rgb(229 83 63 / 40%)
+  );
   border-radius: 50%;
-  background: conic-gradient(from 0deg, rgba(229, 83, 63, 0.4), rgba(226, 165, 48, 0.25), rgba(111, 132, 222, 0.35), rgba(229, 83, 63, 0.4));
-  filter: blur(90px);
   opacity: 0.55;
-  pointer-events: none;
-  z-index: -1;
   animation: final-cta-spin 22s linear infinite;
+  translate: -50% -50%;
+  filter: blur(90px);
+  pointer-events: none;
 }
 
 @keyframes final-cta-spin {
-  to { rotate: 360deg; }
+  to {
+    rotate: 360deg;
+  }
 }
 
 /* Hairline glow across the top edge of the band. */
@@ -37,7 +45,7 @@
   translate: -50% 0;
   width: min(900px, 90%);
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(229, 83, 63, 0.7), transparent);
+  background: linear-gradient(90deg, transparent, rgb(229 83 63 / 70%), transparent);
 }
 
 .final-cta__inner {
@@ -45,21 +53,20 @@
 }
 
 .final-cta__title {
+  margin-bottom: var(--space-5);
+  color: transparent;
   font-size: clamp(2.5rem, 5.5vw, 4.5rem);
   font-weight: 800;
-  letter-spacing: -0.05em;
   line-height: 1;
-  margin-bottom: var(--space-5);
-  background: linear-gradient(180deg, #ffffff 35%, #b9c2d8 100%);
-  -webkit-background-clip: text;
+  letter-spacing: -0.05em;
+  background: linear-gradient(180deg, #fff 35%, #b9c2d8 100%);
   background-clip: text;
-  color: transparent;
 }
 
 .final-cta__text {
-  font-size: var(--text-lg);
-  color: var(--ink-700);
   margin-bottom: var(--space-10);
+  color: var(--ink-700);
+  font-size: var(--text-lg);
 }
 
 .final-cta__actions {
@@ -70,18 +77,20 @@
 }
 
 .final-cta__scarcity {
+  color: var(--gold-600);
   font-size: var(--text-sm);
   font-weight: 600;
-  color: var(--gold-600);
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .final-cta__title {
     font-size: var(--text-3xl);
   }
+
   .final-cta__text {
     font-size: var(--text-base);
   }
+
   .final-cta__actions .btn {
     width: 100%;
   }

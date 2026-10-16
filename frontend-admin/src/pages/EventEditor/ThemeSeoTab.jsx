@@ -29,7 +29,9 @@ export default function ThemeSeoTab({ event, onSaved }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
       <div className="card">
-        <div className="card__header"><h3 className="card__title">Theme</h3></div>
+        <div className="card__header">
+          <h3 className="card__title">Theme</h3>
+        </div>
         <div className="card__body">
           <div className="field-row">
             <label className="field">
@@ -69,7 +71,9 @@ export default function ThemeSeoTab({ event, onSaved }) {
       </div>
 
       <div className="card">
-        <div className="card__header"><h3 className="card__title">SEO</h3></div>
+        <div className="card__header">
+          <h3 className="card__title">SEO</h3>
+        </div>
         <div className="card__body">
           <label className="field">
             <span className="field__label">Meta title</span>
@@ -95,7 +99,13 @@ export default function ThemeSeoTab({ event, onSaved }) {
               className="field__input"
               value={(seo.keywords || []).join(', ')}
               onChange={(e) =>
-                setSeo((s) => ({ ...s, keywords: e.target.value.split(',').map((k) => k.trim()).filter(Boolean) }))
+                setSeo((s) => ({
+                  ...s,
+                  keywords: e.target.value
+                    .split(',')
+                    .map((k) => k.trim())
+                    .filter(Boolean),
+                }))
               }
             />
           </label>

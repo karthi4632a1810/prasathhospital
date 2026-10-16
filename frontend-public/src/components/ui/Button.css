@@ -1,30 +1,35 @@
 .btn {
   position: relative;
-  isolation: isolate;
-  overflow: hidden;
   display: inline-flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   gap: var(--space-2);
   font-family: var(--font-body);
   font-weight: 650;
+  line-height: 1;
   letter-spacing: -0.005em;
   text-align: center;
+  text-decoration: none;
   border: 1px solid transparent;
   border-radius: var(--radius-full);
+  overflow: hidden;
+  transition:
+    background var(--transition),
+    color var(--transition),
+    border-color var(--transition),
+    transform var(--transition),
+    box-shadow var(--transition),
+    filter var(--transition);
+  isolation: isolate;
   cursor: pointer;
-  transition: background var(--transition), color var(--transition), border-color var(--transition),
-    transform var(--transition), box-shadow var(--transition), filter var(--transition);
   white-space: nowrap;
-  text-decoration: none;
-  line-height: 1;
 }
 
-.btn:hover:not(.is-disabled):not(:disabled) {
+.btn:hover:not(.is-disabled, :disabled) {
   transform: translateY(-2px);
 }
 
-.btn:active:not(.is-disabled):not(:disabled) {
+.btn:active:not(.is-disabled, :disabled) {
   transform: translateY(0);
 }
 
@@ -38,21 +43,21 @@
 /* ---------- Sizes ---------- */
 
 .btn--sm {
+  min-height: 40px;
   padding: var(--space-2) var(--space-5);
   font-size: var(--text-sm);
-  min-height: 40px;
 }
 
 .btn--md {
+  min-height: 48px;
   padding: var(--space-3) var(--space-7);
   font-size: var(--text-base);
-  min-height: 48px;
 }
 
 .btn--lg {
+  min-height: 58px;
   padding: var(--space-4) var(--space-10);
   font-size: var(--text-lg);
-  min-height: 58px;
 }
 
 .btn--full {
@@ -66,10 +71,12 @@
    ghost     = text-only */
 
 .btn--accent {
-  background: var(--grad-red);
   color: var(--white);
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: var(--shadow-brand), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  background: var(--grad-red);
+  border-color: rgb(255 255 255 / 12%);
+  box-shadow:
+    var(--shadow-brand),
+    inset 0 1px 0 rgb(255 255 255 / 22%);
 }
 
 /* A slow light sweep across the CTA on hover — the "polished metal" cue. */
@@ -78,80 +85,82 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.28) 50%, transparent 70%);
+  background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 28%) 50%, transparent 70%);
   translate: -120% 0;
   transition: translate 700ms var(--ease-out);
 }
 
-.btn--accent:hover:not(.is-disabled):not(:disabled) {
+.btn--accent:hover:not(.is-disabled, :disabled) {
   color: var(--white);
   filter: brightness(1.08);
-  box-shadow: 0 14px 40px rgba(229, 83, 63, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow:
+    0 14px 40px rgb(229 83 63 / 50%),
+    inset 0 1px 0 rgb(255 255 255 / 25%);
 }
 
-.btn--accent:hover:not(.is-disabled):not(:disabled)::after {
+.btn--accent:hover:not(.is-disabled, :disabled)::after {
   translate: 120% 0;
 }
 
 .btn--primary {
-  background: var(--ink-900);
   color: var(--bg);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  background: var(--ink-900);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 35%);
 }
 
-.btn--primary:hover:not(.is-disabled):not(:disabled) {
-  background: var(--white);
+.btn--primary:hover:not(.is-disabled, :disabled) {
   color: var(--bg);
-  box-shadow: 0 10px 30px rgba(255, 255, 255, 0.14);
+  background: var(--white);
+  box-shadow: 0 10px 30px rgb(255 255 255 / 14%);
 }
 
 .btn--secondary {
-  background: var(--surface-2);
   color: var(--ink-900);
+  background: var(--surface-2);
   border-color: var(--ink-300);
   backdrop-filter: var(--glass-blur);
 }
 
-.btn--secondary:hover:not(.is-disabled):not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.3);
+.btn--secondary:hover:not(.is-disabled, :disabled) {
   color: var(--white);
+  background: rgb(255 255 255 / 10%);
+  border-color: rgb(255 255 255 / 30%);
 }
 
 .btn--ghost {
-  background: transparent;
   color: var(--ink-700);
+  background: transparent;
 }
 
-.btn--ghost:hover:not(.is-disabled):not(:disabled) {
-  background: var(--ink-100);
+.btn--ghost:hover:not(.is-disabled, :disabled) {
   color: var(--ink-900);
+  background: var(--ink-100);
 }
 
 .btn--outline-light {
-  background: rgba(255, 255, 255, 0.06);
   color: var(--white);
-  border-color: rgba(255, 255, 255, 0.28);
+  background: rgb(255 255 255 / 6%);
+  border-color: rgb(255 255 255 / 28%);
   backdrop-filter: var(--glass-blur);
 }
 
-.btn--outline-light:hover:not(.is-disabled):not(:disabled) {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.5);
+.btn--outline-light:hover:not(.is-disabled, :disabled) {
   color: var(--white);
+  background: rgb(255 255 255 / 12%);
+  border-color: rgb(255 255 255 / 50%);
 }
 
 /* WhatsApp's own brand green — a deliberate exception to the accent rule,
    since it needs to be instantly recognizable as WhatsApp. */
 .btn--whatsapp {
-  background: #25d366;
   color: #04301a;
-  box-shadow: 0 10px 28px rgba(37, 211, 102, 0.25);
+  background: #25d366;
+  box-shadow: 0 10px 28px rgb(37 211 102 / 25%);
 }
 
-.btn--whatsapp:hover:not(.is-disabled):not(:disabled) {
-  background: #2fe073;
+.btn--whatsapp:hover:not(.is-disabled, :disabled) {
   color: #04301a;
+  background: #2fe073;
 }
 
 .btn__icon {

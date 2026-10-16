@@ -12,7 +12,7 @@ const NAV_ITEMS = [
   { id: 'faq', label: 'FAQ' },
 ];
 
-export default function SiteHeader({ event, onRegister, canRegister, availableSections }) {
+export default function SiteHeader({ _event, onRegister, canRegister, availableSections }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('');
@@ -69,69 +69,82 @@ export default function SiteHeader({ event, onRegister, canRegister, availableSe
 
   return (
     <>
-    <header className={`site-header ${scrolled ? 'is-scrolled' : ''}`}>
-      <div className="container site-header__inner">
-        <a className="site-header__brand" href="#top" onClick={(e) => handleNavClick(e, 'top')}>
-          <img className="site-header__mark" src="/assets/prashanth-hospitals-crest.jpg" alt="" width="34" height="34" />
-          <span className="site-header__brand-text">
-            <strong>Prashanth</strong>
-            <span>Hospitals</span>
-          </span>
-        </a>
+      <header className={`site-header ${scrolled ? 'is-scrolled' : ''}`}>
+        <div className="container site-header__inner">
+          <a className="site-header__brand" href="#top" onClick={(e) => handleNavClick(e, 'top')}>
+            <img
+              className="site-header__mark"
+              src="/assets/prashanth-hospitals-crest.jpg"
+              alt=""
+              width="34"
+              height="34"
+            />
+            <span className="site-header__brand-text">
+              <strong>Prashanth</strong>
+              <span>Hospitals</span>
+            </span>
+          </a>
 
-        <nav className="site-header__nav" aria-label="Section navigation">
-          {navItems.map((item) => (
-            <a
-              key={item.id}
-              href={`#${item.id}`}
-              className={`site-header__link ${activeSection === item.id ? 'is-active' : ''}`}
-              onClick={(e) => handleNavClick(e, item.id)}
+          <nav className="site-header__nav" aria-label="Section navigation">
+            {navItems.map((item) => (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                className={`site-header__link ${activeSection === item.id ? 'is-active' : ''}`}
+                onClick={(e) => handleNavClick(e, item.id)}
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
+
+          <div className="site-header__actions">
+            {canRegister && (
+              <Button variant="accent" size="sm" onClick={onRegister} className="site-header__cta">
+                Register Now
+              </Button>
+            )}
+            <button
+              className="site-header__burger"
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((v) => !v)}
             >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-
-        <div className="site-header__actions">
-          {canRegister && (
-            <Button variant="accent" size="sm" onClick={onRegister} className="site-header__cta">
-              Register Now
-            </Button>
-          )}
-          <button
-            className="site-header__burger"
-            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((v) => !v)}
-          >
-            <span className={menuOpen ? 'is-open' : ''} />
-          </button>
+              <span className={menuOpen ? 'is-open' : ''} />
+            </button>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
 
-    {/* Siblings of <header>, not children — <header> is position:sticky, which
+      {/* Siblings of <header>, not children — <header> is position:sticky, which
         (in current browser behavior) becomes the containing block for any
         position:fixed descendant, collapsing a fixed scrim to zero height
         instead of covering the viewport. Rendering these outside it keeps
         them fixed to the real viewport. */}
-    {menuOpen && (
-      <>
-        <div className="site-header__scrim" onClick={() => setMenuOpen(false)} />
-        <nav className="site-header__drawer" aria-label="Mobile navigation">
-          {navItems.map((item) => (
-            <a key={item.id} href={`#${item.id}`} onClick={(e) => handleNavClick(e, item.id)}>
-              {item.label}
-            </a>
-          ))}
-          {canRegister && (
-            <Button variant="accent" fullWidth onClick={() => { setMenuOpen(false); onRegister(); }}>
-              Register Now
-            </Button>
-          )}
-        </nav>
-      </>
-    )}
+      {menuOpen && (
+        <>
+          <div className="site-header__scrim" onClick={() => setMenuOpen(false)} />
+          <nav className="site-header__drawer" aria-label="Mobile navigation">
+            {navItems.map((item) => (
+              <a key={item.id} href={`#${item.id}`} onClick={(e) => handleNavClick(e, item.id)}>
+                {item.label}
+              </a>
+            ))}
+            {canRegister && (
+              <Button
+                variant="accent"
+                fullWidth
+                onClick={() => {
+                  setMenuOpen(false);
+                  onRegister();
+                }}
+              >
+                Register Now
+              </Button>
+            )}
+          </nav>
+        </>
+      )}
     </>
   );
 }

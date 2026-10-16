@@ -23,14 +23,18 @@ export default function Feedback() {
   const load = useCallback(() => {
     if (!eventId) return;
     setResult(null);
-    feedbackApi.list(eventId).then((res) => setResult(res)).catch((err) => setError(err.message));
+    feedbackApi
+      .list(eventId)
+      .then((res) => setResult(res))
+      .catch((err) => setError(err.message));
   }, [eventId]);
 
   useEffect(load, [load]);
 
   if (error) return <ErrorState message={error} onRetry={load} />;
   if (events === null) return <LoadingState label="Loading events…" />;
-  if (events.length === 0) return <EmptyState title="No events yet" message="Create an event in the Event CMS first." />;
+  if (events.length === 0)
+    return <EmptyState title="No events yet" message="Create an event in the Event CMS first." />;
 
   const entries = result?.data || [];
 
@@ -39,11 +43,21 @@ export default function Feedback() {
       <div className="page-header">
         <div>
           <h2 className="page-header__title">Feedback</h2>
-          <p className="page-header__subtitle">What attendees said, straight from their ticket link.</p>
+          <p className="page-header__subtitle">
+            What attendees said, straight from their ticket link.
+          </p>
         </div>
         {events.length > 1 && (
-          <select className="field__select" value={eventId || ''} onChange={(e) => setEventId(e.target.value)}>
-            {events.map((ev) => <option key={ev.id} value={ev.id}>{ev.title}</option>)}
+          <select
+            className="field__select"
+            value={eventId || ''}
+            onChange={(e) => setEventId(e.target.value)}
+          >
+            {events.map((ev) => (
+              <option key={ev.id} value={ev.id}>
+                {ev.title}
+              </option>
+            ))}
           </select>
         )}
       </div>
@@ -66,22 +80,55 @@ export default function Feedback() {
           </div>
 
           {entries.length === 0 ? (
-            <EmptyState title="No feedback yet" message="Responses appear here as attendees submit them from their ticket page." />
+            <EmptyState
+              title="No feedback yet"
+              message="Responses appear here as attendees submit them from their ticket page."
+            />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
               {entries.map((f) => (
                 <div className="card" key={f._id}>
-                  <div className="card__body" style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
+                  <div
+                    className="card__body"
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: 'var(--space-4)',
+                      flexWrap: 'wrap',
+                    }}
+                  >
                     <div>
-                      <div style={{ color: 'var(--warning-500)', fontSize: 'var(--text-lg)', marginBottom: 'var(--space-2)' }}>
-                        {'★'.repeat(f.rating)}{'☆'.repeat(5 - f.rating)}
+                      <div
+                        style={{
+                          color: 'var(--warning-500)',
+                          fontSize: 'var(--text-lg)',
+                          marginBottom: 'var(--space-2)',
+                        }}
+                      >
+                        {'★'.repeat(f.rating)}
+                        {'☆'.repeat(5 - f.rating)}
                       </div>
-                      {f.comments && <p style={{ margin: 0, color: 'var(--ink-800)' }}>{f.comments}</p>}
-                      <p style={{ margin: '8px 0 0', fontSize: 'var(--text-sm)', color: 'var(--ink-500)' }}>
+                      {f.comments && (
+                        <p style={{ margin: 0, color: 'var(--ink-800)' }}>{f.comments}</p>
+                      )}
+                      <p
+                        style={{
+                          margin: '8px 0 0',
+                          fontSize: 'var(--text-sm)',
+                          color: 'var(--ink-500)',
+                        }}
+                      >
                         {f.registration?.attendee?.name} · {f.registration?.registrationCode}
                       </p>
                     </div>
-                    <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--ink-400)', whiteSpace: 'nowrap' }}>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: 'var(--text-sm)',
+                        color: 'var(--ink-400)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
                       {formatDateTime(f.createdAt)}
                     </p>
                   </div>

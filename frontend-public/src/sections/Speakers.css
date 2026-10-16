@@ -1,27 +1,32 @@
 .speakers__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: var(--space-8);
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 }
 
 .speaker {
   position: relative;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
-  border: 1px solid var(--line);
-  box-shadow: var(--edge-light), var(--shadow-sm);
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  /* transform is owned by the JS tilt effect (useTilt) on this element —
-     left out of the transition list here so it doesn't fight that. */
-  transition: box-shadow var(--transition), border-color var(--transition);
   display: flex;
   flex-direction: column;
+  background: linear-gradient(180deg, rgb(255 255 255 / 5%), rgb(255 255 255 / 1.5%));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--edge-light), var(--shadow-sm);
+  overflow: hidden;
+
+  /* transform is owned by the JS tilt effect (useTilt) on this element —
+     left out of the transition list here so it doesn't fight that. */
+  transition:
+    box-shadow var(--transition),
+    border-color var(--transition);
   will-change: transform;
 }
 
 .speaker:hover {
-  box-shadow: var(--shadow-lg), 0 0 50px rgba(229, 83, 63, 0.15);
   border-color: var(--accent-300);
+  box-shadow:
+    var(--shadow-lg),
+    0 0 50px rgb(229 83 63 / 15%);
 }
 
 .speaker--keynote {
@@ -32,34 +37,37 @@
 
 .speaker__panel {
   position: relative;
-  aspect-ratio: 4 / 5;
-  overflow: hidden;
   background:
-    radial-gradient(circle at 50% 40%, rgba(229, 83, 63, 0.35), transparent 60%),
-    radial-gradient(circle at 80% 90%, rgba(111, 132, 222, 0.3), transparent 55%),
+    radial-gradient(circle at 50% 40%, rgb(229 83 63 / 35%), transparent 60%),
+    radial-gradient(circle at 80% 90%, rgb(111 132 222 / 30%), transparent 55%),
     linear-gradient(160deg, #1a2140, #0b1022);
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
 }
 
 /* Fine concentric rings behind the monogram — a lens/ultrasound echo. */
 .speaker__panel::before {
-  content: '';
   position: absolute;
+  background: repeating-radial-gradient(
+    circle at 50% 42%,
+    rgb(255 255 255 / 6%) 0 1px,
+    transparent 1px 26px
+  );
+  content: '';
   inset: 0;
-  background: repeating-radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 26px);
   mask-image: radial-gradient(circle at 50% 42%, #000 0%, transparent 70%);
-  -webkit-mask-image: radial-gradient(circle at 50% 42%, #000 0%, transparent 70%);
   pointer-events: none;
 }
 
 /* Fade the panel into the card body. */
 .speaker__panel::after {
-  content: '';
   position: absolute;
-  left: 0;
   right: 0;
   bottom: 0;
+  left: 0;
   height: 35%;
-  background: linear-gradient(to bottom, transparent, rgba(11, 16, 34, 0.85));
+  background: linear-gradient(to bottom, transparent, rgb(11 16 34 / 85%));
+  content: '';
   pointer-events: none;
 }
 
@@ -76,23 +84,22 @@
 }
 
 .speaker__photo--initials {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  font-family: var(--font-display);
   position: relative;
   z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  color: transparent;
+  font-family: var(--font-display);
   font-size: 5rem;
   font-weight: 800;
   letter-spacing: -0.04em;
-  background: linear-gradient(160deg, #ffffff 20%, #f08672 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 10px 30px rgba(229, 83, 63, 0.45));
+  background: linear-gradient(160deg, #fff 20%, #f08672 100%);
   transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1);
+  background-clip: text;
+  filter: drop-shadow(0 10px 30px rgb(229 83 63 / 45%));
 }
 
 .speaker:hover .speaker__photo--initials {
@@ -101,40 +108,40 @@
 
 .speaker__flag {
   position: absolute;
-  z-index: 2;
   top: var(--space-4);
   left: var(--space-4);
+  z-index: 2;
   box-shadow: var(--shadow-sm);
 }
 
 /* ---------- Body ---------- */
 
 .speaker__body {
-  padding: var(--space-6);
   display: flex;
-  flex-direction: column;
   flex: 1;
+  flex-direction: column;
+  padding: var(--space-6);
 }
 
 .speaker__name {
-  font-size: var(--text-xl);
   margin-bottom: var(--space-1);
+  font-size: var(--text-xl);
 }
 
 .speaker__credentials {
+  margin-bottom: var(--space-3);
+  color: var(--accent-700);
   font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--accent-700);
-  margin-bottom: var(--space-3);
 }
 
 .speaker__role {
-  font-size: var(--text-sm);
-  color: var(--ink-700);
-  line-height: 1.5;
   margin-bottom: var(--space-4);
+  color: var(--ink-700);
+  font-size: var(--text-sm);
+  line-height: 1.5;
 }
 
 .speaker__org {
@@ -142,36 +149,36 @@
 }
 
 .speaker__topic {
-  font-size: var(--text-sm);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
   color: var(--ink-800);
+  font-size: var(--text-sm);
   font-weight: 500;
   background: var(--brand-50);
-  border-left: 3px solid var(--brand-500);
-  padding: var(--space-3) var(--space-4);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-  margin-bottom: var(--space-4);
+  border-left: 3px solid var(--brand-500);
 }
 
 .speaker__topic-label {
   display: block;
+  margin-bottom: var(--space-1);
+  color: var(--ink-500);
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ink-500);
-  margin-bottom: var(--space-1);
 }
 
 .speaker__bio {
-  font-size: var(--text-sm);
-  color: var(--ink-600);
-  line-height: 1.65;
-  margin-bottom: var(--space-2);
   display: -webkit-box;
+  margin-bottom: var(--space-2);
+  color: var(--ink-600);
+  font-size: var(--text-sm);
+  line-height: 1.65;
+  overflow: hidden;
   -webkit-line-clamp: 3;
   line-clamp: 3;
   -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 .speaker__bio.is-expanded {
@@ -181,14 +188,14 @@
 }
 
 .speaker__toggle {
-  align-self: flex-start;
-  margin-top: auto;
-  background: none;
-  border: none;
   padding: 0;
+  margin-top: auto;
+  color: var(--accent-700);
   font-size: var(--text-sm);
   font-weight: 600;
-  color: var(--accent-700);
+  background: none;
+  border: none;
+  align-self: flex-start;
 }
 
 .speaker__toggle:hover {
@@ -196,7 +203,7 @@
   text-decoration: underline;
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .speakers__grid {
     grid-template-columns: 1fr;
     max-width: 340px;

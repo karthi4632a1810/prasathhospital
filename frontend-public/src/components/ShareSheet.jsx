@@ -71,7 +71,14 @@ export default function ShareSheet({ event, open, onClose }) {
         <div className="share-sheet__head">
           <h2 className="share-sheet__title">Share this event</h2>
           <button className="share-sheet__close" onClick={onClose} aria-label="Close">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+            >
               <path d="m6 6 12 12M18 6 6 18" strokeLinecap="round" />
             </svg>
           </button>
@@ -92,7 +99,13 @@ export default function ShareSheet({ event, open, onClose }) {
         </div>
 
         <div className="share-sheet__link">
-          <input type="text" value={shareUrl} readOnly aria-label="Event link" onFocus={(e) => e.target.select()} />
+          <input
+            type="text"
+            value={shareUrl}
+            readOnly
+            aria-label="Event link"
+            onFocus={(e) => e.target.select()}
+          />
           <button onClick={copyLink} className={copied ? 'is-copied' : ''}>
             {copied ? 'Copied' : 'Copy'}
           </button>

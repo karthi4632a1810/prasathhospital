@@ -20,7 +20,9 @@ function saleNotice(ticket) {
       return { text: 'Sales closed', tone: 'neutral' };
     case 'not-yet-open':
       return {
-        text: ticket.salesStartAt ? `Opens ${formatShortDate(ticket.salesStartAt)}` : 'Opening soon',
+        text: ticket.salesStartAt
+          ? `Opens ${formatShortDate(ticket.salesStartAt)}`
+          : 'Opening soon',
         tone: 'info',
       };
     case 'inactive':
@@ -77,7 +79,15 @@ function TicketCard({ ticket, onSelect, canRegister }) {
         <ul className="ticket__benefits">
           {ticket.benefits.map((b) => (
             <li key={b}>
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                aria-hidden="true"
+              >
                 <path d="m5 12.5 4.5 4.5L19 7.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               <span>{b}</span>
@@ -134,7 +144,8 @@ export default function Tickets({ ticketTypes, onSelect, canRegister }) {
         </div>
 
         <p className="tickets__note">
-          Registration is by sponsor coupon — enter your company's coupon code when you register and your pass is free.
+          Registration is by sponsor coupon — enter your company's coupon code when you register and
+          your pass is free.
         </p>
       </div>
     </section>

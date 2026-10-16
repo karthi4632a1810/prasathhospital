@@ -43,7 +43,9 @@ export default function TicketTypes() {
   }
 
   function handleSaved(updated) {
-    setTickets((list) => list.map((t) => ((t._id || t.id) === (updated._id || updated.id) ? updated : t)));
+    setTickets((list) =>
+      list.map((t) => ((t._id || t.id) === (updated._id || updated.id) ? updated : t))
+    );
   }
 
   function handleDeleted(id) {
@@ -61,12 +63,22 @@ export default function TicketTypes() {
       <div className="page-header">
         <div>
           <h2 className="page-header__title">Ticket Types</h2>
-          <p className="page-header__subtitle">Pricing, inventory and sales windows for each pass.</p>
+          <p className="page-header__subtitle">
+            Pricing, inventory and sales windows for each pass.
+          </p>
         </div>
         <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
           {events.length > 1 && (
-            <select className="field__select" value={eventId || ''} onChange={(e) => setEventId(e.target.value)}>
-              {events.map((ev) => <option key={ev.id} value={ev.id}>{ev.title}</option>)}
+            <select
+              className="field__select"
+              value={eventId || ''}
+              onChange={(e) => setEventId(e.target.value)}
+            >
+              {events.map((ev) => (
+                <option key={ev.id} value={ev.id}>
+                  {ev.title}
+                </option>
+              ))}
             </select>
           )}
           <Button variant="primary" size="sm" onClick={handleCreate}>
@@ -82,7 +94,12 @@ export default function TicketTypes() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
           {tickets.map((t) => (
-            <TicketTypeCard key={t._id || t.id} ticket={t} onSaved={handleSaved} onDeleted={handleDeleted} />
+            <TicketTypeCard
+              key={t._id || t.id}
+              ticket={t}
+              onSaved={handleSaved}
+              onDeleted={handleDeleted}
+            />
           ))}
         </div>
       )}

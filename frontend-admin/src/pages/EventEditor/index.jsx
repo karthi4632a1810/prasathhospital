@@ -57,7 +57,11 @@ export default function EventEditor() {
   }, [eventId]);
 
   async function handleCreate() {
-    const res = await eventApi.create({ title: 'New event', startDate: new Date(), endDate: new Date() });
+    const res = await eventApi.create({
+      title: 'New event',
+      startDate: new Date(),
+      endDate: new Date(),
+    });
     loadList();
     setEventId(res.data.id);
   }
@@ -86,7 +90,9 @@ export default function EventEditor() {
       <div className="page-header">
         <div>
           <h2 className="page-header__title">Event CMS</h2>
-          <p className="page-header__subtitle">Everything on the public microsite comes from here.</p>
+          <p className="page-header__subtitle">
+            Everything on the public microsite comes from here.
+          </p>
         </div>
         <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
           {events.length > 1 && (

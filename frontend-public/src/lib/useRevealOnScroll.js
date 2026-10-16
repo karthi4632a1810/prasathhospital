@@ -35,7 +35,8 @@ const MAX_STAGGER_MS = 480;
  */
 export function useRevealOnScroll(ready) {
   useEffect(() => {
-    if (!ready || typeof window === 'undefined' || !('IntersectionObserver' in window)) return undefined;
+    if (!ready || typeof window === 'undefined' || !('IntersectionObserver' in window))
+      return undefined;
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return undefined;
 
     const elements = document.querySelectorAll(SELECTORS.join(','));

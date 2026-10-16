@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Legend } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer,
+  Legend,
+} from 'recharts';
 import { useAuth } from '../lib/auth';
 import { useEvents, EventSelect } from '../lib/useEvents';
 import { reportApi } from '../lib/reportApi';
@@ -7,9 +16,24 @@ import { LoadingState, ErrorState, EmptyState } from '../components/ui/States';
 import { CouponStateBadge, UsageBar } from '../components/StatusBadges';
 
 const ALL_LINKS = [
-  { to: '/registrations', label: 'Registrations', desc: 'Search, resend tickets, cancel', roles: ['superadmin', 'manager'] },
-  { to: '/coupons', label: 'Coupons', desc: 'Create and manage company coupons', roles: ['superadmin', 'manager'] },
-  { to: '/reports', label: 'Reports', desc: 'Company & coupon reports, CSV exports', roles: ['superadmin', 'manager'] },
+  {
+    to: '/registrations',
+    label: 'Registrations',
+    desc: 'Search, resend tickets, cancel',
+    roles: ['superadmin', 'manager'],
+  },
+  {
+    to: '/coupons',
+    label: 'Coupons',
+    desc: 'Create and manage company coupons',
+    roles: ['superadmin', 'manager'],
+  },
+  {
+    to: '/reports',
+    label: 'Reports',
+    desc: 'Company & coupon reports, CSV exports',
+    roles: ['superadmin', 'manager'],
+  },
   { to: '/checkin', label: 'Check-in scanner', desc: 'Scan QR codes on event day' },
 ];
 
@@ -52,7 +76,8 @@ export default function DashboardOverview() {
   const links = ALL_LINKS.filter((l) => !l.roles || l.roles.includes(user?.role));
 
   if (eventsError) return <ErrorState message={eventsError} />;
-  if (events && events.length === 0) return <EmptyState title="No events yet" message="Create an event in the Event CMS first." />;
+  if (events && events.length === 0)
+    return <EmptyState title="No events yet" message="Create an event in the Event CMS first." />;
 
   const o = overview;
   const companyChart = (o?.byCompany || []).filter((c) => c.confirmed > 0 || c.allocated > 0);
@@ -61,10 +86,16 @@ export default function DashboardOverview() {
     <div>
       <div className="page-header">
         <div>
-          <h2 className="page-header__title">{greeting}, {user?.name?.split(' ')[0]}</h2>
-          <p className="page-header__subtitle">Live registration and check-in numbers. Refreshes every 30 seconds.</p>
+          <h2 className="page-header__title">
+            {greeting}, {user?.name?.split(' ')[0]}
+          </h2>
+          <p className="page-header__subtitle">
+            Live registration and check-in numbers. Refreshes every 30 seconds.
+          </p>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div
+          style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center', flexWrap: 'wrap' }}
+        >
           <EventSelect events={events} eventId={eventId} onChange={setEventId} />
           <StatusPill status={apiStatus} />
         </div>
@@ -77,8 +108,16 @@ export default function DashboardOverview() {
       ) : (
         <>
           <div className="stat-grid">
-            <StatTile label="Total registrations" value={o.registrations.total} meta={`${o.registrations.cancelled} cancelled`} />
-            <StatTile label="Confirmed" value={o.registrations.confirmed} meta="Valid tickets issued" />
+            <StatTile
+              label="Total registrations"
+              value={o.registrations.total}
+              meta={`${o.registrations.cancelled} cancelled`}
+            />
+            <StatTile
+              label="Confirmed"
+              value={o.registrations.confirmed}
+              meta="Valid tickets issued"
+            />
             <StatTile
               label="Checked in"
               value={`${o.checkIn.checkedIn}`}
@@ -105,12 +144,45 @@ export default function DashboardOverview() {
                 <ResponsiveContainer width="100%" height={260}>
                   <BarChart data={companyChart} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--ink-100)" vertical={false} />
-                    <XAxis dataKey="name" tick={{ fill: 'var(--ink-600)', fontSize: 12 }} axisLine={{ stroke: 'var(--ink-200)' }} tickLine={false} interval={0} />
-                    <YAxis allowDecimals={false} tick={{ fill: 'var(--ink-500)', fontSize: 12 }} axisLine={false} tickLine={false} width={32} />
-                    <Tooltip cursor={{ fill: 'var(--brand-50)' }} contentStyle={{ border: '1px solid var(--ink-200)', borderRadius: 8, fontSize: 13 }} />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fill: 'var(--ink-600)', fontSize: 12 }}
+                      axisLine={{ stroke: 'var(--ink-200)' }}
+                      tickLine={false}
+                      interval={0}
+                    />
+                    <YAxis
+                      allowDecimals={false}
+                      tick={{ fill: 'var(--ink-500)', fontSize: 12 }}
+                      axisLine={false}
+                      tickLine={false}
+                      width={32}
+                    />
+                    <Tooltip
+                      cursor={{ fill: 'var(--brand-50)' }}
+                      contentStyle={{
+                        border: '1px solid var(--ink-200)',
+                        borderRadius: 8,
+                        fontSize: 13,
+                      }}
+                    />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar isAnimationActive={false} dataKey="confirmed" name="Confirmed" fill="var(--brand-600)" radius={[4, 4, 0, 0]} maxBarSize={44} />
-                    <Bar isAnimationActive={false} dataKey="checkedIn" name="Checked in" fill="var(--success-500)" radius={[4, 4, 0, 0]} maxBarSize={44} />
+                    <Bar
+                      isAnimationActive={false}
+                      dataKey="confirmed"
+                      name="Confirmed"
+                      fill="var(--brand-600)"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={44}
+                    />
+                    <Bar
+                      isAnimationActive={false}
+                      dataKey="checkedIn"
+                      name="Checked in"
+                      fill="var(--success-500)"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={44}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -136,11 +208,17 @@ export default function DashboardOverview() {
                   <tbody>
                     {o.byCoupon.map((c) => (
                       <tr key={c.id}>
-                        <td className="mono"><strong>{c.code}</strong></td>
+                        <td className="mono">
+                          <strong>{c.code}</strong>
+                        </td>
                         <td>{c.companyName}</td>
-                        <td><UsageBar used={c.used} allocated={c.allocated} /></td>
+                        <td>
+                          <UsageBar used={c.used} allocated={c.allocated} />
+                        </td>
                         <td className="num">{c.confirmed}</td>
-                        <td><CouponStateBadge state={c.state} /></td>
+                        <td>
+                          <CouponStateBadge state={c.state} />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -155,7 +233,14 @@ export default function DashboardOverview() {
         <div className="card__header">
           <h3 className="card__title">Quick links</h3>
         </div>
-        <div className="card__body" style={{ display: 'grid', gap: 'var(--space-3)', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+        <div
+          className="card__body"
+          style={{
+            display: 'grid',
+            gap: 'var(--space-3)',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          }}
+        >
           {links.map((link) => (
             <a
               key={link.to}
@@ -172,9 +257,13 @@ export default function DashboardOverview() {
             >
               <span>
                 <strong style={{ display: 'block', color: 'var(--ink-900)' }}>{link.label}</strong>
-                <span style={{ fontSize: 'var(--text-sm)', color: 'var(--ink-500)' }}>{link.desc}</span>
+                <span style={{ fontSize: 'var(--text-sm)', color: 'var(--ink-500)' }}>
+                  {link.desc}
+                </span>
               </span>
-              <span aria-hidden="true" style={{ color: 'var(--brand-500)' }}>→</span>
+              <span aria-hidden="true" style={{ color: 'var(--brand-500)' }}>
+                →
+              </span>
             </a>
           ))}
         </div>
@@ -200,7 +289,10 @@ function DeliveryTile({ label, counts }) {
       <p className="stat-tile__label">{label}</p>
       <p className="stat-tile__value">
         {counts.sent}
-        <span style={{ fontSize: 'var(--text-base)', color: 'var(--ink-500)', fontWeight: 500 }}> sent</span>
+        <span style={{ fontSize: 'var(--text-base)', color: 'var(--ink-500)', fontWeight: 500 }}>
+          {' '}
+          sent
+        </span>
       </p>
       <p className="stat-tile__meta">
         <span style={{ color: failed ? 'var(--danger-700)' : undefined }}>{failed} failed</span>
@@ -216,7 +308,11 @@ function StatusPill({ status }) {
   const map = {
     checking: { label: 'Checking API…', color: 'var(--ink-500)', bg: 'var(--ink-100)' },
     ok: { label: 'All systems normal', color: 'var(--success-700)', bg: 'var(--success-100)' },
-    degraded: { label: 'Database unavailable', color: 'var(--warning-700)', bg: 'var(--warning-100)' },
+    degraded: {
+      label: 'Database unavailable',
+      color: 'var(--warning-700)',
+      bg: 'var(--warning-100)',
+    },
     down: { label: 'API unreachable', color: 'var(--danger-700)', bg: 'var(--danger-100)' },
   };
   const cfg = map[status] || map.checking;
@@ -234,7 +330,15 @@ function StatusPill({ status }) {
         fontWeight: 600,
       }}
     >
-      <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'currentColor', display: 'inline-block' }} />
+      <span
+        style={{
+          width: 8,
+          height: 8,
+          borderRadius: '50%',
+          background: 'currentColor',
+          display: 'inline-block',
+        }}
+      />
       {cfg.label}
     </span>
   );

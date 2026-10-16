@@ -23,7 +23,9 @@ export default function FeedbackPage() {
     api
       .getTicket(qrToken)
       .then((res) => setState({ status: 'ready', data: res.data, error: null }))
-      .catch((err) => setState({ status: err.status === 404 ? 'not-found' : 'error', data: null, error: err }));
+      .catch((err) =>
+        setState({ status: err.status === 404 ? 'not-found' : 'error', data: null, error: err })
+      );
   }, [qrToken]);
 
   async function handleSubmit(e) {
@@ -38,7 +40,9 @@ export default function FeedbackPage() {
       await api.submitFeedback({ qrToken, rating, comments });
       setSubmitted(true);
     } catch (err) {
-      setSubmitError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.');
+      setSubmitError(
+        err instanceof ApiError ? err.message : 'Something went wrong. Please try again.'
+      );
     } finally {
       setSubmitting(false);
     }
@@ -60,19 +64,30 @@ export default function FeedbackPage() {
           {submitted ? (
             <div className="feedback-card feedback-card--success">
               <div className="feedback-card__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="36"
+                  height="36"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                >
                   <path d="m5 12.5 4.5 4.5L19 7.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
               <h1>Thank you!</h1>
               <p>Your feedback for {ticket.event.title} has been recorded.</p>
-              <Button variant="primary" href="/">Back to Prashanth Hospitals</Button>
+              <Button variant="primary" href="/">
+                Back to Prashanth Hospitals
+              </Button>
             </div>
           ) : (
             <div className="feedback-card">
               <p className="feedback-card__eyebrow">{ticket.event.title}</p>
               <h1 className="feedback-card__title">How was your experience?</h1>
-              <p className="feedback-card__subtitle">Hi {ticket.attendee.name}, your feedback helps us improve future events.</p>
+              <p className="feedback-card__subtitle">
+                Hi {ticket.attendee.name}, your feedback helps us improve future events.
+              </p>
 
               <form onSubmit={handleSubmit}>
                 <div className="star-rating" role="radiogroup" aria-label="Rating">

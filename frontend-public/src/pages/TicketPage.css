@@ -8,62 +8,65 @@
 }
 
 .ticket-card {
-  border: 1px solid transparent;
+  padding: var(--space-8);
   background:
     linear-gradient(180deg, #151c37, #0b1022) padding-box,
-    linear-gradient(135deg, rgba(229, 83, 63, 0.7), rgba(226, 165, 48, 0.4), rgba(111, 132, 222, 0.5)) border-box;
+    linear-gradient(135deg, rgb(229 83 63 / 70%), rgb(226 165 48 / 40%), rgb(111 132 222 / 50%))
+      border-box;
+  border: 1px solid transparent;
   border-radius: var(--radius-xl);
-  padding: var(--space-8);
-  box-shadow: var(--shadow-lg), 0 0 70px rgba(229, 83, 63, 0.15);
+  box-shadow:
+    var(--shadow-lg),
+    0 0 70px rgb(229 83 63 / 15%);
 }
 
 .ticket-card__brand {
   display: flex;
   justify-content: space-between;
+  margin-bottom: var(--space-6);
+  color: var(--gold-600);
   font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: var(--gold-600);
-  margin-bottom: var(--space-6);
 }
 
 .ticket-card__event {
-  font-size: var(--text-3xl);
   margin-bottom: var(--space-2);
+  font-size: var(--text-3xl);
 }
 
 .ticket-card__datetime,
 .ticket-card__venue {
-  color: var(--ink-600);
   margin: 0;
+  color: var(--ink-600);
 }
 
 .ticket-card__divider {
   height: 1px;
-  background: repeating-linear-gradient(90deg, var(--ink-300) 0 8px, transparent 8px 14px);
   margin-block: var(--space-6);
+  background: repeating-linear-gradient(90deg, var(--ink-300) 0 8px, transparent 8px 14px);
 }
 
 .ticket-card__body {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: var(--space-6);
-  flex-wrap: wrap;
 }
 
 .ticket-card__label {
+  margin: 0 0 var(--space-1);
+  color: var(--ink-500);
   font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--ink-500);
-  margin: 0 0 var(--space-1);
 }
 
 .ticket-card__value {
-  font-size: var(--text-lg);
-  color: var(--ink-900);
   margin: 0;
+  color: var(--ink-900);
+  font-size: var(--text-lg);
   font-weight: 600;
 }
 
@@ -73,31 +76,32 @@
 }
 
 .ticket-card__qr img {
-  /* QR stays dark-on-white so it scans reliably at the check-in desk. */
-  background: #ffffff;
-  border-radius: var(--radius-md);
   padding: var(--space-3);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+
+  /* QR stays dark-on-white so it scans reliably at the check-in desk. */
+  background: #fff;
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 45%);
 }
 
 .ticket-card__qr p {
-  font-size: var(--text-xs);
-  color: var(--ink-500);
   margin-top: var(--space-2);
+  color: var(--ink-500);
+  font-size: var(--text-xs);
 }
 
 .ticket-card__actions {
-  margin-top: var(--space-8);
   display: flex;
-  gap: var(--space-3);
   flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-8);
 }
 
 .ticket-card__badges {
-  margin-top: var(--space-5);
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+  margin-top: var(--space-5);
 }
 
 .ticket-card__qr.is-void img {

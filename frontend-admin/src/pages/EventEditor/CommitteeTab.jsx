@@ -24,23 +24,54 @@ export default function CommitteeTab({ event, onSaved }) {
         items={committee}
         onChange={setCommittee}
         itemLabel="Member"
-        newItem={() => ({ name: '', role: '', group: 'organising', photoUrl: '', order: committee.length })}
+        newItem={() => ({
+          name: '',
+          role: '',
+          group: 'organising',
+          photoUrl: '',
+          order: committee.length,
+        })}
         renderItem={(item, update) => (
           <>
             <div className="field-row">
-              <label className="field"><span className="field__label">Name</span>
-                <input className="field__input" placeholder="Dr Jane Doe" value={item.name} onChange={(e) => update({ name: e.target.value })} /></label>
-              <label className="field"><span className="field__label">Role</span>
-                <input className="field__input" placeholder="Organising Chairperson" value={item.role} onChange={(e) => update({ role: e.target.value })} /></label>
+              <label className="field">
+                <span className="field__label">Name</span>
+                <input
+                  className="field__input"
+                  placeholder="Dr Jane Doe"
+                  value={item.name}
+                  onChange={(e) => update({ name: e.target.value })}
+                />
+              </label>
+              <label className="field">
+                <span className="field__label">Role</span>
+                <input
+                  className="field__input"
+                  placeholder="Organising Chairperson"
+                  value={item.role}
+                  onChange={(e) => update({ role: e.target.value })}
+                />
+              </label>
             </div>
-            <label className="field"><span className="field__label">Group</span>
-              <select className="field__select" value={item.group} onChange={(e) => update({ group: e.target.value })}>
+            <label className="field">
+              <span className="field__label">Group</span>
+              <select
+                className="field__select"
+                value={item.group}
+                onChange={(e) => update({ group: e.target.value })}
+              >
                 {GROUPS.map((g) => (
-                  <option key={g.value} value={g.value}>{g.label}</option>
+                  <option key={g.value} value={g.value}>
+                    {g.label}
+                  </option>
                 ))}
               </select>
             </label>
-            <ImageUploadField label="Photo" value={item.photoUrl} onChange={(url) => update({ photoUrl: url })} />
+            <ImageUploadField
+              label="Photo"
+              value={item.photoUrl}
+              onChange={(url) => update({ photoUrl: url })}
+            />
           </>
         )}
       />

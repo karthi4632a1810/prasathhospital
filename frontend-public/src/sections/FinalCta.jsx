@@ -24,7 +24,8 @@ export default function FinalCta({ event, onRegister, canRegister }) {
             </Button>
             {event.seatsRemaining !== null && event.seatsRemaining <= 50 && (
               <span className="final-cta__scarcity">
-                Only {event.seatsRemaining} {event.seatsRemaining === 1 ? 'seat' : 'seats'} remaining
+                Only {event.seatsRemaining} {event.seatsRemaining === 1 ? 'seat' : 'seats'}{' '}
+                remaining
               </span>
             )}
           </div>

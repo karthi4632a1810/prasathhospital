@@ -48,7 +48,12 @@ export function useEvents() {
 export function EventSelect({ events, eventId, onChange }) {
   if (!events || events.length < 2) return null;
   return (
-    <select className="field__select" value={eventId || ''} onChange={(e) => onChange(e.target.value)} aria-label="Event">
+    <select
+      className="field__select"
+      value={eventId || ''}
+      onChange={(e) => onChange(e.target.value)}
+      aria-label="Event"
+    >
       {events.map((ev) => (
         <option key={ev.id} value={ev.id}>
           {ev.title}

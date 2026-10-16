@@ -53,7 +53,15 @@ export default function Venue({ event }) {
 
             {address && (
               <p className="venue__address">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  aria-hidden="true"
+                >
                   <path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z" />
                   <circle cx="12" cy="10" r="2.5" />
                 </svg>
@@ -65,17 +73,39 @@ export default function Venue({ event }) {
               <div className="venue__chips">
                 {venue.landmark && (
                   <span className="venue__chip">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M3 11 12 4l9 7M5 10v9h14v-9" strokeLinecap="round" strokeLinejoin="round" />
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path
+                        d="M3 11 12 4l9 7M5 10v9h14v-9"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
                     </svg>
                     {venue.landmark}
                   </span>
                 )}
                 {venue.parkingInfo && (
                   <span className="venue__chip">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <rect x="3" y="5" width="18" height="14" rx="2" />
-                      <path d="M9 8h3.5a2 2 0 0 1 0 4H9V8Zm0 4v4" strokeLinecap="round" strokeLinejoin="round" />
+                      <path
+                        d="M9 8h3.5a2 2 0 0 1 0 4H9V8Zm0 4v4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
                     </svg>
                     {venue.parkingInfo}
                   </span>
@@ -90,8 +120,18 @@ export default function Venue({ event }) {
                   href={venue.mapLink}
                   external
                   iconLeft={
-                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.9">
-                      <path d="M3 7.5 9 5l6 2.5L21 5v11.5L15 19l-6-2.5L3 19V7.5Z" strokeLinejoin="round" />
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="17"
+                      height="17"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.9"
+                    >
+                      <path
+                        d="M3 7.5 9 5l6 2.5L21 5v11.5L15 19l-6-2.5L3 19V7.5Z"
+                        strokeLinejoin="round"
+                      />
                       <path d="M9 5v11.5M15 7.5V19" />
                     </svg>
                   }

@@ -8,7 +8,7 @@ import './StickyCta.css';
  * action is always one tap from anywhere on the page — most traffic arrives
  * from a WhatsApp link on a phone.
  */
-export default function StickyCta({ event, ticketTypes, onRegister, canRegister }) {
+export default function StickyCta({ _event, ticketTypes, onRegister, canRegister }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {

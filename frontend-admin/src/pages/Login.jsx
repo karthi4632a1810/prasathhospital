@@ -33,7 +33,13 @@ export default function Login() {
     <div className="login">
       <div className="login__panel">
         <div className="login__brand">
-          <img className="login__brand-mark" src="/assets/prashanth-hospitals-crest.jpg" alt="" width="32" height="32" />
+          <img
+            className="login__brand-mark"
+            src="/assets/prashanth-hospitals-crest.jpg"
+            alt=""
+            width="32"
+            height="32"
+          />
           <div>
             <p className="login__brand-name">Prashanth Hospitals</p>
             <p className="login__brand-sub">Events Admin</p>
@@ -70,7 +76,11 @@ export default function Login() {
             />
           </label>
 
-          {error && <p className="login__error" role="alert">{error}</p>}
+          {error && (
+            <p className="login__error" role="alert">
+              {error}
+            </p>
+          )}
 
           <Button type="submit" variant="primary" fullWidth disabled={submitting}>
             {submitting ? 'Signing in…' : 'Sign in'}
@@ -83,8 +93,8 @@ export default function Login() {
           <p className="login__aside-eyebrow">Fertility &amp; Gynaecology</p>
           <h2 className="login__aside-title">Run every event from one dashboard</h2>
           <p className="login__aside-text">
-            Content, tickets, promo codes, payments, check-in and reports — all in one
-            place, all in sync with the public microsite.
+            Content, tickets, promo codes, payments, check-in and reports — all in one place, all in
+            sync with the public microsite.
           </p>
         </div>
       </div>

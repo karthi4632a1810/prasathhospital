@@ -31,7 +31,9 @@ function AgendaItem({ item }) {
       <div className="agenda-item__content">
         <div className="agenda-item__heading">
           <h4 className="agenda-item__title">{item.title}</h4>
-          {meta.label && <span className={`agenda-tag agenda-tag--${meta.tone}`}>{meta.label}</span>}
+          {meta.label && (
+            <span className={`agenda-tag agenda-tag--${meta.tone}`}>{meta.label}</span>
+          )}
         </div>
 
         {item.description && <p className="agenda-item__desc">{item.description}</p>}
@@ -39,7 +41,15 @@ function AgendaItem({ item }) {
         <div className="agenda-item__meta">
           {item.speakerNames?.length > 0 && (
             <span className="agenda-item__speakers">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.9"
+                aria-hidden="true"
+              >
                 <circle cx="12" cy="8" r="3.4" />
                 <path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6" strokeLinecap="round" />
               </svg>
@@ -48,7 +58,15 @@ function AgendaItem({ item }) {
           )}
           {item.track && (
             <span className="agenda-item__track">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.9"
+                aria-hidden="true"
+              >
                 <path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z" />
                 <circle cx="12" cy="10" r="2.2" />
               </svg>

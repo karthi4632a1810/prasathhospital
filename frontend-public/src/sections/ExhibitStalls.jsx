@@ -7,7 +7,11 @@ const STALL_TIERS = [
     name: 'Platinum Stall',
     price: '₹10,00,000',
     registrations: '60 free registrations',
-    benefits: ['Prime high-visibility location', 'Top-tier branding across collateral', 'Stage recognition'],
+    benefits: [
+      'Prime high-visibility location',
+      'Top-tier branding across collateral',
+      'Stage recognition',
+    ],
   },
   {
     tier: 'gold',
@@ -37,8 +41,8 @@ export default function ExhibitStalls({ contactEmail }) {
           <span className="section-eyebrow">Exhibit &amp; sponsor</span>
           <h2 className="section-title">Put your brand in front of key decision makers</h2>
           <p className="section-sub">
-            Position your organization before leading clinical decision makers and opinion leaders in
-            reproductive medicine from India and internationally.
+            Position your organization before leading clinical decision makers and opinion leaders
+            in reproductive medicine from India and internationally.
           </p>
         </div>
 

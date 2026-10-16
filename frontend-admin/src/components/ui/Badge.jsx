@@ -3,7 +3,11 @@ import './Badge.css';
 export default function Badge({ children, tone = 'neutral', size = 'md', icon, className = '' }) {
   return (
     <span className={`badge badge--${tone} badge--${size} ${className}`.trim()}>
-      {icon && <span className="badge__icon" aria-hidden="true">{icon}</span>}
+      {icon && (
+        <span className="badge__icon" aria-hidden="true">
+          {icon}
+        </span>
+      )}
       {children}
     </span>
   );

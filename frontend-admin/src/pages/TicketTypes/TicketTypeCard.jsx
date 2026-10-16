@@ -33,7 +33,10 @@ export default function TicketTypeCard({ ticket, onSaved, onDeleted }) {
       quantityTotal: Number(form.quantityTotal) || 0,
       minPerOrder: Number(form.minPerOrder) || 1,
       maxPerOrder: Number(form.maxPerOrder) || 1,
-      benefits: form.benefits.split('\n').map((s) => s.trim()).filter(Boolean),
+      benefits: form.benefits
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean),
     });
     onSaved(res.data);
   });
@@ -54,7 +57,8 @@ export default function TicketTypeCard({ ticket, onSaved, onDeleted }) {
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
   const held = ticket.quantityHeld || 0;
   const sold = ticket.quantitySold || 0;
-  const available = ticket.quantityTotal > 0 ? Math.max(ticket.quantityTotal - sold - held, 0) : null;
+  const available =
+    ticket.quantityTotal > 0 ? Math.max(ticket.quantityTotal - sold - held, 0) : null;
 
   return (
     <div className="card">
@@ -65,68 +69,182 @@ export default function TicketTypeCard({ ticket, onSaved, onDeleted }) {
             {ticket.isActive ? 'Active' : 'Inactive'}
           </Badge>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-6)', fontSize: 'var(--text-sm)', color: 'var(--ink-500)' }}>
-          <span><strong style={{ color: 'var(--ink-800)' }}>{sold}</strong> sold</span>
-          <span><strong style={{ color: 'var(--ink-800)' }}>{held}</strong> held</span>
-          <span><strong style={{ color: 'var(--ink-800)' }}>{available === null ? '∞' : available}</strong> available</span>
+        <div
+          style={{
+            display: 'flex',
+            gap: 'var(--space-6)',
+            fontSize: 'var(--text-sm)',
+            color: 'var(--ink-500)',
+          }}
+        >
+          <span>
+            <strong style={{ color: 'var(--ink-800)' }}>{sold}</strong> sold
+          </span>
+          <span>
+            <strong style={{ color: 'var(--ink-800)' }}>{held}</strong> held
+          </span>
+          <span>
+            <strong style={{ color: 'var(--ink-800)' }}>
+              {available === null ? '∞' : available}
+            </strong>{' '}
+            available
+          </span>
         </div>
       </div>
 
       <div className="card__body">
         <div className="field-row">
-          <label className="field"><span className="field__label">Name</span>
-            <input className="field__input" value={form.name} onChange={set('name')} /></label>
-          <label className="field"><span className="field__label">Code</span>
-            <input className="field__input" value={form.code} onChange={set('code')} style={{ textTransform: 'uppercase' }} /></label>
-          <label className="field"><span className="field__label">Kind</span>
+          <label className="field">
+            <span className="field__label">Name</span>
+            <input className="field__input" value={form.name} onChange={set('name')} />
+          </label>
+          <label className="field">
+            <span className="field__label">Code</span>
+            <input
+              className="field__input"
+              value={form.code}
+              onChange={set('code')}
+              style={{ textTransform: 'uppercase' }}
+            />
+          </label>
+          <label className="field">
+            <span className="field__label">Kind</span>
             <select className="field__select" value={form.kind} onChange={set('kind')}>
-              {KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
+              {KINDS.map((k) => (
+                <option key={k} value={k}>
+                  {k}
+                </option>
+              ))}
             </select>
           </label>
         </div>
 
-        <label className="field"><span className="field__label">Description</span>
-          <textarea className="field__textarea" value={form.description} onChange={set('description')} /></label>
+        <label className="field">
+          <span className="field__label">Description</span>
+          <textarea
+            className="field__textarea"
+            value={form.description}
+            onChange={set('description')}
+          />
+        </label>
 
         <div className="field-row">
-          <label className="field"><span className="field__label">Price (₹)</span>
-            <input type="number" min="0" className="field__input" value={form.price} onChange={set('price')} /></label>
-          <label className="field"><span className="field__label">Tax %</span>
-            <input type="number" min="0" max="100" className="field__input" value={form.taxPercent} onChange={set('taxPercent')} /></label>
-          <label className="field"><span className="field__label">Admits</span>
-            <input type="number" min="1" className="field__input" value={form.admitsCount} onChange={set('admitsCount')} /></label>
+          <label className="field">
+            <span className="field__label">Price (₹)</span>
+            <input
+              type="number"
+              min="0"
+              className="field__input"
+              value={form.price}
+              onChange={set('price')}
+            />
+          </label>
+          <label className="field">
+            <span className="field__label">Tax %</span>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              className="field__input"
+              value={form.taxPercent}
+              onChange={set('taxPercent')}
+            />
+          </label>
+          <label className="field">
+            <span className="field__label">Admits</span>
+            <input
+              type="number"
+              min="1"
+              className="field__input"
+              value={form.admitsCount}
+              onChange={set('admitsCount')}
+            />
+          </label>
         </div>
 
         <div className="field-row">
-          <label className="field"><span className="field__label">Total inventory</span>
-            <input type="number" min="0" className="field__input" value={form.quantityTotal} onChange={set('quantityTotal')} />
+          <label className="field">
+            <span className="field__label">Total inventory</span>
+            <input
+              type="number"
+              min="0"
+              className="field__input"
+              value={form.quantityTotal}
+              onChange={set('quantityTotal')}
+            />
             <span className="field__hint">0 = unlimited</span>
           </label>
-          <label className="field"><span className="field__label">Min per order</span>
-            <input type="number" min="1" className="field__input" value={form.minPerOrder} onChange={set('minPerOrder')} /></label>
-          <label className="field"><span className="field__label">Max per order</span>
-            <input type="number" min="1" className="field__input" value={form.maxPerOrder} onChange={set('maxPerOrder')} /></label>
+          <label className="field">
+            <span className="field__label">Min per order</span>
+            <input
+              type="number"
+              min="1"
+              className="field__input"
+              value={form.minPerOrder}
+              onChange={set('minPerOrder')}
+            />
+          </label>
+          <label className="field">
+            <span className="field__label">Max per order</span>
+            <input
+              type="number"
+              min="1"
+              className="field__input"
+              value={form.maxPerOrder}
+              onChange={set('maxPerOrder')}
+            />
+          </label>
         </div>
 
-        <label className="field"><span className="field__label">Benefits (one per line)</span>
-          <textarea className="field__textarea" value={form.benefits} onChange={set('benefits')} /></label>
+        <label className="field">
+          <span className="field__label">Benefits (one per line)</span>
+          <textarea className="field__textarea" value={form.benefits} onChange={set('benefits')} />
+        </label>
 
         <div className="field-row">
           <label className="field__label">
-            <input type="checkbox" checked={form.isActive} onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))} style={{ marginRight: 'var(--space-2)' }} />
+            <input
+              type="checkbox"
+              checked={form.isActive}
+              onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
+              style={{ marginRight: 'var(--space-2)' }}
+            />
             Active (on sale)
           </label>
           <label className="field__label">
-            <input type="checkbox" checked={form.isPubliclyVisible} onChange={(e) => setForm((f) => ({ ...f, isPubliclyVisible: e.target.checked }))} style={{ marginRight: 'var(--space-2)' }} />
+            <input
+              type="checkbox"
+              checked={form.isPubliclyVisible}
+              onChange={(e) => setForm((f) => ({ ...f, isPubliclyVisible: e.target.checked }))}
+              style={{ marginRight: 'var(--space-2)' }}
+            />
             Publicly visible
           </label>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'var(--space-6)', paddingTop: 'var(--space-5)', borderTop: '1px solid var(--ink-100)' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: 'var(--space-6)',
+            paddingTop: 'var(--space-5)',
+            borderTop: '1px solid var(--ink-100)',
+          }}
+        >
           {SaveBar}
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-            {deleteError && <span className="tab-save-bar__status tab-save-bar__status--error">{deleteError}</span>}
-            <button type="button" className="btn btn--ghost btn--sm" onClick={handleDelete} disabled={deleting}>
+            {deleteError && (
+              <span className="tab-save-bar__status tab-save-bar__status--error">
+                {deleteError}
+              </span>
+            )}
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
               {deleting ? 'Deleting…' : 'Delete'}
             </button>
           </div>

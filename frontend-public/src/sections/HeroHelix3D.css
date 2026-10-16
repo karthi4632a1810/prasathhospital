@@ -4,10 +4,10 @@
    require recomputing every rung's geometry. Hidden below 1180px, where
    there's no spare width for it next to the hero text. */
 .helix3d {
-  display: none;
   position: absolute;
   top: 50%;
   right: clamp(var(--space-6), 6vw, 110px);
+  display: none;
   width: 220px;
   height: 600px;
   transform: translateY(-50%) scale(0.62);
@@ -16,19 +16,19 @@
   pointer-events: none;
 }
 
-@media (min-width: 1180px) {
+@media (width >= 1180px) {
   .helix3d {
     display: block;
   }
 }
 
-@media (min-width: 1440px) {
+@media (width >= 1440px) {
   .helix3d {
     transform: translateY(-50%) scale(0.82);
   }
 }
 
-@media (min-width: 1920px) {
+@media (width >= 1920px) {
   .helix3d {
     transform: translateY(-50%) scale(1);
   }
@@ -50,13 +50,22 @@
 }
 
 @keyframes helix3d-spin {
-  from { transform: rotateY(0deg); }
-  to { transform: rotateY(360deg); }
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
 }
 
 @keyframes helix3d-wobble {
-  0%, 100% { transform: rotateX(-4deg); }
-  50% { transform: rotateX(4deg); }
+  0%,
+  100% {
+    transform: rotateX(-4deg);
+  }
+  50% {
+    transform: rotateX(4deg);
+  }
 }
 
 .helix3d__rung {
@@ -73,7 +82,7 @@
   top: 0;
   left: 50%;
   height: 1px;
-  background: rgba(255, 255, 255, 0.13);
+  background: rgb(255 255 255 / 13%);
   border-radius: 1px;
   transform: translate(-50%, -50%);
 }
@@ -88,22 +97,29 @@
 }
 
 .helix3d__node--a {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgb(255 255 255 / 60%);
 }
 
 .helix3d__node--b {
-  background: rgba(255, 255, 255, 0.32);
+  background: rgb(255 255 255 / 32%);
 }
 
 .helix3d__node--gold {
   width: 10px;
   height: 10px;
   background: var(--gold-500);
-  box-shadow: 0 0 10px rgba(226, 165, 48, 0.75);
+  box-shadow: 0 0 10px rgb(226 165 48 / 75%);
   animation: helix3d-node-pulse 2.4s ease-in-out infinite;
 }
 
 @keyframes helix3d-node-pulse {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-  50% { transform: translate(-50%, -50%) scale(1.5); opacity: 0.65; }
+  0%,
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.65;
+    transform: translate(-50%, -50%) scale(1.5);
+  }
 }

@@ -17,14 +17,27 @@ function FaqItem({ faq, isOpen, onToggle }) {
         >
           <span>{faq.question}</span>
           <span className="faq-item__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+            >
               <path d="M6 9.5 12 15l6-5.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </span>
         </button>
       </h3>
 
-      <div id={panelId} role="region" aria-labelledby={buttonId} className="faq-item__panel" hidden={!isOpen}>
+      <div
+        id={panelId}
+        role="region"
+        aria-labelledby={buttonId}
+        className="faq-item__panel"
+        hidden={!isOpen}
+      >
         <p>{faq.answer}</p>
       </div>
     </li>
@@ -70,7 +83,13 @@ export default function Faq({ faqs, contact }) {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
                     <path d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1 0 12 2Zm5.5 14c-.2.6-1.2 1.2-1.7 1.2-.4 0-1 .1-3.3-.9-2.8-1.2-4.5-4-4.6-4.2-.1-.2-1.1-1.4-1.1-2.7s.7-1.9 1-2.2c.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.3.3c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.2.1.4.1.5-.1l.8-.9c.2-.2.3-.2.6-.1l2 1c.3.1.4.2.5.3.1.2.1.6-.1 1.2Z" />
                   </svg>
                   WhatsApp us

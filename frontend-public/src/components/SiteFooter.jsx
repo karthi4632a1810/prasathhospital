@@ -24,7 +24,9 @@ export default function SiteFooter({ event }) {
         {(contact.email || contact.phone) && (
           <div className="site-footer__contact">
             {contact.email && <a href={`mailto:${contact.email}`}>{contact.email}</a>}
-            {contact.phone && <a href={`tel:${contact.phone.replace(/\s/g, '')}`}>{contact.phone}</a>}
+            {contact.phone && (
+              <a href={`tel:${contact.phone.replace(/\s/g, '')}`}>{contact.phone}</a>
+            )}
           </div>
         )}
       </div>

@@ -58,7 +58,14 @@ export default function ImageUploadField({ label, value, onChange, hint }) {
             />
           )}
           {!showImage && !uploading && (
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.6">
+            <svg
+              viewBox="0 0 24 24"
+              width="24"
+              height="24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+            >
               <rect x="3" y="3" width="18" height="18" rx="2" />
               <circle cx="9" cy="9" r="1.6" />
               <path d="m21 15-5-5-11 11" />
@@ -86,7 +93,11 @@ export default function ImageUploadField({ label, value, onChange, hint }) {
               Remove
             </button>
           )}
-          {hint && <p className="field__hint" style={{ marginTop: 'var(--space-2)' }}>{hint}</p>}
+          {hint && (
+            <p className="field__hint" style={{ marginTop: 'var(--space-2)' }}>
+              {hint}
+            </p>
+          )}
           {error && <p className="field__error">{error}</p>}
         </div>
 

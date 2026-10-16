@@ -51,7 +51,9 @@ export default function RegisterPage() {
     api
       .getEvent(slug)
       .then((res) => setState({ status: 'ready', data: res.data, error: null }))
-      .catch((err) => setState({ status: err.status === 404 ? 'not-found' : 'error', data: null, error: err }));
+      .catch((err) =>
+        setState({ status: err.status === 404 ? 'not-found' : 'error', data: null, error: err })
+      );
   }, [slug]);
 
   useEffect(load, [load]);
@@ -84,10 +86,16 @@ export default function RegisterPage() {
     setChecking(true);
     resetCoupon();
     try {
-      const res = await api.validateCoupon({ code, eventSlug: slug, ticketTypeId: selectedTicket.id });
+      const res = await api.validateCoupon({
+        code,
+        eventSlug: slug,
+        ticketTypeId: selectedTicket.id,
+      });
       setCoupon(res.data);
     } catch (err) {
-      setCouponError(err instanceof ApiError ? err.message : 'Could not check this coupon. Please try again.');
+      setCouponError(
+        err instanceof ApiError ? err.message : 'Could not check this coupon. Please try again.'
+      );
     } finally {
       setChecking(false);
     }
@@ -110,7 +118,8 @@ export default function RegisterPage() {
       setResult(res.data);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'Something went wrong. Please try again.';
+      const message =
+        err instanceof ApiError ? err.message : 'Something went wrong. Please try again.';
       // A coupon problem found at submit time (e.g. the last slot went
       // seconds ago) invalidates the preview, so the button locks again.
       if (err instanceof ApiError && /coupon/i.test(message)) {
@@ -234,7 +243,9 @@ export default function RegisterPage() {
                     onChange={(e) => updateField('phone', e.target.value)}
                     placeholder="98765 43210"
                   />
-                  <small className="register-field__hint">Your ticket is also sent here on WhatsApp.</small>
+                  <small className="register-field__hint">
+                    Your ticket is also sent here on WhatsApp.
+                  </small>
                 </label>
                 <label className="register-field">
                   <span>Email address</span>
@@ -303,7 +314,9 @@ export default function RegisterPage() {
                 {submitting ? 'Registering…' : 'Complete Registration'}
               </Button>
               {!coupon && (
-                <p className="register-form__hint">Validate your coupon code to complete registration.</p>
+                <p className="register-form__hint">
+                  Validate your coupon code to complete registration.
+                </p>
               )}
             </form>
           </div>
@@ -319,7 +332,14 @@ function CouponSummary({ coupon }) {
     <div className="coupon-card">
       <div className="coupon-card__head">
         <span className="coupon-card__check" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4">
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.4"
+          >
             <path d="m5 12.5 4.5 4.5L19 7.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </span>
@@ -367,17 +387,30 @@ function RegistrationSuccess({ result, event, slug }) {
   return (
     <div className="register-success register-success--ticket">
       <div className="register-success__icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <svg
+          viewBox="0 0 24 24"
+          width="36"
+          height="36"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        >
           <path d="m5 12.5 4.5 4.5L19 7.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
       <h1>You're registered!</h1>
       <p className="register-success__lead">
-        Your registration for <strong>{event.title}</strong> is <span className="status-pill">Confirmed</span>
+        Your registration for <strong>{event.title}</strong> is{' '}
+        <span className="status-pill">Confirmed</span>
       </p>
 
       <div className="register-success__qr">
-        <img src={qrUrl} alt={`QR ticket for ${result.registrationCode}`} width={200} height={200} />
+        <img
+          src={qrUrl}
+          alt={`QR ticket for ${result.registrationCode}`}
+          width={200}
+          height={200}
+        />
         <p>Show this QR code at the registration desk</p>
       </div>
 
@@ -401,8 +434,8 @@ function RegistrationSuccess({ result, event, slug }) {
 
       <p className="register-success__note">
         We're also sending your ticket to <strong>{result.attendee.email}</strong> and to{' '}
-        <strong>{result.attendee.phone}</strong> on WhatsApp. If it doesn't arrive, this page and the
-        PDF are your ticket — bookmark the ticket page.
+        <strong>{result.attendee.phone}</strong> on WhatsApp. If it doesn't arrive, this page and
+        the PDF are your ticket — bookmark the ticket page.
       </p>
 
       <Button variant="ghost" href={`/events/${slug}`}>

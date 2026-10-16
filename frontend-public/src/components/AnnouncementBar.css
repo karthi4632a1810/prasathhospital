@@ -1,19 +1,19 @@
 .announcement {
   position: relative;
-  background:
-    linear-gradient(90deg, rgba(229, 83, 63, 0.22), rgba(226, 165, 48, 0.12) 50%, rgba(111, 132, 222, 0.2)),
-    var(--navy-900);
-  border-bottom: 1px solid var(--line);
   color: var(--ink-900);
   font-size: var(--text-sm);
+  background:
+    linear-gradient(90deg, rgb(229 83 63 / 22%), rgb(226 165 48 / 12%) 50%, rgb(111 132 222 / 20%)),
+    var(--navy-900);
+  border-bottom: 1px solid var(--line);
 }
 
 .announcement--warning {
-  background: linear-gradient(90deg, rgba(245, 158, 11, 0.25), rgba(245, 158, 11, 0.08)), var(--navy-900);
+  background: linear-gradient(90deg, rgb(245 158 11 / 25%), rgb(245 158 11 / 8%)), var(--navy-900);
 }
 
 .announcement--success {
-  background: linear-gradient(90deg, rgba(34, 197, 94, 0.25), rgba(34, 197, 94, 0.08)), var(--navy-900);
+  background: linear-gradient(90deg, rgb(34 197 94 / 25%), rgb(34 197 94 / 8%)), var(--navy-900);
 }
 
 .announcement__inner {
@@ -30,32 +30,34 @@
 }
 
 .announcement__text {
-  margin: 0;
   flex: 1;
+  margin: 0;
   font-weight: 500;
   line-height: 1.45;
 }
 
 .announcement__close {
   display: inline-flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   width: 28px;
   height: 28px;
-  flex-shrink: 0;
+  color: rgb(255 255 255 / 75%);
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.75);
   border-radius: var(--radius-sm);
-  transition: background var(--transition), color var(--transition);
+  transition:
+    background var(--transition),
+    color var(--transition);
+  flex-shrink: 0;
 }
 
 .announcement__close:hover {
-  background: rgba(255, 255, 255, 0.15);
   color: var(--white);
+  background: rgb(255 255 255 / 15%);
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .announcement {
     font-size: var(--text-xs);
   }

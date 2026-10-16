@@ -52,7 +52,9 @@ function Countdown({ target }) {
 export default function Hero({ event, onRegister, canRegister, onShare }) {
   const { venue, theme } = event;
   const heroStyle = theme?.heroImageUrl
-    ? { backgroundImage: `linear-gradient(135deg, rgba(16,21,43,0.92), rgba(61,16,13,0.82)), url(${theme.heroImageUrl})` }
+    ? {
+        backgroundImage: `linear-gradient(135deg, rgba(16,21,43,0.92), rgba(61,16,13,0.82)), url(${theme.heroImageUrl})`,
+      }
     : undefined;
 
   const locationLine =
@@ -63,7 +65,11 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
   // Headline numbers, all derived from real event data — nothing invented.
   const days =
     event.startDate && event.endDate
-      ? Math.round((new Date(event.endDate).setHours(0, 0, 0, 0) - new Date(event.startDate).setHours(0, 0, 0, 0)) / 86400000) + 1
+      ? Math.round(
+          (new Date(event.endDate).setHours(0, 0, 0, 0) -
+            new Date(event.startDate).setHours(0, 0, 0, 0)) /
+            86400000
+        ) + 1
       : 0;
   const facultyCount = (event.speakers?.length || 0) + (event.committee?.length || 0);
   const stats = [
@@ -87,7 +93,10 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
           <Badge tone="signal" icon={<span className="badge__dot" aria-hidden="true" />}>
             Live Tele-Robotic Surgery
           </Badge>
-          <RegistrationStateBadge state={event.registrationState} seatsRemaining={event.seatsRemaining} />
+          <RegistrationStateBadge
+            state={event.registrationState}
+            seatsRemaining={event.seatsRemaining}
+          />
         </div>
 
         <h1 className="hero__title">
@@ -105,7 +114,15 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
         <dl className="hero__facts">
           <div className="hero__fact">
             <dt>
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                aria-hidden="true"
+              >
                 <rect x="3" y="5" width="18" height="16" rx="2" />
                 <path d="M3 10h18M8 3v4M16 3v4" strokeLinecap="round" />
               </svg>
@@ -116,7 +133,15 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
 
           <div className="hero__fact">
             <dt>
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                aria-hidden="true"
+              >
                 <path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z" />
                 <circle cx="12" cy="10" r="2.5" />
               </svg>
@@ -144,7 +169,14 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
             size="lg"
             onClick={onShare}
             iconLeft={
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <svg
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
                 <circle cx="18" cy="5" r="3" />
                 <circle cx="6" cy="12" r="3" />
                 <circle cx="18" cy="19" r="3" />
@@ -169,7 +201,8 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
 
         {event.registrationClosesAt && event.registrationState === 'open' && (
           <p className="hero__deadline">
-            Registration closes on {formatDate(event.registrationClosesAt, { weekday: 'short', month: 'short' })}
+            Registration closes on{' '}
+            {formatDate(event.registrationClosesAt, { weekday: 'short', month: 'short' })}
           </p>
         )}
       </div>

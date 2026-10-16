@@ -5,5 +5,6 @@ export const couponApi = {
   create: (body) => request('/admin/coupons', { method: 'POST', body }),
   update: (id, body) => request(`/admin/coupons/${id}`, { method: 'PATCH', body }),
   remove: (id) => request(`/admin/coupons/${id}`, { method: 'DELETE' }),
-  generateCode: (companyId) => request(`/admin/coupons/generate-code?company=${encodeURIComponent(companyId)}`),
+  generateCode: (companyId) =>
+    request(`/admin/coupons/generate-code?company=${encodeURIComponent(companyId)}`),
 };

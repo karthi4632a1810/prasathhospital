@@ -17,7 +17,10 @@ function Avatar({ name, photoUrl, tone }) {
     return <img className="committee-member__photo" src={photoUrl} alt={name} loading="lazy" />;
   }
   return (
-    <div className={`committee-member__photo committee-member__photo--initials committee-member__photo--${tone}`} aria-hidden="true">
+    <div
+      className={`committee-member__photo committee-member__photo--initials committee-member__photo--${tone}`}
+      aria-hidden="true"
+    >
       {initials}
     </div>
   );
@@ -28,11 +31,19 @@ function MemberCard({ member, tone, featured }) {
   // run unconditionally, but the ref/handlers only attach when featured.
   const tilt = useTilt({ max: 7, scale: 1.02 });
   const tiltProps = featured
-    ? { ref: tilt.ref, onMouseEnter: tilt.onMouseEnter, onMouseMove: tilt.onMouseMove, onMouseLeave: tilt.onMouseLeave }
+    ? {
+        ref: tilt.ref,
+        onMouseEnter: tilt.onMouseEnter,
+        onMouseMove: tilt.onMouseMove,
+        onMouseLeave: tilt.onMouseLeave,
+      }
     : {};
 
   return (
-    <div className={`committee-member ${featured ? 'committee-member--featured' : ''}`} {...tiltProps}>
+    <div
+      className={`committee-member ${featured ? 'committee-member--featured' : ''}`}
+      {...tiltProps}
+    >
       <Avatar name={member.name} photoUrl={member.photoUrl} tone={tone} />
       <p className="committee-member__name">{member.name}</p>
       {member.role && <p className="committee-member__role">{member.role}</p>}

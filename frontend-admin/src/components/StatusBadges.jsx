@@ -18,7 +18,11 @@ export const DELIVERY_OPTIONS = [
 
 export function DeliveryBadge({ status }) {
   const cfg = DELIVERY[status] || DELIVERY.pending;
-  return <Badge tone={cfg.tone} size="sm">{cfg.label}</Badge>;
+  return (
+    <Badge tone={cfg.tone} size="sm">
+      {cfg.label}
+    </Badge>
+  );
 }
 
 const REG_STATUS = {
@@ -30,7 +34,11 @@ const REG_STATUS = {
 
 export function RegistrationStatusBadge({ status }) {
   const cfg = REG_STATUS[status] || { tone: 'neutral', label: status };
-  return <Badge tone={cfg.tone} size="sm">{cfg.label}</Badge>;
+  return (
+    <Badge tone={cfg.tone} size="sm">
+      {cfg.label}
+    </Badge>
+  );
 }
 
 const COUPON_STATE = {
@@ -41,11 +49,18 @@ const COUPON_STATE = {
   inactive: { tone: 'danger', label: 'Inactive' },
 };
 
-export const COUPON_STATE_OPTIONS = Object.entries(COUPON_STATE).map(([value, cfg]) => [value, cfg.label]);
+export const COUPON_STATE_OPTIONS = Object.entries(COUPON_STATE).map(([value, cfg]) => [
+  value,
+  cfg.label,
+]);
 
 export function CouponStateBadge({ state }) {
   const cfg = COUPON_STATE[state] || { tone: 'neutral', label: state };
-  return <Badge tone={cfg.tone} size="sm">{cfg.label}</Badge>;
+  return (
+    <Badge tone={cfg.tone} size="sm">
+      {cfg.label}
+    </Badge>
+  );
 }
 
 /** "used / allocated" with a bar that turns amber at 80% and red when full. */
@@ -60,7 +75,13 @@ export function UsageBar({ used, allocated }) {
         </span>
         <span>{Math.max(allocated - used, 0)} left</span>
       </div>
-      <div className="usage__bar" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+      <div
+        className="usage__bar"
+        role="progressbar"
+        aria-valuenow={pct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
         <div className="usage__fill" data-level={level} style={{ width: `${pct}%` }} />
       </div>
     </div>

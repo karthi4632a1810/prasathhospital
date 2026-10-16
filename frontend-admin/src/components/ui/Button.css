@@ -1,26 +1,30 @@
 .btn {
   display: inline-flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   gap: var(--space-2);
   font-family: var(--font-body);
   font-weight: 600;
+  line-height: 1;
   text-align: center;
+  text-decoration: none;
   border: 1.5px solid transparent;
   border-radius: var(--radius-md);
+  transition:
+    background var(--transition),
+    color var(--transition),
+    border-color var(--transition),
+    transform var(--transition),
+    box-shadow var(--transition);
   cursor: pointer;
-  transition: background var(--transition), color var(--transition),
-    border-color var(--transition), transform var(--transition), box-shadow var(--transition);
   white-space: nowrap;
-  text-decoration: none;
-  line-height: 1;
 }
 
-.btn:hover:not(.is-disabled):not(:disabled) {
+.btn:hover:not(.is-disabled, :disabled) {
   transform: translateY(-1px);
 }
 
-.btn:active:not(.is-disabled):not(:disabled) {
+.btn:active:not(.is-disabled, :disabled) {
   transform: translateY(0);
 }
 
@@ -34,21 +38,21 @@
 /* ---------- Sizes ---------- */
 
 .btn--sm {
+  min-height: 38px;
   padding: var(--space-2) var(--space-4);
   font-size: var(--text-sm);
-  min-height: 38px;
 }
 
 .btn--md {
+  min-height: 46px;
   padding: var(--space-3) var(--space-6);
   font-size: var(--text-base);
-  min-height: 46px;
 }
 
 .btn--lg {
+  min-height: 56px;
   padding: var(--space-4) var(--space-8);
   font-size: var(--text-lg);
-  min-height: 56px;
 }
 
 .btn--full {
@@ -62,73 +66,73 @@
    secondary/ghost = neutral, so the accent stays rare and meaningful */
 
 .btn--primary {
-  background: var(--ink-900);
   color: var(--white);
+  background: var(--ink-900);
   box-shadow: var(--shadow-sm);
 }
 
-.btn--primary:hover:not(.is-disabled):not(:disabled) {
-  background: var(--ink-800);
+.btn--primary:hover:not(.is-disabled, :disabled) {
   color: var(--white);
+  background: var(--ink-800);
 }
 
 .btn--accent {
-  background: var(--accent-600);
   color: var(--white);
+  background: var(--accent-600);
   box-shadow: var(--shadow-brand);
 }
 
-.btn--accent:hover:not(.is-disabled):not(:disabled) {
-  background: var(--accent-700);
+.btn--accent:hover:not(.is-disabled, :disabled) {
   color: var(--white);
+  background: var(--accent-700);
 }
 
 .btn--secondary {
-  background: var(--white);
   color: var(--ink-800);
+  background: var(--white);
   border-color: var(--ink-200);
 }
 
-.btn--secondary:hover:not(.is-disabled):not(:disabled) {
+.btn--secondary:hover:not(.is-disabled, :disabled) {
+  color: var(--ink-900);
   background: var(--ink-50);
   border-color: var(--ink-300);
-  color: var(--ink-900);
 }
 
 .btn--ghost {
-  background: transparent;
   color: var(--ink-700);
+  background: transparent;
 }
 
-.btn--ghost:hover:not(.is-disabled):not(:disabled) {
-  background: var(--ink-100);
+.btn--ghost:hover:not(.is-disabled, :disabled) {
   color: var(--ink-900);
+  background: var(--ink-100);
 }
 
 /* For use on dark hero backgrounds. */
 .btn--outline-light {
-  background: rgba(255, 255, 255, 0.08);
   color: var(--white);
-  border-color: rgba(255, 255, 255, 0.55);
+  background: rgb(255 255 255 / 8%);
+  border-color: rgb(255 255 255 / 55%);
   backdrop-filter: blur(6px);
 }
 
-.btn--outline-light:hover:not(.is-disabled):not(:disabled) {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: var(--white);
+.btn--outline-light:hover:not(.is-disabled, :disabled) {
   color: var(--white);
+  background: rgb(255 255 255 / 18%);
+  border-color: var(--white);
 }
 
 /* WhatsApp's own brand green — a deliberate, legible exception to the
    one-accent rule, since it needs to be instantly recognizable as WhatsApp. */
 .btn--whatsapp {
-  background: #25d366;
   color: #04301a;
+  background: #25d366;
 }
 
-.btn--whatsapp:hover:not(.is-disabled):not(:disabled) {
-  background: #1eb955;
+.btn--whatsapp:hover:not(.is-disabled, :disabled) {
   color: #04301a;
+  background: #1eb955;
 }
 
 .btn__icon {

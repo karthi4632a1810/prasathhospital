@@ -18,7 +18,10 @@ export default function Coupons() {
   const [flash, setFlash] = useState(null);
 
   useEffect(() => {
-    companyApi.list().then((res) => setCompanies(res.data)).catch(() => {});
+    companyApi
+      .list()
+      .then((res) => setCompanies(res.data))
+      .catch(() => {});
   }, []);
 
   const load = useCallback(() => {
@@ -42,7 +45,13 @@ export default function Coupons() {
 
   async function toggleActive(coupon) {
     const next = !coupon.isActive;
-    if (!next && !window.confirm(`Deactivate ${coupon.code}? It will stop working immediately. Existing registrations are kept.`)) return;
+    if (
+      !next &&
+      !window.confirm(
+        `Deactivate ${coupon.code}? It will stop working immediately. Existing registrations are kept.`
+      )
+    )
+      return;
     try {
       await couponApi.update(coupon.id, { isActive: next });
       notify('success', `${coupon.code} ${next ? 'activated' : 'deactivated'}.`);
@@ -56,12 +65,16 @@ export default function Coupons() {
 
   if (eventsError) return <ErrorState message={eventsError} />;
   if (events === null) return <LoadingState label="Loading events…" />;
-  if (events.length === 0) return <EmptyState title="No events yet" message="Create an event in the Event CMS first." />;
+  if (events.length === 0)
+    return <EmptyState title="No events yet" message="Create an event in the Event CMS first." />;
   if (error && coupons === null) return <ErrorState message={error} onRetry={load} />;
 
   const activeCompanies = (companies || []).filter((c) => c.isActive);
   const totals = (coupons || []).reduce(
-    (acc, c) => ({ allocated: acc.allocated + c.maxAllowedRegistrations, used: acc.used + c.usageCount }),
+    (acc, c) => ({
+      allocated: acc.allocated + c.maxAllowedRegistrations,
+      used: acc.used + c.usageCount,
+    }),
     { allocated: 0, used: 0 }
   );
 
@@ -72,12 +85,19 @@ export default function Coupons() {
           <h2 className="page-header__title">Coupons</h2>
           <p className="page-header__subtitle">
             Each coupon admits a fixed number of delegates at ₹0.
-            {coupons && coupons.length > 0 && ` ${totals.used} of ${totals.allocated} places used across ${coupons.length} coupons.`}
+            {coupons &&
+              coupons.length > 0 &&
+              ` ${totals.used} of ${totals.allocated} places used across ${coupons.length} coupons.`}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
           <EventSelect events={events} eventId={eventId} onChange={setEventId} />
-          <Button variant="primary" size="sm" onClick={() => setEditing('new')} disabled={activeCompanies.length === 0}>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setEditing('new')}
+            disabled={activeCompanies.length === 0}
+          >
             + New coupon
           </Button>
         </div>
@@ -85,29 +105,51 @@ export default function Coupons() {
 
       {activeCompanies.length === 0 && companies !== null && (
         <div className="notice notice--info">
-          Add an active company first — every coupon belongs to a company. <a href="/companies">Go to Companies →</a>
+          Add an active company first — every coupon belongs to a company.{' '}
+          <a href="/companies">Go to Companies →</a>
         </div>
       )}
-      {flash && <div className={`notice notice--${flash.tone}`} role="status">{flash.message}</div>}
+      {flash && (
+        <div className={`notice notice--${flash.tone}`} role="status">
+          {flash.message}
+        </div>
+      )}
 
       <div className="card" style={{ marginBottom: 'var(--space-5)' }}>
         <div className="toolbar">
           <label className="field field--grow">
             <span className="field__label">Search code</span>
-            <input className="field__input" placeholder="e.g. YAMAHA" value={filters.q} onChange={setFilter('q')} />
+            <input
+              className="field__input"
+              placeholder="e.g. YAMAHA"
+              value={filters.q}
+              onChange={setFilter('q')}
+            />
           </label>
           <label className="field">
             <span className="field__label">Company</span>
-            <select className="field__select" value={filters.company} onChange={setFilter('company')}>
+            <select
+              className="field__select"
+              value={filters.company}
+              onChange={setFilter('company')}
+            >
               <option value="">All companies</option>
-              {(companies || []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {(companies || []).map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
             </select>
           </label>
           <label className="field">
             <span className="field__label">State</span>
             <select className="field__select" value={filters.state} onChange={setFilter('state')}>
               <option value="">All states</option>
-              {COUPON_STATE_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              {COUPON_STATE_OPTIONS.map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
             </select>
           </label>
         </div>
@@ -116,7 +158,10 @@ export default function Coupons() {
       {coupons === null ? (
         <LoadingState label="Loading coupons…" />
       ) : coupons.length === 0 ? (
-        <EmptyState title="No coupons" message="Create a coupon for a company to open registration to its delegates." />
+        <EmptyState
+          title="No coupons"
+          message="Create a coupon for a company to open registration to its delegates."
+        />
       ) : (
         <div className="data-table-wrap">
           <table className="data-table">
@@ -139,18 +184,27 @@ export default function Coupons() {
                     {c.description && <span className="sub">{c.description}</span>}
                   </td>
                   <td>{c.company?.name || '—'}</td>
-                  <td><UsageBar used={c.usageCount} allocated={c.maxAllowedRegistrations} /></td>
-                  <td className="muted" style={{ fontSize: 'var(--text-xs)', whiteSpace: 'nowrap' }}>
+                  <td>
+                    <UsageBar used={c.usageCount} allocated={c.maxAllowedRegistrations} />
+                  </td>
+                  <td
+                    className="muted"
+                    style={{ fontSize: 'var(--text-xs)', whiteSpace: 'nowrap' }}
+                  >
                     {c.startDate ? formatDateTime(c.startDate) : 'Now'}
                     <br />→ {c.expiryDate ? formatDateTime(c.expiryDate) : 'No expiry'}
                   </td>
-                  <td><CouponStateBadge state={c.state} /></td>
+                  <td>
+                    <CouponStateBadge state={c.state} />
+                  </td>
                   <td className="muted" style={{ fontSize: 'var(--text-xs)' }}>
                     {formatDateTime(c.createdAt)}
                     {c.createdBy?.name && <span className="sub">by {c.createdBy.name}</span>}
                   </td>
                   <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                    <Button variant="ghost" size="sm" onClick={() => setEditing(c)}>Edit</Button>
+                    <Button variant="ghost" size="sm" onClick={() => setEditing(c)}>
+                      Edit
+                    </Button>
                     <Button variant="ghost" size="sm" onClick={() => toggleActive(c)}>
                       {c.isActive ? 'Deactivate' : 'Activate'}
                     </Button>
@@ -248,7 +302,8 @@ function CouponForm({ coupon, eventId, companies, onClose, onSaved }) {
   }
 
   async function handleDelete() {
-    if (!window.confirm(`Delete ${coupon.code}? Only possible while it has never been used.`)) return;
+    if (!window.confirm(`Delete ${coupon.code}? Only possible while it has never been used.`))
+      return;
     setSaving(true);
     try {
       await couponApi.remove(coupon.id);
@@ -263,16 +318,28 @@ function CouponForm({ coupon, eventId, companies, onClose, onSaved }) {
     <Drawer
       open
       title={coupon ? `Edit ${coupon.code}` : 'New coupon'}
-      subtitle={coupon ? `${used} of ${coupon.maxAllowedRegistrations} used` : 'Codes are case-insensitive and must be unique.'}
+      subtitle={
+        coupon
+          ? `${used} of ${coupon.maxAllowedRegistrations} used`
+          : 'Codes are case-insensitive and must be unique.'
+      }
       onClose={onClose}
       footer={
         <>
           {coupon && used === 0 && (
-            <Button variant="ghost" size="sm" onClick={handleDelete} disabled={saving} style={{ marginRight: 'auto' }}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDelete}
+              disabled={saving}
+              style={{ marginRight: 'auto' }}
+            >
               Delete
             </Button>
           )}
-          <Button variant="secondary" size="sm" onClick={onClose} disabled={saving}>Cancel</Button>
+          <Button variant="secondary" size="sm" onClick={onClose} disabled={saving}>
+            Cancel
+          </Button>
           <Button variant="primary" size="sm" type="submit" form="coupon-form" disabled={saving}>
             {saving ? 'Saving…' : coupon ? 'Save changes' : 'Create coupon'}
           </Button>
@@ -280,10 +347,15 @@ function CouponForm({ coupon, eventId, companies, onClose, onSaved }) {
       }
     >
       <form id="coupon-form" onSubmit={handleSubmit}>
-        {error && <div className="notice notice--error" role="alert">{error}</div>}
+        {error && (
+          <div className="notice notice--error" role="alert">
+            {error}
+          </div>
+        )}
         {locked && (
           <div className="notice notice--info">
-            This coupon has been used, so its code and company are locked. You can still change the limit, dates and status.
+            This coupon has been used, so its code and company are locked. You can still change the
+            limit, dates and status.
           </div>
         )}
         <div className="field-row">
@@ -307,45 +379,92 @@ function CouponForm({ coupon, eventId, companies, onClose, onSaved }) {
                 }}
               />
               {!locked && (
-                <Button variant="secondary" size="sm" onClick={() => generate(form.company)} disabled={generating || !form.company}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => generate(form.company)}
+                  disabled={generating || !form.company}
+                >
                   {generating ? '…' : 'Generate'}
                 </Button>
               )}
             </div>
             <span className="field__hint">
-              {coupon ? '4–32 letters, numbers, “-” or “_”.' : 'Auto-generated and unique for the company. You can edit it or press Generate for another.'}
+              {coupon
+                ? '4–32 letters, numbers, “-” or “_”.'
+                : 'Auto-generated and unique for the company. You can edit it or press Generate for another.'}
             </span>
           </label>
           <label className="field">
             <span className="field__label">Company *</span>
-            <select className="field__select" required value={form.company} disabled={locked} onChange={set('company')}>
-              {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            <select
+              className="field__select"
+              required
+              value={form.company}
+              disabled={locked}
+              onChange={set('company')}
+            >
+              {companies.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
             </select>
           </label>
         </div>
         <label className="field">
           <span className="field__label">Description</span>
-          <input className="field__input" maxLength={500} value={form.description} onChange={set('description')} placeholder="e.g. Yamaha dealer network delegates" />
+          <input
+            className="field__input"
+            maxLength={500}
+            value={form.description}
+            onChange={set('description')}
+            placeholder="e.g. Yamaha dealer network delegates"
+          />
         </label>
         <label className="field">
           <span className="field__label">Max registrations *</span>
-          <input className="field__input" type="number" min={Math.max(used, 1)} max={100000} required value={form.maxAllowedRegistrations} onChange={set('maxAllowedRegistrations')} />
-          {used > 0 && <span className="field__hint">Can’t be set below the {used} already used.</span>}
+          <input
+            className="field__input"
+            type="number"
+            min={Math.max(used, 1)}
+            max={100000}
+            required
+            value={form.maxAllowedRegistrations}
+            onChange={set('maxAllowedRegistrations')}
+          />
+          {used > 0 && (
+            <span className="field__hint">Can’t be set below the {used} already used.</span>
+          )}
         </label>
         <div className="field-row">
           <label className="field">
             <span className="field__label">Start date</span>
-            <input className="field__input" type="datetime-local" value={form.startDate} onChange={set('startDate')} />
+            <input
+              className="field__input"
+              type="datetime-local"
+              value={form.startDate}
+              onChange={set('startDate')}
+            />
             <span className="field__hint">Blank = usable immediately.</span>
           </label>
           <label className="field">
             <span className="field__label">Expiry date</span>
-            <input className="field__input" type="datetime-local" value={form.expiryDate} onChange={set('expiryDate')} />
+            <input
+              className="field__input"
+              type="datetime-local"
+              value={form.expiryDate}
+              onChange={set('expiryDate')}
+            />
             <span className="field__hint">Blank = no expiry.</span>
           </label>
         </div>
         <label className="checkbox">
-          <input type="checkbox" checked={form.isActive} onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))} />
+          <input
+            type="checkbox"
+            checked={form.isActive}
+            onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
+          />
           Active
         </label>
       </form>

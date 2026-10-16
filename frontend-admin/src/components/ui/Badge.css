@@ -2,11 +2,11 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  border-radius: var(--radius-full);
   font-weight: 600;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
   line-height: 1.2;
+  letter-spacing: 0.01em;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
 }
 
 .badge--sm {
@@ -20,46 +20,46 @@
 }
 
 .badge--neutral {
-  background: var(--ink-100);
   color: var(--ink-700);
+  background: var(--ink-100);
 }
 
 .badge--brand {
-  background: var(--brand-100);
   color: var(--brand-800);
+  background: var(--brand-100);
 }
 
 .badge--accent {
-  background: var(--accent-100);
   color: var(--accent-700);
+  background: var(--accent-100);
 }
 
 .badge--success {
-  background: var(--success-100);
   color: var(--success-700);
+  background: var(--success-100);
 }
 
 .badge--warning {
-  background: var(--warning-100);
   color: var(--warning-700);
+  background: var(--warning-100);
 }
 
 .badge--danger {
-  background: var(--danger-100);
   color: var(--danger-700);
+  background: var(--danger-100);
 }
 
 .badge--info {
-  background: var(--brand-100);
   color: var(--brand-800);
+  background: var(--brand-100);
 }
 
 /* On dark hero backgrounds. */
 .badge--light {
-  background: rgba(255, 255, 255, 0.16);
   color: var(--white);
+  background: rgb(255 255 255 / 16%);
+  border: 1px solid rgb(255 255 255 / 25%);
   backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .badge__icon {

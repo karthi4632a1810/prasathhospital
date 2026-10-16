@@ -32,9 +32,17 @@ export default function Button({
 
   const content = (
     <>
-      {iconLeft && <span className="btn__icon" aria-hidden="true">{iconLeft}</span>}
+      {iconLeft && (
+        <span className="btn__icon" aria-hidden="true">
+          {iconLeft}
+        </span>
+      )}
       <span className="btn__label">{children}</span>
-      {iconRight && <span className="btn__icon" aria-hidden="true">{iconRight}</span>}
+      {iconRight && (
+        <span className="btn__icon" aria-hidden="true">
+          {iconRight}
+        </span>
+      )}
     </>
   );
 

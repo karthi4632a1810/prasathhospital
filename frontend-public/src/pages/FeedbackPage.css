@@ -8,12 +8,12 @@
 }
 
 .feedback-card {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
-  border: 1px solid var(--line);
-  backdrop-filter: var(--glass-blur);
-  border-radius: var(--radius-xl);
   padding: var(--space-8);
+  background: linear-gradient(180deg, rgb(255 255 255 / 6%), rgb(255 255 255 / 2%));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
   box-shadow: var(--edge-light), var(--shadow-lg);
+  backdrop-filter: var(--glass-blur);
 }
 
 .feedback-card--success {
@@ -22,51 +22,53 @@
 
 .feedback-card__icon {
   display: inline-flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   width: 64px;
   height: 64px;
-  border-radius: var(--radius-full);
-  background: var(--success-100);
-  color: var(--success-700);
   margin-bottom: var(--space-5);
+  color: var(--success-700);
+  background: var(--success-100);
+  border-radius: var(--radius-full);
 }
 
 .feedback-card__eyebrow {
+  margin-bottom: var(--space-2);
+  color: var(--gold-600);
   font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--gold-600);
-  margin-bottom: var(--space-2);
 }
 
 .feedback-card__title {
-  font-size: var(--text-3xl);
   margin-bottom: var(--space-2);
+  font-size: var(--text-3xl);
 }
 
 .feedback-card__subtitle {
-  color: var(--ink-600);
   margin-bottom: var(--space-8);
+  color: var(--ink-600);
 }
 
 .star-rating {
   display: flex;
-  gap: var(--space-2);
   justify-content: center;
+  gap: var(--space-2);
   margin-bottom: var(--space-8);
 }
 
 .star-rating__star {
-  background: none;
-  border: none;
+  padding: 0;
+  color: var(--ink-400);
   font-size: 44px;
   line-height: 1;
-  color: var(--ink-400);
+  background: none;
+  border: none;
+  transition:
+    color var(--transition),
+    transform var(--transition);
   cursor: pointer;
-  transition: color var(--transition), transform var(--transition);
-  padding: 0;
 }
 
 .star-rating__star:hover {
@@ -75,7 +77,7 @@
 
 .star-rating__star.is-filled {
   color: var(--gold-500);
-  text-shadow: 0 0 18px rgba(226, 165, 48, 0.6);
+  text-shadow: 0 0 18px rgb(226 165 48 / 60%);
 }
 
 .feedback-field {
@@ -86,18 +88,18 @@
 }
 
 .feedback-field span {
+  color: var(--ink-700);
   font-size: var(--text-sm);
   font-weight: 600;
-  color: var(--ink-700);
 }
 
 .feedback-field textarea {
-  font: inherit;
   padding: var(--space-3) var(--space-4);
+  color: var(--ink-900);
+  background: rgb(255 255 255 / 4%);
   border: 1px solid var(--ink-300);
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--ink-900);
+  font: inherit;
   resize: vertical;
 }
 
@@ -108,10 +110,10 @@
 }
 
 .feedback-error {
-  background: var(--danger-100);
-  color: var(--danger-700);
-  border-radius: var(--radius-md);
   padding: var(--space-3) var(--space-4);
-  font-size: var(--text-sm);
   margin-bottom: var(--space-5);
+  color: var(--danger-700);
+  font-size: var(--text-sm);
+  background: var(--danger-100);
+  border-radius: var(--radius-md);
 }

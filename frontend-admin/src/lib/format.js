@@ -16,9 +16,11 @@ export function fromDateTimeLocal(value) {
 
 export function formatCurrency(amount, currency = 'INR') {
   if (amount === 0) return 'Free';
-  return new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 0 }).format(
-    amount || 0
-  );
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 0,
+  }).format(amount || 0);
 }
 
 export function formatDateTime(value) {

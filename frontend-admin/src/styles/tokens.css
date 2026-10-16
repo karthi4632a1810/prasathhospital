@@ -18,7 +18,6 @@
   --brand-300: #a5b4fc;
   --brand-100: #e0e7ff;
   --brand-50: #eef2ff;
-
   --accent-700: #4338ca;
   --accent-600: #4f46e5;
   --accent-500: #6366f1;
@@ -42,7 +41,7 @@
   --ink-200: #e1e3e8;
   --ink-100: #eff0f3;
   --ink-50: #f8f9fb;
-  --white: #ffffff;
+  --white: #fff;
 
   /* Status — functional, kept distinct from the brand accent */
   --success-700: #15803d;
@@ -56,9 +55,8 @@
   --danger-100: #fee2e2;
 
   /* Typography — one family throughout, hierarchy via weight/size/tracking */
-  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-
+  --font-display: 'Inter', -apple-system, blinkmacsystemfont, 'Segoe UI', roboto, sans-serif;
+  --font-body: 'Inter', -apple-system, blinkmacsystemfont, 'Segoe UI', roboto, sans-serif;
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
@@ -92,21 +90,20 @@
   --radius-full: 999px;
 
   /* Elevation — soft and restrained */
-  --shadow-xs: 0 1px 2px rgba(16, 17, 20, 0.04);
-  --shadow-sm: 0 1px 3px rgba(16, 17, 20, 0.06), 0 1px 2px rgba(16, 17, 20, 0.04);
-  --shadow-md: 0 4px 16px rgba(16, 17, 20, 0.06);
-  --shadow-lg: 0 12px 32px rgba(16, 17, 20, 0.10);
-  --shadow-brand: 0 8px 20px rgba(79, 70, 229, 0.18);
+  --shadow-xs: 0 1px 2px rgb(16 17 20 / 4%);
+  --shadow-sm: 0 1px 3px rgb(16 17 20 / 6%), 0 1px 2px rgb(16 17 20 / 4%);
+  --shadow-md: 0 4px 16px rgb(16 17 20 / 6%);
+  --shadow-lg: 0 12px 32px rgb(16 17 20 / 10%);
+  --shadow-brand: 0 8px 20px rgb(79 70 229 / 18%);
 
   /* Layout */
   --container-max: 1180px;
   --container-pad: var(--space-6);
   --header-height: 68px;
-
   --transition: 140ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   :root {
     --container-pad: var(--space-4);
     --text-5xl: 2.25rem;

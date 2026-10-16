@@ -16,47 +16,49 @@
 
 .exhibit-stall {
   position: relative;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015));
-  border: 1px solid var(--line);
-  box-shadow: var(--edge-light), var(--shadow-sm);
-  backdrop-filter: var(--glass-blur);
-  border-radius: var(--radius-xl);
   padding: var(--space-6);
   text-align: center;
-  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+  background: linear-gradient(180deg, rgb(255 255 255 / 6%), rgb(255 255 255 / 1.5%));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--edge-light), var(--shadow-sm);
+  transition:
+    transform var(--transition),
+    box-shadow var(--transition),
+    border-color var(--transition);
+  backdrop-filter: var(--glass-blur);
 }
 
 .exhibit-stall:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--edge-light), var(--shadow-lg);
   border-color: var(--ink-300);
+  box-shadow: var(--edge-light), var(--shadow-lg);
+  transform: translateY(-4px);
 }
 
 .exhibit-stall__name {
+  margin-bottom: var(--space-4);
+  color: var(--ink-500);
   font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ink-500);
-  margin-bottom: var(--space-4);
 }
 
 .exhibit-stall__price {
+  color: transparent;
   font-family: var(--font-display);
   font-size: var(--text-4xl);
   font-weight: 800;
   letter-spacing: -0.04em;
   background: var(--grad-title);
-  -webkit-background-clip: text;
   background-clip: text;
-  color: transparent;
 }
 
 .exhibit-stall__regs {
-  font-size: var(--text-sm);
-  color: var(--accent-700);
-  font-weight: 600;
   margin: var(--space-2) 0 var(--space-5);
+  color: var(--accent-700);
+  font-size: var(--text-sm);
+  font-weight: 600;
 }
 
 .exhibit-stall__benefits {
@@ -67,29 +69,29 @@
 }
 
 .exhibit-stall__benefits li {
-  font-size: var(--text-sm);
-  color: var(--ink-600);
   padding-top: var(--space-2);
+  color: var(--ink-600);
+  font-size: var(--text-sm);
   border-top: 1px solid var(--line);
 }
 
 .exhibit-stall--platinum {
-  border: 1px solid transparent;
   background:
-    linear-gradient(180deg, rgba(40, 22, 30, 0.95), rgba(14, 18, 38, 0.95)) padding-box,
+    linear-gradient(180deg, rgb(40 22 30 / 95%), rgb(14 18 38 / 95%)) padding-box,
     linear-gradient(160deg, #ff8a72, #e5533f 35%, #e2a530 70%, #6f84de) border-box;
-  box-shadow: var(--shadow-lg), 0 0 60px rgba(229, 83, 63, 0.22);
+  border: 1px solid transparent;
+  box-shadow:
+    var(--shadow-lg),
+    0 0 60px rgb(229 83 63 / 22%);
 }
 
 .exhibit-stall--platinum .exhibit-stall__price {
-  background: linear-gradient(120deg, #ffffff 0%, #ff9c86 60%, #f2c463 100%);
-  -webkit-background-clip: text;
+  background: linear-gradient(120deg, #fff 0%, #ff9c86 60%, #f2c463 100%);
   background-clip: text;
 }
 
 .exhibit-stall--gold .exhibit-stall__price {
   background: var(--grad-gold);
-  -webkit-background-clip: text;
   background-clip: text;
 }
 
@@ -101,5 +103,7 @@
 
 .exhibit-stall--platinum:hover {
   border-color: transparent;
-  box-shadow: var(--shadow-lg), 0 0 80px rgba(229, 83, 63, 0.32);
+  box-shadow:
+    var(--shadow-lg),
+    0 0 80px rgb(229 83 63 / 32%);
 }

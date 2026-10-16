@@ -12,7 +12,11 @@ const PUBLIC_SITE = (import.meta.env.VITE_PUBLIC_SITE_URL || '').replace(/\/$/, 
 const CHANNEL_LABEL = { email: 'Email', whatsapp: 'WhatsApp' };
 
 function formatAmount(amount, currency = 'INR') {
-  return new Intl.NumberFormat('en-IN', { style: 'currency', currency, minimumFractionDigits: 2 }).format(amount ?? 0);
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+  }).format(amount ?? 0);
 }
 
 export default function RegistrationDetail({ id, onClose, onChanged }) {
@@ -49,7 +53,11 @@ export default function RegistrationDetail({ id, onClose, onChanged }) {
     try {
       const res = await registrationApi.retryDelivery(reg.id, channel);
       const status = res.data.outcome.status;
-      apply(res.data.registration, res.message, status === 'sent' ? 'success' : status === 'not_configured' ? 'warning' : 'error');
+      apply(
+        res.data.registration,
+        res.message,
+        status === 'sent' ? 'success' : status === 'not_configured' ? 'warning' : 'error'
+      );
     } catch (err) {
       setFlash({ tone: 'error', message: err.message });
     } finally {
@@ -114,7 +122,20 @@ export default function RegistrationDetail({ id, onClose, onChanged }) {
   );
 }
 
-function Body({ reg, busy, flash, onRetry, cancelOpen, setCancelOpen, reason, setReason, onCancel, notes, setNotes, onSaveNotes }) {
+function Body({
+  reg,
+  busy,
+  flash,
+  onRetry,
+  cancelOpen,
+  setCancelOpen,
+  reason,
+  setReason,
+  onCancel,
+  notes,
+  setNotes,
+  onSaveNotes,
+}) {
   const isConfirmed = reg.status === 'confirmed';
   const canCancel = (isConfirmed || reg.status === 'pending_payment') && !reg.checkedInAt;
   const ticketUrl = reg.qrToken ? `${PUBLIC_SITE}/tickets/${reg.qrToken}` : null;
@@ -123,29 +144,69 @@ function Body({ reg, busy, flash, onRetry, cancelOpen, setCancelOpen, reason, se
 
   return (
     <>
-      {flash && <div className={`notice notice--${flash.tone}`} role="status">{flash.message}</div>}
+      {flash && (
+        <div className={`notice notice--${flash.tone}`} role="status">
+          {flash.message}
+        </div>
+      )}
 
-      <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', marginBottom: 'var(--space-5)' }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: 'var(--space-2)',
+          flexWrap: 'wrap',
+          marginBottom: 'var(--space-5)',
+        }}
+      >
         <RegistrationStatusBadge status={reg.status} />
         {reg.checkedInAt && <span className="badge badge--success badge--sm">Checked in</span>}
       </div>
 
-      <div style={{ display: 'flex', gap: 'var(--space-6)', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: 'var(--space-6)',
+          flexWrap: 'wrap',
+          alignItems: 'flex-start',
+        }}
+      >
         <dl className="detail-list" style={{ flex: '1 1 300px' }}>
-          <dt>Registration ID</dt><dd className="mono">{reg.registrationCode}</dd>
-          <dt>Name</dt><dd>{reg.attendee?.name}</dd>
-          <dt>Mobile</dt><dd>{reg.attendee?.phone}</dd>
-          <dt>Email</dt><dd>{reg.attendee?.email}</dd>
-          <dt>Company</dt><dd>{reg.company?.name || '—'}</dd>
-          <dt>Coupon</dt><dd className="mono">{reg.couponCode || reg.coupon?.code || '—'}</dd>
-          <dt>Pass</dt><dd>{reg.ticketType?.name || '—'}</dd>
-          <dt>Amount paid</dt><dd>{formatAmount(reg.pricing?.totalAmount, reg.pricing?.currency)}</dd>
-          <dt>Registered</dt><dd>{formatDateTime(reg.createdAt)}</dd>
-          {reg.checkedInAt && (<><dt>Checked in</dt><dd>{formatDateTime(reg.checkedInAt)}{reg.checkedInBy?.name ? ` · ${reg.checkedInBy.name}` : ''}</dd></>)}
+          <dt>Registration ID</dt>
+          <dd className="mono">{reg.registrationCode}</dd>
+          <dt>Name</dt>
+          <dd>{reg.attendee?.name}</dd>
+          <dt>Mobile</dt>
+          <dd>{reg.attendee?.phone}</dd>
+          <dt>Email</dt>
+          <dd>{reg.attendee?.email}</dd>
+          <dt>Company</dt>
+          <dd>{reg.company?.name || '—'}</dd>
+          <dt>Coupon</dt>
+          <dd className="mono">{reg.couponCode || reg.coupon?.code || '—'}</dd>
+          <dt>Pass</dt>
+          <dd>{reg.ticketType?.name || '—'}</dd>
+          <dt>Amount paid</dt>
+          <dd>{formatAmount(reg.pricing?.totalAmount, reg.pricing?.currency)}</dd>
+          <dt>Registered</dt>
+          <dd>{formatDateTime(reg.createdAt)}</dd>
+          {reg.checkedInAt && (
+            <>
+              <dt>Checked in</dt>
+              <dd>
+                {formatDateTime(reg.checkedInAt)}
+                {reg.checkedInBy?.name ? ` · ${reg.checkedInBy.name}` : ''}
+              </dd>
+            </>
+          )}
           {reg.cancelledAt && (
             <>
-              <dt>Cancelled</dt><dd>{formatDateTime(reg.cancelledAt)}{reg.cancelledBy?.name ? ` · ${reg.cancelledBy.name}` : ''}</dd>
-              <dt>Reason</dt><dd>{reg.cancellationReason || '—'}</dd>
+              <dt>Cancelled</dt>
+              <dd>
+                {formatDateTime(reg.cancelledAt)}
+                {reg.cancelledBy?.name ? ` · ${reg.cancelledBy.name}` : ''}
+              </dd>
+              <dt>Reason</dt>
+              <dd>{reg.cancellationReason || '—'}</dd>
             </>
           )}
         </dl>
@@ -157,14 +218,28 @@ function Body({ reg, busy, flash, onRetry, cancelOpen, setCancelOpen, reason, se
               alt={`QR code for ${reg.registrationCode}`}
               width={150}
               height={150}
-              style={{ border: '1px solid var(--ink-200)', borderRadius: 'var(--radius-md)', padding: 6, opacity: isConfirmed ? 1 : 0.3 }}
+              style={{
+                border: '1px solid var(--ink-200)',
+                borderRadius: 'var(--radius-md)',
+                padding: 6,
+                opacity: isConfirmed ? 1 : 0.3,
+              }}
             />
-            <p className="muted" style={{ fontSize: 'var(--text-xs)', margin: 'var(--space-1) 0 var(--space-3)' }}>
+            <p
+              className="muted"
+              style={{ fontSize: 'var(--text-xs)', margin: 'var(--space-1) 0 var(--space-3)' }}
+            >
               QR {reg.qrStatus === 'active' ? 'active' : 'void'}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-              <Button variant="secondary" size="sm" href={pdfUrl} external>Download ticket</Button>
-              {ticketUrl && <Button variant="ghost" size="sm" href={ticketUrl} external>Open ticket page</Button>}
+              <Button variant="secondary" size="sm" href={pdfUrl} external>
+                Download ticket
+              </Button>
+              {ticketUrl && (
+                <Button variant="ghost" size="sm" href={ticketUrl} external>
+                  Open ticket page
+                </Button>
+              )}
             </div>
           </div>
         )}
@@ -176,7 +251,14 @@ function Body({ reg, busy, flash, onRetry, cancelOpen, setCancelOpen, reason, se
           const d = reg.delivery?.[channel] || {};
           return (
             <div key={channel} className="card" style={{ padding: 'var(--space-4)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 'var(--space-2)',
+                }}
+              >
                 <strong>{CHANNEL_LABEL[channel]}</strong>
                 <DeliveryBadge status={d.status} />
               </div>
@@ -184,9 +266,21 @@ function Body({ reg, busy, flash, onRetry, cancelOpen, setCancelOpen, reason, se
                 {d.attempts || 0} attempt{d.attempts === 1 ? '' : 's'}
                 {d.lastAttemptAt ? ` · last ${formatDateTime(d.lastAttemptAt)}` : ''}
               </p>
-              {d.sentAt && <p className="muted" style={{ fontSize: 'var(--text-xs)', margin: '2px 0 0' }}>Sent {formatDateTime(d.sentAt)}</p>}
+              {d.sentAt && (
+                <p className="muted" style={{ fontSize: 'var(--text-xs)', margin: '2px 0 0' }}>
+                  Sent {formatDateTime(d.sentAt)}
+                </p>
+              )}
               {d.error && d.status !== 'sent' && (
-                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--danger-700)', margin: 'var(--space-2) 0 0' }}>{d.error}</p>
+                <p
+                  style={{
+                    fontSize: 'var(--text-xs)',
+                    color: 'var(--danger-700)',
+                    margin: 'var(--space-2) 0 0',
+                  }}
+                >
+                  {d.error}
+                </p>
               )}
               {isConfirmed && (
                 <Button
@@ -196,7 +290,15 @@ function Body({ reg, busy, flash, onRetry, cancelOpen, setCancelOpen, reason, se
                   onClick={() => onRetry(channel)}
                   disabled={Boolean(busy)}
                 >
-                  {busy === channel ? 'Sending…' : channel === 'email' ? (d.status === 'sent' ? 'Resend email' : 'Send email') : d.status === 'sent' ? 'Resend WhatsApp' : 'Retry WhatsApp'}
+                  {busy === channel
+                    ? 'Sending…'
+                    : channel === 'email'
+                      ? d.status === 'sent'
+                        ? 'Resend email'
+                        : 'Send email'
+                      : d.status === 'sent'
+                        ? 'Resend WhatsApp'
+                        : 'Retry WhatsApp'}
                 </Button>
               )}
             </div>
@@ -210,16 +312,26 @@ function Body({ reg, busy, flash, onRetry, cancelOpen, setCancelOpen, reason, se
           <div className="data-table-wrap" style={{ marginBottom: 'var(--space-6)' }}>
             <table className="data-table">
               <thead>
-                <tr><th>When</th><th>Channel</th><th>Result</th><th>By</th><th>Detail</th></tr>
+                <tr>
+                  <th>When</th>
+                  <th>Channel</th>
+                  <th>Result</th>
+                  <th>By</th>
+                  <th>Detail</th>
+                </tr>
               </thead>
               <tbody>
                 {[...reg.deliveryLog].reverse().map((entry, i) => (
                   <tr key={`${entry.at}-${i}`}>
                     <td style={{ whiteSpace: 'nowrap' }}>{formatDateTime(entry.at)}</td>
                     <td>{CHANNEL_LABEL[entry.channel]}</td>
-                    <td><DeliveryBadge status={entry.status} /></td>
+                    <td>
+                      <DeliveryBadge status={entry.status} />
+                    </td>
                     <td>{entry.trigger === 'admin' ? entry.actorName || 'Admin' : 'Auto'}</td>
-                    <td className="muted" style={{ fontSize: 'var(--text-xs)' }}>{entry.error || entry.providerMessageId || '—'}</td>
+                    <td className="muted" style={{ fontSize: 'var(--text-xs)' }}>
+                      {entry.error || entry.providerMessageId || '—'}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -230,31 +342,69 @@ function Body({ reg, busy, flash, onRetry, cancelOpen, setCancelOpen, reason, se
 
       <p className="section-label">Internal notes</p>
       <label className="field">
-        <textarea className="field__textarea" value={notes} maxLength={2000} onChange={(e) => setNotes(e.target.value)} aria-label="Internal notes" />
+        <textarea
+          className="field__textarea"
+          value={notes}
+          maxLength={2000}
+          onChange={(e) => setNotes(e.target.value)}
+          aria-label="Internal notes"
+        />
       </label>
-      <Button variant="secondary" size="sm" onClick={onSaveNotes} disabled={Boolean(busy) || notes === (reg.notes || '')}>
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={onSaveNotes}
+        disabled={Boolean(busy) || notes === (reg.notes || '')}
+      >
         {busy === 'notes' ? 'Saving…' : 'Save notes'}
       </Button>
 
       {canCancel && (
-        <div style={{ marginTop: 'var(--space-8)', paddingTop: 'var(--space-5)', borderTop: '1px solid var(--ink-100)' }}>
-          <p className="section-label" style={{ color: 'var(--danger-700)' }}>Cancel registration</p>
+        <div
+          style={{
+            marginTop: 'var(--space-8)',
+            paddingTop: 'var(--space-5)',
+            borderTop: '1px solid var(--ink-100)',
+          }}
+        >
+          <p className="section-label" style={{ color: 'var(--danger-700)' }}>
+            Cancel registration
+          </p>
           {!cancelOpen ? (
-            <Button variant="ghost" size="sm" onClick={() => setCancelOpen(true)}>Cancel this registration…</Button>
+            <Button variant="ghost" size="sm" onClick={() => setCancelOpen(true)}>
+              Cancel this registration…
+            </Button>
           ) : (
             <form onSubmit={onCancel}>
               <p className="muted" style={{ fontSize: 'var(--text-sm)', marginTop: 0 }}>
-                The QR ticket stops working at check-in, and the coupon place goes back to {reg.company?.name || 'the company'} so it can be reused. This is recorded in the audit log.
+                The QR ticket stops working at check-in, and the coupon place goes back to{' '}
+                {reg.company?.name || 'the company'} so it can be reused. This is recorded in the
+                audit log.
               </p>
               <label className="field">
                 <span className="field__label">Reason *</span>
-                <textarea className="field__textarea" required minLength={3} maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} autoFocus />
+                <textarea
+                  className="field__textarea"
+                  required
+                  minLength={3}
+                  maxLength={500}
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  autoFocus
+                />
               </label>
               <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-                <Button variant="primary" size="sm" type="submit" disabled={busy === 'cancel' || reason.trim().length < 3}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  type="submit"
+                  disabled={busy === 'cancel' || reason.trim().length < 3}
+                >
                   {busy === 'cancel' ? 'Cancelling…' : 'Confirm cancellation'}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setCancelOpen(false)}>Keep registration</Button>
+                <Button variant="ghost" size="sm" onClick={() => setCancelOpen(false)}>
+                  Keep registration
+                </Button>
               </div>
             </form>
           )}
