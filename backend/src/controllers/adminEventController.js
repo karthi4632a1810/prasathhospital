@@ -35,6 +35,11 @@ const EDITABLE_FIELDS = [
   'theme',
   'highlights',
   'isFeatured',
+  'sections',
+  'heroSettings',
+  'chairpersonWelcome',
+  'exhibitStalls',
+  'finalCtaSettings',
 ];
 
 function applyEditableFields(event, body) {

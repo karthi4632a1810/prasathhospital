@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { eventApi } from '../../lib/eventApi';
 import { useSaveBar } from '../../components/SaveBar';
 import RepeatingListEditor from '../../components/RepeatingListEditor';
+import SectionVisibilityBanner from '../../components/SectionVisibilityBanner';
 
 const TYPES = [
   'session',
@@ -33,11 +34,17 @@ export default function AgendaTab({ event, onSaved }) {
 
   return (
     <div>
+      <SectionVisibilityBanner
+        sectionKey="agenda"
+        sectionName="Agenda & Schedule"
+        event={event}
+        onSaved={onSaved}
+      />
       <RepeatingListEditor
         items={days}
         onChange={setDays}
         itemLabel="Day"
-        newItem={() => ({ date: toDateInput(new Date()), label: '', items: [] })}
+        newItem={() => ({ date: toDateInput(new Date()), label: '', items: [], isActive: true })}
         renderItem={(day, updateDay) => (
           <>
             <div className="field-row">
@@ -79,6 +86,7 @@ export default function AgendaTab({ event, onSaved }) {
                 speakerNames: [],
                 track: '',
                 type: 'session',
+                isActive: true,
                 order: (day.items || []).length,
               })}
               renderItem={(item, updateItem) => (

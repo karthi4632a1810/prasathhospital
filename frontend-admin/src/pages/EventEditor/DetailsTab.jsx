@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { eventApi } from '../../lib/eventApi';
 import { toDateTimeLocal, fromDateTimeLocal } from '../../lib/format';
 import { useSaveBar } from '../../components/SaveBar';
+import SectionVisibilityBanner from '../../components/SectionVisibilityBanner';
 
 const CATEGORIES = ['cme', 'conference', 'workshop', 'awareness-camp', 'public-seminar', 'other'];
 const MODES = ['in-person', 'virtual', 'hybrid'];
@@ -51,9 +52,17 @@ export default function DetailsTab({ event, onSaved }) {
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
   return (
-    <div className="card">
-      <div className="card__body">
-        <label className="field">
+    <div>
+      <SectionVisibilityBanner
+        sectionKey="about"
+        sectionName="About & Highlights"
+        event={event}
+        onSaved={onSaved}
+        description="Conference highlights cards and organizer profile."
+      />
+      <div className="card">
+        <div className="card__body">
+          <label className="field">
           <span className="field__label">Title</span>
           <input className="field__input" value={form.title} onChange={set('title')} />
         </label>
@@ -203,5 +212,6 @@ export default function DetailsTab({ event, onSaved }) {
         {SaveBar}
       </div>
     </div>
-  );
+  </div>
+);
 }

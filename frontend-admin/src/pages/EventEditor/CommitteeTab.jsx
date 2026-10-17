@@ -3,6 +3,7 @@ import { eventApi } from '../../lib/eventApi';
 import { useSaveBar } from '../../components/SaveBar';
 import RepeatingListEditor from '../../components/RepeatingListEditor';
 import ImageUploadField from '../../components/ImageUploadField';
+import SectionVisibilityBanner from '../../components/SectionVisibilityBanner';
 
 const GROUPS = [
   { value: 'leadership', label: 'Leadership' },
@@ -20,6 +21,12 @@ export default function CommitteeTab({ event, onSaved }) {
 
   return (
     <div>
+      <SectionVisibilityBanner
+        sectionKey="committee"
+        sectionName="Committee"
+        event={event}
+        onSaved={onSaved}
+      />
       <RepeatingListEditor
         items={committee}
         onChange={setCommittee}
@@ -29,6 +36,7 @@ export default function CommitteeTab({ event, onSaved }) {
           role: '',
           group: 'organising',
           photoUrl: '',
+          isActive: true,
           order: committee.length,
         })}
         renderItem={(item, update) => (

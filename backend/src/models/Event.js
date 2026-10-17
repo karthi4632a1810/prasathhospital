@@ -19,6 +19,7 @@ const SpeakerSchema = new Schema(
     bio: { type: String, trim: true, default: '', maxlength: 1500 },
     topic: { type: String, trim: true, default: '' },
     isKeynote: { type: Boolean, default: false },
+    isActive: { type: Boolean, default: true },
     order: { type: Number, default: 0 },
   },
   { _id: true, timestamps: false }
@@ -37,6 +38,7 @@ const AgendaItemSchema = new Schema(
       enum: ['session', 'keynote', 'panel', 'workshop', 'break', 'registration', 'networking', 'other'],
       default: 'session',
     },
+    isActive: { type: Boolean, default: true },
     order: { type: Number, default: 0 },
   },
   { _id: true }
@@ -46,6 +48,7 @@ const AgendaDaySchema = new Schema(
   {
     date: { type: Date, required: true },
     label: { type: String, trim: true, default: '' }, // "Day 1 - Clinical Track"
+    isActive: { type: Boolean, default: true },
     items: [AgendaItemSchema],
   },
   { _id: true }
@@ -61,6 +64,7 @@ const CommitteeMemberSchema = new Schema(
       default: 'organising',
     },
     photoUrl: { type: String, trim: true, default: '' },
+    isActive: { type: Boolean, default: true },
     order: { type: Number, default: 0 },
   },
   { _id: true }
@@ -76,6 +80,7 @@ const SponsorSchema = new Schema(
       enum: ['title', 'platinum', 'gold', 'silver', 'bronze', 'partner'],
       default: 'partner',
     },
+    isActive: { type: Boolean, default: true },
     order: { type: Number, default: 0 },
   },
   { _id: true }
@@ -85,6 +90,7 @@ const FaqSchema = new Schema(
   {
     question: { type: String, required: true, trim: true },
     answer: { type: String, required: true, trim: true },
+    isActive: { type: Boolean, default: true },
     order: { type: Number, default: 0 },
   },
   { _id: true }
@@ -99,6 +105,105 @@ const AnnouncementSchema = new Schema(
     expiresAt: { type: Date, default: null },
   },
   { _id: true }
+);
+
+const SectionVisibilitySchema = new Schema(
+  {
+    announcements: { type: Boolean, default: true },
+    hero: { type: Boolean, default: true },
+    chairpersonWelcome: { type: Boolean, default: true },
+    about: { type: Boolean, default: true },
+    speakers: { type: Boolean, default: true },
+    committee: { type: Boolean, default: true },
+    agenda: { type: Boolean, default: true },
+    tickets: { type: Boolean, default: true },
+    venue: { type: Boolean, default: true },
+    sponsors: { type: Boolean, default: true },
+    exhibitStalls: { type: Boolean, default: true },
+    faqs: { type: Boolean, default: true },
+    finalCta: { type: Boolean, default: true },
+    stickyCta: { type: Boolean, default: true },
+  },
+  { _id: false }
+);
+
+const HeroSettingsSchema = new Schema(
+  {
+    showCountdown: { type: Boolean, default: true },
+    showStats: { type: Boolean, default: true },
+    showLiveBadge: { type: Boolean, default: true },
+    liveBadgeText: { type: String, trim: true, default: 'Live Tele-Robotic Surgery' },
+    showShareButton: { type: Boolean, default: true },
+    ctaText: { type: String, trim: true, default: 'Register Now' },
+  },
+  { _id: false }
+);
+
+const ChairpersonWelcomeSchema = new Schema(
+  {
+    show: { type: Boolean, default: true },
+    eyebrow: { type: String, trim: true, default: 'A message from our chairperson' },
+    name: { type: String, trim: true, default: 'Dr. Geetha Haripriya' },
+    title: {
+      type: String,
+      trim: true,
+      default: 'Chairperson, Prashanth Fertility and Research Centre Pvt. Ltd.',
+    },
+    photoUrl: {
+      type: String,
+      trim: true,
+      default: '/assets/chairperson-geetha-haripriya.png',
+    },
+    message: { type: String, trim: true, default: '' },
+  },
+  { _id: false }
+);
+
+const StallTierSchema = new Schema(
+  {
+    tier: { type: String, trim: true, default: 'partner' },
+    name: { type: String, required: true, trim: true },
+    price: { type: String, trim: true, default: '' },
+    registrations: { type: String, trim: true, default: '' },
+    benefits: [{ type: String, trim: true }],
+    isActive: { type: Boolean, default: true },
+    order: { type: Number, default: 0 },
+  },
+  { _id: true }
+);
+
+const ExhibitStallsSchema = new Schema(
+  {
+    show: { type: Boolean, default: true },
+    eyebrow: { type: String, trim: true, default: 'Exhibit & sponsor' },
+    title: {
+      type: String,
+      trim: true,
+      default: 'Put your brand in front of key decision makers',
+    },
+    subtitle: {
+      type: String,
+      trim: true,
+      default:
+        'Position your organization before leading clinical decision makers and opinion leaders in reproductive medicine from India and internationally.',
+    },
+    ctaText: { type: String, trim: true, default: 'Reserve your stall' },
+    contactEmail: { type: String, trim: true, default: '' },
+    tiers: [StallTierSchema],
+  },
+  { _id: false }
+);
+
+const FinalCtaSettingsSchema = new Schema(
+  {
+    show: { type: Boolean, default: true },
+    openTitle: { type: String, trim: true, default: 'Secure your seat' },
+    closedTitle: { type: String, trim: true, default: 'Stay in the loop' },
+    openText: { type: String, trim: true, default: '' },
+    closedText: { type: String, trim: true, default: '' },
+    buttonText: { type: String, trim: true, default: 'Register Now' },
+  },
+  { _id: false }
 );
 
 const VenueSchema = new Schema(
@@ -234,6 +339,12 @@ const EventSchema = new Schema(
     contact: { type: ContactSchema, default: () => ({}) },
     seo: { type: SeoSchema, default: () => ({}) },
     theme: { type: ThemeSchema, default: () => ({}) },
+
+    sections: { type: SectionVisibilitySchema, default: () => ({}) },
+    heroSettings: { type: HeroSettingsSchema, default: () => ({}) },
+    chairpersonWelcome: { type: ChairpersonWelcomeSchema, default: () => ({}) },
+    exhibitStalls: { type: ExhibitStallsSchema, default: () => ({}) },
+    finalCtaSettings: { type: FinalCtaSettingsSchema, default: () => ({}) },
 
     isFeatured: { type: Boolean, default: false },
     publishedAt: { type: Date, default: null },

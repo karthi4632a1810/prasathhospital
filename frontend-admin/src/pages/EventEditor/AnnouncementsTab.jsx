@@ -3,6 +3,7 @@ import { eventApi } from '../../lib/eventApi';
 import { useSaveBar } from '../../components/SaveBar';
 import RepeatingListEditor from '../../components/RepeatingListEditor';
 import { toDateTimeLocal, fromDateTimeLocal } from '../../lib/format';
+import SectionVisibilityBanner from '../../components/SectionVisibilityBanner';
 
 const LEVELS = ['info', 'success', 'warning'];
 
@@ -22,10 +23,13 @@ export default function AnnouncementsTab({ event, onSaved }) {
 
   return (
     <div>
-      <p style={{ color: 'var(--ink-500)', marginBottom: 'var(--space-4)' }}>
-        Shown as a dismissible bar at the top of the microsite. Only active, unexpired announcements
-        are visible to visitors.
-      </p>
+      <SectionVisibilityBanner
+        sectionKey="announcements"
+        sectionName="Announcement Bar"
+        event={event}
+        onSaved={onSaved}
+        description="Top banner on the public microsite for important notices or alerts."
+      />
       <RepeatingListEditor
         items={announcements}
         onChange={setAnnouncements}

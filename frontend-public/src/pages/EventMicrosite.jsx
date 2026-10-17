@@ -74,18 +74,25 @@ export default function EventMicrosite() {
 
   const canRegister = event?.registrationState === 'open';
 
-  /* Which sections actually have content — drives the header nav so we never
-     link to an empty anchor. */
+  const sections = event?.sections || {};
+
+  /* Which sections actually have content and are enabled — drives the header nav
+     so we never link to a hidden or empty anchor. */
   const availableSections = useMemo(() => {
     if (!event) return [];
+    const sec = event.sections || {};
     const list = [];
-    if (event.description || event.summary) list.push('about');
-    if (event.speakers?.length) list.push('speakers');
-    if (event.committee?.length) list.push('committee');
-    if (event.agenda?.some((d) => d.items?.length)) list.push('agenda');
-    if (ticketTypes.length) list.push('tickets');
-    if (event.mode === 'virtual' || event.venue?.name) list.push('venue');
-    if (event.faqs?.length) list.push('faq');
+    if (sec.about !== false && (event.description || event.summary || event.highlights?.length)) {
+      list.push('about');
+    }
+    if (sec.speakers !== false && event.speakers?.length) list.push('speakers');
+    if (sec.committee !== false && event.committee?.length) list.push('committee');
+    if (sec.agenda !== false && event.agenda?.some((d) => d.items?.length)) list.push('agenda');
+    if (sec.tickets !== false && ticketTypes.length) list.push('tickets');
+    if (sec.venue !== false && (event.mode === 'virtual' || event.venue?.name)) list.push('venue');
+    if (sec.sponsors !== false && event.sponsors?.length) list.push('sponsors');
+    if (sec.exhibitStalls !== false) list.push('exhibit');
+    if (sec.faqs !== false && event.faqs?.length) list.push('faq');
     return list;
   }, [event, ticketTypes.length]);
 
@@ -125,7 +132,9 @@ export default function EventMicrosite() {
         Skip to content
       </a>
 
-      <AnnouncementBar announcements={event.announcements} />
+      {sections.announcements !== false && (
+        <AnnouncementBar announcements={event.announcements} />
+      )}
 
       <SiteHeader
         event={event}
@@ -135,38 +144,66 @@ export default function EventMicrosite() {
       />
 
       <main id="main">
-        <Hero
-          event={event}
-          onRegister={scrollToTickets}
-          canRegister={canRegister}
-          onShare={() => setShareOpen(true)}
-        />
-        <ChairpersonWelcome
-          name="Dr. Geetha Haripriya"
-          title="Chairperson, Prashanth Fertility and Research Centre Pvt. Ltd."
-          photoUrl="/assets/chairperson-geetha-haripriya.png"
-          message={event.description}
-        />
-        <About event={event} />
-        <Speakers speakers={event.speakers} />
-        <Committee committee={event.committee} />
-        <Agenda agenda={event.agenda} />
-        <Tickets ticketTypes={ticketTypes} onSelect={goToRegistration} canRegister={canRegister} />
-        <Venue event={event} />
-        <Sponsors sponsors={event.sponsors} />
-        <ExhibitStalls contactEmail={event.contact?.email} />
-        <Faq faqs={event.faqs} contact={event.contact} />
-        <FinalCta event={event} onRegister={scrollToTickets} canRegister={canRegister} />
+        {sections.hero !== false && (
+          <Hero
+            event={event}
+            onRegister={scrollToTickets}
+            canRegister={canRegister}
+            onShare={() => setShareOpen(true)}
+          />
+        )}
+        {sections.chairpersonWelcome !== false && (
+          <ChairpersonWelcome
+            welcome={event.chairpersonWelcome}
+            eventDescription={event.description}
+          />
+        )}
+        {sections.about !== false && <About event={event} />}
+        {sections.speakers !== false && event.speakers?.length > 0 && (
+          <Speakers speakers={event.speakers} />
+        )}
+        {sections.committee !== false && event.committee?.length > 0 && (
+          <Committee committee={event.committee} />
+        )}
+        {sections.agenda !== false && event.agenda?.length > 0 && (
+          <Agenda agenda={event.agenda} />
+        )}
+        {sections.tickets !== false && ticketTypes.length > 0 && (
+          <Tickets ticketTypes={ticketTypes} onSelect={goToRegistration} canRegister={canRegister} />
+        )}
+        {sections.venue !== false && <Venue event={event} />}
+        {sections.sponsors !== false && event.sponsors?.length > 0 && (
+          <Sponsors sponsors={event.sponsors} />
+        )}
+        {sections.exhibitStalls !== false && (
+          <ExhibitStalls
+            exhibit={event.exhibitStalls}
+            contactEmail={event.exhibitStalls?.contactEmail || event.contact?.email}
+          />
+        )}
+        {sections.faqs !== false && event.faqs?.length > 0 && (
+          <Faq faqs={event.faqs} contact={event.contact} />
+        )}
+        {sections.finalCta !== false && (
+          <FinalCta
+            event={event}
+            settings={event.finalCtaSettings}
+            onRegister={scrollToTickets}
+            canRegister={canRegister}
+          />
+        )}
       </main>
 
       <SiteFooter event={event} />
 
-      <StickyCta
-        event={event}
-        ticketTypes={ticketTypes}
-        onRegister={scrollToTickets}
-        canRegister={canRegister}
-      />
+      {sections.stickyCta !== false && (
+        <StickyCta
+          event={event}
+          ticketTypes={ticketTypes}
+          onRegister={scrollToTickets}
+          canRegister={canRegister}
+        />
+      )}
 
       <ShareSheet event={event} open={shareOpen} onClose={() => setShareOpen(false)} />
     </>

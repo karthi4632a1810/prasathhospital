@@ -3,6 +3,7 @@ import { eventApi } from '../../lib/eventApi';
 import { useSaveBar } from '../../components/SaveBar';
 import RepeatingListEditor from '../../components/RepeatingListEditor';
 import ImageUploadField from '../../components/ImageUploadField';
+import SectionVisibilityBanner from '../../components/SectionVisibilityBanner';
 
 export default function SpeakersTab({ event, onSaved }) {
   const [speakers, setSpeakers] = useState(event.speakers || []);
@@ -14,6 +15,12 @@ export default function SpeakersTab({ event, onSaved }) {
 
   return (
     <div>
+      <SectionVisibilityBanner
+        sectionKey="speakers"
+        sectionName="Speakers & Faculty"
+        event={event}
+        onSaved={onSaved}
+      />
       <RepeatingListEditor
         items={speakers}
         onChange={setSpeakers}
@@ -23,6 +30,7 @@ export default function SpeakersTab({ event, onSaved }) {
           credentials: '',
           designation: '',
           organization: '',
+          isActive: true,
           photoUrl: '',
           bio: '',
           topic: '',

@@ -3,6 +3,7 @@ import { eventApi } from '../../lib/eventApi';
 import { useSaveBar } from '../../components/SaveBar';
 import RepeatingListEditor from '../../components/RepeatingListEditor';
 import ImageUploadField from '../../components/ImageUploadField';
+import SectionVisibilityBanner from '../../components/SectionVisibilityBanner';
 
 const TIERS = ['title', 'platinum', 'gold', 'silver', 'bronze', 'partner'];
 
@@ -16,6 +17,12 @@ export default function SponsorsTab({ event, onSaved }) {
 
   return (
     <div>
+      <SectionVisibilityBanner
+        sectionKey="sponsors"
+        sectionName="Sponsors & Partners"
+        event={event}
+        onSaved={onSaved}
+      />
       <RepeatingListEditor
         items={sponsors}
         onChange={setSponsors}
@@ -25,6 +32,7 @@ export default function SponsorsTab({ event, onSaved }) {
           logoUrl: '',
           websiteUrl: '',
           tier: 'partner',
+          isActive: true,
           order: sponsors.length,
         })}
         renderItem={(item, update) => (

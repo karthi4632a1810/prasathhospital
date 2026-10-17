@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { eventApi } from '../../lib/eventApi';
 import { useSaveBar } from '../../components/SaveBar';
+import SectionVisibilityBanner from '../../components/SectionVisibilityBanner';
 
 export default function VenueTab({ event, onSaved }) {
   const [venue, setVenue] = useState({ ...emptyVenue(), ...event.venue });
@@ -19,6 +20,12 @@ export default function VenueTab({ event, onSaved }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+      <SectionVisibilityBanner
+        sectionKey="venue"
+        sectionName="Venue & Location"
+        event={event}
+        onSaved={onSaved}
+      />
       <div className="card">
         <div className="card__header">
           <h3 className="card__title">Venue</h3>

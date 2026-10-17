@@ -51,6 +51,14 @@ function Countdown({ target }) {
 
 export default function Hero({ event, onRegister, canRegister, onShare }) {
   const { venue, theme } = event;
+  const heroSettings = event.heroSettings || {};
+  const showCountdown = heroSettings.showCountdown !== false;
+  const showStats = heroSettings.showStats !== false;
+  const showLiveBadge = heroSettings.showLiveBadge !== false;
+  const liveBadgeText = heroSettings.liveBadgeText || 'Live Tele-Robotic Surgery';
+  const showShareButton = heroSettings.showShareButton !== false;
+  const ctaText = heroSettings.ctaText || 'Register Now';
+
   const heroStyle = theme?.heroImageUrl
     ? {
         backgroundImage: `linear-gradient(135deg, rgba(16,21,43,0.92), rgba(61,16,13,0.82)), url(${theme.heroImageUrl})`,
@@ -90,9 +98,11 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
         <div className="hero__badges">
           <Badge tone="light">{CATEGORY_LABEL[event.category] || 'Event'}</Badge>
           <Badge tone="light">{MODE_LABEL[event.mode] || 'In person'}</Badge>
-          <Badge tone="signal" icon={<span className="badge__dot" aria-hidden="true" />}>
-            Live Tele-Robotic Surgery
-          </Badge>
+          {showLiveBadge && liveBadgeText && (
+            <Badge tone="signal" icon={<span className="badge__dot" aria-hidden="true" />}>
+              {liveBadgeText}
+            </Badge>
+          )}
           <RegistrationStateBadge
             state={event.registrationState}
             seatsRemaining={event.seatsRemaining}
@@ -151,12 +161,12 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
           </div>
         </dl>
 
-        <Countdown target={event.startDate} />
+        {showCountdown && <Countdown target={event.startDate} />}
 
         <div className="hero__actions">
           {canRegister ? (
             <Button variant="accent" size="lg" onClick={onRegister}>
-              Register Now
+              {ctaText}
             </Button>
           ) : (
             <Button variant="outline-light" size="lg" disabled>
@@ -164,31 +174,33 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
             </Button>
           )}
 
-          <Button
-            variant="outline-light"
-            size="lg"
-            onClick={onShare}
-            iconLeft={
-              <svg
-                viewBox="0 0 24 24"
-                width="18"
-                height="18"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-              >
-                <circle cx="18" cy="5" r="3" />
-                <circle cx="6" cy="12" r="3" />
-                <circle cx="18" cy="19" r="3" />
-                <path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4" strokeLinecap="round" />
-              </svg>
-            }
-          >
-            Share
-          </Button>
+          {showShareButton && (
+            <Button
+              variant="outline-light"
+              size="lg"
+              onClick={onShare}
+              iconLeft={
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                >
+                  <circle cx="18" cy="5" r="3" />
+                  <circle cx="6" cy="12" r="3" />
+                  <circle cx="18" cy="19" r="3" />
+                  <path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4" strokeLinecap="round" />
+                </svg>
+              }
+            >
+              Share
+            </Button>
+          )}
         </div>
 
-        {stats.length > 0 && (
+        {showStats && stats.length > 0 && (
           <dl className="hero__stats">
             {stats.map((s) => (
               <div className="hero__stat" key={s.label}>

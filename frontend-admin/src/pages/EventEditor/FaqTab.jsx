@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { eventApi } from '../../lib/eventApi';
 import { useSaveBar } from '../../components/SaveBar';
 import RepeatingListEditor from '../../components/RepeatingListEditor';
+import SectionVisibilityBanner from '../../components/SectionVisibilityBanner';
 
 export default function FaqTab({ event, onSaved }) {
   const [faqs, setFaqs] = useState(event.faqs || []);
@@ -13,11 +14,17 @@ export default function FaqTab({ event, onSaved }) {
 
   return (
     <div>
+      <SectionVisibilityBanner
+        sectionKey="faqs"
+        sectionName="Frequently Asked Questions (FAQ)"
+        event={event}
+        onSaved={onSaved}
+      />
       <RepeatingListEditor
         items={faqs}
         onChange={setFaqs}
         itemLabel="Question"
-        newItem={() => ({ question: '', answer: '', order: faqs.length })}
+        newItem={() => ({ question: '', answer: '', isActive: true, order: faqs.length })}
         renderItem={(item, update) => (
           <>
             <label className="field">

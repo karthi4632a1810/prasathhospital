@@ -188,13 +188,20 @@ function serializeEventForPublic(event) {
     virtualLink: event.mode === 'in-person' ? '' : event.virtualLink,
 
     highlights: event.highlights || [],
-    speakers: sortByOrder(event.speakers).map(serializeSpeaker),
-    committee: sortByOrder(event.committee).map(serializeCommitteeMember),
+    speakers: sortByOrder((event.speakers || []).filter((s) => s.isActive !== false)).map(serializeSpeaker),
+    committee: sortByOrder((event.committee || []).filter((m) => m.isActive !== false)).map(serializeCommitteeMember),
     agenda: [...(event.agenda || [])]
+      .filter((d) => d.isActive !== false)
       .sort((a, b) => new Date(a.date) - new Date(b.date))
-      .map(serializeAgendaDay),
-    sponsors: sortByOrder(event.sponsors).map(serializeSponsor),
-    faqs: sortByOrder(event.faqs).map((f) => ({
+      .map((day) => {
+        const plain = day.toObject ? day.toObject() : day;
+        return serializeAgendaDay({
+          ...plain,
+          items: (plain.items || []).filter((item) => item.isActive !== false),
+        });
+      }),
+    sponsors: sortByOrder((event.sponsors || []).filter((s) => s.isActive !== false)).map(serializeSponsor),
+    faqs: sortByOrder((event.faqs || []).filter((f) => f.isActive !== false)).map((f) => ({
       id: String(f._id),
       question: f.question,
       answer: f.answer,
@@ -205,6 +212,37 @@ function serializeEventForPublic(event) {
       level: a.level,
       publishedAt: a.publishedAt,
     })),
+
+    sections: {
+      announcements: event.sections?.announcements !== false,
+      hero: event.sections?.hero !== false,
+      chairpersonWelcome: event.sections?.chairpersonWelcome !== false,
+      about: event.sections?.about !== false,
+      speakers: event.sections?.speakers !== false,
+      committee: event.sections?.committee !== false,
+      agenda: event.sections?.agenda !== false,
+      tickets: event.sections?.tickets !== false,
+      venue: event.sections?.venue !== false,
+      sponsors: event.sections?.sponsors !== false,
+      exhibitStalls: event.sections?.exhibitStalls !== false,
+      faqs: event.sections?.faqs !== false,
+      finalCta: event.sections?.finalCta !== false,
+      stickyCta: event.sections?.stickyCta !== false,
+    },
+    heroSettings: event.heroSettings || {},
+    chairpersonWelcome: {
+      show: event.chairpersonWelcome?.show !== false,
+      eyebrow: event.chairpersonWelcome?.eyebrow || 'A message from our chairperson',
+      name: event.chairpersonWelcome?.name || 'Dr. Geetha Haripriya',
+      title:
+        event.chairpersonWelcome?.title ||
+        'Chairperson, Prashanth Fertility and Research Centre Pvt. Ltd.',
+      photoUrl:
+        event.chairpersonWelcome?.photoUrl || '/assets/chairperson-geetha-haripriya.png',
+      message: event.chairpersonWelcome?.message || event.description || '',
+    },
+    exhibitStalls: event.exhibitStalls || {},
+    finalCtaSettings: event.finalCtaSettings || {},
 
     contact: event.contact,
     theme: event.theme,

@@ -2,13 +2,17 @@ import { useCallback, useEffect, useState } from 'react';
 import { eventApi } from '../../lib/eventApi';
 import { LoadingState, ErrorState, EmptyState } from '../../components/ui/States';
 import Button from '../../components/ui/Button';
+import SectionsTab from './SectionsTab';
 import DetailsTab from './DetailsTab';
+import HeroCtaTab from './HeroCtaTab';
+import WelcomeTab from './WelcomeTab';
 import VenueTab from './VenueTab';
 import ThemeSeoTab from './ThemeSeoTab';
 import SpeakersTab from './SpeakersTab';
 import CommitteeTab from './CommitteeTab';
 import AgendaTab from './AgendaTab';
 import SponsorsTab from './SponsorsTab';
+import ExhibitTab from './ExhibitTab';
 import FaqTab from './FaqTab';
 import AnnouncementsTab from './AnnouncementsTab';
 import './EventEditor.css';
@@ -16,13 +20,17 @@ import './EventEditor.css';
 const PUBLIC_SITE_URL = (import.meta.env.VITE_PUBLIC_SITE_URL || '').replace(/\/$/, '');
 
 const TABS = [
+  { key: 'sections', label: 'Screen Controls', Component: SectionsTab },
   { key: 'details', label: 'Details', Component: DetailsTab },
+  { key: 'hero-cta', label: 'Hero & CTA', Component: HeroCtaTab },
+  { key: 'welcome', label: 'Welcome Message', Component: WelcomeTab },
   { key: 'venue', label: 'Venue & Contact', Component: VenueTab },
   { key: 'theme', label: 'Theme & SEO', Component: ThemeSeoTab },
   { key: 'speakers', label: 'Speakers', Component: SpeakersTab },
   { key: 'committee', label: 'Committee', Component: CommitteeTab },
   { key: 'agenda', label: 'Agenda', Component: AgendaTab },
   { key: 'sponsors', label: 'Sponsors', Component: SponsorsTab },
+  { key: 'exhibit', label: 'Exhibit & Stalls', Component: ExhibitTab },
   { key: 'faqs', label: 'FAQ', Component: FaqTab },
   { key: 'announcements', label: 'Announcements', Component: AnnouncementsTab },
 ];
@@ -32,7 +40,7 @@ export default function EventEditor() {
   const [eventId, setEventId] = useState(null);
   const [event, setEvent] = useState(null);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('details');
+  const [activeTab, setActiveTab] = useState('sections');
 
   const loadList = useCallback(() => {
     setError(null);
@@ -141,7 +149,7 @@ export default function EventEditor() {
         {!event ? (
           <LoadingState label="Loading event…" />
         ) : (
-          <ActiveTab event={event} onSaved={setEvent} />
+          <ActiveTab event={event} onSaved={setEvent} onNavigateTab={setActiveTab} />
         )}
       </div>
     </div>

@@ -29,41 +29,56 @@ const STALL_TIERS = [
   },
 ];
 
-export default function ExhibitStalls({ contactEmail }) {
-  const mailHref = `mailto:${contactEmail || 'secretariat@ciim2026.com'}?subject=${encodeURIComponent(
-    'Stall Reservation — CIIM 2026'
+export default function ExhibitStalls({ exhibit = {}, contactEmail }) {
+  if (exhibit.show === false) return null;
+
+  const eyebrow = exhibit.eyebrow || 'Exhibit & sponsor';
+  const title = exhibit.title || 'Put your brand in front of key decision makers';
+  const subtitle =
+    exhibit.subtitle ||
+    'Position your organization before leading clinical decision makers and opinion leaders in reproductive medicine from India and internationally.';
+  const ctaText = exhibit.ctaText || 'Reserve your stall';
+  const email = contactEmail || exhibit.contactEmail || 'secretariat@ciim2026.com';
+
+  const rawTiers =
+    exhibit.tiers && exhibit.tiers.length > 0 ? exhibit.tiers : STALL_TIERS;
+  const tiers = rawTiers.filter((t) => t.isActive !== false);
+
+  if (!tiers.length) return null;
+
+  const mailHref = `mailto:${email}?subject=${encodeURIComponent(
+    `Stall Reservation — ${title}`
   )}`;
 
   return (
     <section className="section section--tight exhibit-stalls" id="exhibit">
       <div className="container">
         <div className="section-head section-head--center">
-          <span className="section-eyebrow">Exhibit &amp; sponsor</span>
-          <h2 className="section-title">Put your brand in front of key decision makers</h2>
-          <p className="section-sub">
-            Position your organization before leading clinical decision makers and opinion leaders
-            in reproductive medicine from India and internationally.
-          </p>
+          <span className="section-eyebrow">{eyebrow}</span>
+          <h2 className="section-title">{title}</h2>
+          {subtitle && <p className="section-sub">{subtitle}</p>}
         </div>
 
         <div className="exhibit-stalls__grid">
-          {STALL_TIERS.map((s) => (
-            <div className={`exhibit-stall exhibit-stall--${s.tier}`} key={s.tier}>
+          {tiers.map((s, idx) => (
+            <div className={`exhibit-stall exhibit-stall--${s.tier || 'partner'}`} key={s._id || s.id || s.tier || idx}>
               <h3 className="exhibit-stall__name">{s.name}</h3>
-              <div className="exhibit-stall__price">{s.price}</div>
-              <p className="exhibit-stall__regs">{s.registrations}</p>
-              <ul className="exhibit-stall__benefits">
-                {s.benefits.map((b) => (
-                  <li key={b}>{b}</li>
-                ))}
-              </ul>
+              {s.price && <div className="exhibit-stall__price">{s.price}</div>}
+              {s.registrations && <p className="exhibit-stall__regs">{s.registrations}</p>}
+              {s.benefits && s.benefits.length > 0 && (
+                <ul className="exhibit-stall__benefits">
+                  {s.benefits.map((b, i) => (
+                    <li key={i}>{b}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           ))}
         </div>
 
         <div className="exhibit-stalls__cta">
           <Button variant="accent" size="lg" href={mailHref}>
-            Reserve your stall
+            {ctaText}
           </Button>
         </div>
       </div>
