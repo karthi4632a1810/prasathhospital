@@ -15,6 +15,46 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;800&display=swap"
       rel="stylesheet"
     />
+    <style>
+      #nl-badge-frame,
+      iframe#nl-badge-frame,
+      iframe[id*="nl-badge"],
+      [data-netlify-drawer],
+      #netlify-drawer {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        clip: rect(0, 0, 0, 0) !important;
+        clip-path: inset(50%) !important;
+        height: 0 !important;
+        width: 0 !important;
+        max-height: 0 !important;
+        max-width: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        padding: 0 !important;
+        position: absolute !important;
+        z-index: -9999 !important;
+      }
+    </style>
+    <script>
+      (function() {
+        function removeBadge() {
+          const badge = document.getElementById('nl-badge-frame') || document.querySelector('iframe[id*="nl-badge"]');
+          if (badge) {
+            badge.style.setProperty('display', 'none', 'important');
+            badge.remove();
+          }
+        }
+        if (typeof MutationObserver !== 'undefined') {
+          const observer = new MutationObserver(removeBadge);
+          observer.observe(document.documentElement, { childList: true, subtree: true });
+        }
+        window.addEventListener('DOMContentLoaded', removeBadge);
+        window.addEventListener('load', removeBadge);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

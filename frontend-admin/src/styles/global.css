@@ -202,3 +202,26 @@ button {
     break-inside: avoid;
   }
 }
+
+/* ---------- Netlify Branding & Badge Suppression ---------- */
+#nl-badge-frame,
+iframe#nl-badge-frame,
+iframe[id*="nl-badge"],
+[data-netlify-drawer],
+#netlify-drawer {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  clip: rect(0, 0, 0, 0) !important;
+  clip-path: inset(50%) !important;
+  height: 0 !important;
+  width: 0 !important;
+  max-height: 0 !important;
+  max-width: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  position: absolute !important;
+  z-index: -9999 !important;
+}
