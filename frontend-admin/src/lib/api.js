@@ -39,47 +39,62 @@ export function setUnauthorizedHandler(fn) {
  * ApiError shape the UI can render. Mirrors frontend-public/src/lib/api.js
  * so both apps stay easy to read side by side.
  */
-async function request(path, { signal, body, headers, ...options } = {}) {
+async function request(path, { signal, body, headers, retries = 2, retryDelay = 2500, ...options } = {}) {
   const token = getToken();
-  let response;
 
-  try {
-    response = await fetch(`${BASE_URL}/api/v1${path}`, {
-      headers: {
-        ...(body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...(headers || {}),
-      },
-      body: body instanceof FormData ? body : body !== undefined ? JSON.stringify(body) : undefined,
-      signal,
-      ...options,
-    });
-  } catch (err) {
-    if (err.name === 'AbortError') throw err;
-    throw new ApiError(
-      'We could not reach the server. Please check your connection and try again.',
-      0
-    );
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(`${BASE_URL}/api/v1${path}`, {
+        headers: {
+          ...(body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(headers || {}),
+        },
+        body: body instanceof FormData ? body : body !== undefined ? JSON.stringify(body) : undefined,
+        signal,
+        ...options,
+      });
+
+      if ([502, 503, 504].includes(response.status) && attempt < retries) {
+        await new Promise((res) => setTimeout(res, retryDelay));
+        continue;
+      }
+
+      let payload = null;
+      try {
+        payload = await response.json();
+      } catch {
+        if (attempt < retries) {
+          await new Promise((res) => setTimeout(res, retryDelay));
+          continue;
+        }
+        throw new ApiError('The server is warming up. Please try again in a moment.', response.status);
+      }
+
+      if (response.status === 401) onUnauthorized();
+
+      if (!response.ok || !payload?.success) {
+        throw new ApiError(
+          payload?.error?.message || 'Something went wrong. Please try again.',
+          response.status,
+          payload?.error?.details
+        );
+      }
+
+      return payload;
+    } catch (err) {
+      if (err.name === 'AbortError') throw err;
+      if (attempt < retries && (err.name === 'TypeError' || err.status === 0 || [502, 503, 504].includes(err.status))) {
+        await new Promise((res) => setTimeout(res, retryDelay));
+        continue;
+      }
+      if (err instanceof ApiError) throw err;
+      throw new ApiError(
+        'We could not reach the server. Please check your connection and try again.',
+        0
+      );
+    }
   }
-
-  let payload = null;
-  try {
-    payload = await response.json();
-  } catch {
-    throw new ApiError('The server returned an unexpected response.', response.status);
-  }
-
-  if (response.status === 401) onUnauthorized();
-
-  if (!response.ok || !payload?.success) {
-    throw new ApiError(
-      payload?.error?.message || 'Something went wrong. Please try again.',
-      response.status,
-      payload?.error?.details
-    );
-  }
-
-  return payload;
 }
 
 export const api = {
