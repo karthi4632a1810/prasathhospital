@@ -1117,8 +1117,8 @@ const ticketTypesData = [
       'Reserved seating block',
       'Lunch and high tea for both',
     ],
-    isPubliclyVisible: true,
-    isActive: true,
+    isPubliclyVisible: false,
+    isActive: false,
     order: 3,
   },
   {
@@ -1141,8 +1141,8 @@ const ticketTypesData = [
       'Faculty networking dinner',
       'Printed session resource compendium',
     ],
-    isPubliclyVisible: true,
-    isActive: true,
+    isPubliclyVisible: false,
+    isActive: false,
     order: 4,
   },
   {

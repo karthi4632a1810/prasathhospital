@@ -11,6 +11,12 @@
   max-width: 1180px;
 }
 
+.tickets__grid--2 {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  max-width: 820px;
+  margin-inline: auto;
+}
+
 .ticket {
   position: relative;
   display: flex;
