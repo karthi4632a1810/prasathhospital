@@ -196,15 +196,6 @@ export default function EventMicrosite() {
 
       <SiteFooter event={event} />
 
-      {sections.stickyCta !== false && (
-        <StickyCta
-          event={event}
-          ticketTypes={ticketTypes}
-          onRegister={scrollToTickets}
-          canRegister={canRegister}
-        />
-      )}
-
       <ShareSheet event={event} open={shareOpen} onClose={() => setShareOpen(false)} />
     </>
   );
