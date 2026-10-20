@@ -35,7 +35,7 @@ export default function Login() {
         <div className="login__brand">
           <img
             className="login__brand-mark"
-            src="/assets/pf-new-logo.png"
+            src="/assets/pf-logo-icon.png"
             alt="Prashanth Fertility"
             width="36"
             height="36"

@@ -75,7 +75,7 @@ export default function AppShell({ children }) {
       <aside className="shell__sidebar" data-open={navOpen}>
         <div className="shell__brand">
           <span className="shell__brand-mark">
-            <img src="/assets/pf-new-logo.png" alt="Prashanth Fertility" width="26" height="26" />
+            <img src="/assets/pf-logo-icon.png" alt="Prashanth Fertility" width="26" height="26" />
           </span>
           <span className="shell__brand-text">
             Prashanth Fertility

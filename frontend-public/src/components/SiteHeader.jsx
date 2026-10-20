@@ -74,7 +74,7 @@ export default function SiteHeader({ _event, onRegister, canRegister, availableS
           <a className="site-header__brand" href="#top" onClick={(e) => handleNavClick(e, 'top')}>
             <img
               className="site-header__mark"
-              src="/assets/pf-new-logo.png"
+              src="/assets/pf-logo-icon.png"
               alt="Prashanth Fertility"
               width="36"
               height="36"
