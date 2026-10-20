@@ -1,8 +1,18 @@
 'use strict';
 
+const dns = require('dns');
 const mongoose = require('mongoose');
 const env = require('./env');
 const logger = require('../utils/logger');
+
+// If using MongoDB Atlas SRV URI on systems with ISP DNS issues, fallback to Google & Cloudflare DNS
+if (env.mongoUri && env.mongoUri.startsWith('mongodb+srv')) {
+  try {
+    dns.setServers(['8.8.8.8', '1.1.1.1']);
+  } catch {
+    // ignore
+  }
+}
 
 mongoose.set('strictQuery', true);
 
@@ -13,6 +23,13 @@ let connectionPromise = null;
  * which keeps the seed script and the HTTP server from opening rival pools.
  */
 async function connectDatabase(uri = env.mongoUri) {
+  if (uri && uri.startsWith('mongodb+srv')) {
+    try {
+      dns.setServers(['8.8.8.8', '1.1.1.1']);
+    } catch {
+      // ignore
+    }
+  }
   if (connectionPromise) return connectionPromise;
 
   connectionPromise = mongoose

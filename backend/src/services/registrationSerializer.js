@@ -14,10 +14,30 @@ function deliverySummary(reg) {
  * errors and provider ids stay admin-only.
  */
 function serializeRegistrationForPublic(reg, { event, ticketType, company } = {}) {
+  const att = reg.attendee || {};
   return {
     registrationCode: reg.registrationCode,
     status: reg.status,
-    attendee: { name: reg.attendee.name, email: reg.attendee.email, phone: reg.attendee.phone },
+    attendee: {
+      name: att.name,
+      title: att.title || '',
+      firstName: att.firstName || '',
+      lastName: att.lastName || '',
+      gender: att.gender || '',
+      email: att.email,
+      phone: att.phone,
+      institution: att.institution || '',
+      designation: att.designation || '',
+      address: att.address || '',
+      country: att.country || 'India',
+      state: att.state || '',
+      city: att.city || '',
+      pincode: att.pincode || '',
+      category: att.category || '',
+      registrationCategory: att.registrationCategory || '',
+      workshop: att.workshop || '',
+      accompanyingPerson: att.accompanyingPerson || { hasAccompanyingPerson: false, name: '' },
+    },
     company: company ? { name: company.name } : null,
     couponCode: reg.couponCode || '',
     pricing: reg.pricing,

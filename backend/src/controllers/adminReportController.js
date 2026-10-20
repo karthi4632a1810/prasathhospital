@@ -99,15 +99,21 @@ async function buildBreakdown(eventId, query) {
   const couponStats = new Map(couponRows.map((r) => [String(r._id), r]));
   const couponList = coupons.map((c) => {
     const stats = couponStats.get(String(c._id)) || {};
+    const state = couponState(c);
+    const isUsable = state === 'active' || state === 'scheduled';
+    const allocated = isUsable ? c.maxAllowedRegistrations : c.usageCount;
+    const remaining = isUsable ? Math.max(c.maxAllowedRegistrations - c.usageCount, 0) : 0;
     return {
       id: c._id,
       code: c.code,
       companyId: c.company?._id || null,
       companyName: c.company?.name || '—',
-      state: couponState(c),
-      allocated: c.maxAllowedRegistrations,
+      state,
+      isActive: c.isActive,
+      maxAllowedRegistrations: c.maxAllowedRegistrations,
+      allocated,
       used: c.usageCount,
-      remaining: Math.max(c.maxAllowedRegistrations - c.usageCount, 0),
+      remaining,
       ...EMPTY_COUNTS,
       ...stats,
       _id: undefined,
@@ -124,16 +130,19 @@ async function buildBreakdown(eventId, query) {
 
   const companyList = companies.map((company) => {
     const own = couponList.filter((c) => String(c.companyId) === String(company._id));
-    const allocated = own.reduce((sum, c) => sum + c.allocated, 0);
+    const activeOwn = own.filter((c) => c.state === 'active' || c.state === 'scheduled');
+    const allocated = activeOwn.reduce((sum, c) => sum + c.allocated, 0);
     const used = own.reduce((sum, c) => sum + c.used, 0);
+    const remaining = activeOwn.reduce((sum, c) => sum + c.remaining, 0);
     return {
       id: company._id,
       name: company.name,
       isActive: company.isActive,
       couponCount: own.length,
+      activeCouponCount: activeOwn.length,
       allocated,
       used,
-      remaining: Math.max(allocated - used, 0),
+      remaining,
       ...EMPTY_COUNTS,
       ...(companyStats.get(String(company._id)) || {}),
       _id: undefined,
@@ -174,7 +183,9 @@ const getOverview = asyncHandler(async (req, res) => {
   for (const row of byStatus) statusCounts[row._id] = row.count;
   const confirmed = statusCounts.confirmed;
 
-  const allocated = breakdown.coupons.reduce((sum, c) => sum + c.allocated, 0);
+  const activeCoupons = breakdown.coupons.filter((c) => c.state === 'active' || c.state === 'scheduled');
+  const allocated = activeCoupons.reduce((sum, c) => sum + c.allocated, 0);
+  const remaining = activeCoupons.reduce((sum, c) => sum + c.remaining, 0);
   const used = breakdown.coupons.reduce((sum, c) => sum + c.used, 0);
 
   return sendSuccess(res, {
@@ -191,7 +202,14 @@ const getOverview = asyncHandler(async (req, res) => {
       rate: confirmed > 0 ? Math.round((checkedIn / confirmed) * 100) : 0,
     },
     delivery: { email: deliveryCounts(emailRows), whatsapp: deliveryCounts(whatsappRows) },
-    coupons: { count: breakdown.coupons.length, allocated, used, remaining: Math.max(allocated - used, 0) },
+    coupons: {
+      count: activeCoupons.length,
+      totalCount: breakdown.coupons.length,
+      inactiveCount: breakdown.coupons.length - activeCoupons.length,
+      allocated,
+      used,
+      remaining,
+    },
     byCompany: breakdown.companies.map((c) => ({ id: c.id, name: c.name, confirmed: c.confirmed, checkedIn: c.checkedIn, allocated: c.allocated, used: c.used })),
     byCoupon: breakdown.coupons.map((c) => ({
       id: c.id,

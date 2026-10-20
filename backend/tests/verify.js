@@ -433,6 +433,7 @@ const base = 'http://127.0.0.1:5099';
     ['DELETE', '/api/v1/admin/companies/000000000000000000000000'],
     ['GET', '/api/v1/admin/coupons'],
     ['POST', '/api/v1/admin/coupons'],
+    ['POST', '/api/v1/admin/coupons/series'],
     ['PATCH', '/api/v1/admin/coupons/000000000000000000000000'],
     ['DELETE', '/api/v1/admin/coupons/000000000000000000000000'],
     ['GET', '/api/v1/admin/coupons/generate-code'],

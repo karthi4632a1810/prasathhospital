@@ -24,16 +24,46 @@ const REGISTRATION_STATE_MESSAGES = {
   unavailable: 'Registration is not available for this event.',
 };
 
-/** Trims and validates the three attendee fields; returns the cleaned values. */
+/** Trims and validates attendee fields; returns the cleaned values. */
 function cleanAttendee(attendee) {
-  const name = String(attendee?.name || '').trim().replace(/\s+/g, ' ');
+  const title = String(attendee?.title || '').trim();
+  const firstName = String(attendee?.firstName || '').trim();
+  const lastName = String(attendee?.lastName || '').trim();
+  let name = String(attendee?.name || '').trim();
+  if (!name && (firstName || lastName)) {
+    name = [title, firstName, lastName].filter(Boolean).join(' ');
+  }
+  name = name.replace(/\s+/g, ' ');
   const email = String(attendee?.email || '').trim().toLowerCase();
   const phone = String(attendee?.phone || '').replace(/[\s()-]/g, '');
 
   if (name.length < 2 || name.length > 120) throw ApiError.badRequest('Please enter your full name.');
   if (email.length > 160 || !EMAIL_RE.test(email)) throw ApiError.badRequest('Please enter a valid email address.');
   if (!PHONE_RE.test(phone)) throw ApiError.badRequest('Please enter a valid mobile number (10–15 digits).');
-  return { name, email, phone };
+
+  return {
+    name,
+    title,
+    firstName,
+    lastName,
+    gender: String(attendee?.gender || '').trim(),
+    email,
+    phone,
+    institution: String(attendee?.institution || '').trim(),
+    designation: String(attendee?.designation || '').trim(),
+    address: String(attendee?.address || '').trim(),
+    country: String(attendee?.country || 'India').trim(),
+    state: String(attendee?.state || '').trim(),
+    city: String(attendee?.city || '').trim(),
+    pincode: String(attendee?.pincode || '').trim(),
+    category: String(attendee?.category || '').trim(),
+    registrationCategory: String(attendee?.registrationCategory || '').trim(),
+    workshop: String(attendee?.workshop || '').trim(),
+    accompanyingPerson: {
+      hasAccompanyingPerson: Boolean(attendee?.accompanyingPerson?.hasAccompanyingPerson),
+      name: String(attendee?.accompanyingPerson?.name || '').trim(),
+    },
+  };
 }
 
 function couponError(reason) {

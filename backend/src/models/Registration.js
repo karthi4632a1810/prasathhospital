@@ -8,8 +8,26 @@ const { Schema } = mongoose;
 const AttendeeSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
+    title: { type: String, trim: true, default: '' },
+    firstName: { type: String, trim: true, default: '' },
+    lastName: { type: String, trim: true, default: '' },
+    gender: { type: String, trim: true, default: '' },
     email: { type: String, required: true, trim: true, lowercase: true },
     phone: { type: String, required: true, trim: true },
+    institution: { type: String, trim: true, default: '' },
+    designation: { type: String, trim: true, default: '' },
+    address: { type: String, trim: true, default: '' },
+    country: { type: String, trim: true, default: 'India' },
+    state: { type: String, trim: true, default: '' },
+    city: { type: String, trim: true, default: '' },
+    pincode: { type: String, trim: true, default: '' },
+    category: { type: String, trim: true, default: '' },
+    registrationCategory: { type: String, trim: true, default: '' },
+    workshop: { type: String, trim: true, default: '' },
+    accompanyingPerson: {
+      hasAccompanyingPerson: { type: Boolean, default: false },
+      name: { type: String, trim: true, default: '' },
+    },
     // Legacy: the coupon flow no longer asks for this. Kept so historical
     // registrations still load and export unchanged.
     participantType: { type: String, trim: true, default: '' },

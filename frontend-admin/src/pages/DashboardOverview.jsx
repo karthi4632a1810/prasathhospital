@@ -126,7 +126,7 @@ export default function DashboardOverview() {
             <StatTile
               label="Coupon places used"
               value={`${o.coupons.used} / ${o.coupons.allocated}`}
-              meta={`${o.coupons.remaining} remaining across ${o.coupons.count} coupons`}
+              meta={`${o.coupons.remaining} remaining across ${o.coupons.count} active coupons${o.coupons.inactiveCount ? ` (${o.coupons.inactiveCount} inactive)` : ''}`}
             />
           </div>
 

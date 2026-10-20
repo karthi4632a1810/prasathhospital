@@ -105,7 +105,7 @@ export default function Agenda({ agenda }) {
           <div className="agenda__tabs" role="tablist" aria-label="Agenda days">
             {days.map((day, i) => (
               <button
-                key={day.id}
+                key={day.id || `day-${i}`}
                 role="tab"
                 aria-selected={i === activeDay}
                 className={`agenda__tab ${i === activeDay ? 'is-active' : ''}`}
@@ -121,16 +121,23 @@ export default function Agenda({ agenda }) {
         )}
 
         <div className="agenda__panel">
-          {!isMultiDay && (
+          {!isMultiDay ? (
             <p className="agenda__single-date">
               {formatDate(current.date)}
               {current.label && <span className="agenda__label"> · {current.label}</span>}
             </p>
-          )}
+          ) : current.label ? (
+            <p className="agenda__day-theme">
+              <span className="agenda__theme-badge">Day {activeDay + 1} Focus</span>
+              <span className="agenda__theme-text">
+                {current.label.replace(/^Day\s+\d+\s*[—–-]\s*/i, '')}
+              </span>
+            </p>
+          ) : null}
 
           <ol className="agenda__list">
-            {current.items.map((item) => (
-              <AgendaItem item={item} key={item.id} />
+            {current.items.map((item, idx) => (
+              <AgendaItem item={item} key={item.id || item._id || `${item.startTime}-${idx}`} />
             ))}
           </ol>
         </div>

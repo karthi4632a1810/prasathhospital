@@ -35,7 +35,18 @@ async function statsByCompany(companyIds) {
   const [couponRows, regRows] = await Promise.all([
     Coupon.aggregate([
       { $match: { company: { $in: companyIds } } },
-      { $group: { _id: '$company', couponCount: { $sum: 1 }, allocated: { $sum: '$maxAllowedRegistrations' }, used: { $sum: '$usageCount' } } },
+      {
+        $group: {
+          _id: '$company',
+          couponCount: { $sum: 1 },
+          allocated: {
+            $sum: {
+              $cond: [{ $eq: ['$isActive', true] }, '$maxAllowedRegistrations', '$usageCount'],
+            },
+          },
+          used: { $sum: '$usageCount' },
+        },
+      },
     ]),
     Registration.aggregate([
       { $match: { company: { $in: companyIds }, status: 'confirmed' } },

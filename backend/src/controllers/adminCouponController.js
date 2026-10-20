@@ -142,6 +142,141 @@ const createCoupon = asyncHandler(async (req, res) => {
   return sendSuccess(res, serializeCoupon(await populated(Coupon.findById(coupon._id))), { status: 201 });
 });
 
+/** POST /api/v1/admin/coupons/series */
+const createCouponSeries = asyncHandler(async (req, res) => {
+  const body = req.body || {};
+  if (!body.event) throw ApiError.badRequest('An "event" id is required.');
+  if (!body.company) throw ApiError.badRequest('Please choose a company.');
+
+  const [event, company] = await Promise.all([
+    Event.findById(body.event).select('_id'),
+    Company.findById(body.company).select('_id isActive name'),
+  ]);
+  if (!event) throw ApiError.notFound('Event not found');
+  if (!company) throw ApiError.notFound('Company not found');
+  if (!company.isActive) throw ApiError.conflict(`${company.name} is inactive. Activate the company first.`);
+
+  const seriesField = Number(body.seriesField) || 2;
+  if (![1, 2, 3].includes(seriesField)) {
+    throw ApiError.badRequest('Series field selection must be 1, 2, or 3.');
+  }
+
+  const startNum = parseInt(body.startNum, 10);
+  const endNum = parseInt(body.endNum, 10);
+
+  if (Number.isNaN(startNum) || startNum < 0) {
+    throw ApiError.badRequest('Series start number must be a non-negative integer (e.g. 1).');
+  }
+  if (Number.isNaN(endNum) || endNum < startNum) {
+    throw ApiError.badRequest('Series end number must be greater than or equal to start number.');
+  }
+
+  const count = endNum - startNum + 1;
+  if (count > 2000) {
+    throw ApiError.badRequest(`Maximum 2,000 coupons can be generated in one batch (requested: ${count}).`);
+  }
+
+  const defaultDigits = Math.max(String(endNum).length, 3);
+  const digits = Math.min(Math.max(parseInt(body.digits, 10) || defaultDigits, 1), 10);
+
+  const field1 = String(body.field1 || '').trim().toUpperCase();
+  const field2 = String(body.field2 || '').trim().toUpperCase();
+  const field3 = String(body.field3 || '').trim().toUpperCase();
+
+  const generatedCodes = [];
+  for (let i = startNum; i <= endNum; i++) {
+    const padded = String(i).padStart(digits, '0');
+    let code;
+    if (seriesField === 1) {
+      code = `${padded}${field2}${field3}`;
+    } else if (seriesField === 2) {
+      code = `${field1}${padded}${field3}`;
+    } else {
+      code = `${field1}${field2}${padded}`;
+    }
+
+    if (!CODE_RE.test(code)) {
+      throw ApiError.badRequest(
+        `Generated code "${code}" is invalid. Coupon codes must be 4–32 letters, numbers, "-" or "_". Please check your inputs.`
+      );
+    }
+    generatedCodes.push(code);
+  }
+
+  // Check for uniqueness within the batch itself
+  const codeSet = new Set(generatedCodes);
+  if (codeSet.size !== generatedCodes.length) {
+    throw ApiError.badRequest('Duplicate codes were generated within this series batch.');
+  }
+
+  // Check for collision with existing codes in database
+  const existing = await Coupon.find({ code: { $in: generatedCodes } }).select('code').lean();
+  if (existing.length > 0) {
+    const list = existing.slice(0, 5).map((c) => c.code).join(', ');
+    const more = existing.length > 5 ? ` and ${existing.length - 5} more` : '';
+    throw ApiError.conflict(
+      `${existing.length} coupon code(s) already exist in the database (${list}${more}). Please adjust prefix/suffix or range.`
+    );
+  }
+
+  const maxAllowedRegistrations = Number(body.maxAllowedRegistrations) || 1; // single use default
+  const startDate = parseDate(body.startDate, 'Start date');
+  const expiryDate = parseDate(body.expiryDate, 'Expiry date');
+  if (startDate && expiryDate && expiryDate <= startDate) {
+    throw ApiError.badRequest('Expiry date must be after the start date.');
+  }
+
+  const description = body.description ? String(body.description).trim().slice(0, 500) : '';
+  const isActive = body.isActive !== undefined ? Boolean(body.isActive) : true;
+
+  const docs = generatedCodes.map((code) => ({
+    event: event._id,
+    company: company._id,
+    code,
+    description: description || `Series coupon (${code})`,
+    maxAllowedRegistrations,
+    usageCount: 0,
+    startDate,
+    expiryDate,
+    isActive,
+    createdBy: req.user._id,
+  }));
+
+  await Coupon.insertMany(docs, { ordered: true });
+
+  recordAudit(req, {
+    action: 'coupon.create_series',
+    entityType: 'Coupon',
+    meta: {
+      company: company.name,
+      event: event._id,
+      count: docs.length,
+      firstCode: generatedCodes[0],
+      lastCode: generatedCodes[generatedCodes.length - 1],
+      seriesField,
+      startNum,
+      endNum,
+      digits,
+      maxAllowedRegistrations,
+    },
+  });
+
+  return sendSuccess(
+    res,
+    {
+      count: docs.length,
+      firstCode: generatedCodes[0],
+      lastCode: generatedCodes[generatedCodes.length - 1],
+      sample: generatedCodes.slice(0, 10),
+      codes: generatedCodes,
+    },
+    {
+      status: 201,
+      message: `Successfully created ${docs.length} coupon codes (${generatedCodes[0]} to ${generatedCodes[generatedCodes.length - 1]}).`,
+    }
+  );
+});
+
 /**
  * GET /api/v1/admin/coupons/generate-code?company=<id>
  * A fresh unique code for the company ("YAMAHA-7KQ93X") to prefill the
@@ -207,4 +342,4 @@ const deleteCoupon = asyncHandler(async (req, res) => {
   return sendSuccess(res, null, { message: 'Coupon deleted' });
 });
 
-module.exports = { listCoupons, createCoupon, updateCoupon, deleteCoupon, generateCode, couponState };
+module.exports = { listCoupons, createCoupon, createCouponSeries, updateCoupon, deleteCoupon, generateCode, couponState };
