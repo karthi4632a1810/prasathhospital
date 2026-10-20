@@ -5,8 +5,8 @@ const mongoose = require('mongoose');
 const env = require('./env');
 const logger = require('../utils/logger');
 
-// If using MongoDB Atlas SRV URI on systems with ISP DNS issues, fallback to Google & Cloudflare DNS
-if (env.mongoUri && env.mongoUri.startsWith('mongodb+srv')) {
+// If using MongoDB Atlas SRV URI on Windows systems with local ISP DNS issues, fallback to Google & Cloudflare DNS
+if (process.platform === 'win32' && env.mongoUri && env.mongoUri.startsWith('mongodb+srv')) {
   try {
     dns.setServers(['8.8.8.8', '1.1.1.1']);
   } catch {
@@ -23,7 +23,7 @@ let connectionPromise = null;
  * which keeps the seed script and the HTTP server from opening rival pools.
  */
 async function connectDatabase(uri = env.mongoUri) {
-  if (uri && uri.startsWith('mongodb+srv')) {
+  if (process.platform === 'win32' && uri && uri.startsWith('mongodb+srv')) {
     try {
       dns.setServers(['8.8.8.8', '1.1.1.1']);
     } catch {
