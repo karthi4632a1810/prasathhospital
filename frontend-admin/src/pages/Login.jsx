@@ -35,13 +35,13 @@ export default function Login() {
         <div className="login__brand">
           <img
             className="login__brand-mark"
-            src="/assets/prashanth-hospitals-crest.jpg"
-            alt=""
-            width="32"
-            height="32"
+            src="/assets/pf-new-logo.png"
+            alt="Prashanth Fertility"
+            width="36"
+            height="36"
           />
           <div>
-            <p className="login__brand-name">Prashanth Hospitals</p>
+            <p className="login__brand-name">Prashanth Fertility</p>
             <p className="login__brand-sub">Events Admin</p>
           </div>
         </div>

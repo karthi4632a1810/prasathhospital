@@ -74,14 +74,14 @@ export default function SiteHeader({ _event, onRegister, canRegister, availableS
           <a className="site-header__brand" href="#top" onClick={(e) => handleNavClick(e, 'top')}>
             <img
               className="site-header__mark"
-              src="/assets/prashanth-hospitals-crest.jpg"
-              alt=""
-              width="34"
-              height="34"
+              src="/assets/pf-new-logo.png"
+              alt="Prashanth Fertility"
+              width="36"
+              height="36"
             />
             <span className="site-header__brand-text">
               <strong>Prashanth</strong>
-              <span>Hospitals</span>
+              <span>Fertility</span>
             </span>
           </a>
 
