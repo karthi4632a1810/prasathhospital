@@ -6,24 +6,23 @@ const COMMITTEE_PHOTO_MAP = {
   'dr samhitha moturi': '/assets/committee/dr-samhitha-moturi.png',
   'dr swathi': '/assets/committee/dr-swathi.jpg',
   'dr abrajdha': '/assets/committee/dr-abrajdha.png',
-  'dr anuradha': '/assets/committee/dr-anuradha.png',
+  'dr anuradha': '/assets/committee/dr-sailaja.png',
   'dr veena': '/assets/committee/dr-veena.png',
-  'dr usha todadri': '/assets/committee/dr-usha-todadri.png',
+  'dr usha todadri': '/assets/committee/dr-s-r-rathika.png',
   'dr shabia': '/assets/committee/dr-shabia.jpg',
-  'dr sailaja': '/assets/committee/dr-sailaja.png',
+  'dr sailaja': '/assets/committee/dr-anuradha.png',
   'dr sughija': '/assets/committee/dr-sughija.png',
   'dr selvapriya': '/assets/committee/dr-selvapriya.jpg',
   'dr pushpalatha': '/assets/committee/dr-pushpalatha.jpg',
   'dr jenifer': '/assets/committee/dr-jenifer.jpg',
   'dr shri janani': '/assets/committee/dr-shri-janani.png',
-  'dr. s. r. rathika': '/assets/committee/dr-s-r-rathika.png',
-  'dr s. r. rathika': '/assets/committee/dr-s-r-rathika.png',
-  'dr s r rathika': '/assets/committee/dr-s-r-rathika.png',
+  'dr. s. r. rathika': '/assets/committee/dr-usha-todadri.png',
+  'dr s. r. rathika': '/assets/committee/dr-usha-todadri.png',
+  'dr s r rathika': '/assets/committee/dr-usha-todadri.png',
   'dr shobhana': '/assets/committee/dr-shobhana.png',
   'dr subhasree': '/assets/committee/dr-subhasree.png',
   'dr divya': '/assets/committee/dr-divya.png',
   'dr malsri': '/assets/committee/dr-malsri.png',
-  'dr priyanka': '/assets/committee/dr-priyanka.jpg',
   'dr. samhitha moturi': '/assets/committee/dr-samhitha-moturi.png',
 };
 
@@ -36,7 +35,7 @@ function normalizeName(name = '') {
  *  at a glance without introducing a new accent color. */
 function Avatar({ name, photoUrl, tone }) {
   const norm = normalizeName(name);
-  const resolvedPhoto = photoUrl || COMMITTEE_PHOTO_MAP[norm];
+  const resolvedPhoto = norm === 'dr priyanka' ? null : (photoUrl || COMMITTEE_PHOTO_MAP[norm]);
 
   const initials = name
     .replace(/^Dr\.?\s+/i, '')
