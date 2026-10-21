@@ -5,8 +5,9 @@ import json
 
 TOKEN = 'nfp_vuUg3SNk44aZj2gxk6iZvy4g1y5grAhH1003'
 
-def package_and_deploy(dist_dir, site_id, name):
-    zip_path = f"{dist_dir}.zip"
+def package_and_deploy(dist_dir, site_id, name, zip_path=None):
+    if not zip_path:
+        zip_path = f"{dist_dir}.zip"
     if os.path.exists(zip_path):
         os.remove(zip_path)
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as z:
@@ -34,5 +35,5 @@ def package_and_deploy(dist_dir, site_id, name):
         print(f"{name} deployed! Deploy ID: {res.get('id')} State: {res.get('state')}")
 
 if __name__ == '__main__':
-    package_and_deploy('frontend-public/dist', '5df8ec3c-1790-4101-9951-e717983f066b', 'frontend-public')
-    package_and_deploy('frontend-admin/dist', '875aebdc-1647-4c07-97e5-7e8453604e4c', 'frontend-admin')
+    package_and_deploy('frontend-public/dist', '5df8ec3c-1790-4101-9951-e717983f066b', 'frontend-public', 'frontend-public/public-dist.zip')
+    package_and_deploy('frontend-admin/dist', '875aebdc-1647-4c07-97e5-7e8453604e4c', 'frontend-admin', 'frontend-admin/admin-dist.zip')

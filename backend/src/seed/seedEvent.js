@@ -133,7 +133,7 @@ const eventData = {
 
   committee: [
     { name: 'Dr Geetha Haripriya', role: 'Organising Chairperson', group: 'leadership', photoUrl: '/assets/chairperson-geetha-haripriya.png', order: 1, isActive: true },
-    { name: 'Dr Samhitha Moturi', role: 'Organising Secretary', group: 'leadership', photoUrl: '', order: 2, isActive: true },
+    { name: 'Dr Samhitha Moturi', role: 'Organising Secretary (Director, Prashanth Fertility)', group: 'leadership', photoUrl: '/assets/committee/dr-samhitha-moturi.png', order: 2, isActive: true },
 
     { name: 'Dr Swathi', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-swathi.jpg', order: 1, isActive: true },
     { name: 'Dr Abrajdha', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-abrajdha.png', order: 2, isActive: true },
@@ -145,15 +145,15 @@ const eventData = {
     { name: 'Dr Sughija', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-sughija.png', order: 8, isActive: true },
     { name: 'Dr Selvapriya', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-selvapriya.jpg', order: 9, isActive: true },
     { name: 'Dr Pushpalatha', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-pushpalatha.jpg', order: 10, isActive: true },
-    { name: 'Dr shobhana', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-shobhana.png', order: 11, isActive: true },
-    { name: 'Dr subhasree', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-subhasree.png', order: 12, isActive: true },
 
     { name: 'Dr Jenifer', role: '', group: 'organising', photoUrl: '/assets/committee/dr-jenifer.jpg', order: 1, isActive: true },
     { name: 'Dr Shri Janani', role: '', group: 'organising', photoUrl: '/assets/committee/dr-shri-janani.png', order: 2, isActive: true },
     { name: 'Dr. S. R. Rathika', role: '', group: 'organising', photoUrl: '/assets/committee/dr-s-r-rathika.png', order: 3, isActive: true },
-    { name: 'Dr Divya', role: '', group: 'organising', photoUrl: '', order: 4, isActive: true },
-    { name: 'Dr Priyanka', role: '', group: 'organising', photoUrl: '', order: 5, isActive: true },
-    { name: 'Dr Malsri', role: '', group: 'organising', photoUrl: '', order: 6, isActive: true },
+    { name: 'Dr shobhana', role: '', group: 'organising', photoUrl: '/assets/committee/dr-shobhana.png', order: 4, isActive: true },
+    { name: 'Dr subhasree', role: '', group: 'organising', photoUrl: '/assets/committee/dr-subhasree.png', order: 5, isActive: true },
+    { name: 'Dr Divya', role: '', group: 'organising', photoUrl: '', order: 6, isActive: true },
+    { name: 'Dr Priyanka', role: '', group: 'organising', photoUrl: '', order: 7, isActive: true },
+    { name: 'Dr Malsri', role: '', group: 'organising', photoUrl: '', order: 8, isActive: true },
   ],
 
   agenda: [
@@ -691,11 +691,13 @@ const eventData = {
   ],
 
   sponsors: [
-    { name: 'Prashanth Fertility Research Centre', tier: 'title', logoUrl: '', order: 1 },
-    { name: 'Merck Healthcare', tier: 'platinum', logoUrl: '', order: 2 },
-    { name: 'Ferring Pharmaceuticals', tier: 'gold', logoUrl: '', order: 3 },
-    { name: 'Vitrolife', tier: 'gold', logoUrl: '', order: 4 },
-    { name: 'Chennai OBGYN Society', tier: 'partner', logoUrl: '', order: 5 },
+    { name: 'Prashanth Fertility Research Centre', tier: 'title', logoUrl: '/assets/sponsors/prashanth-fertility.png', order: 1 },
+    { name: 'Nivyan', tier: 'platinum', logoUrl: '/assets/sponsors/nivyan.png', order: 2 },
+    { name: 'Ferring Pharmaceuticals', tier: 'platinum', logoUrl: '/assets/sponsors/ferring.png', order: 3 },
+    { name: 'Samarth Life Sciences', tier: 'platinum', logoUrl: '/assets/sponsors/samarth.png', order: 4 },
+    { name: 'Intas Pharmaceuticals', tier: 'platinum', logoUrl: '/assets/sponsors/intas.png', order: 5 },
+    { name: 'Zydus Healthcare', tier: 'platinum', logoUrl: '/assets/sponsors/zydus.png', order: 6 },
+    { name: 'Gufic Biosciences', tier: 'platinum', logoUrl: '/assets/sponsors/gufic.png', order: 7 },
   ],
 
   faqs: [
@@ -718,22 +720,10 @@ const eventData = {
       order: 3,
     },
     {
-      question: 'Can I register a colleague along with me?',
+      question: 'Is accommodation provided for delegates?',
       answer:
-        'Yes. The Couple/Duo pass admits two delegates on a single registration. Each delegate still receives an individual QR code and certificate.',
+        'Please note that delegate accommodation is not provided. Delegates are kindly requested to arrange their own travel and stay.',
       order: 4,
-    },
-    {
-      question: 'What is the cancellation and refund policy?',
-      answer:
-        'Cancellations requested in writing up to 14 days before the event are eligible for a refund less a 10% processing fee. Registrations are transferable to another delegate at no cost.',
-      order: 5,
-    },
-    {
-      question: 'Is accommodation provided?',
-      answer:
-        'Accommodation is not included. Our delegate desk can share a list of partner hotels near the venue with negotiated rates on request.',
-      order: 6,
     },
   ],
 
@@ -756,8 +746,8 @@ const eventData = {
 
   contact: {
     name: 'CIIM 2026 Conference Secretariat',
-    phone: '+914442279999',
-    whatsapp: '+919840012345',
+    phone: '+91 96000 47646',
+    whatsapp: '+91 96000 47646',
     email: 'secretariat@ciim2026.com',
   },
 

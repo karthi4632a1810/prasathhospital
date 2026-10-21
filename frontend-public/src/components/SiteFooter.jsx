@@ -12,8 +12,8 @@ export default function SiteFooter({ event }) {
             <img src="/assets/pf-logo-icon.png" alt="Prashanth Fertility" width="28" height="28" />
           </span>
           <div>
-            <p className="site-footer__name">Prashanth Fertility</p>
-            <p className="site-footer__tagline">Care · Compassion · Life</p>
+            <p className="site-footer__name">Prashanth Fertility &amp; Research Centre</p>
+            <p className="site-footer__tagline">In association with TAPISAR (Tamil Nadu &amp; Pondicherry Chapter of ISAR)</p>
           </div>
         </div>
 
@@ -21,14 +21,12 @@ export default function SiteFooter({ event }) {
           Healthier Women &nbsp;|&nbsp; Stronger Families &nbsp;|&nbsp; Brighter Tomorrows
         </p>
 
-        {(contact.email || contact.phone) && (
-          <div className="site-footer__contact">
-            {contact.email && <a href={`mailto:${contact.email}`}>{contact.email}</a>}
-            {contact.phone && (
-              <a href={`tel:${contact.phone.replace(/\s/g, '')}`}>{contact.phone}</a>
-            )}
-          </div>
-        )}
+        <div className="site-footer__contact">
+          {contact.email && <a href={`mailto:${contact.email}`}>{contact.email}</a>}
+          <a href={`tel:${(contact.phone || '+91 96000 47646').replace(/\s/g, '')}`}>
+            {contact.phone || '+91 96000 47646'}
+          </a>
+        </div>
       </div>
 
       <div className="site-footer__bottom">

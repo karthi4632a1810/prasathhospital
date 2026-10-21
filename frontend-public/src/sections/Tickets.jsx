@@ -125,6 +125,12 @@ function TicketCard({ ticket, onSelect, canRegister }) {
 export default function Tickets({ ticketTypes, onSelect, canRegister }) {
   if (!ticketTypes?.length) return null;
 
+  const visiblePasses = ticketTypes.filter(
+    (t) => t.code === 'REG' || t.code === 'PGS' || /regular|pg student|resident/i.test(t.name)
+  );
+
+  if (!visiblePasses.length) return null;
+
   return (
     <section className="section section--brand-soft tickets" id="tickets">
       <div className="container">
@@ -137,8 +143,8 @@ export default function Tickets({ ticketTypes, onSelect, canRegister }) {
           </p>
         </div>
 
-        <div className={`tickets__grid tickets__grid--${Math.min(ticketTypes.length, 4)}`}>
-          {ticketTypes.map((t) => (
+        <div className={`tickets__grid tickets__grid--${Math.min(visiblePasses.length, 4)}`}>
+          {visiblePasses.map((t) => (
             <TicketCard ticket={t} key={t.id} onSelect={onSelect} canRegister={canRegister} />
           ))}
         </div>

@@ -91,7 +91,6 @@ export default function EventMicrosite() {
     if (sec.tickets !== false && ticketTypes.length) list.push('tickets');
     if (sec.venue !== false && (event.mode === 'virtual' || event.venue?.name)) list.push('venue');
     if (sec.sponsors !== false && event.sponsors?.length) list.push('sponsors');
-    if (sec.exhibitStalls !== false) list.push('exhibit');
     if (sec.faqs !== false && event.faqs?.length) list.push('faq');
     return list;
   }, [event, ticketTypes.length]);
@@ -174,12 +173,6 @@ export default function EventMicrosite() {
         {sections.venue !== false && <Venue event={event} />}
         {sections.sponsors !== false && event.sponsors?.length > 0 && (
           <Sponsors sponsors={event.sponsors} />
-        )}
-        {sections.exhibitStalls !== false && (
-          <ExhibitStalls
-            exhibit={event.exhibitStalls}
-            contactEmail={event.exhibitStalls?.contactEmail || event.contact?.email}
-          />
         )}
         {sections.faqs !== false && event.faqs?.length > 0 && (
           <Faq faqs={event.faqs} contact={event.contact} />

@@ -46,9 +46,9 @@
   width: 100%;
   background: #f6e9ee;
   border-radius: 19px;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
-  object-position: top center;
+  object-position: center;
 }
 
 .chairperson-welcome__content {

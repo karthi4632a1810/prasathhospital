@@ -21,29 +21,29 @@
   --surface-2: rgb(255 255 255 / 6.5%); /* raised / hovered glass */
   --surface-solid: #0e1428; /* opaque panel (drawers, sheets, sticky bars) */
   --line: rgb(255 255 255 / 9%);
-  --glass-blur: blur(18px) saturate(140%);
-  --grad-crest: linear-gradient(120deg, #e5533f 0%, #e2a530 50%, #6f84de 100%);
-  --grad-red: linear-gradient(135deg, #ea5b46 0%, #b8321f 100%);
-  --grad-gold: linear-gradient(135deg, #f6d27a 0%, #e2a530 55%, #b9770f 100%);
+  --glass-blur: blur(18px) saturate(105%);
+  --grad-crest: linear-gradient(120deg, #d84b39 0%, #d4992c 50%, #6377c8 100%);
+  --grad-red: linear-gradient(135deg, #db523e 0%, #a82d1c 100%);
+  --grad-gold: linear-gradient(135deg, #eed083 0%, #d4992c 55%, #ab6e0d 100%);
   --grad-title: linear-gradient(180deg, #fff 0%, #c7cee0 100%);
 
-  /* ---------- Crest red — the one accent (--brand-* and --accent-* share it) */
-  --brand-900: #fbd3cb;
-  --brand-800: #f5a495;
-  --brand-700: #f08672; /* readable red/coral for text on dark */
-  --brand-600: #c63f2d; /* solid fills (white text passes contrast) */
-  --brand-500: #e5533f; /* vivid — dots, borders, glows */
-  --brand-300: rgb(229 83 63 / 45%);
-  --brand-100: rgb(229 83 63 / 16%);
-  --brand-50: rgb(229 83 63 / 8%);
-  --accent-900: #fbd3cb;
-  --accent-800: #f5a495;
-  --accent-700: #f08672;
-  --accent-600: #c63f2d;
-  --accent-500: #e5533f;
-  --accent-300: rgb(229 83 63 / 45%);
-  --accent-100: rgb(229 83 63 / 16%);
-  --accent-50: rgb(229 83 63 / 8%);
+  /* ---------- Crest red — softened saturation */
+  --brand-900: #f5d1cb;
+  --brand-800: #ea9f92;
+  --brand-700: #e58270; /* readable red/coral for text on dark */
+  --brand-600: #b83a2a; /* solid fills */
+  --brand-500: #d84b39; /* softened red */
+  --brand-300: rgb(216 75 57 / 38%);
+  --brand-100: rgb(216 75 57 / 14%);
+  --brand-50: rgb(216 75 57 / 7%);
+  --accent-900: #f5d1cb;
+  --accent-800: #ea9f92;
+  --accent-700: #e58270;
+  --accent-600: #b83a2a;
+  --accent-500: #d84b39;
+  --accent-300: rgb(216 75 57 / 38%);
+  --accent-100: rgb(216 75 57 / 14%);
+  --accent-50: rgb(216 75 57 / 7%);
 
   /* ---------- Crest navy — dark bands, plus a periwinkle tint for chips */
   --navy-900: #0a0f21;

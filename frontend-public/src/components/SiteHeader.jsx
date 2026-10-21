@@ -83,6 +83,10 @@ export default function SiteHeader({ _event, onRegister, canRegister, availableS
               <strong>Prashanth</strong>
               <span>Fertility</span>
             </span>
+            <span className="site-header__partner-tag">
+              <span className="site-header__partner-sub">in association with</span>
+              <strong>TAPISAR</strong>
+            </span>
           </a>
 
           <nav className="site-header__nav" aria-label="Section navigation">

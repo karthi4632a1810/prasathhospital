@@ -72,6 +72,31 @@
   text-transform: uppercase;
 }
 
+.site-header__partner-tag {
+  display: flex;
+  flex-direction: column;
+  padding-left: var(--space-3);
+  margin-left: var(--space-2);
+  border-left: 1px solid var(--line);
+  line-height: 1.15;
+}
+
+.site-header__partner-sub {
+  color: var(--ink-500);
+  font-size: 0.6rem;
+  font-weight: 500;
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
+}
+
+.site-header__partner-tag strong {
+  color: var(--gold-500);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
 /* ---------- Desktop nav ---------- */
 
 .site-header__nav {

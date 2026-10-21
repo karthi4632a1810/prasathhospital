@@ -47,6 +47,10 @@ const INDIAN_STATES = [
 
 const COUNTRIES = [
   'India',
+  'Mauritius',
+  'Sri Lanka',
+  'Maldives',
+  'Bangladesh',
   'United Kingdom',
   'United States',
   'United Arab Emirates',
@@ -56,26 +60,7 @@ const COUNTRIES = [
   'Canada',
   'Germany',
   'Nepal',
-  'Sri Lanka',
-  'Bangladesh',
   'Other',
-];
-
-const REGISTRATION_CATEGORIES = [
-  'Non IFS Member',
-  'IFS Member',
-  'Postgraduate Student',
-  'Delegate / Consultant',
-  'Faculty / Invited Speaker',
-  'International Delegate',
-];
-
-const WORKSHOP_OPTIONS = [
-  { value: 'None', label: 'None (Conference Only)' },
-  { value: 'Basic Infertility - Getting it Right', label: 'Basic Infertility — Getting it Right' },
-  { value: 'Ultrasound in ART & Early Pregnancy', label: 'Ultrasound in ART & Early Pregnancy' },
-  { value: 'Live Tele-Robotic Surgery Masterclass', label: 'Live Tele-Robotic Surgery Masterclass' },
-  { value: 'Embryology & Quality Control Protocols', label: 'Embryology & Quality Control Protocols' },
 ];
 
 const EMPTY_FORM = {
@@ -85,17 +70,12 @@ const EMPTY_FORM = {
   gender: 'Male',
   email: '',
   phone: '',
-  institution: '',
-  designation: '',
+  medicalCouncilRegNo: '',
   address: '',
   country: 'India',
   state: 'Tamil Nadu',
   city: '',
   pincode: '',
-  registrationCategory: 'Non IFS Member',
-  workshop: 'Basic Infertility - Getting it Right',
-  hasAccompanyingPerson: false,
-  accompanyingPersonName: '',
 };
 
 export default function RegisterPage() {
@@ -133,7 +113,11 @@ export default function RegisterPage() {
   useEffect(load, [load]);
 
   const event = state.data?.event;
-  const ticketTypes = useMemo(() => state.data?.ticketTypes || [], [state.data]);
+  const ticketTypes = useMemo(() => {
+    const raw = state.data?.ticketTypes || [];
+    const allowed = ['REG', 'PGS'];
+    return raw.filter((t) => allowed.includes(t.code) || /regular|pg student|resident/i.test(t.name));
+  }, [state.data]);
 
   useEffect(() => {
     if (!ticketTypes.length) return;
@@ -198,20 +182,13 @@ export default function RegisterPage() {
           gender: form.gender,
           email: form.email.trim(),
           phone: form.phone.trim(),
-          institution: form.institution.trim(),
-          designation: form.designation.trim(),
+          medicalCouncilRegNo: form.medicalCouncilRegNo.trim(),
           address: form.address.trim(),
           country: form.country,
           state: form.state,
           city: form.city.trim(),
           pincode: form.pincode.trim(),
           category: selectedTicket.name,
-          registrationCategory: form.registrationCategory,
-          workshop: form.workshop,
-          accompanyingPerson: {
-            hasAccompanyingPerson: form.hasAccompanyingPerson,
-            name: form.accompanyingPersonName.trim(),
-          },
         },
         couponCode: coupon.code,
         idempotencyKey: idempotencyKey.current,
@@ -300,71 +277,62 @@ export default function RegisterPage() {
 
             <form onSubmit={handleSubmit} className="register-form">
               {/* --- Section A: Pass & Category Options --- */}
+              {/* --- STEP 01: Pass Selection --- */}
               <div className="form-section">
                 <div className="form-section__header">
-                  <h3 className="form-section__title">1. Registration Category & Workshop Option</h3>
+                  <h3 className="form-section__title">1. Select Registration Pass</h3>
                 </div>
 
-                <div className="register-field-row">
-                  {ticketTypes.length > 1 && (
-                    <label className="register-field">
-                      <span>Registration Pass *</span>
-                      <select
-                        value={ticketTypeId}
-                        onChange={(e) => {
-                          setTicketTypeId(e.target.value);
-                          resetCoupon();
-                        }}
-                        required
-                      >
-                        {ticketTypes.map((t) => (
-                          <option key={t.id} value={t.id} disabled={t.saleState !== 'on-sale'}>
-                            {t.name}
-                            {t.saleState !== 'on-sale' ? ` (${t.saleState.replace('-', ' ')})` : ''}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  )}
-
+                <div className="register-field">
                   <label className="register-field">
-                    <span>Registration Category *</span>
+                    <span>Registration Pass *</span>
                     <select
-                      value={form.registrationCategory}
-                      onChange={(e) => updateField('registrationCategory', e.target.value)}
+                      value={ticketTypeId}
+                      onChange={(e) => {
+                        setTicketTypeId(e.target.value);
+                        resetCoupon();
+                      }}
                       required
                     >
-                      {REGISTRATION_CATEGORIES.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
+                      {ticketTypes.map((t) => (
+                        <option key={t.id} value={t.id} disabled={t.saleState !== 'on-sale'}>
+                          {t.name}
+                          {t.saleState !== 'on-sale' ? ` (${t.saleState.replace('-', ' ')})` : ''}
                         </option>
                       ))}
                     </select>
+                    <small className="register-field__hint">
+                      Conference passes are limited to Delegate — Regular and PG Student / Resident.
+                    </small>
                   </label>
+                </div>
+              </div>
+
+              {/* --- STEP 02: Doctor Reg. No. --- */}
+              <div className="form-section">
+                <div className="form-section__header">
+                  <h3 className="form-section__title">2. Doctor Medical Council Registration Number</h3>
                 </div>
 
                 <label className="register-field">
-                  <span>Full Day Workshops</span>
-                  <select
-                    value={form.workshop}
-                    onChange={(e) => updateField('workshop', e.target.value)}
-                  >
-                    {WORKSHOP_OPTIONS.map((w) => (
-                      <option key={w.value} value={w.value}>
-                        {w.label}
-                      </option>
-                    ))}
-                  </select>
+                  <span>Doctor's Medical Council Registration Number *</span>
+                  <input
+                    required
+                    maxLength={50}
+                    value={form.medicalCouncilRegNo}
+                    onChange={(e) => updateField('medicalCouncilRegNo', e.target.value)}
+                    placeholder="e.g. TNMC/104523/2018 or State Medical Council Reg. No."
+                  />
                   <small className="register-field__hint">
-                    Select a dedicated practical masterclass or skill lab (subject to capacity).
+                    Required for accreditation &amp; Tamil Nadu Medical Council (TNMC) 6 CME Credit Points.
                   </small>
                 </label>
               </div>
 
-              {/* --- Section B: Personal Information --- */}
+              {/* --- STEP 03: Doctor Personal Details --- */}
               <div className="form-section">
                 <div className="form-section__header">
-                  <h3 className="form-section__title">2. Personal Information</h3>
+                  <h3 className="form-section__title">3. Doctor Details</h3>
                 </div>
 
                 <div className="register-field-row register-field-row--name">
@@ -397,7 +365,7 @@ export default function RegisterPage() {
                   </label>
 
                   <label className="register-field register-field--last">
-                    <span>Last Name</span>
+                    <span>Last Name (Optional)</span>
                     <input
                       maxLength={60}
                       autoComplete="family-name"
@@ -436,7 +404,7 @@ export default function RegisterPage() {
                       placeholder="e.g. 9884485876"
                     />
                     <small className="register-field__hint">
-                      Your QR entry ticket is instantly sent here via WhatsApp.
+                      Strictly mandatory: Your individual scannable QR pass is instantly dispatched here via WhatsApp.
                     </small>
                   </label>
                 </div>
@@ -453,49 +421,19 @@ export default function RegisterPage() {
                     placeholder="e.g. jparthibhan@gmail.com"
                   />
                   <small className="register-field__hint">
-                    Confirmation & delegate credentials will be delivered to this address.
+                    Strictly mandatory: Confirmation email with formal invitation letter and QR ticket will be delivered to this address.
                   </small>
                 </label>
               </div>
 
-              {/* --- Section C: Professional & Institutional Details --- */}
+              {/* --- STEP 04: Correspondence Address --- */}
               <div className="form-section">
                 <div className="form-section__header">
-                  <h3 className="form-section__title">3. Institutional & Professional Profile</h3>
-                </div>
-
-                <div className="register-field-row">
-                  <label className="register-field">
-                    <span>Institution / Hospital *</span>
-                    <input
-                      required
-                      maxLength={150}
-                      value={form.institution}
-                      onChange={(e) => updateField('institution', e.target.value)}
-                      placeholder="e.g. Prashanth Fertility Research Centre"
-                    />
-                  </label>
-
-                  <label className="register-field">
-                    <span>Designation</span>
-                    <input
-                      maxLength={100}
-                      value={form.designation}
-                      onChange={(e) => updateField('designation', e.target.value)}
-                      placeholder="e.g. Consultant Gynecologist / Senior Embryologist"
-                    />
-                  </label>
-                </div>
-              </div>
-
-              {/* --- Section D: Correspondence Address --- */}
-              <div className="form-section">
-                <div className="form-section__header">
-                  <h3 className="form-section__title">4. Correspondence Address</h3>
+                  <h3 className="form-section__title">4. Postal Address</h3>
                 </div>
 
                 <label className="register-field">
-                  <span>Correspondence Address *</span>
+                  <span>Postal / Clinic Address *</span>
                   <textarea
                     required
                     rows={3}
@@ -556,12 +494,12 @@ export default function RegisterPage() {
                       maxLength={80}
                       value={form.city}
                       onChange={(e) => updateField('city', e.target.value)}
-                      placeholder="e.g. Chennai"
+                      placeholder="e.g. Chennai, Kanchipuram"
                     />
                   </label>
 
                   <label className="register-field">
-                    <span>PIN / ZIP Code *</span>
+                    <span>PIN / Postal Code *</span>
                     <input
                       required
                       maxLength={16}
@@ -573,40 +511,10 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* --- Section E: Accompanying Person Option --- */}
-              <div className="form-section form-section--accompanying">
-                <div className="form-section__header">
-                  <h3 className="form-section__title">5. Accompanying Person Option</h3>
-                </div>
-
-                <label className="register-checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={form.hasAccompanyingPerson}
-                    onChange={(e) => updateField('hasAccompanyingPerson', e.target.checked)}
-                  />
-                  <span>
-                    Accompanying Person Registration (Includes access to banquet, inauguration & meals)
-                  </span>
-                </label>
-
-                {form.hasAccompanyingPerson && (
-                  <div className="register-field register-field--accompanying-name">
-                    <span>Accompanying Person Full Name *</span>
-                    <input
-                      required={form.hasAccompanyingPerson}
-                      value={form.accompanyingPersonName}
-                      onChange={(e) => updateField('accompanyingPersonName', e.target.value)}
-                      placeholder="e.g. Dr. / Mr. / Mrs. Accompanying Guest"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* --- Section F: Coupon & Fee Validation --- */}
+              {/* --- STEP 05: Coupon & Fee Validation --- */}
               <div className="form-section form-section--coupon">
                 <div className="form-section__header">
-                  <h3 className="form-section__title">6. Sponsor Pass / Coupon Code</h3>
+                  <h3 className="form-section__title">5. Sponsor Pass / Coupon Code</h3>
                 </div>
 
                 <div className="register-field">
@@ -701,25 +609,18 @@ function CouponSummary({ coupon, selectedTicket, formState }) {
             <td>
               <strong>Registration Fee ({selectedTicket?.name || 'Conference Pass'})</strong>
               <div className="summary-table__sub">
-                Category: {formState?.registrationCategory}
-                {formState?.workshop && formState.workshop !== 'None' ? ` · ${formState.workshop}` : ''}
+                Medical Council Reg: {formState?.medicalCouncilRegNo || 'Not Provided'}
               </div>
             </td>
             <td className="text-right">{formatAmount(originalPrice, coupon.currency)}</td>
           </tr>
-          {formState?.hasAccompanyingPerson && (
-            <tr>
-              <td>Accompanying Person ({formState.accompanyingPersonName || 'Guest'})</td>
-              <td className="text-right">{formatAmount(15500, coupon.currency)}</td>
-            </tr>
-          )}
           <tr className="summary-table__discount">
             <td>
               <span>Sponsor / Coupon Discount ({coupon.code})</span>
-              <div className="summary-table__sub">Issued by: {coupon.companyName}</div>
+              <div className="summary-table__sub">Sponsored by: {coupon.companyName}</div>
             </td>
             <td className="text-right text-success">
-              −{formatAmount(originalPrice + (formState?.hasAccompanyingPerson ? 15500 : 0), coupon.currency)}
+              −{formatAmount(originalPrice, coupon.currency)}
             </td>
           </tr>
           <tr className="summary-table__grand-total">
@@ -758,15 +659,13 @@ function RegistrationSuccess({ result, event, slug, formState }) {
 
   const detailRows = [
     ['Full Name', att.name || [formState?.title, formState?.firstName, formState?.lastName].filter(Boolean).join(' ')],
+    ['Medical Council Reg. No.', att.medicalCouncilRegNo || formState?.medicalCouncilRegNo],
     ['Email', att.email],
     ['Mobile', att.phone],
     ['Gender', att.gender || formState?.gender],
-    ['Institution / Hospital', att.institution || formState?.institution],
-    ['Designation', att.designation || formState?.designation],
+    ['Address', att.address || formState?.address],
     ['City / State', [att.city || formState?.city, att.state || formState?.state, att.country || formState?.country].filter(Boolean).join(', ')],
-    ['Category', result.ticketType?.name || 'Conference and Workshop'],
-    ['Registration Category', att.registrationCategory || formState?.registrationCategory || 'Non IFS Member'],
-    ['Full Day Workshops', att.workshop || formState?.workshop || 'Basic Infertility - Getting it Right'],
+    ['Pass Category', result.ticketType?.name || 'Delegate Pass'],
     ['Registration Mode', 'Online'],
     ['Status', 'Confirmed'],
     ['Registration Date', regDate],

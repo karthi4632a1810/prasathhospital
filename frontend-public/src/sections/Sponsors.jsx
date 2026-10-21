@@ -1,10 +1,11 @@
 import { useTilt } from '../lib/useTilt';
 import './Sponsors.css';
 
-const TIER_ORDER = ['title', 'platinum', 'gold', 'silver', 'bronze', 'partner'];
+const TIER_ORDER = ['title', 'platinum', 'main', 'gold', 'silver', 'bronze', 'partner'];
 const TIER_LABEL = {
   title: 'Title Sponsor',
-  platinum: 'Platinum Sponsors',
+  platinum: 'Main Sponsor for the Conference',
+  main: 'Main Sponsor for the Conference',
   gold: 'Gold Sponsors',
   silver: 'Silver Sponsors',
   bronze: 'Bronze Sponsors',

@@ -14,6 +14,7 @@ const AttendeeSchema = new Schema(
     gender: { type: String, trim: true, default: '' },
     email: { type: String, required: true, trim: true, lowercase: true },
     phone: { type: String, required: true, trim: true },
+    medicalCouncilRegNo: { type: String, trim: true, default: '' },
     institution: { type: String, trim: true, default: '' },
     designation: { type: String, trim: true, default: '' },
     address: { type: String, trim: true, default: '' },

@@ -74,11 +74,13 @@
 /* ---------- Tier accents — tiers get the color their name literally is,
    drawn from the crest palette, so the hierarchy reads at a glance. ---------- */
 
-.sponsors__item--platinum {
+.sponsors__item--platinum,
+.sponsors__item--main {
   border-top-color: var(--navy-600);
 }
 
-.sponsors__item--platinum:hover {
+.sponsors__item--platinum:hover,
+.sponsors__item--main:hover {
   border-color: var(--navy-600);
   box-shadow:
     var(--edge-light),

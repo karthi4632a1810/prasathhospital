@@ -26,6 +26,7 @@ function serializeRegistrationForPublic(reg, { event, ticketType, company } = {}
       gender: att.gender || '',
       email: att.email,
       phone: att.phone,
+      medicalCouncilRegNo: att.medicalCouncilRegNo || '',
       institution: att.institution || '',
       designation: att.designation || '',
       address: att.address || '',

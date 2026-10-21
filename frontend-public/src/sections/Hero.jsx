@@ -117,6 +117,9 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
           ) : (
             event.title
           )}
+          <span className="hero__association">
+            — In association with <strong className="hero__association-partner">TAPISAR</strong>
+          </span>
         </h1>
 
         {event.tagline && <p className="hero__tagline">{event.tagline}</p>}

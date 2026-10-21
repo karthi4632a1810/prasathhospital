@@ -49,6 +49,7 @@ function cleanAttendee(attendee) {
     gender: String(attendee?.gender || '').trim(),
     email,
     phone,
+    medicalCouncilRegNo: String(attendee?.medicalCouncilRegNo || '').trim(),
     institution: String(attendee?.institution || '').trim(),
     designation: String(attendee?.designation || '').trim(),
     address: String(attendee?.address || '').trim(),

@@ -81,12 +81,15 @@ const env = {
   mailFrom: read('MAIL_FROM', ''), // e.g. "CIIM 2026 <tickets@ciim2026.com>"
   mailReplyTo: read('MAIL_REPLY_TO', ''),
 
-  // --- WhatsApp (Module 8) ---
+  // --- WhatsApp (WATI or Meta Cloud API) ---
+  whatsappProvider: read('WHATSAPP_PROVIDER', 'wati'),
+  watiBaseUrl: read('WATI_BASE_URL', 'https://live-mt-server.wati.io/1080787'),
+  watiAccessToken: read('WATI_ACCESS_TOKEN', ''),
   whatsappPhoneNumberId: read('WHATSAPP_PHONE_NUMBER_ID', ''),
   whatsappAccessToken: read('WHATSAPP_ACCESS_TOKEN', ''),
   whatsappApiVersion: read('WHATSAPP_API_VERSION', 'v20.0'),
-  // Approved Meta template for business-initiated messages. Body params, in
-  // order: {{1}} name, {{2}} event, {{3}} registration ID, {{4}} ticket link.
+  // Approved Meta / WATI template for business-initiated messages. Body params, in
+  // order: {{1}} name, {{2}} event, {{3}} registration ID, {{4}} ticket link, {{5}} pass name.
   whatsappTemplateName: read('WHATSAPP_TEMPLATE_NAME', ''),
   whatsappTemplateLanguage: read('WHATSAPP_TEMPLATE_LANGUAGE', 'en'),
 };

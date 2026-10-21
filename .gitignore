@@ -31,3 +31,6 @@ public/uploads/
 
 # Local database backups (Module 14)
 backups/
+
+temp/
+

@@ -46,6 +46,7 @@ function MemberCard({ member, tone, featured }) {
     >
       <Avatar name={member.name} photoUrl={member.photoUrl} tone={tone} />
       <p className="committee-member__name">{member.name}</p>
+      {member.designation && <p className="committee-member__designation">{member.designation}</p>}
       {member.role && <p className="committee-member__role">{member.role}</p>}
     </div>
   );

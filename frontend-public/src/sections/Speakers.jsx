@@ -14,12 +14,15 @@ function Avatar({ name, photoUrl }) {
     .join('')
     .toUpperCase();
 
-  if (photoUrl) {
-    return <img className="speaker__photo" src={photoUrl} alt={name} loading="lazy" />;
-  }
   return (
-    <div className="speaker__photo speaker__photo--initials" aria-hidden="true">
-      {initials}
+    <div className="speaker__avatar-wrap">
+      {photoUrl ? (
+        <img className="speaker__photo" src={photoUrl} alt={name} loading="lazy" />
+      ) : (
+        <div className="speaker__photo speaker__photo--initials" aria-hidden="true">
+          {initials}
+        </div>
+      )}
     </div>
   );
 }
