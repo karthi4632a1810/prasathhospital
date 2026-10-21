@@ -691,7 +691,7 @@ const eventData = {
   ],
 
   sponsors: [
-    { name: 'Prashanth Fertility Research Centre', tier: 'title', logoUrl: '/assets/sponsors/prashanth-fertility.png', order: 1 },
+    { name: 'Prashanth Fertility Research Centre', tier: 'title', logoUrl: '/assets/sponsors/prashanth-fertility.png', websiteUrl: 'https://www.prashanthfertility.com', order: 1 },
     { name: 'Nivyan', tier: 'platinum', logoUrl: '/assets/sponsors/nivyan.png', order: 2 },
     { name: 'Ferring Pharmaceuticals', tier: 'platinum', logoUrl: '/assets/sponsors/ferring.png', order: 3 },
     { name: 'Samarth Life Sciences', tier: 'platinum', logoUrl: '/assets/sponsors/samarth.png', order: 4 },
