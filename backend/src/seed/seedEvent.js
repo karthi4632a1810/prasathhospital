@@ -52,7 +52,7 @@ const eventData = {
     about: true,
     speakers: true,
     committee: true,
-    agenda: true,
+    agenda: false,
     tickets: true,
     venue: true,
     sponsors: true,
