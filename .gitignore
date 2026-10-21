@@ -33,7 +33,8 @@ public/uploads/
 backups/
 
 temp/
-
+scratch/
+*.zip
 
 image*.png
 

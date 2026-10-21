@@ -9,11 +9,10 @@
 
 .feedback-card {
   padding: var(--space-8);
-  background: linear-gradient(180deg, rgb(255 255 255 / 6%), rgb(255 255 255 / 2%));
-  border: 1px solid var(--line);
+  background: #ffffff;
+  border: 1px solid #fed2e2;
   border-radius: var(--radius-xl);
-  box-shadow: var(--edge-light), var(--shadow-lg);
-  backdrop-filter: var(--glass-blur);
+  box-shadow: 0 10px 40px rgba(68, 33, 91, 0.08);
 }
 
 .feedback-card--success {
@@ -96,8 +95,8 @@
 .feedback-field textarea {
   padding: var(--space-3) var(--space-4);
   color: var(--ink-900);
-  background: rgb(255 255 255 / 4%);
-  border: 1px solid var(--ink-300);
+  background: #ffffff;
+  border: 1px solid #fed2e2;
   border-radius: var(--radius-md);
   font: inherit;
   resize: vertical;

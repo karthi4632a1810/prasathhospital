@@ -73,19 +73,22 @@ export default function SiteHeader({ _event, onRegister, canRegister, availableS
         <div className="container site-header__inner">
           <a className="site-header__brand" href="#top" onClick={(e) => handleNavClick(e, 'top')}>
             <img
-              className="site-header__mark"
-              src="/assets/pf-logo-icon.png"
+              className="site-header__pf-logo"
+              src="/assets/prashanth-fertility-logo.png"
               alt="Prashanth Fertility"
-              width="36"
-              height="36"
             />
-            <span className="site-header__brand-text">
-              <strong>Prashanth</strong>
-              <span>Fertility</span>
-            </span>
             <span className="site-header__partner-tag">
               <span className="site-header__partner-sub">in association with</span>
-              <strong>TAPISAR</strong>
+              <span className="site-header__partner-val">
+                <img
+                  src="/assets/tapisar-logo.png"
+                  alt="TAPISAR"
+                  className="site-header__tapisar-logo"
+                  width="20"
+                  height="20"
+                />
+                <strong>TAPISAR</strong>
+              </span>
             </span>
           </a>
 

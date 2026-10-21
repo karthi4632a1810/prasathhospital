@@ -13,78 +13,88 @@
    ========================================================================== */
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  /* ---------- Foundations ---------- */
-  --bg: #070b18; /* page base — deep midnight navy */
-  --surface: rgb(255 255 255 / 3.5%); /* glass card */
-  --surface-2: rgb(255 255 255 / 6.5%); /* raised / hovered glass */
-  --surface-solid: #0e1428; /* opaque panel (drawers, sheets, sticky bars) */
-  --line: rgb(255 255 255 / 9%);
-  --glass-blur: blur(18px) saturate(105%);
-  --grad-crest: linear-gradient(120deg, #d84b39 0%, #d4992c 50%, #6377c8 100%);
-  --grad-red: linear-gradient(135deg, #db523e 0%, #a82d1c 100%);
-  --grad-gold: linear-gradient(135deg, #eed083 0%, #d4992c 55%, #ab6e0d 100%);
-  --grad-title: linear-gradient(180deg, #fff 0%, #c7cee0 100%);
+  /* ---------- Foundations (Blush Pink Brand Theme matching theme.jpg reference) ---------- */
+  --bg: #fff6f9; /* soft blush ivory base from Dr. Samhitha's theme.jpg */
+  --bg-gradient: linear-gradient(180deg, #fff7fa 0%, #fef1f6 50%, #fdebf2 100%);
+  --surface: rgb(255 255 255 / 88%); /* crisp translucent white card */
+  --surface-2: #ffffff; /* raised card */
+  --surface-solid: #ffffff; /* opaque panel */
+  --surface-tint: #fbdbea; /* signature blush container fill from theme.jpg */
+  --line: rgb(235 63 103 / 16%); /* subtle rose boundary */
+  --line-strong: rgb(235 63 103 / 28%);
+  --glass-blur: blur(16px) saturate(125%);
+  --grad-crest: linear-gradient(120deg, #eb3f67 0%, #d82375 50%, #44215b 100%);
+  --grad-red: linear-gradient(135deg, #eb3f67 0%, #c2185b 100%);
+  --grad-gold: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  --grad-title: linear-gradient(180deg, #381b4e 0%, #eb3f67 100%);
+  --grad-hero: linear-gradient(180deg, #fff8fb 0%, #fce9f1 100%);
 
-  /* ---------- Crest red — softened saturation */
-  --brand-900: #f5d1cb;
-  --brand-800: #ea9f92;
-  --brand-700: #e58270; /* readable red/coral for text on dark */
-  --brand-600: #b83a2a; /* solid fills */
-  --brand-500: #d84b39; /* softened red */
-  --brand-300: rgb(216 75 57 / 38%);
-  --brand-100: rgb(216 75 57 / 14%);
-  --brand-50: rgb(216 75 57 / 7%);
-  --accent-900: #f5d1cb;
-  --accent-800: #ea9f92;
-  --accent-700: #e58270;
-  --accent-600: #b83a2a;
-  --accent-500: #d84b39;
-  --accent-300: rgb(216 75 57 / 38%);
-  --accent-100: rgb(216 75 57 / 14%);
-  --accent-50: rgb(216 75 57 / 7%);
+  /* ---------- Brand & Accent (Vibrant Magenta & Rose from theme.jpg) ---------- */
+  --brand-900: #381b4e;
+  --brand-800: #551e5e;
+  --brand-700: #821c56;
+  --brand-600: #c2185b;
+  --brand-500: #eb3f67;
+  --brand-400: #e11d48;
+  --brand-300: rgb(235 63 103 / 35%);
+  --brand-200: rgb(235 63 103 / 22%);
+  --brand-100: rgb(235 63 103 / 12%);
+  --brand-50: rgb(235 63 103 / 6%);
 
-  /* ---------- Crest navy — dark bands, plus a periwinkle tint for chips */
-  --navy-900: #0a0f21;
-  --navy-700: #aab6ec;
-  --navy-600: #6f84de;
-  --navy-100: rgb(111 132 222 / 16%);
+  --accent-900: #381b4e;
+  --accent-800: #681d4a;
+  --accent-700: #9e1355;
+  --accent-600: #c2185b;
+  --accent-500: #eb3f67;
+  --accent-400: #e11d48;
+  --accent-300: rgb(235 63 103 / 35%);
+  --accent-200: rgb(235 63 103 / 22%);
+  --accent-100: rgb(235 63 103 / 12%);
+  --accent-50: rgb(235 63 103 / 6%);
 
-  /* ---------- Crest gold — reserved for rare "live" highlights only */
-  --gold-600: #f2c463;
-  --gold-500: #e2a530;
-  --gold-100: rgb(226 165 48 / 15%);
+  /* ---------- Royal Plum Navy ---------- */
+  --navy-900: #231238;
+  --navy-800: #34184c;
+  --navy-700: #44215b;
+  --navy-600: #5f327d;
+  --navy-100: rgb(68 33 91 / 10%);
 
-  /* Muted, de-emphasized — one agenda category only */
-  --teal-600: #9aa3b8;
-  --teal-100: rgb(255 255 255 / 6%);
+  /* ---------- Gold Accents ---------- */
+  --gold-600: #b45309;
+  --gold-500: #d97706;
+  --gold-100: rgb(217 119 6 / 12%);
 
-  /* ---------- Neutrals (dark scale: 900 = brightest text, 50 = faintest fill) */
-  --ink-900: #f4f6fb;
-  --ink-800: #e3e7f0;
-  --ink-700: #c3c9d8;
-  --ink-600: #9aa3b8;
-  --ink-500: #7b8499;
-  --ink-400: #5b6479;
-  --ink-300: rgb(255 255 255 / 18%);
-  --ink-200: rgb(255 255 255 / 10%);
-  --ink-100: rgb(255 255 255 / 6%);
-  --ink-50: rgb(255 255 255 / 3%);
-  --white: #fff;
+  /* Muted category */
+  --teal-600: #55627a;
+  --teal-100: rgb(85 98 122 / 10%);
 
-  /* ---------- Status (tints + readable foregrounds) */
-  --success-700: #4ade80;
-  --success-500: #22c55e;
-  --success-100: rgb(34 197 94 / 15%);
-  --warning-700: #fbbf24;
-  --warning-500: #f59e0b;
-  --warning-100: rgb(245 158 11 / 15%);
-  --danger-700: #f87171;
-  --danger-500: #ef4444;
-  --danger-100: rgb(239 68 68 / 15%);
+  /* ---------- Neutrals (Light scale: 900 = dark plum text, 50 = lightest tint) ---------- */
+  --ink-900: #28133e; /* deep royal plum for headings */
+  --ink-800: #3d2054; /* high-contrast dark text */
+  --ink-700: #4e2f66; /* body copy text */
+  --ink-600: #684c7e; /* secondary descriptions */
+  --ink-500: #886e9c; /* muted metadata / captions */
+  --ink-400: #aa93bd;
+  --ink-300: rgb(68 33 91 / 20%);
+  --ink-200: rgb(68 33 91 / 10%);
+  --ink-100: rgb(68 33 91 / 6%);
+  --ink-50: rgb(68 33 91 / 3%);
+  --white: #ffffff;
 
-  /* ---------- Typography */
+  /* ---------- Status ---------- */
+  --success-700: #15803d;
+  --success-500: #16a34a;
+  --success-100: rgb(22 163 74 / 12%);
+  --warning-700: #b45309;
+  --warning-500: #d97706;
+  --warning-100: rgb(217 119 6 / 12%);
+  --danger-700: #b91c1c;
+  --danger-500: #dc2626;
+  --danger-100: rgb(220 38 38 / 12%);
+
+  /* ---------- Typography ---------- */
   --font-display: 'Inter', -apple-system, blinkmacsystemfont, 'Segoe UI', roboto, sans-serif;
   --font-body: 'Inter', -apple-system, blinkmacsystemfont, 'Segoe UI', roboto, sans-serif;
   --text-xs: 0.75rem;
@@ -122,16 +132,16 @@
   --radius-xl: 22px;
   --radius-full: 999px;
 
-  /* ---------- Elevation — deeper on dark, plus colored glows */
-  --shadow-xs: 0 1px 2px rgb(0 0 0 / 35%);
-  --shadow-sm: 0 4px 14px rgb(0 0 0 / 35%);
-  --shadow-md: 0 14px 34px rgb(0 0 0 / 45%);
-  --shadow-lg: 0 28px 64px rgb(0 0 0 / 55%);
-  --shadow-brand: 0 10px 32px rgb(229 83 63 / 38%);
-  --shadow-gold: 0 10px 32px rgb(226 165 48 / 30%);
+  /* ---------- Elevation — refined light luxury rose & plum shadows ---------- */
+  --shadow-xs: 0 1px 3px rgb(68 33 91 / 6%), 0 1px 2px rgb(68 33 91 / 4%);
+  --shadow-sm: 0 4px 14px rgb(235 63 103 / 8%), 0 2px 6px rgb(68 33 91 / 4%);
+  --shadow-md: 0 12px 32px rgb(235 63 103 / 10%), 0 4px 12px rgb(68 33 91 / 5%);
+  --shadow-lg: 0 24px 60px rgb(235 63 103 / 14%), 0 8px 24px rgb(68 33 91 / 7%);
+  --shadow-brand: 0 10px 28px rgb(235 63 103 / 32%);
+  --shadow-gold: 0 10px 28px rgb(217 119 6 / 25%);
 
-  /* the 1px top-edge highlight that makes glass read as glass */
-  --edge-light: inset 0 1px 0 rgb(255 255 255 / 7%);
+  /* the 1px highlight that frames glass cards */
+  --edge-light: inset 0 1px 0 rgb(255 255 255 / 90%);
 
   /* ---------- Layout */
   --container-max: 1180px;

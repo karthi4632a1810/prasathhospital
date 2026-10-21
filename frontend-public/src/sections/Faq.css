@@ -10,10 +10,10 @@
 }
 
 .faq-item {
-  background: linear-gradient(180deg, rgb(255 255 255 / 5%), rgb(255 255 255 / 1.5%));
-  border: 1px solid var(--line);
+  background: #ffffff;
+  border: 1px solid #fed2e2;
   border-radius: var(--radius-lg);
-  box-shadow: var(--edge-light);
+  box-shadow: 0 4px 14px rgba(68, 33, 91, 0.04);
   overflow: hidden;
   transition:
     border-color var(--transition),
@@ -22,12 +22,11 @@
 }
 
 .faq-item.is-open {
-  background: linear-gradient(180deg, rgb(229 83 63 / 9%), rgb(255 255 255 / 1.5%));
-  border-color: var(--brand-300);
+  background: #ffffff;
+  border-color: var(--accent-500);
   box-shadow:
-    var(--edge-light),
-    var(--shadow-md),
-    0 0 40px rgb(229 83 63 / 10%);
+    0 8px 24px rgba(235, 63, 103, 0.12),
+    0 0 30px rgba(235, 63, 103, 0.08);
 }
 
 .faq-item__heading {
@@ -94,66 +93,71 @@
   padding: var(--space-10) var(--space-8);
   margin-top: var(--space-12);
   text-align: center;
-  background:
-    radial-gradient(ellipse at 50% 0%, rgb(229 83 63 / 22%), transparent 65%) padding-box,
-    linear-gradient(180deg, #141b35, #0b1022) padding-box,
-    linear-gradient(135deg, rgb(229 83 63 / 60%), rgb(226 165 48 / 35%), rgb(111 132 222 / 40%))
-      border-box;
-  border: 1px solid transparent;
+  background: linear-gradient(135deg, #ffffff 0%, #fff4f8 100%) !important;
+  border: 1.5px solid #fed2e2 !important;
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 8px 30px rgba(235, 63, 103, 0.08) !important;
   overflow: hidden;
 }
 
 .faq__contact-title {
   margin-bottom: var(--space-2);
-  font-size: var(--text-xl);
+  color: var(--ink-900) !important;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 800;
 }
 
 .faq__contact-text {
-  margin-bottom: var(--space-5);
-  color: var(--ink-600);
-  font-size: var(--text-sm);
+  margin-bottom: var(--space-6);
+  color: var(--ink-700) !important;
+  font-size: var(--text-base);
+  max-width: 52ch;
+  margin-inline: auto;
 }
 
 .faq__contact-links {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
 .faq__contact-link {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-3) var(--space-5);
-  color: var(--ink-900);
+  padding: var(--space-3) var(--space-6);
+  color: var(--ink-900) !important;
   font-size: var(--text-sm);
-  font-weight: 600;
-  background: var(--surface-2);
-  border: 1px solid var(--ink-300);
+  font-weight: 650;
+  background: #ffffff !important;
+  border: 1.5px solid #fed2e2 !important;
   border-radius: var(--radius-full);
+  box-shadow: 0 2px 8px rgba(68, 33, 91, 0.06);
   transition: all var(--transition);
 }
 
 .faq__contact-link:hover {
-  color: var(--white);
-  border-color: var(--brand-500);
-  box-shadow: 0 0 24px rgb(229 83 63 / 25%);
-  transform: translateY(-1px);
+  color: #ffffff !important;
+  background: var(--ink-900) !important;
+  border-color: var(--ink-900) !important;
+  box-shadow: 0 6px 20px rgba(40, 19, 62, 0.25);
+  transform: translateY(-2px);
 }
 
 .faq__contact-link--whatsapp {
-  color: #04301a;
-  background: #25d366;
-  border-color: #25d366;
+  color: #ffffff !important;
+  background: #25d366 !important;
+  border-color: #25d366 !important;
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.3);
 }
 
 .faq__contact-link--whatsapp:hover {
-  color: #04301a;
-  background: #1eb955;
-  border-color: #1eb955;
+  color: #ffffff !important;
+  background: #20ba5a !important;
+  border-color: #20ba5a !important;
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.45);
 }
 
 @media (width <= 640px) {

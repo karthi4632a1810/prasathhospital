@@ -21,7 +21,10 @@ export default function ChairpersonWelcome({
   const photoUrl =
     propPhotoUrl || welcome.photoUrl || '/assets/chairperson-geetha-haripriya.png';
   const eyebrow = welcome.eyebrow || 'A message from our chairperson';
-  const message = propMessage || welcome.message || eventDescription || '';
+  const rawMessage = propMessage || welcome.message || eventDescription || '';
+  const message = rawMessage
+    .replace(/\b5th CIIM\b/gi, '9th CIIM')
+    .replace(/\b5th Annual\b/gi, '9th Annual');
 
   const paragraphs = (message || '')
     .split(/\n\s*\n/)

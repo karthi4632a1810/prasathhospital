@@ -1,9 +1,77 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Button from '../components/ui/Button';
 import Badge, { RegistrationStateBadge } from '../components/ui/Badge';
 import { formatDateRange, formatDate, getCountdown } from '../lib/format';
 import HeroHelix3D from './HeroHelix3D';
 import './Hero.css';
+
+function AnimatedStatCounter({ value }) {
+  const match = String(value).match(/^(\D*)(\d+)(\D*)$/);
+  if (!match) return <span>{value}</span>;
+
+  const prefix = match[1] || '';
+  const target = parseInt(match[2], 10);
+  const suffix = match[3] || '';
+
+  const [count, setCount] = useState(0);
+  const ref = useRef(null);
+  const [hasStarted, setHasStarted] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    if (typeof IntersectionObserver === 'undefined') {
+      setHasStarted(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setHasStarted(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!hasStarted) return;
+
+    let startTimestamp = null;
+    const duration = 1600;
+    let animationFrameId;
+
+    const step = (timestamp) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      const easeProgress = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.round(easeProgress * target));
+
+      if (progress < 1) {
+        animationFrameId = requestAnimationFrame(step);
+      } else {
+        setCount(target);
+      }
+    };
+
+    animationFrameId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [hasStarted, target]);
+
+  return (
+    <span ref={ref}>
+      {prefix}
+      {hasStarted ? count : 0}
+      {suffix}
+    </span>
+  );
+}
 
 const MODE_LABEL = {
   'in-person': 'In person',
@@ -25,7 +93,7 @@ function Countdown({ target }) {
 
   useEffect(() => {
     setRemaining(getCountdown(target));
-    const timer = setInterval(() => setRemaining(getCountdown(target)), 60000);
+    const timer = setInterval(() => setRemaining(getCountdown(target)), 1000);
     return () => clearInterval(timer);
   }, [target]);
 
@@ -35,6 +103,7 @@ function Countdown({ target }) {
     { value: remaining.days, label: remaining.days === 1 ? 'Day' : 'Days' },
     { value: remaining.hours, label: remaining.hours === 1 ? 'Hour' : 'Hours' },
     { value: remaining.minutes, label: 'Min' },
+    { value: remaining.seconds, label: 'Sec' },
   ];
 
   return (
@@ -95,34 +164,50 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
       <HeroHelix3D />
 
       <div className="container hero__inner">
-        <div className="hero__badges">
-          <Badge tone="light">{CATEGORY_LABEL[event.category] || 'Event'}</Badge>
-          <Badge tone="light">{MODE_LABEL[event.mode] || 'In person'}</Badge>
-          {showLiveBadge && liveBadgeText && (
-            <Badge tone="signal" icon={<span className="badge__dot" aria-hidden="true" />}>
-              {liveBadgeText}
-            </Badge>
-          )}
-          <RegistrationStateBadge
-            state={event.registrationState}
-            seatsRemaining={event.seatsRemaining}
-          />
+        {/* Organizer association lead pill (Prashanth logo in sticky header above) */}
+        <div className="hero__organizer-lead">
+          <span className="hero__org-bridge">In association with</span>
+
+          <div className="hero__org-brand">
+            <img
+              src="/assets/tapisar-logo.png"
+              alt="TAPISAR Logo"
+              className="hero__org-logo hero__org-logo--tapisar"
+            />
+            <div className="hero__tapisar-info">
+              <span className="hero__org-name hero__org-name--tapisar">TAPISAR</span>
+              <span className="hero__org-sub">Tamil Nadu &amp; Pondicherry Chapter of ISAR</span>
+            </div>
+          </div>
         </div>
 
-        <h1 className="hero__title">
-          {titleMatch ? (
-            <>
-              {titleMatch[1]} <span className="hero__title-year">{titleMatch[2]}</span>
-            </>
-          ) : (
-            event.title
-          )}
-          <span className="hero__association">
-            — In association with <strong className="hero__association-partner">TAPISAR</strong>
-          </span>
-        </h1>
+        {/* 2. Historic breakthrough pill */}
+        <div className="hero__era-pill">
+          <span className="hero__era-tag">HISTORIC FIRST</span>
+          <span className="hero__era-text">Infertility Care Enters a New Surgical Era</span>
+        </div>
 
-        {event.tagline && <p className="hero__tagline">{event.tagline}</p>}
+        {/* 3. MANDATED HERO ORDER: [CIIM Logo] CIIM 2026 (Centered Below) */}
+        <div className="hero__ciim-block">
+          <div className="hero__ciim-head">
+            <img
+              src="/assets/ciim-2026-logo.png"
+              alt="CIIM 2026 Logo"
+              className="hero__ciim-logo"
+            />
+            <h1 className="hero__title">
+              CIIM <span className="hero__title-year">2026</span>
+            </h1>
+          </div>
+          <p className="hero__fullname">CONTROVERSIES IN INFERTILITY MANAGEMENT</p>
+          <p className="hero__theme-quote">
+            Theme: &ldquo;Breaking Boundaries, Elevating Surgical Precision &amp; ART Outcomes&rdquo;
+          </p>
+        </div>
+
+        {event.tagline && event.tagline !== 'Breaking Boundaries, Elevating Surgical Precision & ART Outcomes' && (
+          <p className="hero__tagline">{event.tagline}</p>
+        )}
 
         <dl className="hero__facts">
           <div className="hero__fact">
@@ -141,7 +226,10 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
               </svg>
               <span className="visually-hidden">Date and time</span>
             </dt>
-            <dd>{formatDateRange(event.startDate, event.endDate)}</dd>
+            <dd>
+              <span className="hero__fact-label">DATES</span>
+              <strong>{formatDateRange(event.startDate, event.endDate)}</strong>
+            </dd>
           </div>
 
           <div className="hero__fact">
@@ -160,7 +248,10 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
               </svg>
               <span className="visually-hidden">Location</span>
             </dt>
-            <dd>{locationLine}</dd>
+            <dd>
+              <span className="hero__fact-label">VENUE</span>
+              <strong>{locationLine}</strong>
+            </dd>
           </div>
         </dl>
 
@@ -208,7 +299,9 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
             {stats.map((s) => (
               <div className="hero__stat" key={s.label}>
                 <dt className="hero__stat-label">{s.label}</dt>
-                <dd className="hero__stat-value">{s.value}</dd>
+                <dd className="hero__stat-value">
+                  <AnimatedStatCounter value={s.value} />
+                </dd>
               </div>
             ))}
           </dl>

@@ -14,6 +14,8 @@
   transform-origin: center center;
   perspective: 1000px;
   pointer-events: none;
+  opacity: 0.35;
+  z-index: 1;
 }
 
 @media (width >= 1180px) {
@@ -82,7 +84,7 @@
   top: 0;
   left: 50%;
   height: 1px;
-  background: rgb(255 255 255 / 13%);
+  background: rgb(235 63 103 / 22%);
   border-radius: 1px;
   transform: translate(-50%, -50%);
 }
@@ -97,18 +99,20 @@
 }
 
 .helix3d__node--a {
-  background: rgb(255 255 255 / 60%);
+  background: var(--accent-500);
+  box-shadow: 0 0 10px rgb(235 63 103 / 45%);
 }
 
 .helix3d__node--b {
-  background: rgb(255 255 255 / 32%);
+  background: var(--navy-700);
+  box-shadow: 0 0 8px rgb(68 33 91 / 30%);
 }
 
 .helix3d__node--gold {
   width: 10px;
   height: 10px;
-  background: var(--gold-500);
-  box-shadow: 0 0 10px rgb(226 165 48 / 75%);
+  background: var(--accent-600);
+  box-shadow: 0 0 12px rgb(235 63 103 / 60%);
   animation: helix3d-node-pulse 2.4s ease-in-out infinite;
 }
 

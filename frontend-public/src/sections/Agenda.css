@@ -15,16 +15,18 @@
   gap: 2px;
   padding: var(--space-3) var(--space-6);
   color: var(--ink-700);
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: #ffffff;
+  border: 1px solid #fed2e2;
   border-radius: var(--radius-lg);
+  box-shadow: 0 2px 8px rgba(68, 33, 91, 0.04);
   transition: all var(--transition);
   backdrop-filter: var(--glass-blur);
 }
 
 .agenda__tab:hover {
-  background: var(--brand-50);
-  border-color: var(--brand-300);
+  color: var(--ink-900);
+  background: #fff0f5;
+  border-color: var(--accent-500);
 }
 
 .agenda__tab.is-active {
@@ -180,10 +182,10 @@
 
 .agenda-item__content {
   padding: var(--space-4) var(--space-5);
-  background: linear-gradient(180deg, rgb(255 255 255 / 5%), rgb(255 255 255 / 1.5%));
-  border: 1px solid var(--line);
+  background: #ffffff;
+  border: 1px solid #fed2e2;
   border-radius: var(--radius-lg);
-  box-shadow: var(--edge-light);
+  box-shadow: 0 4px 14px rgba(68, 33, 91, 0.04);
   transition:
     border-color var(--transition),
     box-shadow var(--transition),
@@ -192,11 +194,10 @@
 }
 
 .agenda-item__content:hover {
-  border-color: var(--brand-300);
+  border-color: var(--accent-500);
   box-shadow:
-    var(--edge-light),
-    var(--shadow-md),
-    0 0 30px rgb(229 83 63 / 10%);
+    0 8px 24px rgba(235, 63, 103, 0.12),
+    0 0 30px rgba(235, 63, 103, 0.08);
   translate: 4px 0;
 }
 

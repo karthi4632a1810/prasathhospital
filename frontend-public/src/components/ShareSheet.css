@@ -83,15 +83,15 @@
 }
 
 .share-option--whatsapp {
-  color: #4ade80;
-  background: rgb(37 211 102 / 12%);
-  border-color: rgb(37 211 102 / 35%);
+  color: #166534;
+  background: #ecfdf5;
+  border-color: #86efac;
 }
 
 .share-option--whatsapp:hover {
-  color: #86efac;
-  background: rgb(37 211 102 / 20%);
-  border-color: #25d366;
+  color: #14532d;
+  background: #d1fae5;
+  border-color: #22c55e;
 }
 
 .share-sheet__link {

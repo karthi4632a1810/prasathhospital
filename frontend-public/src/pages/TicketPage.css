@@ -9,15 +9,10 @@
 
 .ticket-card {
   padding: var(--space-8);
-  background:
-    linear-gradient(180deg, #151c37, #0b1022) padding-box,
-    linear-gradient(135deg, rgb(229 83 63 / 70%), rgb(226 165 48 / 40%), rgb(111 132 222 / 50%))
-      border-box;
-  border: 1px solid transparent;
+  background: #ffffff;
+  border: 1px solid #fed2e2;
   border-radius: var(--radius-xl);
-  box-shadow:
-    var(--shadow-lg),
-    0 0 70px rgb(229 83 63 / 15%);
+  box-shadow: 0 10px 40px rgba(68, 33, 91, 0.08);
 }
 
 .ticket-card__brand {

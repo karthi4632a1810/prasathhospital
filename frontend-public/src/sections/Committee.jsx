@@ -1,10 +1,43 @@
 import { useTilt } from '../lib/useTilt';
 import './Committee.css';
 
+const COMMITTEE_PHOTO_MAP = {
+  'dr geetha haripriya': '/assets/chairperson-geetha-haripriya.png',
+  'dr samhitha moturi': '/assets/committee/dr-samhitha-moturi.png',
+  'dr swathi': '/assets/committee/dr-swathi.jpg',
+  'dr abrajdha': '/assets/committee/dr-abrajdha.png',
+  'dr anuradha': '/assets/committee/dr-anuradha.png',
+  'dr veena': '/assets/committee/dr-veena.png',
+  'dr usha todadri': '/assets/committee/dr-usha-todadri.png',
+  'dr shabia': '/assets/committee/dr-shabia.jpg',
+  'dr sailaja': '/assets/committee/dr-sailaja.png',
+  'dr sughija': '/assets/committee/dr-sughija.png',
+  'dr selvapriya': '/assets/committee/dr-selvapriya.jpg',
+  'dr pushpalatha': '/assets/committee/dr-pushpalatha.jpg',
+  'dr jenifer': '/assets/committee/dr-jenifer.jpg',
+  'dr shri janani': '/assets/committee/dr-shri-janani.png',
+  'dr. s. r. rathika': '/assets/committee/dr-s-r-rathika.png',
+  'dr s. r. rathika': '/assets/committee/dr-s-r-rathika.png',
+  'dr s r rathika': '/assets/committee/dr-s-r-rathika.png',
+  'dr shobhana': '/assets/committee/dr-shobhana.png',
+  'dr subhasree': '/assets/committee/dr-subhasree.png',
+  'dr divya': '/assets/committee/dr-divya.png',
+  'dr malsri': '/assets/committee/dr-malsri.png',
+  'dr priyanka': '/assets/committee/dr-priyanka.jpg',
+  'dr. samhitha moturi': '/assets/committee/dr-samhitha-moturi.png',
+};
+
+function normalizeName(name = '') {
+  return name.trim().toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ');
+}
+
 /** Initials avatar used until a photo is uploaded in the CMS. `tone` tints
  *  it per committee group — a restrained way to tell the two groups apart
  *  at a glance without introducing a new accent color. */
 function Avatar({ name, photoUrl, tone }) {
+  const norm = normalizeName(name);
+  const resolvedPhoto = photoUrl || COMMITTEE_PHOTO_MAP[norm];
+
   const initials = name
     .replace(/^Dr\.?\s+/i, '')
     .split(/\s+/)
@@ -13,8 +46,8 @@ function Avatar({ name, photoUrl, tone }) {
     .join('')
     .toUpperCase();
 
-  if (photoUrl) {
-    return <img className="committee-member__photo" src={photoUrl} alt={name} loading="lazy" />;
+  if (resolvedPhoto) {
+    return <img className="committee-member__photo" src={resolvedPhoto} alt={name} loading="lazy" />;
   }
   return (
     <div
@@ -39,6 +72,10 @@ function MemberCard({ member, tone, featured }) {
       }
     : {};
 
+  const isGeetha = /geetha/i.test(member.name);
+  const isSamhitha = /samhitha/i.test(member.name);
+  const roleLines = member.role ? member.role.split('\n').map((s) => s.trim()).filter(Boolean) : [];
+
   return (
     <div
       className={`committee-member ${featured ? 'committee-member--featured' : ''}`}
@@ -47,7 +84,35 @@ function MemberCard({ member, tone, featured }) {
       <Avatar name={member.name} photoUrl={member.photoUrl} tone={tone} />
       <p className="committee-member__name">{member.name}</p>
       {member.designation && <p className="committee-member__designation">{member.designation}</p>}
-      {member.role && <p className="committee-member__role">{member.role}</p>}
+      {isGeetha ? (
+        <div className="committee-member__role-lines">
+          <span className="committee-member__role-line">
+            Organising Chairman
+          </span>
+          <span className="committee-member__role-line committee-member__role-line--hospitals">
+            Chairman Prashanth Group of Hospitals
+          </span>
+        </div>
+      ) : isSamhitha ? (
+        <div className="committee-member__role-lines">
+          <span className="committee-member__role-line">
+            Organising Secretary
+          </span>
+          <span className="committee-member__role-line committee-member__role-line--hospitals">
+            Director Prashanth Group of Hospitals
+          </span>
+        </div>
+      ) : roleLines.length > 1 ? (
+        <div className="committee-member__role-lines">
+          {roleLines.map((line, idx) => (
+            <span key={idx} className="committee-member__role-line">
+              {line}
+            </span>
+          ))}
+        </div>
+      ) : (
+        member.role && <p className="committee-member__role">{member.role}</p>
+      )}
     </div>
   );
 }

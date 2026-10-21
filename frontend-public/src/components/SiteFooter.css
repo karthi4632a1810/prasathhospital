@@ -1,8 +1,8 @@
 .site-footer {
   position: relative;
-  color: rgb(255 255 255 / 82%);
-  background: rgb(4 7 16 / 75%);
-  border-top: 1px solid var(--line);
+  color: var(--ink-700);
+  background: linear-gradient(180deg, #ffffff 0%, #fdebf2 100%);
+  border-top: 1px solid var(--line-strong);
 }
 
 .site-footer::before {
@@ -12,9 +12,9 @@
   left: 50%;
   translate: -50% 0;
   width: min(700px, 80%);
-  height: 1px;
+  height: 2px;
   background: var(--grad-crest);
-  opacity: 0.7;
+  opacity: 0.9;
 }
 
 .site-footer__inner {
@@ -29,46 +29,53 @@
 .site-footer__brand {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 .site-footer__mark {
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   background: var(--white);
+  border: 1px solid var(--line);
   border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgb(235 63 103 / 10%);
   flex-shrink: 0;
 }
 
 .site-footer__mark img {
   display: block;
+  width: 28px;
+  height: 28px;
   object-fit: contain;
 }
 
 .site-footer__name {
   margin: 0;
-  color: var(--white);
+  color: var(--ink-900);
   font-family: var(--font-display);
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
+  font-weight: 750;
   line-height: 1.2;
 }
 
 .site-footer__tagline {
   margin: 0;
-  color: rgb(255 255 255 / 55%);
+  color: var(--navy-700);
   font-size: var(--text-xs);
-  letter-spacing: 0.14em;
+  font-weight: 650;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .site-footer__promise {
   margin: 0;
-  color: rgb(255 255 255 / 72%);
+  color: var(--accent-700);
   font-size: var(--text-sm);
-  letter-spacing: 0.06em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
 }
 
 .site-footer__contact {
@@ -79,16 +86,17 @@
 }
 
 .site-footer__contact a {
-  color: var(--accent-700);
+  color: var(--accent-600);
   font-size: var(--text-sm);
+  font-weight: 650;
 }
 
 .site-footer__contact a:hover {
-  color: var(--white);
+  color: var(--ink-900);
 }
 
 .site-footer__bottom {
-  border-top: 1px solid rgb(255 255 255 / 10%);
+  border-top: 1px solid var(--line);
 }
 
 .site-footer__bottom-inner {
@@ -102,7 +110,7 @@
 
 .site-footer__bottom-inner p {
   margin: 0;
-  color: rgb(255 255 255 / 50%);
+  color: var(--ink-600);
   font-size: var(--text-xs);
 }
 

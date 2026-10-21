@@ -91,8 +91,9 @@
 }
 
 .btn--accent:hover:not(.is-disabled, :disabled) {
-  color: var(--white);
-  filter: brightness(1.08);
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #d82375 0%, #ad1457 100%) !important;
+  filter: brightness(1.06);
   box-shadow:
     0 14px 40px rgb(229 83 63 / 50%),
     inset 0 1px 0 rgb(255 255 255 / 25%);
@@ -103,51 +104,53 @@
 }
 
 .btn--primary {
-  color: var(--bg);
+  color: #ffffff !important;
   background: var(--ink-900);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 35%);
+  box-shadow: 0 4px 16px rgba(40, 19, 62, 0.25);
 }
 
 .btn--primary:hover:not(.is-disabled, :disabled) {
-  color: var(--bg);
-  background: var(--white);
-  box-shadow: 0 10px 30px rgb(255 255 255 / 14%);
+  color: #ffffff !important;
+  background: var(--navy-700) !important;
+  box-shadow: 0 6px 20px rgba(40, 19, 62, 0.35);
 }
 
 .btn--secondary {
   color: var(--ink-900);
-  background: var(--surface-2);
-  border-color: var(--ink-300);
-  backdrop-filter: var(--glass-blur);
+  background: #ffffff;
+  border: 1.5px solid #fed2e2;
+  box-shadow: 0 2px 8px rgba(68, 33, 91, 0.05);
 }
 
 .btn--secondary:hover:not(.is-disabled, :disabled) {
-  color: var(--white);
-  background: rgb(255 255 255 / 10%);
-  border-color: rgb(255 255 255 / 30%);
+  color: #ffffff !important;
+  background: var(--ink-900) !important;
+  border-color: var(--ink-900) !important;
+  box-shadow: 0 6px 20px rgba(40, 19, 62, 0.25);
 }
 
 .btn--ghost {
-  color: var(--ink-700);
+  color: var(--ink-800);
   background: transparent;
 }
 
 .btn--ghost:hover:not(.is-disabled, :disabled) {
-  color: var(--ink-900);
-  background: var(--ink-100);
+  color: var(--ink-900) !important;
+  background: rgba(68, 33, 91, 0.08) !important;
 }
 
 .btn--outline-light {
-  color: var(--white);
-  background: rgb(255 255 255 / 6%);
-  border-color: rgb(255 255 255 / 28%);
-  backdrop-filter: var(--glass-blur);
+  color: var(--ink-900);
+  background: #ffffff;
+  border: 1.5px solid #fed2e2;
+  box-shadow: 0 2px 8px rgba(68, 33, 91, 0.05);
 }
 
 .btn--outline-light:hover:not(.is-disabled, :disabled) {
-  color: var(--white);
-  background: rgb(255 255 255 / 12%);
-  border-color: rgb(255 255 255 / 50%);
+  color: #ffffff !important;
+  background: var(--ink-900) !important;
+  border-color: var(--ink-900) !important;
+  box-shadow: 0 6px 20px rgba(40, 19, 62, 0.25);
 }
 
 /* WhatsApp's own brand green — a deliberate exception to the accent rule,

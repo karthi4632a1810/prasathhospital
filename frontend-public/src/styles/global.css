@@ -38,10 +38,10 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(900px 600px at 8% -5%, rgb(229 83 63 / 13%), transparent 60%),
-    radial-gradient(800px 700px at 100% 30%, rgb(111 132 222 / 11%), transparent 60%),
-    radial-gradient(700px 500px at 30% 105%, rgb(226 165 48 / 7%), transparent 60%),
-    radial-gradient(rgb(255 255 255 / 4.5%) 1px, transparent 1px) 0 0 / 30px 30px,
+    radial-gradient(1100px 750px at 15% -5%, rgb(235 63 103 / 10%), transparent 60%),
+    radial-gradient(900px 800px at 95% 30%, rgb(251 219 234 / 50%), transparent 60%),
+    radial-gradient(800px 600px at 30% 100%, rgb(235 63 103 / 7%), transparent 60%),
+    radial-gradient(rgb(235 63 103 / 5%) 1px, transparent 1px) 0 0 / 30px 30px,
     var(--bg);
 }
 
@@ -122,7 +122,7 @@ button {
    hairline at the top edge marks the change instead of a flat color block. */
 .section--alt,
 .section--brand-soft {
-  background: linear-gradient(180deg, rgb(255 255 255 / 2.5%) 0%, rgb(255 255 255 / 1%) 100%);
+  background: linear-gradient(180deg, rgb(251 219 234 / 28%) 0%, rgb(251 219 234 / 12%) 100%);
 }
 
 .section--alt::before,
@@ -132,7 +132,7 @@ button {
   left: 50%;
   width: min(900px, 90%);
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 14%), transparent);
+  background: linear-gradient(90deg, transparent, rgb(235 63 103 / 22%), transparent);
   transform: translateX(-50%);
   content: '';
 }

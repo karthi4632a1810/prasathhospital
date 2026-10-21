@@ -22,10 +22,10 @@
   display: flex;
   flex-direction: column;
   padding: var(--space-7) var(--space-6) var(--space-6);
-  background: linear-gradient(180deg, rgb(255 255 255 / 5.5%), rgb(255 255 255 / 1.5%));
-  border: 1px solid var(--line);
+  background: #ffffff;
+  border: 1px solid #fed2e2;
   border-radius: var(--radius-xl);
-  box-shadow: var(--edge-light), var(--shadow-sm);
+  box-shadow: 0 4px 20px rgba(68, 33, 91, 0.05);
 
   /* transform is owned by the JS tilt effect (useTilt) on this element —
      left out of the transition list here so it doesn't fight that. */
@@ -37,25 +37,25 @@
 }
 
 .ticket:hover:not(.is-unavailable) {
-  border-color: var(--ink-300);
-  box-shadow: var(--edge-light), var(--shadow-lg);
+  border-color: var(--accent-500);
+  box-shadow: 0 12px 32px rgba(235, 63, 103, 0.15);
 }
 
 .ticket--featured {
   background:
-    linear-gradient(180deg, rgb(40 22 30 / 95%), rgb(14 18 38 / 95%)) padding-box,
-    linear-gradient(160deg, #ff8a72, #e5533f 35%, #e2a530 70%, #6f84de) border-box;
-  border: 1px solid transparent;
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(135deg, #eb3f67, #a21caf 50%, #f43f5e) border-box;
+  border: 2px solid transparent;
   box-shadow:
-    var(--shadow-lg),
-    0 0 70px rgb(229 83 63 / 25%);
+    0 10px 32px rgba(235, 63, 103, 0.18),
+    0 0 50px rgba(235, 63, 103, 0.12);
 }
 
 .ticket--featured:hover:not(.is-unavailable) {
   border-color: transparent;
   box-shadow:
-    var(--shadow-lg),
-    0 0 90px rgb(229 83 63 / 38%);
+    0 16px 40px rgba(235, 63, 103, 0.25),
+    0 0 70px rgba(235, 63, 103, 0.18);
 }
 
 .ticket.is-unavailable {
@@ -203,6 +203,38 @@
   line-height: 1.45;
 }
 
+.ticket__foot .btn {
+  font-weight: 700;
+  color: #ffffff !important;
+  background: var(--ink-900) !important;
+  border: 1px solid var(--ink-900) !important;
+  box-shadow: 0 4px 14px rgba(40, 19, 62, 0.25);
+  transition: all var(--transition);
+}
+
+.ticket__foot .btn:hover:not(:disabled) {
+  color: #ffffff !important;
+  background: var(--navy-700) !important;
+  border-color: var(--navy-700) !important;
+  box-shadow: 0 6px 20px rgba(68, 33, 91, 0.35);
+  transform: translateY(-2px);
+}
+
+.ticket--featured .ticket__foot .btn {
+  color: #ffffff !important;
+  background: var(--grad-red) !important;
+  border: 1px solid transparent !important;
+  box-shadow: 0 4px 16px rgba(235, 63, 103, 0.35);
+}
+
+.ticket--featured .ticket__foot .btn:hover:not(:disabled) {
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #d82375 0%, #ad1457 100%) !important;
+  border-color: transparent !important;
+  box-shadow: 0 6px 24px rgba(235, 63, 103, 0.5);
+  transform: translateY(-2px);
+}
+
 .tickets__note {
   margin-top: var(--space-10);
   color: var(--ink-600);
@@ -221,6 +253,8 @@
 }
 
 .ticket--featured .ticket__amount {
-  background: linear-gradient(120deg, #fff 0%, #ff9c86 60%, #f2c463 100%);
+  background: linear-gradient(135deg, #eb3f67 0%, #ad1457 60%, #44215b 100%);
+  -webkit-background-clip: text;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
 }

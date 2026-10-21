@@ -6,25 +6,25 @@
   grid-template-columns: minmax(240px, 360px) minmax(0, 1fr);
   padding: var(--space-12);
   background:
-    linear-gradient(160deg, rgb(20 28 54 / 92%), rgb(10 15 33 / 92%)) padding-box,
-    linear-gradient(135deg, rgb(229 83 63 / 55%), rgb(226 165 48 / 35%) 40%, rgb(111 132 222 / 35%))
+    linear-gradient(160deg, #ffffff, #fff4f8) padding-box,
+    linear-gradient(135deg, rgb(235 63 103 / 50%), rgb(251 219 234 / 80%) 40%, rgb(68 33 91 / 35%))
       border-box;
 
   /* gradient hairline border via the padding-box/border-box trick */
-  border: 1px solid transparent;
+  border: 1.5px solid transparent;
   border-radius: 28px;
-  box-shadow: var(--shadow-lg), var(--edge-light);
+  box-shadow: 0 16px 48px rgb(235 63 103 / 10%);
   overflow: hidden;
 }
 
-/* A soft red bloom behind the portrait side. */
+/* A soft rose bloom behind the portrait side. */
 .chairperson-welcome__grid::before {
   position: absolute;
   top: -200px;
   left: -160px;
   width: 560px;
   height: 560px;
-  background: radial-gradient(circle, rgb(229 83 63 / 22%), transparent 65%);
+  background: radial-gradient(circle, rgb(235 63 103 / 15%), transparent 65%);
   border-radius: 50%;
   content: '';
   pointer-events: none;
@@ -36,8 +36,8 @@
   background: var(--grad-crest);
   border-radius: 24px;
   box-shadow:
-    0 30px 60px rgb(0 0 0 / 50%),
-    0 0 60px rgb(229 83 63 / 18%);
+    0 20px 48px rgb(235 63 103 / 22%),
+    0 0 40px rgb(235 63 103 / 15%);
 }
 
 .chairperson-welcome__photo {
@@ -115,10 +115,10 @@
 }
 
 .chairperson-welcome__byline strong {
-  color: var(--white);
+  color: var(--ink-900);
   font-family: var(--font-display);
   font-size: var(--text-xl);
-  font-weight: 700;
+  font-weight: 750;
   letter-spacing: -0.01em;
 }
 

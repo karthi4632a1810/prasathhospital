@@ -9,7 +9,10 @@ export default function SiteFooter({ event }) {
       <div className="container site-footer__inner">
         <div className="site-footer__brand">
           <span className="site-footer__mark">
-            <img src="/assets/pf-logo-icon.png" alt="Prashanth Fertility" width="28" height="28" />
+            <img src="/assets/pf-logo-icon.png" alt="Prashanth Fertility" width="30" height="30" />
+          </span>
+          <span className="site-footer__mark site-footer__mark--tapisar">
+            <img src="/assets/tapisar-logo.png" alt="TAPISAR" width="30" height="30" />
           </span>
           <div>
             <p className="site-footer__name">Prashanth Fertility &amp; Research Centre</p>

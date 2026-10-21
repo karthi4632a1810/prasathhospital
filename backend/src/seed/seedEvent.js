@@ -27,9 +27,9 @@ const eventData = {
   slug: SLUG,
   tagline: 'Breaking Boundaries, Elevating Surgical Precision & ART Outcomes',
   summary:
-    'The 5th Annual Conference on Controversies in Infertility Management — in-person at The Leela Palace, Chennai, with live tele-transmission of a historic cross-geography robotic surgery demonstration. High-impact debates, masterclasses and emerging-tech sessions for 800+ delegates.',
+    'The 9th Annual Conference on Controversies in Infertility Management — in-person at The Leela Palace, Chennai, with live tele-transmission of a historic cross-geography robotic surgery demonstration. High-impact debates, masterclasses and emerging-tech sessions for 800+ delegates.',
   description:
-    'Greetings from Dr. Geetha Haripriya, Chairperson, Prashanth Fertility and Research Centre Pvt. Ltd. We are delighted to welcome you to the prestigious 5th CIIM, to be held from November 21st – 22nd, 2026. CIIM 2026 will truly be an unforgettable conference for all who attend.\n\nThe conference aims to ideate, analyze, and share inventive, feasible, and implementable ways to encourage and disseminate knowledge, education, and research to make a high level of care available to women. The Organizing Committee is working hard to put together an educational and scientific program for what will be an academic extravaganza, packaged with cuisine to tantalize your taste buds, and a complete cultural fest.',
+    'Greetings from Dr. Geetha Haripriya, Chairperson, Prashanth Fertility and Research Centre Pvt. Ltd. We are delighted to welcome you to the prestigious 9th CIIM, to be held from November 21st – 22nd, 2026. CIIM 2026 will truly be an unforgettable conference for all who attend.\n\nThe conference aims to ideate, analyze, and share inventive, feasible, and implementable ways to encourage and disseminate knowledge, education, and research to make a high level of care available to women. The Organizing Committee is working hard to put together an educational and scientific program for what will be an academic extravaganza, packaged with cuisine to tantalize your taste buds, and a complete cultural fest.',
 
   category: 'conference',
   mode: 'in-person',
@@ -132,8 +132,8 @@ const eventData = {
   ],
 
   committee: [
-    { name: 'Dr Geetha Haripriya', role: 'Organising Chairperson', group: 'leadership', photoUrl: '/assets/chairperson-geetha-haripriya.png', order: 1, isActive: true },
-    { name: 'Dr Samhitha Moturi', role: 'Organising Secretary (Director, Prashanth Fertility)', group: 'leadership', photoUrl: '/assets/committee/dr-samhitha-moturi.png', order: 2, isActive: true },
+    { name: 'Dr Geetha Haripriya', role: 'Organising Chairman\nChairman Prashanth Group of Hospitals', group: 'leadership', photoUrl: '/assets/chairperson-geetha-haripriya.png', order: 1, isActive: true },
+    { name: 'Dr Samhitha Moturi', role: 'Organising Secretary\nDirector Prashanth Group of Hospitals', group: 'leadership', photoUrl: '/assets/committee/dr-samhitha-moturi.png', order: 2, isActive: true },
 
     { name: 'Dr Swathi', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-swathi.jpg', order: 1, isActive: true },
     { name: 'Dr Abrajdha', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-abrajdha.png', order: 2, isActive: true },
@@ -151,9 +151,9 @@ const eventData = {
     { name: 'Dr. S. R. Rathika', role: '', group: 'organising', photoUrl: '/assets/committee/dr-s-r-rathika.png', order: 3, isActive: true },
     { name: 'Dr shobhana', role: '', group: 'organising', photoUrl: '/assets/committee/dr-shobhana.png', order: 4, isActive: true },
     { name: 'Dr subhasree', role: '', group: 'organising', photoUrl: '/assets/committee/dr-subhasree.png', order: 5, isActive: true },
-    { name: 'Dr Divya', role: '', group: 'organising', photoUrl: '', order: 6, isActive: true },
-    { name: 'Dr Priyanka', role: '', group: 'organising', photoUrl: '', order: 7, isActive: true },
-    { name: 'Dr Malsri', role: '', group: 'organising', photoUrl: '', order: 8, isActive: true },
+    { name: 'Dr Divya', role: '', group: 'organising', photoUrl: '/assets/committee/dr-divya.png', order: 6, isActive: true },
+    { name: 'Dr Priyanka', role: '', group: 'organising', photoUrl: '/assets/committee/dr-priyanka.jpg', order: 7, isActive: true },
+    { name: 'Dr Malsri', role: '', group: 'organising', photoUrl: '/assets/committee/dr-malsri.png', order: 8, isActive: true },
   ],
 
   agenda: [

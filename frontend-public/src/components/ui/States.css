@@ -2,7 +2,7 @@
 
 .skeleton-hero {
   padding-block: var(--space-20);
-  background: var(--navy-900);
+  background: var(--bg);
 }
 
 .skeleton {
