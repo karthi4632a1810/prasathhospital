@@ -49,13 +49,6 @@ const SECTIONS_CONFIG = [
     tabKey: 'committee',
   },
   {
-    key: 'agenda',
-    name: 'Agenda & Schedule',
-    category: 'Schedule',
-    description: 'Detailed program schedule broken down by days, tracks, and sessions.',
-    tabKey: 'agenda',
-  },
-  {
     key: 'tickets',
     name: 'Registration Passes (Tickets)',
     category: 'Registration',
@@ -117,7 +110,7 @@ export default function SectionsTab({ event, onSaved, onNavigateTab }) {
   });
 
   const { SaveBar } = useSaveBar(async () => {
-    const res = await eventApi.update(event.id, { sections });
+    const res = await eventApi.update(event.id, { sections: { ...sections, agenda: false } });
     onSaved(res.data);
   });
 

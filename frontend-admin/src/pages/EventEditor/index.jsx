@@ -28,7 +28,6 @@ const TABS = [
   { key: 'theme', label: 'Theme & SEO', Component: ThemeSeoTab },
   { key: 'speakers', label: 'Speakers', Component: SpeakersTab },
   { key: 'committee', label: 'Committee', Component: CommitteeTab },
-  { key: 'agenda', label: 'Agenda', Component: AgendaTab },
   { key: 'sponsors', label: 'Sponsors', Component: SponsorsTab },
   { key: 'exhibit', label: 'Exhibit & Stalls', Component: ExhibitTab },
   { key: 'faqs', label: 'FAQ', Component: FaqTab },
