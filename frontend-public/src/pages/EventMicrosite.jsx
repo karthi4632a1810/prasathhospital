@@ -87,7 +87,7 @@ export default function EventMicrosite() {
     }
     if (sec.speakers !== false && event.speakers?.length) list.push('speakers');
     if (sec.committee !== false && event.committee?.length) list.push('committee');
-    if (sec.agenda !== false && event.agenda?.some((d) => d.items?.length)) list.push('agenda');
+    if (sec.agenda !== false) list.push('agenda');
     if (sec.tickets !== false && ticketTypes.length) list.push('tickets');
     if (sec.venue !== false && (event.mode === 'virtual' || event.venue?.name)) list.push('venue');
     if (sec.sponsors !== false && event.sponsors?.length) list.push('sponsors');
@@ -164,7 +164,7 @@ export default function EventMicrosite() {
         {sections.committee !== false && event.committee?.length > 0 && (
           <Committee committee={event.committee} />
         )}
-        {sections.agenda !== false && event.agenda?.length > 0 && (
+        {sections.agenda !== false && (
           <Agenda agenda={event.agenda} />
         )}
         {sections.tickets !== false && ticketTypes.length > 0 && (
