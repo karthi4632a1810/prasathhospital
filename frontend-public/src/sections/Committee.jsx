@@ -11,18 +11,24 @@ const COMMITTEE_PHOTO_MAP = {
   'dr usha todadri': '/assets/committee/dr-s-r-rathika.png',
   'dr shabia': '/assets/committee/dr-shabia.jpg',
   'dr sailaja': '/assets/committee/dr-anuradha.png',
+  'dr shailaja': '/assets/committee/dr-anuradha.png',
+  'dr madhumitha': '/assets/committee/dr-sughija.png',
   'dr sughija': '/assets/committee/dr-sughija.png',
   'dr selvapriya': '/assets/committee/dr-selvapriya.jpg',
   'dr pushpalatha': '/assets/committee/dr-pushpalatha.jpg',
   'dr jenifer': '/assets/committee/dr-jenifer.jpg',
+  'dr jennifer': '/assets/committee/dr-jenifer.jpg',
   'dr shri janani': '/assets/committee/dr-shri-janani.png',
   'dr. s. r. rathika': '/assets/committee/dr-usha-todadri.png',
   'dr s. r. rathika': '/assets/committee/dr-usha-todadri.png',
   'dr s r rathika': '/assets/committee/dr-usha-todadri.png',
   'dr shobhana': '/assets/committee/dr-shobhana.png',
+  'dr shobana': '/assets/committee/dr-shobhana.png',
   'dr subhasree': '/assets/committee/dr-subhasree.png',
+  'dr subhashree': '/assets/committee/dr-subhasree.png',
   'dr divya': '/assets/committee/dr-divya.png',
   'dr malsri': '/assets/committee/dr-malsri.png',
+  'dr malasree': '/assets/committee/dr-malsri.png',
   'dr. samhitha moturi': '/assets/committee/dr-samhitha-moturi.png',
 };
 
@@ -136,9 +142,15 @@ function CommitteeGroup({ title, tone, members }) {
 export default function Committee({ committee }) {
   if (!committee?.length) return null;
 
-  const leadership = committee.filter((m) => m.group === 'leadership');
-  const scientific = committee.filter((m) => m.group === 'scientific');
-  const organising = committee.filter((m) => m.group === 'organising');
+  const leadership = committee
+    .filter((m) => m.group === 'leadership' && m.isActive !== false)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
+  const scientific = committee
+    .filter((m) => m.group === 'scientific' && m.isActive !== false)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
+  const organising = committee
+    .filter((m) => m.group === 'organising' && m.isActive !== false)
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
 
   return (
     <section className="section section--alt committee" id="committee">
