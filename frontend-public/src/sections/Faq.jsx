@@ -49,7 +49,7 @@ export default function Faq({ faqs, contact }) {
   const [openId, setOpenId] = useState(faqs?.[0]?.id ?? null);
   const helpdeskPhone = contact?.phone || '+91 96000 47646';
   const helpdeskWhatsapp = contact?.whatsapp || '+91 96000 47646';
-  const helpdeskEmail = contact?.email || 'secretariat@ciim2026.com';
+  const helpdeskEmail = contact?.email || 'infociim@pfrcivf.com';
 
   if (!faqs?.length) return null;
 

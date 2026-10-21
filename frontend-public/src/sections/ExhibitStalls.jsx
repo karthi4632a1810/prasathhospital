@@ -38,7 +38,7 @@ export default function ExhibitStalls({ exhibit = {}, contactEmail }) {
     exhibit.subtitle ||
     'Position your organization before leading clinical decision makers and opinion leaders in reproductive medicine from India and internationally.';
   const ctaText = exhibit.ctaText || 'Reserve your stall';
-  const email = contactEmail || exhibit.contactEmail || 'secretariat@ciim2026.com';
+  const email = contactEmail || exhibit.contactEmail || 'infociim@pfrcivf.com';
 
   const rawTiers =
     exhibit.tiers && exhibit.tiers.length > 0 ? exhibit.tiers : STALL_TIERS;

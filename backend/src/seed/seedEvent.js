@@ -750,7 +750,7 @@ const eventData = {
     name: 'CIIM 2026 Conference Secretariat',
     phone: '+91 96000 47646',
     whatsapp: '+91 96000 47646',
-    email: 'secretariat@ciim2026.com',
+    email: 'infociim@pfrcivf.com',
   },
 
   seo: {

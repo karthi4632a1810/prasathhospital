@@ -78,8 +78,8 @@ const env = {
   smtpSecure: read('SMTP_SECURE', 'false') === 'true', // true for port 465
   smtpUser: read('SMTP_USER', ''),
   smtpPass: read('SMTP_PASS', ''),
-  mailFrom: read('MAIL_FROM', ''), // e.g. "CIIM 2026 <tickets@ciim2026.com>"
-  mailReplyTo: read('MAIL_REPLY_TO', ''),
+  mailFrom: read('MAIL_FROM', 'CIIM 2026 <infociim@pfrcivf.com>'),
+  mailReplyTo: read('MAIL_REPLY_TO', 'infociim@pfrcivf.com'),
 
   // --- WhatsApp (WATI or Meta Cloud API) ---
   whatsappProvider: read('WHATSAPP_PROVIDER', 'wati'),

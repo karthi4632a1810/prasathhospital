@@ -137,7 +137,7 @@ export default function ExhibitTab({ event, onSaved }) {
                 className="field__input"
                 value={header.contactEmail}
                 onChange={setH('contactEmail')}
-                placeholder="secretariat@ciim2026.com"
+                placeholder="infociim@pfrcivf.com"
               />
               <span className="field__hint">
                 Inquiry CTA button opens mailto: with this address.
