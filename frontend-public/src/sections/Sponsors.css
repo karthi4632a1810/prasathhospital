@@ -105,7 +105,7 @@
 /* ---------- Title sponsor: Clean featured banner ---------- */
 
 .sponsors__tier--title .sponsors__list {
-  max-width: 720px;
+  max-width: 760px;
   margin-inline: auto;
 }
 
@@ -113,8 +113,8 @@
   position: relative;
   width: 100%;
   min-width: 0;
-  min-height: 200px;
-  padding: calc(var(--space-8) + 16px) var(--space-8) var(--space-8);
+  min-height: 220px;
+  padding: calc(var(--space-8) + 12px) var(--space-6) var(--space-6);
   background: #ffffff;
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
@@ -143,6 +143,13 @@
   z-index: 2;
 }
 
+.sponsors__item--title a {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
 .sponsors__item--title .sponsors__name {
   margin-top: var(--space-3);
   color: transparent;
@@ -156,14 +163,14 @@
 .sponsors__item--title img {
   display: block;
   height: auto;
-  max-height: 140px;
+  max-height: 240px;
   width: 100%;
-  max-width: 540px;
-  padding: var(--space-3) var(--space-4);
+  max-width: 100%;
+  padding: var(--space-2);
   background: transparent;
   border: none;
   box-shadow: none;
-  margin-top: var(--space-4);
+  margin-top: var(--space-2);
   object-fit: contain;
   transition: transform var(--transition);
 }
