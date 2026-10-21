@@ -64,7 +64,7 @@ function Avatar({ name, photoUrl, tone }) {
   );
 }
 
-function MemberCard({ member, tone, featured }) {
+function MemberCard({ member, tone, featured, index }) {
   // Tilt is reserved for the featured leadership cards — a hook still has to
   // run unconditionally, but the ref/handlers only attach when featured.
   const tilt = useTilt({ max: 7, scale: 1.02 });
@@ -86,6 +86,11 @@ function MemberCard({ member, tone, featured }) {
       className={`committee-member ${featured ? 'committee-member--featured' : ''}`}
       {...tiltProps}
     >
+      {index && (
+        <span className={`committee-member__ref committee-member__ref--${tone}`}>
+          {index}
+        </span>
+      )}
       <Avatar name={member.name} photoUrl={member.photoUrl} tone={tone} />
       <p className="committee-member__name">{member.name}</p>
       {member.designation && <p className="committee-member__designation">{member.designation}</p>}
@@ -130,9 +135,9 @@ function CommitteeGroup({ title, tone, members }) {
         <span className="committee__group-dot" aria-hidden="true" />
         {title}
       </h3>
-      <div className="committee__grid">
-        {members.map((m) => (
-          <MemberCard member={m} tone={tone} key={m.id} />
+      <div className={`committee__grid committee__grid--${tone}`}>
+        {members.map((m, idx) => (
+          <MemberCard member={m} tone={tone} index={idx + 1} key={m.id || m.name} />
         ))}
       </div>
     </div>
