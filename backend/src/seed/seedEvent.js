@@ -124,7 +124,7 @@ const eventData = {
       organization: "",
       topic: "",
       bio: "",
-      photoUrl: "/assets/faculty/dr-jayesh-amin.png",
+      photoUrl: "/assets/faculty/dr-jayesh-amin.jpg",
       isKeynote: false,
       isActive: true,
       order: 3,

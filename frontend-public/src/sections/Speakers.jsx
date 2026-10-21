@@ -3,9 +3,22 @@ import Badge from '../components/ui/Badge';
 import { useTilt } from '../lib/useTilt';
 import './Speakers.css';
 
+const SPEAKER_PHOTO_MAP = {
+  'dr jathin shah': '/assets/faculty/dr-jathin-shah.jpg',
+  'dr rohit gutgutia': '/assets/faculty/dr-rohit-gutgutia.png',
+  'dr jayesh amin': '/assets/faculty/dr-jayesh-amin.jpg',
+};
+
+function normalizeName(name = '') {
+  return name.trim().toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ');
+}
+
 /** Large photo panel; falls back to a giant initials monogram on an accent
  *  gradient when no photo has been uploaded in the CMS yet. */
 function Avatar({ name, photoUrl }) {
+  const norm = normalizeName(name);
+  const resolvedPhoto = SPEAKER_PHOTO_MAP[norm] || photoUrl;
+
   const initials = name
     .replace(/^Dr\.?\s+/i, '')
     .split(/\s+/)
@@ -16,8 +29,8 @@ function Avatar({ name, photoUrl }) {
 
   return (
     <div className="speaker__avatar-wrap">
-      {photoUrl ? (
-        <img className="speaker__photo" src={photoUrl} alt={name} loading="lazy" />
+      {resolvedPhoto ? (
+        <img className="speaker__photo" src={resolvedPhoto} alt={name} loading="lazy" />
       ) : (
         <div className="speaker__photo speaker__photo--initials" aria-hidden="true">
           {initials}
