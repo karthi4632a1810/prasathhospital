@@ -139,6 +139,43 @@ function CommitteeGroup({ title, tone, members }) {
   );
 }
 
+const SCIENTIFIC_ORDER = [
+  'dr swathi',
+  'dr anuradha',
+  'dr usha todadri',
+  'dr sailaja',
+  'dr shailaja',
+  'dr selvapriya',
+  'dr abrajdha',
+  'dr aburajda',
+  'dr madhumitha',
+  'dr veena',
+  'dr shabia',
+  'dr sabiha',
+  'dr pushpalatha',
+];
+
+const ORGANISING_ORDER = [
+  'dr malsri',
+  'dr malasree',
+  'dr jenifer',
+  'dr jennifer',
+  'dr shri janani',
+  'dr shobhana',
+  'dr shobana',
+  'dr subhasree',
+  'dr subhashree',
+  'dr priyanka',
+  'dr divya',
+];
+
+function getMemberOrder(m, orderList) {
+  if (typeof m.order === 'number' && m.order > 0 && m.order < 90) return m.order;
+  const norm = normalizeName(m.name);
+  const idx = orderList.findIndex((target) => norm === target || norm.includes(target) || target.includes(norm));
+  return idx >= 0 ? idx + 1 : 99;
+}
+
 export default function Committee({ committee }) {
   if (!committee?.length) return null;
 
@@ -147,10 +184,10 @@ export default function Committee({ committee }) {
     .sort((a, b) => (a.order || 0) - (b.order || 0));
   const scientific = committee
     .filter((m) => m.group === 'scientific' && m.isActive !== false)
-    .sort((a, b) => (a.order || 0) - (b.order || 0));
+    .sort((a, b) => getMemberOrder(a, SCIENTIFIC_ORDER) - getMemberOrder(b, SCIENTIFIC_ORDER));
   const organising = committee
     .filter((m) => m.group === 'organising' && m.isActive !== false)
-    .sort((a, b) => (a.order || 0) - (b.order || 0));
+    .sort((a, b) => getMemberOrder(a, ORGANISING_ORDER) - getMemberOrder(b, ORGANISING_ORDER));
 
   return (
     <section className="section section--alt committee" id="committee">

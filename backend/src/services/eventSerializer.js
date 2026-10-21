@@ -39,6 +39,7 @@ function serializeCommitteeMember(m) {
     role: m.role,
     group: m.group,
     photoUrl: m.photoUrl,
+    order: m.order,
   };
 }
 
