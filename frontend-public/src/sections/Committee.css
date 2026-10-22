@@ -65,12 +65,9 @@
   width: 100%;
 }
 
-.committee__grid--scientific {
-  max-width: 1040px;
-}
-
+.committee__grid--scientific,
 .committee__grid--organising {
-  max-width: 820px;
+  max-width: 1040px;
 }
 
 /* ---------- Card ---------- */

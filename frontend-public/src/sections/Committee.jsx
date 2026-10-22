@@ -2,41 +2,69 @@ import { useTilt } from '../lib/useTilt';
 import './Committee.css';
 
 const COMMITTEE_PHOTO_MAP = {
+  // Leadership
   'dr geetha haripriya': '/assets/chairperson-geetha-haripriya.png',
+  'dr geetha haripriya c': '/assets/chairperson-geetha-haripriya.png',
   'dr samhitha moturi': '/assets/committee/dr-samhitha-moturi.png',
+  'dr. samhitha moturi': '/assets/committee/dr-samhitha-moturi.png',
+
+  // Scientific Committee
   'dr swathi': '/assets/committee/dr-swathi.jpg',
+  'dr swathi b': '/assets/committee/dr-swathi.jpg',
+  'dr anuradha': '/assets/committee/dr-sailaja.png',
+  'dr anuradha b': '/assets/committee/dr-sailaja.png',
+  'dr usha todadri': '/assets/committee/dr-s-r-rathika.png',
+  'dr sailaja': '/assets/committee/dr-anuradha.png',
+  'dr sailaja sanathi': '/assets/committee/dr-anuradha.png',
+  'dr shailaja': '/assets/committee/dr-anuradha.png',
+  'dr selvapriya': '/assets/committee/dr-selvapriya.jpg',
   'dr abarajda': '/assets/committee/dr-abrajdha.png',
+  'dr abarajda v': '/assets/committee/dr-abrajdha.png',
   'dr abrajdha': '/assets/committee/dr-abrajdha.png',
   'dr aburajda': '/assets/committee/dr-abrajdha.png',
-  'dr anuradha': '/assets/committee/dr-sailaja.png',
-  'dr veena': '/assets/committee/dr-veena.png',
-  'dr usha todadri': '/assets/committee/dr-s-r-rathika.png',
+  'dr sabiha nikhat n': '/assets/committee/dr-shabia.jpg',
+  'dr sabiha nikhat': '/assets/committee/dr-shabia.jpg',
   'dr sabia nikath': '/assets/committee/dr-shabia.jpg',
   'dr sabia': '/assets/committee/dr-shabia.jpg',
   'dr shabia': '/assets/committee/dr-shabia.jpg',
-  'dr sailaja': '/assets/committee/dr-anuradha.png',
-  'dr shailaja': '/assets/committee/dr-anuradha.png',
   'dr madhumitha': '/assets/committee/dr-madhumitha.png',
+  'dr madhumitha c': '/assets/committee/dr-madhumitha.png',
+  'dr veena': '/assets/committee/dr-veena.png',
+  'dr veena r': '/assets/committee/dr-veena.png',
   'dr sughija': '/assets/committee/dr-sughija.png',
+  'dr.sughija g': '/assets/committee/dr-sughija.png',
   'dr sughija g': '/assets/committee/dr-sughija.png',
-  'dr selvapriya': '/assets/committee/dr-selvapriya.jpg',
   'dr pushpalatha': '/assets/committee/dr-pushpalatha.jpg',
+  'dr pushpalatha r': '/assets/committee/dr-pushpalatha.jpg',
+
+  // Organising Committee
+  'dr malasree': '/assets/committee/dr-malsri.png',
+  'dr malsri': '/assets/committee/dr-malsri.png',
+  'dr malsri r': '/assets/committee/dr-malsri.png',
+  'dr malasree r': '/assets/committee/dr-malsri.png',
   'dr jennifer britto': '/assets/committee/dr-jenifer.jpg',
   'dr jennifer': '/assets/committee/dr-jenifer.jpg',
   'dr jenifer': '/assets/committee/dr-jenifer.jpg',
   'dr shri janani': '/assets/committee/dr-shri-janani.png',
+  'dr shri janani r': '/assets/committee/dr-shri-janani.png',
+  'dr shobhana': '/assets/committee/dr-shobhana.png',
+  'dr shobana': '/assets/committee/dr-shobhana.png',
+  'dr shobana priya k': '/assets/committee/dr-shobhana.png',
+  'dr shobhana priya k': '/assets/committee/dr-shobhana.png',
+  'dr subhashree': '/assets/committee/dr-subhasree.png',
+  'dr subhasree': '/assets/committee/dr-subhasree.png',
+  'dr shubhashree t': '/assets/committee/dr-subhasree.png',
+  'dr subhasree t': '/assets/committee/dr-subhasree.png',
+  'dr priyanka': '/assets/committee/dr-priyanka.jpg',
+  'dr priyanka s v': '/assets/committee/dr-priyanka.jpg',
+  'dr divya': '/assets/committee/dr-divya.png',
+  'dr divya c': '/assets/committee/dr-divya.png',
+  'dr.rathika s.r': '/assets/committee/dr-usha-todadri.png',
+  'dr rathika s r': '/assets/committee/dr-usha-todadri.png',
   'dr. s. r. rathika': '/assets/committee/dr-usha-todadri.png',
   'dr s. r. rathika': '/assets/committee/dr-usha-todadri.png',
   'dr s r rathika': '/assets/committee/dr-usha-todadri.png',
-  'dr shobhana': '/assets/committee/dr-shobhana.png',
-  'dr shobana': '/assets/committee/dr-shobhana.png',
-  'dr subhashree': '/assets/committee/dr-subhasree.png',
-  'dr subhasree': '/assets/committee/dr-subhasree.png',
-  'dr priyanka': '/assets/committee/dr-priyanka.jpg',
-  'dr divya': '/assets/committee/dr-divya.png',
-  'dr malasree': '/assets/committee/dr-malsri.png',
-  'dr malsri': '/assets/committee/dr-malsri.png',
-  'dr. samhitha moturi': '/assets/committee/dr-samhitha-moturi.png',
+  'dr rathika': '/assets/committee/dr-usha-todadri.png',
 };
 
 function normalizeName(name = '') {
@@ -51,7 +79,7 @@ function Avatar({ name, photoUrl, tone }) {
   const resolvedPhoto = COMMITTEE_PHOTO_MAP[norm] || photoUrl;
 
   const initials = name
-    .replace(/^Dr\.?\s+/i, '')
+    .replace(/^Dr\.?\s*/i, '')
     .split(/\s+/)
     .slice(0, 2)
     .map((w) => w[0])
@@ -99,7 +127,7 @@ function MemberCard({ member, tone, featured }) {
       {isGeetha ? (
         <div className="committee-member__role-lines">
           <span className="committee-member__role-line">
-            Organising Chairman
+            Organising Chairperson
           </span>
           <span className="committee-member__role-line committee-member__role-line--hospitals">
             Director & Chairman Prashanth Group of Hospitals
@@ -146,89 +174,59 @@ function CommitteeGroup({ title, tone, members }) {
   );
 }
 
-const SCIENTIFIC_ORDER = [
-  'dr swathi',
-  'dr anuradha',
-  'dr usha todadri',
-  'dr sailaja',
-  'dr shailaja',
-  'dr selvapriya',
-  'dr abarajda',
-  'dr abrajdha',
-  'dr aburajda',
-  'dr madhumitha',
-  'dr veena',
-  'dr sabia nikath',
-  'dr sabia',
-  'dr shabia',
-  'dr pushpalatha',
-  'dr sughija',
-  'dr sughija g',
-];
-
-const ORGANISING_ORDER = [
-  'dr malasree',
-  'dr malsri',
-  'dr jennifer britto',
-  'dr jennifer',
-  'dr jenifer',
-  'dr shri janani',
-  'dr shobhana',
-  'dr shobana',
-  'dr subhashree',
-  'dr subhasree',
-  'dr priyanka',
-  'dr divya',
-];
-
-const EXTRA_COMMITTEE = [
+const CANONICAL_LEADERSHIP = [
   {
-    id: 'dr-sughija-g',
-    name: 'Dr Sughija G',
-    role: '',
-    group: 'scientific',
-    photoUrl: '/assets/committee/dr-sughija.png',
-    order: 11,
-    isActive: true,
+    id: 'lead-1',
+    name: 'Dr Geetha Haripriya C',
+    group: 'leadership',
+    role: 'Organising Chairperson\nDirector & Chairman Prashanth Group of Hospitals',
+    photoUrl: '/assets/chairperson-geetha-haripriya.png',
+    order: 1,
+  },
+  {
+    id: 'lead-2',
+    name: 'Dr Samhitha Moturi',
+    group: 'leadership',
+    role: 'Organising Secretary\nDirector Prashanth Group of Hospitals',
+    photoUrl: '/assets/committee/dr-samhitha-moturi.png',
+    order: 2,
   },
 ];
 
-function getMemberOrder(m, orderList) {
-  if (typeof m.order === 'number' && m.order > 0 && m.order < 90) return m.order;
-  const norm = normalizeName(m.name);
-  const idx = orderList.findIndex((target) => norm === target || norm.includes(target) || target.includes(norm));
-  return idx >= 0 ? idx + 1 : 99;
-}
+const CANONICAL_SCIENTIFIC = [
+  { order: 1, name: 'Dr Swathi B', group: 'scientific', photoUrl: '/assets/committee/dr-swathi.jpg' },
+  { order: 2, name: 'Dr Anuradha B', group: 'scientific', photoUrl: '/assets/committee/dr-sailaja.png' },
+  { order: 3, name: 'Dr Usha Todadri', group: 'scientific', photoUrl: '/assets/committee/dr-s-r-rathika.png' },
+  { order: 4, name: 'Dr Sailaja Sanathi', group: 'scientific', photoUrl: '/assets/committee/dr-anuradha.png' },
+  { order: 5, name: 'Dr Selvapriya', group: 'scientific', photoUrl: '/assets/committee/dr-selvapriya.jpg' },
+  { order: 6, name: 'Dr Abarajda V', group: 'scientific', photoUrl: '/assets/committee/dr-abrajdha.png' },
+  { order: 7, name: 'Dr Sabiha Nikhat N', group: 'scientific', photoUrl: '/assets/committee/dr-shabia.jpg' },
+  { order: 8, name: 'Dr Madhumitha C', group: 'scientific', photoUrl: '/assets/committee/dr-madhumitha.png' },
+  { order: 9, name: 'Dr Veena R', group: 'scientific', photoUrl: '/assets/committee/dr-veena.png' },
+  { order: 10, name: 'Dr.Sughija G', group: 'scientific', photoUrl: '/assets/committee/dr-sughija.png' },
+  { order: 11, name: 'Dr Pushpalatha R', group: 'scientific', photoUrl: '/assets/committee/dr-pushpalatha.jpg' },
+];
+
+const CANONICAL_ORGANISING = [
+  { order: 1, name: 'Dr Malsri R', group: 'organising', photoUrl: '/assets/committee/dr-malsri.png' },
+  { order: 2, name: 'Dr Jennifer Britto', group: 'organising', photoUrl: '/assets/committee/dr-jenifer.jpg' },
+  { order: 3, name: 'Dr Shri janani R', group: 'organising', photoUrl: '/assets/committee/dr-shri-janani.png' },
+  { order: 4, name: 'Dr Shobana Priya K', group: 'organising', photoUrl: '/assets/committee/dr-shobhana.png' },
+  { order: 5, name: 'Dr Shubhashree T', group: 'organising', photoUrl: '/assets/committee/dr-subhasree.png' },
+  { order: 6, name: 'Dr Priyanka S V', group: 'organising', photoUrl: '/assets/committee/dr-priyanka.jpg' },
+  { order: 7, name: 'Dr Divya C', group: 'organising', photoUrl: '/assets/committee/dr-divya.png' },
+  { order: 8, name: 'Dr Dhivya S', group: 'organising', photoUrl: '' },
+  { order: 9, name: 'Dr Seeniammal P', group: 'organising', photoUrl: '' },
+  { order: 10, name: 'Dr.Rathika S.R', group: 'organising', photoUrl: '/assets/committee/dr-usha-todadri.png' },
+  { order: 11, name: 'Dr.Krupasankari Rajesh', group: 'organising', photoUrl: '' },
+];
 
 export default function Committee({ committee }) {
-  const mergedList = [...(committee || [])];
-  for (const extra of EXTRA_COMMITTEE) {
-    const norm = normalizeName(extra.name);
-    const existing = mergedList.find(
-      (m) => normalizeName(m.name) === norm || normalizeName(m.name).startsWith('dr sughija')
-    );
-    if (!existing) {
-      mergedList.push(extra);
-    } else {
-      existing.name = 'Dr Sughija G';
-      existing.group = 'scientific';
-      existing.order = 11;
-      existing.isActive = true;
-      existing.photoUrl = '/assets/committee/dr-sughija.png';
-    }
-  }
-
-  if (!mergedList.length) return null;
-
-  const leadership = mergedList
-    .filter((m) => m.group === 'leadership' && m.isActive !== false)
-    .sort((a, b) => (a.order || 0) - (b.order || 0));
-  const scientific = mergedList
-    .filter((m) => m.group === 'scientific' && m.isActive !== false)
-    .sort((a, b) => getMemberOrder(a, SCIENTIFIC_ORDER) - getMemberOrder(b, SCIENTIFIC_ORDER));
-  const organising = mergedList
-    .filter((m) => m.group === 'organising' && m.isActive !== false)
-    .sort((a, b) => getMemberOrder(a, ORGANISING_ORDER) - getMemberOrder(b, ORGANISING_ORDER));
+  // If committee is supplied from the CMS/API, we use the canonical rosters
+  // to ensure exact naming, photo links, and 1-to-11 order matching the official sheet.
+  const leadership = CANONICAL_LEADERSHIP;
+  const scientific = CANONICAL_SCIENTIFIC;
+  const organising = CANONICAL_ORGANISING;
 
   return (
     <section className="section section--alt committee" id="committee">
