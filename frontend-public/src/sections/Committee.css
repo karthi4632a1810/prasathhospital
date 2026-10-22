@@ -1,13 +1,12 @@
-/* ---------- Leadership ---------- */
-
 .committee__leadership {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
   gap: var(--space-6);
+  max-width: 760px;
+  margin: 0 auto var(--space-14);
   padding-bottom: var(--space-12);
-  margin-bottom: var(--space-14);
   border-bottom: 1px solid var(--ink-200);
 }
 
@@ -200,9 +199,10 @@
 /* ---------- Leadership: larger, accent-framed ---------- */
 
 .committee-member--featured {
-  width: auto;
-  min-width: 260px;
-  max-width: 360px;
+  flex: 0 1 340px;
+  width: 100%;
+  min-width: 280px;
+  max-width: 350px;
   padding: var(--space-6) var(--space-7);
   background: #ffffff;
   border: 1.5px solid #fed2e2;
@@ -213,7 +213,6 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  margin: 0 auto;
 
   /* transform is owned by the JS tilt effect (useTilt) on these two cards */
   transition:
