@@ -201,7 +201,7 @@ const eventData = {
     { name: 'Dr Sailaja', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-anuradha.png', order: 4, isActive: true },
     { name: 'Dr Selvapriya', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-selvapriya.jpg', order: 5, isActive: true },
     { name: 'Dr Abarajda', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-abrajdha.png', order: 6, isActive: true },
-    { name: 'Dr Madhumitha', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-sughija.png', order: 7, isActive: true },
+    { name: 'Dr Madhumitha', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-madhumitha.png', order: 7, isActive: true },
     { name: 'Dr Veena', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-veena.png', order: 8, isActive: true },
     { name: 'Dr Sabia Nikath', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-shabia.jpg', order: 9, isActive: true },
     { name: 'Dr Pushpalatha', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-pushpalatha.jpg', order: 10, isActive: true },

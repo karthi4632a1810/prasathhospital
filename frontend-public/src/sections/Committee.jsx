@@ -47,7 +47,7 @@ function normalizeName(name = '') {
  *  at a glance without introducing a new accent color. */
 function Avatar({ name, photoUrl, tone }) {
   const norm = normalizeName(name);
-  const resolvedPhoto = photoUrl || COMMITTEE_PHOTO_MAP[norm];
+  const resolvedPhoto = COMMITTEE_PHOTO_MAP[norm] || photoUrl;
 
   const initials = name
     .replace(/^Dr\.?\s+/i, '')
