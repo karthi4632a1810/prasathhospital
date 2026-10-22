@@ -18,6 +18,7 @@ const COMMITTEE_PHOTO_MAP = {
   'dr shailaja': '/assets/committee/dr-anuradha.png',
   'dr madhumitha': '/assets/committee/dr-madhumitha.png',
   'dr sughija': '/assets/committee/dr-sughija.png',
+  'dr sughija g': '/assets/committee/dr-sughija.png',
   'dr selvapriya': '/assets/committee/dr-selvapriya.jpg',
   'dr pushpalatha': '/assets/committee/dr-pushpalatha.jpg',
   'dr jennifer britto': '/assets/committee/dr-jenifer.jpg',
@@ -161,6 +162,8 @@ const SCIENTIFIC_ORDER = [
   'dr sabia',
   'dr shabia',
   'dr pushpalatha',
+  'dr sughija',
+  'dr sughija g',
 ];
 
 const ORGANISING_ORDER = [
@@ -178,6 +181,18 @@ const ORGANISING_ORDER = [
   'dr divya',
 ];
 
+const EXTRA_COMMITTEE = [
+  {
+    id: 'dr-sughija-g',
+    name: 'Dr Sughija G',
+    role: '',
+    group: 'scientific',
+    photoUrl: '/assets/committee/dr-sughija.png',
+    order: 11,
+    isActive: true,
+  },
+];
+
 function getMemberOrder(m, orderList) {
   if (typeof m.order === 'number' && m.order > 0 && m.order < 90) return m.order;
   const norm = normalizeName(m.name);
@@ -186,15 +201,32 @@ function getMemberOrder(m, orderList) {
 }
 
 export default function Committee({ committee }) {
-  if (!committee?.length) return null;
+  const mergedList = [...(committee || [])];
+  for (const extra of EXTRA_COMMITTEE) {
+    const norm = normalizeName(extra.name);
+    const existing = mergedList.find(
+      (m) => normalizeName(m.name) === norm || normalizeName(m.name).startsWith('dr sughija')
+    );
+    if (!existing) {
+      mergedList.push(extra);
+    } else {
+      existing.name = 'Dr Sughija G';
+      existing.group = 'scientific';
+      existing.order = 11;
+      existing.isActive = true;
+      existing.photoUrl = '/assets/committee/dr-sughija.png';
+    }
+  }
 
-  const leadership = committee
+  if (!mergedList.length) return null;
+
+  const leadership = mergedList
     .filter((m) => m.group === 'leadership' && m.isActive !== false)
     .sort((a, b) => (a.order || 0) - (b.order || 0));
-  const scientific = committee
+  const scientific = mergedList
     .filter((m) => m.group === 'scientific' && m.isActive !== false)
     .sort((a, b) => getMemberOrder(a, SCIENTIFIC_ORDER) - getMemberOrder(b, SCIENTIFIC_ORDER));
-  const organising = committee
+  const organising = mergedList
     .filter((m) => m.group === 'organising' && m.isActive !== false)
     .sort((a, b) => getMemberOrder(a, ORGANISING_ORDER) - getMemberOrder(b, ORGANISING_ORDER));
 

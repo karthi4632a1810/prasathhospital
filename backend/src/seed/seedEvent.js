@@ -205,6 +205,7 @@ const eventData = {
     { name: 'Dr Veena', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-veena.png', order: 8, isActive: true },
     { name: 'Dr Sabia Nikath', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-shabia.jpg', order: 9, isActive: true },
     { name: 'Dr Pushpalatha', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-pushpalatha.jpg', order: 10, isActive: true },
+    { name: 'Dr Sughija G', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-sughija.png', order: 11, isActive: true },
 
     { name: 'Dr Malasree', role: '', group: 'organising', photoUrl: '/assets/committee/dr-malsri.png', order: 1, isActive: true },
     { name: 'Dr Jennifer Britto', role: '', group: 'organising', photoUrl: '/assets/committee/dr-jenifer.jpg', order: 2, isActive: true },
@@ -215,7 +216,6 @@ const eventData = {
     { name: 'Dr Divya', role: '', group: 'organising', photoUrl: '/assets/committee/dr-divya.png', order: 7, isActive: true },
 
     { name: 'Dr. S. R. Rathika', role: '', group: 'organising', photoUrl: '/assets/committee/dr-usha-todadri.png', order: 99, isActive: false },
-    { name: 'Dr Sughija', role: '', group: 'scientific', photoUrl: '/assets/committee/dr-sughija.png', order: 99, isActive: false },
   ],
 
   agenda: [
