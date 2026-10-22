@@ -760,10 +760,11 @@ const eventData = {
     { name: 'Ferring Pharmaceuticals', tier: 'platinum', logoUrl: '/assets/sponsors/ferring.png', order: 3 },
     { name: 'Samarth Life Sciences', tier: 'platinum', logoUrl: '/assets/sponsors/samarth.png', order: 4 },
     { name: 'Intas Pharmaceuticals', tier: 'platinum', logoUrl: '/assets/sponsors/intas.png', order: 5 },
-    { name: 'Zydus Healthcare', tier: 'platinum', logoUrl: '/assets/sponsors/zydus.png', order: 6 },
-    { name: 'Gufic Biosciences', tier: 'platinum', logoUrl: '/assets/sponsors/gufic.png', order: 7 },
-    { name: 'Mankind Pharma', tier: 'platinum', logoUrl: '/assets/sponsors/mankind.png', order: 8 },
-    { name: 'BSV', tier: 'platinum', logoUrl: '/assets/sponsors/bsv.png', order: 9 },
+    { name: 'Gufic Biosciences', tier: 'platinum', logoUrl: '/assets/sponsors/gufic.png', order: 6 },
+    { name: 'Mankind Pharma', tier: 'platinum', logoUrl: '/assets/sponsors/mankind.png', order: 7 },
+    { name: 'BSV', tier: 'platinum', logoUrl: '/assets/sponsors/bsv.png', order: 8 },
+    { name: 'Merck', tier: 'platinum', logoUrl: '/assets/sponsors/merck.png', order: 9 },
+    { name: 'Sun Pharma', tier: 'platinum', logoUrl: '/assets/sponsors/sun-pharma.png', order: 10 },
   ],
 
   faqs: [

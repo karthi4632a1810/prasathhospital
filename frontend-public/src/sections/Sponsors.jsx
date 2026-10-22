@@ -15,25 +15,36 @@ const TIER_LABEL = {
 const SPONSOR_LOGO_MAP = {
   'prashanth fertility research centre': '/assets/sponsors/prashanth-fertility.png',
   'nivyan': '/assets/sponsors/nivyan.png',
+  'nivian': '/assets/sponsors/nivyan.png',
+  'nivian life sciences': '/assets/sponsors/nivyan.png',
   'ferring pharmaceuticals': '/assets/sponsors/ferring.png',
   'ferring': '/assets/sponsors/ferring.png',
   'samarth life sciences': '/assets/sponsors/samarth.png',
   'samarth': '/assets/sponsors/samarth.png',
   'intas pharmaceuticals': '/assets/sponsors/intas.png',
   'intas': '/assets/sponsors/intas.png',
-  'zydus healthcare': '/assets/sponsors/zydus.png',
-  'zydus': '/assets/sponsors/zydus.png',
   'gufic biosciences': '/assets/sponsors/gufic.png',
   'gufic': '/assets/sponsors/gufic.png',
   'mankind pharma': '/assets/sponsors/mankind.png',
   'mankind': '/assets/sponsors/mankind.png',
   'bsv': '/assets/sponsors/bsv.png',
   'bharat serums and vaccines': '/assets/sponsors/bsv.png',
+  'merck': '/assets/sponsors/merck.png',
+  'sun pharma': '/assets/sponsors/sun-pharma.png',
+  'sun pharmaceuticals': '/assets/sponsors/sun-pharma.png',
+  'sun pharmaceutical': '/assets/sponsors/sun-pharma.png',
 };
 
-const EXTRA_SPONSORS = [
-  { id: 'mankind-pharma', name: 'Mankind Pharma', tier: 'platinum', logoUrl: '/assets/sponsors/mankind.png', order: 8 },
-  { id: 'bsv', name: 'BSV', tier: 'platinum', logoUrl: '/assets/sponsors/bsv.png', order: 9 },
+const CANONICAL_PLATINUM_SPONSORS = [
+  { id: 'nivyan', name: 'Nivyan', tier: 'platinum', logoUrl: '/assets/sponsors/nivyan.png', order: 1 },
+  { id: 'ferring', name: 'Ferring Pharmaceuticals', tier: 'platinum', logoUrl: '/assets/sponsors/ferring.png', order: 2 },
+  { id: 'samarth', name: 'Samarth Life Sciences', tier: 'platinum', logoUrl: '/assets/sponsors/samarth.png', order: 3 },
+  { id: 'intas', name: 'Intas Pharmaceuticals', tier: 'platinum', logoUrl: '/assets/sponsors/intas.png', order: 4 },
+  { id: 'gufic', name: 'Gufic Biosciences', tier: 'platinum', logoUrl: '/assets/sponsors/gufic.png', order: 5 },
+  { id: 'mankind-pharma', name: 'Mankind Pharma', tier: 'platinum', logoUrl: '/assets/sponsors/mankind.png', order: 6 },
+  { id: 'bsv', name: 'BSV', tier: 'platinum', logoUrl: '/assets/sponsors/bsv.png', order: 7 },
+  { id: 'merck', name: 'Merck', tier: 'platinum', logoUrl: '/assets/sponsors/merck.png', order: 8 },
+  { id: 'sun-pharma', name: 'Sun Pharma', tier: 'platinum', logoUrl: '/assets/sponsors/sun-pharma.png', order: 9 },
 ];
 
 function normalizeName(name = '') {
@@ -71,13 +82,29 @@ function SponsorCard({ sponsor, tier }) {
 }
 
 export default function Sponsors({ sponsors }) {
-  const mergedList = [...(sponsors || [])];
-  for (const extra of EXTRA_SPONSORS) {
-    const norm = normalizeName(extra.name);
-    if (!mergedList.some((s) => normalizeName(s.name) === norm)) {
-      mergedList.push(extra);
-    }
-  }
+  // Filter out any Zydus entries
+  const incoming = (sponsors || []).filter((s) => !normalizeName(s.name).includes('zydus'));
+
+  // Title sponsors from incoming or fallback
+  const titleSponsors = incoming.filter((s) => s.tier === 'title');
+  const titleList = titleSponsors.length > 0 ? titleSponsors : [
+    {
+      id: 'prashanth-fertility',
+      name: 'Prashanth Fertility Research Centre',
+      tier: 'title',
+      logoUrl: '/assets/sponsors/prashanth-fertility.png',
+      websiteUrl: 'https://www.prashanthfertility.com',
+      order: 1,
+    },
+  ];
+
+  // Canonical platinum sponsors guarantee exact official roster
+  const platinumList = CANONICAL_PLATINUM_SPONSORS;
+
+  // Other tiers if present
+  const otherTiers = incoming.filter((s) => s.tier !== 'title' && s.tier !== 'platinum');
+
+  const mergedList = [...titleList, ...platinumList, ...otherTiers];
 
   if (!mergedList.length) return null;
 
