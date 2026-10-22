@@ -60,15 +60,7 @@ function TicketCard({ ticket, onSelect, canRegister }) {
         {ticket.isFree ? (
           <span className="ticket__amount">Free</span>
         ) : (
-          <>
-            <span className="ticket__amount">{formatCurrency(ticket.price, ticket.currency)}</span>
-            {ticket.taxPercent > 0 && (
-              <span className="ticket__tax">
-                + {ticket.taxPercent}% GST ={' '}
-                <strong>{formatCurrency(ticket.priceWithTax, ticket.currency)}</strong>
-              </span>
-            )}
-          </>
+          <span className="ticket__amount">{formatCurrency(ticket.price, ticket.currency)}</span>
         )}
         {ticket.admitsCount > 1 && (
           <span className="ticket__admits">Admits {ticket.admitsCount} delegates</span>

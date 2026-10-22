@@ -4,9 +4,22 @@ import { useTilt } from '../lib/useTilt';
 import './Speakers.css';
 
 const SPEAKER_PHOTO_MAP = {
+  'dr hafeez rahman': '/assets/faculty/dr-hafeez-rahman.png',
+  'dr hafeez': '/assets/faculty/dr-hafeez-rahman.png',
+  'dr asha rao': '/assets/faculty/dr-asha-rao.jpg',
+  'dr asha r rao': '/assets/faculty/dr-asha-rao.jpg',
+  'dr jayesh amin': '/assets/faculty/dr-jayesh-amin.jpg',
+  'dr malaraj': '/assets/faculty/dr-malaraj.png',
+  'dr leena mehrotra': '/assets/faculty/dr-leena-mehrotra.png',
+  'dr sanjeeva reddy': '/assets/faculty/dr-sanjeeva-reddy.jpg',
+  'dr hitesh bhatt': '/assets/faculty/dr-hitesh-bhatt.png',
+  'adv hitesh j bhatt': '/assets/faculty/dr-hitesh-bhatt.png',
+  'dr hitesh j bhatt': '/assets/faculty/dr-hitesh-bhatt.png',
+  'dr rajesh koradia': '/assets/faculty/dr-rajesh-koradia.jpg',
   'dr jathin shah': '/assets/faculty/dr-jathin-shah.jpg',
   'dr rohit gutgutia': '/assets/faculty/dr-rohit-gutgutia.png',
-  'dr jayesh amin': '/assets/faculty/dr-jayesh-amin.jpg',
+  'dr devika gunasheela': '/assets/faculty/dr-devika-gunasheela.jpg',
+  'dr vasundara jagannathan': '/assets/faculty/dr-vasundara-jagannathan.jpg',
 };
 
 function normalizeName(name = '') {

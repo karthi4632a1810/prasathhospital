@@ -16,7 +16,7 @@ const COMMITTEE_PHOTO_MAP = {
   'dr shabia': '/assets/committee/dr-shabia.jpg',
   'dr sailaja': '/assets/committee/dr-anuradha.png',
   'dr shailaja': '/assets/committee/dr-anuradha.png',
-  'dr madhumitha': '/assets/committee/dr-sughija.png',
+  'dr madhumitha': '/assets/committee/dr-madhumitha.png',
   'dr sughija': '/assets/committee/dr-sughija.png',
   'dr selvapriya': '/assets/committee/dr-selvapriya.jpg',
   'dr pushpalatha': '/assets/committee/dr-pushpalatha.jpg',
@@ -31,6 +31,7 @@ const COMMITTEE_PHOTO_MAP = {
   'dr shobana': '/assets/committee/dr-shobhana.png',
   'dr subhashree': '/assets/committee/dr-subhasree.png',
   'dr subhasree': '/assets/committee/dr-subhasree.png',
+  'dr priyanka': '/assets/committee/dr-priyanka.jpg',
   'dr divya': '/assets/committee/dr-divya.png',
   'dr malasree': '/assets/committee/dr-malsri.png',
   'dr malsri': '/assets/committee/dr-malsri.png',
@@ -46,7 +47,7 @@ function normalizeName(name = '') {
  *  at a glance without introducing a new accent color. */
 function Avatar({ name, photoUrl, tone }) {
   const norm = normalizeName(name);
-  const resolvedPhoto = norm === 'dr priyanka' ? null : (photoUrl || COMMITTEE_PHOTO_MAP[norm]);
+  const resolvedPhoto = photoUrl || COMMITTEE_PHOTO_MAP[norm];
 
   const initials = name
     .replace(/^Dr\.?\s+/i, '')
@@ -69,7 +70,7 @@ function Avatar({ name, photoUrl, tone }) {
   );
 }
 
-function MemberCard({ member, tone, featured, index }) {
+function MemberCard({ member, tone, featured }) {
   // Tilt is reserved for the featured leadership cards — a hook still has to
   // run unconditionally, but the ref/handlers only attach when featured.
   const tilt = useTilt({ max: 7, scale: 1.02 });
@@ -91,11 +92,6 @@ function MemberCard({ member, tone, featured, index }) {
       className={`committee-member ${featured ? 'committee-member--featured' : ''}`}
       {...tiltProps}
     >
-      {index && (
-        <span className={`committee-member__ref committee-member__ref--${tone}`}>
-          {index}
-        </span>
-      )}
       <Avatar name={member.name} photoUrl={member.photoUrl} tone={tone} />
       <p className="committee-member__name">{member.name}</p>
       {member.designation && <p className="committee-member__designation">{member.designation}</p>}
@@ -105,7 +101,7 @@ function MemberCard({ member, tone, featured, index }) {
             Organising Chairman
           </span>
           <span className="committee-member__role-line committee-member__role-line--hospitals">
-            Chairman Prashanth Group of Hospitals
+            Director & Chairman Prashanth Group of Hospitals
           </span>
         </div>
       ) : isSamhitha ? (
@@ -141,8 +137,8 @@ function CommitteeGroup({ title, tone, members }) {
         {title}
       </h3>
       <div className={`committee__grid committee__grid--${tone}`}>
-        {members.map((m, idx) => (
-          <MemberCard member={m} tone={tone} index={idx + 1} key={m.id || m.name} />
+        {members.map((m) => (
+          <MemberCard member={m} tone={tone} key={m.id || m.name} />
         ))}
       </div>
     </div>

@@ -4,6 +4,7 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  align-items: center;
   gap: var(--space-6);
   padding-bottom: var(--space-12);
   margin-bottom: var(--space-14);
@@ -15,13 +16,23 @@
 .committee__groups {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: var(--space-12);
+  width: 100%;
+}
+
+.committee__group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 
 .committee__group-title {
   display: flex;
   justify-content: center;
   align-items: center;
+  text-align: center;
   gap: var(--space-2);
   margin-bottom: var(--space-6);
   color: var(--ink-500);
@@ -49,9 +60,10 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  align-items: stretch;
+  align-items: center;
   gap: var(--space-5);
   margin: 0 auto;
+  width: 100%;
 }
 
 .committee__grid--scientific {
@@ -69,7 +81,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: var(--space-3);
   width: 172px;
   min-height: 195px;
@@ -92,54 +104,13 @@
   transform: translateY(-3px);
 }
 
-/* ---------- Reference Number (Subtle & Transparent for Reference) ---------- */
-
-.committee-member__ref {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 20px;
-  padding: 0 7px;
-  font-family: var(--font-display, inherit);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  border-radius: 999px;
-  letter-spacing: 0.02em;
-  margin-bottom: 2px;
-  transition: all var(--transition);
-}
-
-.committee-member__ref--scientific {
-  color: var(--accent-700, #a3355b);
-  background: rgba(163, 53, 91, 0.06);
-  border: 1px solid rgba(163, 53, 91, 0.16);
-}
-
-.committee-member__ref--organising {
-  color: var(--navy-700, #44215b);
-  background: rgba(68, 33, 91, 0.06);
-  border: 1px solid rgba(68, 33, 91, 0.16);
-}
-
-.committee-member:hover .committee-member__ref--scientific {
-  background: rgba(163, 53, 91, 0.14);
-  border-color: rgba(163, 53, 91, 0.35);
-}
-
-.committee-member:hover .committee-member__ref--organising {
-  background: rgba(68, 33, 91, 0.14);
-  border-color: rgba(68, 33, 91, 0.35);
-}
-
 .committee-member__photo {
   width: 76px;
   height: 76px;
   border-radius: 50%;
   object-fit: cover;
   object-position: center 20%;
+  margin: 0 auto;
   box-shadow:
     0 0 0 2px var(--white),
     0 0 0 3px var(--accent-400);
@@ -149,6 +120,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  margin: 0 auto;
   font-family: var(--font-display);
   font-size: var(--text-lg);
   font-weight: 650;
@@ -175,19 +147,38 @@
   font-size: var(--text-sm);
   font-weight: 700;
   line-height: 1.3;
+  text-align: center;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.committee-member__designation {
+  color: var(--ink-600);
+  font-size: var(--text-xs);
+  line-height: 1.35;
+  text-align: center;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .committee-member__role {
   color: var(--accent-700);
   font-size: var(--text-xs);
   font-weight: 600;
+  text-align: center;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .committee-member__role-lines {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   gap: 3px;
   margin-top: 2px;
+  width: 100%;
 }
 
 .committee-member__role-line {
@@ -195,11 +186,15 @@
   font-size: var(--text-xs);
   font-weight: 600;
   line-height: 1.25;
+  text-align: center;
+  width: 100%;
 }
 
 .committee-member__role-line--hospitals {
   color: var(--navy-700);
   font-weight: 750;
+  text-align: center;
+  width: 100%;
 }
 
 /* ---------- Leadership: larger, accent-framed ---------- */
@@ -207,12 +202,18 @@
 .committee-member--featured {
   width: auto;
   min-width: 260px;
-  max-width: 340px;
+  max-width: 360px;
   padding: var(--space-6) var(--space-7);
   background: #ffffff;
   border: 1.5px solid #fed2e2;
   border-radius: var(--radius-xl);
   box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin: 0 auto;
 
   /* transform is owned by the JS tilt effect (useTilt) on these two cards */
   transition:
@@ -232,6 +233,7 @@
   font-size: var(--text-2xl);
   object-fit: cover;
   object-position: center 15%;
+  margin: 0 auto;
   box-shadow:
     0 0 0 3px var(--white),
     0 0 0 5px var(--accent-500);
@@ -242,23 +244,31 @@
   font-size: var(--text-lg);
   font-weight: 800;
   color: var(--ink-900);
+  text-align: center;
+  margin: 0 auto;
 }
 
 .committee-member--featured .committee-member__role {
   color: var(--accent-700);
   font-size: var(--text-sm);
   font-weight: 650;
+  text-align: center;
+  margin: 0 auto;
 }
 
 .committee-member--featured .committee-member__role-line {
   font-size: 0.82rem;
   font-weight: 650;
+  text-align: center;
+  margin: 0 auto;
 }
 
 .committee-member--featured .committee-member__role-line--hospitals {
   font-size: 0.85rem;
   font-weight: 750;
   color: var(--navy-700);
+  text-align: center;
+  margin: 0 auto;
 }
 
 @media (width <= 480px) {

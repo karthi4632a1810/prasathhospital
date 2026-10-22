@@ -16,15 +16,19 @@ export default function ChairpersonWelcome({
   const name = propName || welcome.name || 'Dr. Geetha Haripriya';
   const title =
     propTitle ||
-    welcome.title ||
-    'Chairperson, Prashanth Fertility and Research Centre Pvt. Ltd.';
+    (welcome.title
+      ? welcome.title.replace(/chairperson/gi, 'Chairman')
+      : 'Chairman, Prashanth Fertility and Research Centre Pvt. Ltd.');
   const photoUrl =
     propPhotoUrl || welcome.photoUrl || '/assets/chairperson-geetha-haripriya.png';
-  const eyebrow = welcome.eyebrow || 'A message from our chairperson';
+  const eyebrow = welcome.eyebrow
+    ? welcome.eyebrow.replace(/chairperson/gi, 'chairman')
+    : 'A message from our chairman';
   const rawMessage = propMessage || welcome.message || eventDescription || '';
   const message = rawMessage
     .replace(/\b5th CIIM\b/gi, '9th CIIM')
-    .replace(/\b5th Annual\b/gi, '9th Annual');
+    .replace(/\b5th Annual\b/gi, '9th Annual')
+    .replace(/chairperson/gi, 'Chairman');
 
   const paragraphs = (message || '')
     .split(/\n\s*\n/)
