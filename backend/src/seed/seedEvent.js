@@ -760,6 +760,8 @@ const eventData = {
     { name: 'Intas Pharmaceuticals', tier: 'platinum', logoUrl: '/assets/sponsors/intas.png', order: 5 },
     { name: 'Zydus Healthcare', tier: 'platinum', logoUrl: '/assets/sponsors/zydus.png', order: 6 },
     { name: 'Gufic Biosciences', tier: 'platinum', logoUrl: '/assets/sponsors/gufic.png', order: 7 },
+    { name: 'Mankind Pharma', tier: 'platinum', logoUrl: '/assets/sponsors/mankind.png', order: 8 },
+    { name: 'BSV', tier: 'platinum', logoUrl: '/assets/sponsors/bsv.png', order: 9 },
   ],
 
   faqs: [
