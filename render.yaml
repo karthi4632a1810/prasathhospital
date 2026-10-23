@@ -10,6 +10,7 @@ services:
     # requires a paid instance type; free instances have no disk.
     plan: starter
     healthCheckPath: /api/v1/health
+    branch: demo-live
     autoDeploy: true
     disk:
       name: uploads
