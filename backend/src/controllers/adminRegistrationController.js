@@ -63,17 +63,29 @@ const updateRegistration = asyncHandler(async (req, res) => {
   if (body.attendee) {
     const next = cleanAttendee({ ...reg.attendee.toObject(), ...body.attendee });
     reg.attendee.name = next.name;
-    reg.attendee.phone = next.phone;
+    if (next.phone !== reg.attendee.phone) {
+      reg.attendee.phone = next.phone;
+      if (reg.activePhoneKey !== undefined) reg.activePhoneKey = Registration.activePhoneKeyFor(reg.event, next.phone);
+    }
+    if (next.medicalCouncilRegNo !== reg.attendee.medicalCouncilRegNo) {
+      reg.attendee.medicalCouncilRegNo = next.medicalCouncilRegNo;
+      if (reg.activeCouncilKey !== undefined) reg.activeCouncilKey = Registration.activeCouncilKeyFor(reg.event, next.medicalCouncilRegNo);
+    }
     if (next.email !== reg.attendee.email) {
       reg.attendee.email = next.email;
-      if (reg.activeKey) reg.activeKey = Registration.activeKeyFor(reg.event, next.email);
+      if (reg.activeKey !== undefined) reg.activeKey = Registration.activeKeyFor(reg.event, next.email);
     }
   }
 
   try {
     await reg.save();
   } catch (err) {
-    if (err && err.code === 11000) throw ApiError.conflict('Another active registration already uses this email address.');
+    if (err && err.code === 11000) {
+      const field = Object.keys(err.keyValue || err.keyPattern || {})[0];
+      if (field === 'activePhoneKey') throw ApiError.conflict('Another active registration already uses this mobile number.');
+      if (field === 'activeCouncilKey') throw ApiError.conflict('Another active registration already uses this Medical Council Registration Number.');
+      throw ApiError.conflict('Another active registration already uses this email address.');
+    }
     throw err;
   }
   recordAudit(req, { action: 'registration.update', entityType: 'Registration', entityId: reg._id, meta: { fields: Object.keys(body) } });
@@ -104,7 +116,7 @@ const cancelRegistration = asyncHandler(async (req, res) => {
     { _id: req.params.id, status: { $in: ['confirmed', 'pending_payment'] }, checkedInAt: null },
     {
       $set: { status: 'cancelled', cancelledAt: new Date(), cancelledBy: req.user._id, cancellationReason: reason.slice(0, 500) },
-      $unset: { activeKey: 1 },
+      $unset: { activeKey: 1, activePhoneKey: 1, activeCouncilKey: 1 },
     },
     { new: false }
   );

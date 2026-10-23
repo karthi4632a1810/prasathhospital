@@ -199,7 +199,7 @@ export default function RegisterPage() {
     } catch (err) {
       const message =
         err instanceof ApiError ? err.message : 'Something went wrong. Please try again.';
-      if (err instanceof ApiError && /coupon/i.test(message)) {
+      if (err instanceof ApiError && (err.code?.startsWith('COUPON_') || (/coupon/i.test(message) && !/already registered/i.test(message)))) {
         setCoupon(null);
         setCouponError(message);
       } else {

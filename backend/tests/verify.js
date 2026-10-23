@@ -720,6 +720,20 @@ const base = 'http://127.0.0.1:5099';
     return k;
   });
 
+  check('registration activePhoneKey is per event + core 10 digits', () => {
+    const k1 = Registration.activePhoneKeyFor('abc', '+91 99624-60782');
+    const k2 = Registration.activePhoneKeyFor('abc', '09962460782');
+    assert(k1 === 'abc:9962460782' && k2 === 'abc:9962460782', k1);
+    return k1;
+  });
+
+  check('registration activeCouncilKey is per event + normalized council number', () => {
+    const k1 = Registration.activeCouncilKeyFor('abc', 'TNMC / 104523 / 2018');
+    const k2 = Registration.activeCouncilKeyFor('abc', 'tnmc-104523-2018');
+    assert(k1 === 'abc:TNMC1045232018' && k2 === 'abc:TNMC1045232018', k1);
+    return k1;
+  });
+
   console.log('\n=== 15. Hardening regressions (bug-fix pass) ===');
 
   r = await (async () => {

@@ -167,8 +167,19 @@ const createRegistration = asyncHandler(async (req, res) => {
   }
 
   const activeKey = Registration.activeKeyFor(event._id, attendee.email);
+  const activePhoneKey = Registration.activePhoneKeyFor(event._id, attendee.phone);
+  const activeCouncilKey = Registration.activeCouncilKeyFor(event._id, attendee.medicalCouncilRegNo);
+
   if (await Registration.exists({ activeKey })) {
     throw ApiError.conflict('This email address is already registered for this event. Check your email or WhatsApp for your ticket.');
+  }
+
+  if (activePhoneKey && (await Registration.exists({ activePhoneKey }))) {
+    throw ApiError.conflict('This mobile number is already registered for this event. Each mobile number can only be used once.');
+  }
+
+  if (activeCouncilKey && (await Registration.exists({ activeCouncilKey }))) {
+    throw ApiError.conflict('This Medical Council Registration Number is already registered for this event. Each registration number can only be used once.');
   }
 
   const check = await inspectCoupon(couponCode, event._id);
@@ -205,6 +216,8 @@ const createRegistration = asyncHandler(async (req, res) => {
     pricing: couponPricing(ticketType),
     status: 'confirmed',
     activeKey,
+    activePhoneKey: activePhoneKey || undefined,
+    activeCouncilKey: activeCouncilKey || undefined,
     idempotencyKey: idempotencyKey || undefined,
     campaignSource: String(campaignSource || '').slice(0, 80),
   });
@@ -229,6 +242,12 @@ const createRegistration = asyncHandler(async (req, res) => {
       }
       if (field === 'activeKey') {
         throw ApiError.conflict('This email address is already registered for this event. Check your email or WhatsApp for your ticket.');
+      }
+      if (field === 'activePhoneKey') {
+        throw ApiError.conflict('This mobile number is already registered for this event. Each mobile number can only be used once.');
+      }
+      if (field === 'activeCouncilKey') {
+        throw ApiError.conflict('This Medical Council Registration Number is already registered for this event. Each registration number can only be used once.');
       }
     }
     logger.error('Registration save failed after capacity was taken (compensated)', err);

@@ -117,6 +117,8 @@ const RegistrationSchema = new Schema(
     // cancel. The unique index makes "one active registration per email
     // per event" hold even under concurrent submits.
     activeKey: { type: String, unique: true, sparse: true },
+    activePhoneKey: { type: String, unique: true, sparse: true },
+    activeCouncilKey: { type: String, unique: true, sparse: true },
 
     delivery: {
       email: { type: DeliveryChannelSchema, default: () => ({}) },
@@ -149,6 +151,17 @@ RegistrationSchema.statics.DELIVERY_STATUSES = DELIVERY_STATUSES;
 
 RegistrationSchema.statics.activeKeyFor = function activeKeyFor(eventId, email) {
   return `${String(eventId)}:${String(email).trim().toLowerCase()}`;
+};
+
+RegistrationSchema.statics.activePhoneKeyFor = function activePhoneKeyFor(eventId, phone) {
+  const digits = String(phone || '').replace(/[^\d]/g, '');
+  const core = digits.length >= 10 ? digits.slice(-10) : digits;
+  return core ? `${String(eventId)}:${core}` : undefined;
+};
+
+RegistrationSchema.statics.activeCouncilKeyFor = function activeCouncilKeyFor(eventId, councilNo) {
+  const clean = String(councilNo || '').trim().toUpperCase().replace(/[\s\/-]/g, '');
+  return clean ? `${String(eventId)}:${clean}` : undefined;
 };
 
 RegistrationSchema.virtual('isFree').get(function isFree() {
