@@ -18,6 +18,8 @@ function sendTicketConfirmation({ event, ticketType, registration, companyName }
 
   if (env.whatsappTemplateName) {
     const qrImageUrl = `${env.apiBaseUrl.replace(/\/$/, '')}/api/v1/tickets/${registration.qrToken}/qr.png`;
+    const thankYouImageUrl = `${env.publicSiteUrl.replace(/\/$/, '')}/images/thankyou-img.jpg`;
+
     return sendWhatsAppTemplate({
       to: registration.attendee.phone,
       name: env.whatsappTemplateName,
@@ -25,8 +27,11 @@ function sendTicketConfirmation({ event, ticketType, registration, companyName }
       bodyParams: [
         { name: '1', value: registration.attendee.name },
         { name: 'Name', value: registration.attendee.name },
+        { name: 'DrName', value: registration.attendee.name },
         { name: 'QR', value: qrImageUrl },
-        { name: '2', value: event.title },
+        { name: 'img', value: thankYouImageUrl },
+        { name: '2', value: ticketUrl },
+        { name: 'extra', value: ticketUrl },
         { name: '3', value: registration.registrationCode },
         { name: '4', value: ticketUrl },
       ],
