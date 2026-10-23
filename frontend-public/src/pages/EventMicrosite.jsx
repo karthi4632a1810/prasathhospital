@@ -6,6 +6,7 @@ import SiteFooter from '../components/SiteFooter';
 import AnnouncementBar from '../components/AnnouncementBar';
 import StickyCta from '../components/StickyCta';
 import ShareSheet from '../components/ShareSheet';
+import PgOfferModal from '../components/PgOfferModal';
 import { LoadingState, ErrorState, NotFoundState } from '../components/ui/States';
 
 import Hero from '../sections/Hero';
@@ -35,6 +36,8 @@ export default function EventMicrosite() {
 
   const [state, setState] = useState({ status: 'loading', data: null, error: null });
   const [shareOpen, setShareOpen] = useState(false);
+  // Auto-open on load; user dismisses explicitly
+  const [pgOfferOpen, setPgOfferOpen] = useState(true);
 
   // Record which campaign brought this visitor in, before anything else.
   useEffect(() => {
@@ -127,6 +130,7 @@ export default function EventMicrosite() {
 
   return (
     <>
+      <PgOfferModal open={pgOfferOpen} onClose={() => setPgOfferOpen(false)} />
       <a className="skip-link" href="#main">
         Skip to content
       </a>
