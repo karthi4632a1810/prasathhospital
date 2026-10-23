@@ -98,6 +98,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     captureCampaign();
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, []);
 
   const load = useCallback(() => {
@@ -111,6 +112,12 @@ export default function RegisterPage() {
   }, [slug]);
 
   useEffect(load, [load]);
+
+  useEffect(() => {
+    if (state.status === 'ready') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  }, [state.status]);
 
   const event = state.data?.event;
   const ticketTypes = useMemo(() => {

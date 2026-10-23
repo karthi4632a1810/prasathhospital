@@ -104,6 +104,7 @@ export default function EventMicrosite() {
     (ticket) => {
       const base = `/events/${slug}/register`;
       const path = ticket ? `${base}?ticket=${encodeURIComponent(ticket.code)}` : base;
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       navigate(withCampaignParams(path));
     },
     [navigate, slug]
