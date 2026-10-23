@@ -13,10 +13,13 @@ export default function Coupons() {
   const [coupons, setCoupons] = useState(null);
   const [companies, setCompanies] = useState(null);
   const [error, setError] = useState(null);
-  const [filters, setFilters] = useState({ company: '', state: '', q: '' });
+  const [filters, setFilters] = useState({ company: '', state: '', type: '', q: '' });
   const [seriesOpen, setSeriesOpen] = useState(false);
   const [editing, setEditing] = useState(null); // null | 'new' | coupon
   const [flash, setFlash] = useState(null);
+  const [generatingTest, setGeneratingTest] = useState(false);
+  const [purgeConfirmOpen, setPurgeConfirmOpen] = useState(false);
+  const [purging, setPurging] = useState(false);
 
   useEffect(() => {
     companyApi
@@ -62,6 +65,54 @@ export default function Coupons() {
     }
   }
 
+  async function handleGenerateTestBatch() {
+    if (!eventId) return;
+    setGeneratingTest(true);
+    try {
+      const res = await couponApi.createTestBatch({ event: eventId, count: 5 });
+      notify('success', `Created ${res.data?.length || 5} disposable test coupons (TEST-CIIM-01..).`);
+      load();
+    } catch (err) {
+      notify('error', err.message || 'Failed to create test coupons.');
+    } finally {
+      setGeneratingTest(false);
+    }
+  }
+
+  async function handlePurgeTestBatch() {
+    if (!eventId) return;
+    setPurging(true);
+    try {
+      const res = await couponApi.purgeTestBatch({ event: eventId });
+      setPurgeConfirmOpen(false);
+      notify(
+        'success',
+        res.message ||
+          `Purged test coupon(s) and test registration(s). Zero trace remaining!`
+      );
+      load();
+    } catch (err) {
+      notify('error', err.message || 'Failed to purge test data.');
+    } finally {
+      setPurging(false);
+    }
+  }
+
+  async function handleDeleteTestCoupon(coupon) {
+    const isTest = coupon.isTest;
+    const msg = isTest
+      ? `Delete test coupon "${coupon.code}" and ALL test registrations created with it? This completely wipes test data with ZERO TRACE in the admin panel.`
+      : `Delete coupon "${coupon.code}"? Only possible while it has never been used.`;
+    if (!window.confirm(msg)) return;
+    try {
+      const res = await couponApi.remove(coupon.id, { purgeRegistrations: isTest });
+      notify('success', res.message || `${coupon.code} deleted.`);
+      load();
+    } catch (err) {
+      notify('error', err.message);
+    }
+  }
+
   const setFilter = (key) => (e) => setFilters((f) => ({ ...f, [key]: e.target.value }));
 
   if (eventsError) return <ErrorState message={eventsError} />;
@@ -81,6 +132,7 @@ export default function Coupons() {
     { allocated: 0, used: 0 }
   );
   const allUsed = (coupons || []).reduce((sum, c) => sum + c.usageCount, 0);
+  const testCouponsCount = (coupons || []).filter((c) => c.isTest).length;
 
   return (
     <div>
@@ -91,11 +143,30 @@ export default function Coupons() {
             Each coupon admits a fixed number of delegates at ₹0.
             {coupons &&
               coupons.length > 0 &&
-              ` ${allUsed} of ${totals.allocated} places used across ${activeCoupons.length} active coupons${inactiveCoupons.length > 0 ? ` (${inactiveCoupons.length} inactive)` : ''}.`}
+              ` ${allUsed} of ${totals.allocated} places used across ${activeCoupons.length} active coupons${inactiveCoupons.length > 0 ? ` (${inactiveCoupons.length} inactive)` : ''}${testCouponsCount > 0 ? ` • ${testCouponsCount} test coupon(s)` : ''}.`}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
           <EventSelect events={events} eventId={eventId} onChange={setEventId} />
+          <Button
+            variant="purple"
+            size="sm"
+            onClick={handleGenerateTestBatch}
+            disabled={generatingTest || !eventId}
+            title="Create 5 disposable dummy test coupons (TEST-CIIM-01..05) with zero-track deletion"
+          >
+            {generatingTest ? 'Creating 5 Tests…' : '🧪 Create 5 Test Coupons'}
+          </Button>
+          {testCouponsCount > 0 && (
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => setPurgeConfirmOpen(true)}
+              title="Delete all test coupons and all registrations made with them (zero trace)"
+            >
+              🗑️ Purge Test Data ({testCouponsCount})
+            </Button>
+          )}
           <Button
             variant="secondary"
             size="sm"
@@ -165,6 +236,14 @@ export default function Coupons() {
               ))}
             </select>
           </label>
+          <label className="field">
+            <span className="field__label">Type</span>
+            <select className="field__select" value={filters.type} onChange={setFilter('type')}>
+              <option value="">All coupons</option>
+              <option value="prod">Production only</option>
+              <option value="test">🧪 Test mode only</option>
+            </select>
+          </label>
         </div>
       </div>
 
@@ -193,7 +272,28 @@ export default function Coupons() {
               {coupons.map((c) => (
                 <tr key={c.id}>
                   <td>
-                    <strong className="mono">{c.code}</strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                      <strong className="mono">{c.code}</strong>
+                      {c.isTest && (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            padding: '1px 7px',
+                            borderRadius: '9999px',
+                            background: 'rgba(124, 58, 237, 0.1)',
+                            color: '#7c3aed',
+                            border: '1px solid rgba(124, 58, 237, 0.25)',
+                          }}
+                          title="Disposable test mode coupon. Deleting this will completely remove all test registrations."
+                        >
+                          🧪 TEST
+                        </span>
+                      )}
+                    </div>
                     {c.description && <span className="sub">{c.description}</span>}
                   </td>
                   <td>{c.company?.name || '—'}</td>
@@ -221,6 +321,17 @@ export default function Coupons() {
                     <Button variant="ghost" size="sm" onClick={() => toggleActive(c)}>
                       {c.isActive ? 'Deactivate' : 'Activate'}
                     </Button>
+                    {c.isTest && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        style={{ color: '#dc2626' }}
+                        onClick={() => handleDeleteTestCoupon(c)}
+                        title="Delete test coupon and purge all test registrations (zero trace)"
+                      >
+                        Delete
+                      </Button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -255,6 +366,99 @@ export default function Coupons() {
           }}
         />
       )}
+
+      {purgeConfirmOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.55)',
+            backdropFilter: 'blur(3px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: 'var(--space-4)',
+          }}
+          onClick={() => !purging && setPurgeConfirmOpen(false)}
+        >
+          <div
+            className="card"
+            style={{
+              maxWidth: '500px',
+              width: '100%',
+              background: 'var(--white)',
+              padding: '24px',
+              borderRadius: '12px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
+              <div
+                style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '50%',
+                  backgroundColor: '#fee2e2',
+                  color: '#dc2626',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '24px',
+                  flexShrink: 0,
+                }}
+              >
+                🗑️
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--ink-900)' }}>
+                  Purge All Test Coupons & Data?
+                </h3>
+                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>
+                  Complete zero-trace cleanup for admin panel
+                </span>
+              </div>
+            </div>
+
+            <p style={{ fontSize: 'var(--text-sm)', color: 'var(--ink-700)', lineHeight: '1.5', margin: '0 0 16px 0' }}>
+              This will permanently delete <strong>all {testCouponsCount} test coupon(s)</strong> and{' '}
+              <strong>all attendee registrations</strong> created using test coupons.
+            </p>
+
+            <div
+              style={{
+                background: 'var(--ink-50)',
+                border: '1px solid var(--ink-200)',
+                borderRadius: '8px',
+                padding: '12px 14px',
+                fontSize: 'var(--text-xs)',
+                color: 'var(--ink-700)',
+                lineHeight: '1.6',
+                marginBottom: '20px',
+              }}
+            >
+              <div>✓ Restores event capacity and ticket pass counters.</div>
+              <div>✓ Completely removes test registrations from the admin panel.</div>
+              <div>✓ No trace left in reports, registration lists, or attendance stats.</div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setPurgeConfirmOpen(false)}
+                disabled={purging}
+              >
+                Cancel
+              </Button>
+              <Button variant="danger" size="sm" onClick={handlePurgeTestBatch} disabled={purging}>
+                {purging ? 'Purging Test Data…' : 'Yes, Delete All Test Data'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -268,13 +472,14 @@ function CouponForm({ coupon, eventId, companies, onClose, onSaved }) {
     startDate: toDateTimeLocal(coupon?.startDate),
     expiryDate: toDateTimeLocal(coupon?.expiryDate),
     isActive: coupon ? coupon.isActive : true,
+    isTest: coupon ? Boolean(coupon.isTest) : false,
   }));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [generating, setGenerating] = useState(false);
   const customCode = useRef(false); // true once the admin types their own code
   const used = coupon?.usageCount || 0;
-  const locked = used > 0; // code + company frozen once redeemed
+  const locked = used > 0 && !form.isTest; // code + company frozen once redeemed unless test coupon
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
@@ -308,6 +513,7 @@ function CouponForm({ coupon, eventId, companies, onClose, onSaved }) {
       startDate: fromDateTimeLocal(form.startDate),
       expiryDate: fromDateTimeLocal(form.expiryDate),
       isActive: form.isActive,
+      isTest: form.isTest,
     };
     if (!locked) {
       body.code = form.code.trim().toUpperCase();
@@ -328,11 +534,14 @@ function CouponForm({ coupon, eventId, companies, onClose, onSaved }) {
   }
 
   async function handleDelete() {
-    if (!window.confirm(`Delete ${coupon.code}? Only possible while it has never been used.`))
-      return;
+    const isTest = form.isTest || coupon?.isTest;
+    const msg = isTest
+      ? `Delete test coupon ${coupon.code} and ALL ${used} test registration(s) created with it? This completely wipes test data with ZERO TRACE in the admin panel.`
+      : `Delete ${coupon.code}? Only possible while it has never been used.`;
+    if (!window.confirm(msg)) return;
     setSaving(true);
     try {
-      await couponApi.remove(coupon.id);
+      await couponApi.remove(coupon.id, { purgeRegistrations: isTest });
       onSaved(`${coupon.code} deleted.`);
     } catch (err) {
       setError(err.message);
@@ -346,21 +555,21 @@ function CouponForm({ coupon, eventId, companies, onClose, onSaved }) {
       title={coupon ? `Edit ${coupon.code}` : 'New coupon'}
       subtitle={
         coupon
-          ? `${used} of ${coupon.maxAllowedRegistrations} used`
+          ? `${used} of ${coupon.maxAllowedRegistrations} used${form.isTest ? ' • 🧪 Test Mode' : ''}`
           : 'Codes are case-insensitive and must be unique.'
       }
       onClose={onClose}
       footer={
         <>
-          {coupon && used === 0 && (
+          {coupon && (used === 0 || form.isTest) && (
             <Button
               variant="ghost"
               size="sm"
               onClick={handleDelete}
               disabled={saving}
-              style={{ marginRight: 'auto' }}
+              style={{ marginRight: 'auto', color: form.isTest ? '#dc2626' : undefined }}
             >
-              Delete
+              {form.isTest && used > 0 ? `Delete Coupon & ${used} Test Reg(s)` : 'Delete'}
             </Button>
           )}
           <Button variant="secondary" size="sm" onClick={onClose} disabled={saving}>
@@ -492,6 +701,19 @@ function CouponForm({ coupon, eventId, companies, onClose, onSaved }) {
             onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
           />
           Active
+        </label>
+        <label className="checkbox" style={{ marginTop: 'var(--space-2)' }}>
+          <input
+            type="checkbox"
+            checked={form.isTest}
+            onChange={(e) => setForm((f) => ({ ...f, isTest: e.target.checked }))}
+          />
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <span>🧪 Test Mode Coupon</span>
+            <span className="field__hint" style={{ margin: 0 }}>
+              (Disposable: can be purged anytime with all associated registrations, leaving zero trace)
+            </span>
+          </span>
         </label>
       </form>
     </Drawer>

@@ -206,6 +206,8 @@ const createRegistration = asyncHandler(async (req, res) => {
     throw ApiError.conflict('This event just reached capacity.');
   }
 
+  const isTest = Boolean(coupon.isTest || /^TEST-|^CIIMTEST/i.test(coupon.code));
+
   const reg = new Registration({
     event: event._id,
     ticketType: ticketType._id,
@@ -220,6 +222,7 @@ const createRegistration = asyncHandler(async (req, res) => {
     activeCouncilKey: activeCouncilKey || undefined,
     idempotencyKey: idempotencyKey || undefined,
     campaignSource: String(campaignSource || '').slice(0, 80),
+    isTest,
   });
   reg.issueQrToken();
 

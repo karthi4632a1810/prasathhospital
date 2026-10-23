@@ -136,6 +136,7 @@ const RegistrationSchema = new Schema(
 
     campaignSource: { type: String, trim: true, default: '' },
     notes: { type: String, trim: true, default: '' },
+    isTest: { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
 );

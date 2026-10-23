@@ -135,6 +135,31 @@
   background: #1eb955;
 }
 
+.btn--danger {
+  color: var(--white);
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.btn--danger:hover:not(.is-disabled, :disabled) {
+  color: var(--white);
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.btn--purple {
+  color: #ffffff;
+  background: #7c3aed;
+  border-color: #7c3aed;
+  box-shadow: 0 1px 2px rgba(124, 58, 237, 0.2);
+}
+
+.btn--purple:hover:not(.is-disabled, :disabled) {
+  color: #ffffff;
+  background: #6d28d9;
+  border-color: #6d28d9;
+}
+
 .btn__icon {
   display: inline-flex;
   align-items: center;

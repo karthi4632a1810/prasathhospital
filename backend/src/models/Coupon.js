@@ -49,6 +49,7 @@ const CouponSchema = new Schema(
     },
 
     isActive: { type: Boolean, default: true },
+    isTest: { type: Boolean, default: false, index: true },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   },
   {

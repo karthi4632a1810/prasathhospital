@@ -4,6 +4,8 @@ const Coupon = require('../models/Coupon');
 const Company = require('../models/Company');
 const Event = require('../models/Event');
 const Registration = require('../models/Registration');
+const Feedback = require('../models/Feedback');
+const inventory = require('../services/inventory');
 const ApiError = require('../utils/ApiError');
 const { sendSuccess, asyncHandler } = require('../utils/response');
 const { recordAudit } = require('../services/auditLog');
@@ -37,6 +39,7 @@ function serializeCoupon(coupon) {
     startDate: coupon.startDate,
     expiryDate: coupon.expiryDate,
     isActive: coupon.isActive,
+    isTest: Boolean(coupon.isTest || /^TEST-|^CIIMTEST/i.test(coupon.code)),
     state: couponState(coupon),
     createdBy: coupon.createdBy?.name ? { id: coupon.createdBy._id, name: coupon.createdBy.name } : coupon.createdBy,
     createdAt: coupon.createdAt,
@@ -70,6 +73,7 @@ function cleanChanges(body, current = {}) {
   if ('startDate' in body) changes.startDate = parseDate(body.startDate, 'Start date');
   if ('expiryDate' in body) changes.expiryDate = parseDate(body.expiryDate, 'Expiry date');
   if ('isActive' in body) changes.isActive = Boolean(body.isActive);
+  if ('isTest' in body) changes.isTest = Boolean(body.isTest);
 
   const start = 'startDate' in changes ? changes.startDate : current.startDate;
   const expiry = 'expiryDate' in changes ? changes.expiryDate : current.expiryDate;
@@ -92,12 +96,18 @@ function populated(query) {
   return query.populate('company', 'name isActive').populate('event', 'title').populate('createdBy', 'name');
 }
 
-/** GET /api/v1/admin/coupons?event=&company=&state=&q= */
+/** GET /api/v1/admin/coupons?event=&company=&state=&type=&q= */
 const listCoupons = asyncHandler(async (req, res) => {
   const filter = {};
   if (req.query.event) filter.event = req.query.event;
   if (req.query.company) filter.company = req.query.company;
   if (req.query.q) filter.code = new RegExp(escapeRegex(String(req.query.q).trim().toUpperCase()));
+  if (req.query.type === 'test') {
+    filter.$or = [{ isTest: true }, { code: /^TEST-|^CIIMTEST/i }];
+  } else if (req.query.type === 'prod') {
+    filter.isTest = { $ne: true };
+    filter.code = { $not: /^TEST-|^CIIMTEST/i };
+  }
 
   const coupons = await populated(Coupon.find(filter).sort({ createdAt: -1 }));
   let rows = coupons.map(serializeCoupon);
@@ -330,16 +340,234 @@ const updateCoupon = asyncHandler(async (req, res) => {
   return sendSuccess(res, serializeCoupon(await populated(Coupon.findById(coupon._id))));
 });
 
-/** DELETE /api/v1/admin/coupons/:id — only if never used; otherwise deactivate. */
-const deleteCoupon = asyncHandler(async (req, res) => {
-  const coupon = await findOr404(req.params.id);
-  const hasRegistrations = await Registration.exists({ coupon: coupon._id });
-  if (coupon.usageCount > 0 || hasRegistrations) {
-    throw ApiError.conflict('This coupon has been used. Deactivate it instead so its history is kept.');
+/**
+ * POST /api/v1/admin/coupons/test-batch
+ * Body: { event, count }
+ * Generates 5 dummy test coupons with isTest: true
+ */
+const createTestBatch = asyncHandler(async (req, res) => {
+  const count = Math.min(Math.max(parseInt(req.body?.count, 10) || 5, 1), 20);
+
+  let eventId = req.body?.event;
+  let event = null;
+  if (eventId) {
+    event = await Event.findById(eventId).select('_id title');
   }
-  await coupon.deleteOne();
-  recordAudit(req, { action: 'coupon.delete', entityType: 'Coupon', entityId: coupon._id, meta: { code: coupon.code } });
-  return sendSuccess(res, null, { message: 'Coupon deleted' });
+  if (!event) {
+    event = await Event.findOne({}).sort({ createdAt: -1 }).select('_id title');
+  }
+  if (!event) throw ApiError.notFound('No active event found to attach test coupons to.');
+
+  // Find or create in-house / test company
+  let company = await Company.findOne({
+    $or: [{ name: /CIIM INHOUSE/i }, { name: /INHOUSE/i }, { name: /TEST/i }],
+    isActive: true,
+  }).select('_id name isActive');
+
+  if (!company) {
+    company = await Company.findOne({ isActive: true }).select('_id name isActive');
+  }
+
+  if (!company) {
+    company = await Company.create({
+      name: 'CIIM INHOUSE (Test)',
+      description: 'System internal company for test coupons',
+      isActive: true,
+    });
+  }
+
+  // Find existing test codes to avoid collisions
+  const existingTestCoupons = await Coupon.find({ code: /^TEST-CIIM-/i }).select('code').lean();
+  const existingSet = new Set(existingTestCoupons.map((c) => c.code.toUpperCase()));
+
+  const createdDocs = [];
+  let num = 1;
+  while (createdDocs.length < count && num <= 9999) {
+    const candidate = `TEST-CIIM-${String(num).padStart(2, '0')}`;
+    if (!existingSet.has(candidate)) {
+      const clash = await Coupon.exists({ code: candidate });
+      if (!clash) {
+        existingSet.add(candidate);
+        createdDocs.push({
+          event: event._id,
+          company: company._id,
+          code: candidate,
+          description: 'Disposable Test Coupon (Zero-Track Mode)',
+          maxAllowedRegistrations: 1,
+          usageCount: 0,
+          isActive: true,
+          isTest: true,
+          createdBy: req.user?._id || null,
+        });
+      }
+    }
+    num++;
+  }
+
+  if (createdDocs.length < count) {
+    while (createdDocs.length < count) {
+      const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const candidate = `TEST-${randomPart}`;
+      const clash = await Coupon.exists({ code: candidate });
+      if (!clash) {
+        createdDocs.push({
+          event: event._id,
+          company: company._id,
+          code: candidate,
+          description: 'Disposable Test Coupon (Zero-Track Mode)',
+          maxAllowedRegistrations: 1,
+          usageCount: 0,
+          isActive: true,
+          isTest: true,
+          createdBy: req.user?._id || null,
+        });
+      }
+    }
+  }
+
+  const inserted = await Coupon.insertMany(createdDocs, { ordered: true });
+  const ids = inserted.map((c) => c._id);
+  const populatedCoupons = await populated(Coupon.find({ _id: { $in: ids } }));
+
+  recordAudit(req, {
+    action: 'coupon.create_test_batch',
+    entityType: 'Coupon',
+    meta: {
+      count: inserted.length,
+      codes: inserted.map((c) => c.code),
+      company: company.name,
+      event: event.title,
+    },
+  });
+
+  return sendSuccess(
+    res,
+    populatedCoupons.map(serializeCoupon),
+    {
+      status: 201,
+      message: `Successfully created ${inserted.length} test coupons (${inserted.map((c) => c.code).join(', ')}).`,
+    }
+  );
 });
 
-module.exports = { listCoupons, createCoupon, createCouponSeries, updateCoupon, deleteCoupon, generateCode, couponState };
+/**
+ * DELETE /api/v1/admin/coupons/test-batch
+ * Purges all test coupons AND all registrations created with test coupons,
+ * reverting capacity and leaving zero trace in admin.
+ */
+const purgeTestBatch = asyncHandler(async (req, res) => {
+  const eventId = req.query.event || req.body?.event;
+  const couponFilter = {
+    $or: [{ isTest: true }, { code: /^TEST-|^CIIMTEST/i }],
+  };
+  if (eventId) couponFilter.event = eventId;
+
+  const testCoupons = await Coupon.find(couponFilter);
+  const testCouponIds = testCoupons.map((c) => c._id);
+  const testCouponCodes = testCoupons.map((c) => c.code);
+
+  const regFilter = {
+    $or: [
+      { coupon: { $in: testCouponIds } },
+      { couponCode: { $in: testCouponCodes } },
+      { isTest: true },
+    ],
+  };
+  if (eventId) regFilter.event = eventId;
+
+  const testRegistrations = await Registration.find(regFilter);
+  const testRegIds = testRegistrations.map((r) => r._id);
+
+  // Revert inventory and seat counts
+  for (const reg of testRegistrations) {
+    if (reg.status === 'confirmed') {
+      if (reg.ticketType) await inventory.releaseTicketSale(reg.ticketType);
+      if (reg.event) await inventory.releaseEventSeat(reg.event);
+    }
+  }
+
+  // Remove feedback on test registrations
+  if (testRegIds.length > 0) {
+    await Feedback.deleteMany({ registration: { $in: testRegIds } }).catch(() => {});
+  }
+
+  // Delete all test registrations completely
+  const delRegResult = await Registration.deleteMany({ _id: { $in: testRegIds } });
+
+  // Delete all test coupons completely
+  const delCouponResult = await Coupon.deleteMany({ _id: { $in: testCouponIds } });
+
+  recordAudit(req, {
+    action: 'coupon.purge_test_batch',
+    entityType: 'Coupon',
+    meta: {
+      deletedCouponsCount: delCouponResult.deletedCount,
+      deletedRegistrationsCount: delRegResult.deletedCount,
+      codes: testCouponCodes,
+    },
+  });
+
+  return sendSuccess(
+    res,
+    {
+      deletedCouponsCount: delCouponResult.deletedCount,
+      deletedRegistrationsCount: delRegResult.deletedCount,
+    },
+    {
+      message: `Purged ${delCouponResult.deletedCount} test coupon(s) and ${delRegResult.deletedCount} test registration(s). Zero trace remaining in admin.`,
+    }
+  );
+});
+
+/** DELETE /api/v1/admin/coupons/:id */
+const deleteCoupon = asyncHandler(async (req, res) => {
+  const coupon = await findOr404(req.params.id);
+  const isTestCoupon = Boolean(
+    coupon.isTest || /^TEST-|^CIIMTEST/i.test(coupon.code) || req.query.purgeRegistrations === 'true'
+  );
+
+  const linkedRegs = await Registration.find({ $or: [{ coupon: coupon._id }, { couponCode: coupon.code }] });
+
+  if (!isTestCoupon && (coupon.usageCount > 0 || linkedRegs.length > 0)) {
+    throw ApiError.conflict('This coupon has been used. Deactivate it instead so its history is kept.');
+  }
+
+  // If test coupon or purge requested, wipe all associated test registrations with zero trace!
+  if (linkedRegs.length > 0) {
+    const regIds = linkedRegs.map((r) => r._id);
+    for (const reg of linkedRegs) {
+      if (reg.status === 'confirmed') {
+        if (reg.ticketType) await inventory.releaseTicketSale(reg.ticketType);
+        if (reg.event) await inventory.releaseEventSeat(reg.event);
+      }
+    }
+    await Feedback.deleteMany({ registration: { $in: regIds } }).catch(() => {});
+    await Registration.deleteMany({ _id: { $in: regIds } });
+  }
+
+  await coupon.deleteOne();
+  recordAudit(req, {
+    action: isTestCoupon ? 'coupon.delete_test' : 'coupon.delete',
+    entityType: 'Coupon',
+    entityId: coupon._id,
+    meta: { code: coupon.code, purgedRegistrations: linkedRegs.length },
+  });
+
+  const message = linkedRegs.length > 0
+    ? `Test coupon ${coupon.code} and ${linkedRegs.length} test registration(s) deleted completely with zero trace.`
+    : `Coupon ${coupon.code} deleted.`;
+
+  return sendSuccess(res, null, { message });
+});
+
+module.exports = {
+  listCoupons,
+  createCoupon,
+  createCouponSeries,
+  createTestBatch,
+  purgeTestBatch,
+  updateCoupon,
+  deleteCoupon,
+  generateCode,
+  couponState,
+};

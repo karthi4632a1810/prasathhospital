@@ -342,7 +342,25 @@ export default function Registrations() {
                     }}
                   >
                     <td>
-                      <strong className="mono">{reg.registrationCode}</strong>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        <strong className="mono">{reg.registrationCode}</strong>
+                        {reg.isTest && (
+                          <span
+                            style={{
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              padding: '1px 6px',
+                              borderRadius: '9999px',
+                              background: 'rgba(124, 58, 237, 0.1)',
+                              color: '#7c3aed',
+                              border: '1px solid rgba(124, 58, 237, 0.25)',
+                            }}
+                            title="Test registration made with a test mode coupon"
+                          >
+                            🧪 TEST
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td>
                       <strong>{reg.attendee?.name}</strong>
