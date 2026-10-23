@@ -30,27 +30,27 @@ const IMAGE_PRESETS = [
 
 const TEMPLATES = [
   {
-    id: 'ciim2026_registration_thankyou',
-    name: 'ciim2026_registration_thankyou',
-    label: 'Thank You Registration Template',
+    id: 'ciim2026_registration_thankyou_02',
+    name: 'ciim2026_registration_thankyou_02',
+    label: 'Thank You Registration Template (Utility)',
     description: 'Header with conference poster, welcome letter, and optional custom extra note.',
     defaultImageType: 'poster',
     defaultExtra: '...',
     params: ['DrName', 'extra', 'img'],
   },
   {
-    id: 'ciim2026_registration_4',
-    name: 'ciim2026_registration_4',
-    label: 'Registration 4 (QR Header + Ticket Link)',
+    id: 'ciim2026_registration_5',
+    name: 'ciim2026_registration_5',
+    label: 'Registration 5 (QR Header + Ticket Link - Utility)',
     description: 'High-res QR code header with delegate name, dates/venue, and ticket link.',
     defaultImageType: 'qr_gold',
     defaultExtra: 'https://ciim.prashanthfertility.com/tickets/CIIM-TEST-KARTHIKEYAN',
-    params: ['Name', 'extra', 'QR'],
+    params: ['Name', 'extra', 'qr', 'QR'],
   },
   {
     id: 'ciim2026_registration_1',
     name: 'ciim2026_registration_1',
-    label: 'Registration 1 (QR Code Header)',
+    label: 'Registration 1 (QR Code Header - Utility)',
     description: 'Standard confirmed registration template with QR image header.',
     defaultImageType: 'qr_gold',
     defaultExtra: '',
@@ -120,7 +120,7 @@ const sendTestWhatsAppMessage = asyncHandler(async (req, res) => {
 
   // Format extra parameter
   let extraParamValue = extra || '';
-  if (templateName === 'ciim2026_registration_thankyou') {
+  if (templateName === 'ciim2026_registration_thankyou_02' || templateName === 'ciim2026_registration_thankyou') {
     extraParamValue = extra ? extra.trim() : '...';
   } else if (extra && extra.startsWith('http')) {
     // Add Unicode line break above and below for clean paragraph isolation
@@ -129,7 +129,7 @@ const sendTestWhatsAppMessage = asyncHandler(async (req, res) => {
 
   // Construct clean parameter array matching exact WATI template bindings
   let bodyParams = [];
-  if (templateName === 'ciim2026_registration_thankyou') {
+  if (templateName === 'ciim2026_registration_thankyou_02' || templateName === 'ciim2026_registration_thankyou') {
     bodyParams = [
       { name: '1', value: cleanName },
       { name: 'DrName', value: cleanName },
@@ -137,10 +137,11 @@ const sendTestWhatsAppMessage = asyncHandler(async (req, res) => {
       { name: '2', value: extraParamValue },
       { name: 'extra', value: extraParamValue },
     ];
-  } else if (templateName === 'ciim2026_registration_4') {
+  } else if (templateName === 'ciim2026_registration_5' || templateName === 'ciim2026_registration_4') {
     bodyParams = [
       { name: '1', value: cleanName },
       { name: 'Name', value: cleanName },
+      { name: 'qr', value: finalImageUrl },
       { name: 'QR', value: finalImageUrl },
       { name: '2', value: extraParamValue },
       { name: 'extra', value: extraParamValue },
@@ -149,6 +150,7 @@ const sendTestWhatsAppMessage = asyncHandler(async (req, res) => {
     bodyParams = [
       { name: '1', value: cleanName },
       { name: 'Name', value: cleanName },
+      { name: 'qr', value: finalImageUrl },
       { name: 'QR', value: finalImageUrl },
     ];
   }

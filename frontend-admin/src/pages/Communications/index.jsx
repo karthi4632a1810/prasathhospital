@@ -26,17 +26,17 @@ const DEFAULT_IMAGE_PRESETS = [
 
 const DEFAULT_TEMPLATES = [
   {
-    id: 'ciim2026_registration_4',
-    name: 'ciim2026_registration_4',
-    label: 'Registration 4 (QR Header + Ticket Link)',
+    id: 'ciim2026_registration_5',
+    name: 'ciim2026_registration_5',
+    label: 'Registration 5 (QR Header + Ticket Link - Utility)',
     description: 'Header with QR Code, delegate name, conference dates/venue, and ticket link.',
     defaultImageType: 'qr_gold',
     defaultExtraMode: 'link',
   },
   {
-    id: 'ciim2026_registration_thankyou',
-    name: 'ciim2026_registration_thankyou',
-    label: 'Thank You Registration Template',
+    id: 'ciim2026_registration_thankyou_02',
+    name: 'ciim2026_registration_thankyou_02',
+    label: 'Thank You Registration Template (Utility)',
     description: 'Header with official conference poster, welcome letter, and custom extra parameter.',
     defaultImageType: 'poster',
     defaultExtraMode: 'dots',
@@ -44,7 +44,7 @@ const DEFAULT_TEMPLATES = [
   {
     id: 'ciim2026_registration_1',
     name: 'ciim2026_registration_1',
-    label: 'Registration 1 (QR Code Header)',
+    label: 'Registration 1 (QR Code Header - Utility)',
     description: 'Standard confirmed registration template with QR image header.',
     defaultImageType: 'qr_gold',
     defaultExtraMode: 'none',
@@ -58,7 +58,7 @@ export default function Communications() {
   // WhatsApp Form State
   const [waPhone, setWaPhone] = useState('9962460782');
   const [waName, setWaName] = useState('Dr. Karthikeyan');
-  const [waTemplate, setWaTemplate] = useState('ciim2026_registration_4');
+  const [waTemplate, setWaTemplate] = useState('ciim2026_registration_5');
   const [waImageType, setWaImageType] = useState('qr_gold');
   const [waCustomImageUrl, setWaCustomImageUrl] = useState('');
   const [waExtraMode, setWaExtraMode] = useState('link'); // 'link' | 'dots' | 'custom' | 'none'
@@ -104,10 +104,10 @@ export default function Communications() {
   // When template changes, auto-set appropriate image & extra defaults
   const handleTemplateChange = (tmplId) => {
     setWaTemplate(tmplId);
-    if (tmplId === 'ciim2026_registration_thankyou') {
+    if (tmplId === 'ciim2026_registration_thankyou_02' || tmplId === 'ciim2026_registration_thankyou') {
       setWaImageType('poster');
       setWaExtraMode('dots');
-    } else if (tmplId === 'ciim2026_registration_4') {
+    } else if (tmplId === 'ciim2026_registration_5' || tmplId === 'ciim2026_registration_4') {
       setWaImageType('qr_gold');
       setWaExtraMode('link');
     } else {
@@ -476,7 +476,7 @@ export default function Communications() {
 
                   {/* Bubble Text */}
                   <div className="comm-wa-bubble__text">
-                    {waTemplate === 'ciim2026_registration_thankyou' ? (
+                    {waTemplate === 'ciim2026_registration_thankyou_02' || waTemplate === 'ciim2026_registration_thankyou' ? (
                       <>
                         <strong>Dear {waName || 'Dr. Karthikeyan'},</strong>
                         <br /><br />
