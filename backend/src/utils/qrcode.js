@@ -5,10 +5,12 @@ const fs = require('fs');
 const QRCode = require('qrcode');
 const { PNG } = require('pngjs');
 
-// Theme colors
+// Luxury CIIM Palette: Royal Crimson & Polished Gold
 const THEME_DARK = '#96291F'; // CIIM Deep Crimson
 const THEME_LIGHT = '#FFFFFF';
-const BORDER_COLOR = [150, 41, 31, 255]; // rgba for #96291F
+const COLOR_CRIMSON = [150, 41, 31, 255]; // #96291F
+const COLOR_GOLD = [212, 175, 55, 255];   // #D4AF37 Polished Metallic Gold
+const COLOR_WHITE = [255, 255, 255, 255];
 
 let cachedLogo = null;
 
@@ -27,19 +29,23 @@ function loadLogo() {
 }
 
 /**
- * Generates a high-resolution, premium themed PNG QR code buffer.
- * If a logo exists, embeds it in the center inside a circular badge
- * using Error Correction Level H (30% redundancy) for 100% reliable scanning.
+ * Generates an ultra-premium standalone Royal Crimson & Gold themed QR code.
+ * Features:
+ *  - CIIM Crimson data modules (#96291F)
+ *  - High-contrast precision finder eyes for 100% camera scanning
+ *  - Central circular medallion with polished Gold (#D4AF37) and Crimson hairline bezel rings
+ *  - Official Prashanth baby emblem centered inside the medallion
+ *  - Error Correction Level H (30% redundancy)
  *
  * @param {string} text - URL or data to encode
  * @param {object} [options]
  * @param {number} [options.width=800]
- * @returns {Promise<Buffer>}
+ * @returns {Promise<Buffer>} PNG buffer
  */
 async function generateQrPngBuffer(text, options = {}) {
   const width = options.width || 800;
 
-  // 1. Generate base themed QR code with High error correction
+  // 1. Generate high-contrast themed QR code with Error Correction Level H
   const qrBuffer = await QRCode.toBuffer(text, {
     type: 'png',
     errorCorrectionLevel: 'H',
@@ -59,50 +65,58 @@ async function generateQrPngBuffer(text, options = {}) {
   try {
     const qr = PNG.sync.read(qrBuffer);
 
-    // Badge diameter: ~24% of QR code width (safe for Error Correction H)
-    const badgeSize = Math.floor(width * 0.24);
+    // Center circular badge: 22% diameter (safely within 30% EC tolerance)
+    const badgeSize = Math.floor(width * 0.22);
     const badgeRadius = Math.floor(badgeSize / 2);
     const centerX = Math.floor(width / 2);
     const centerY = Math.floor(width / 2);
 
-    // 2. Draw white circular background badge with a fine crimson ring
-    const ringThickness = Math.max(3, Math.floor(width * 0.005));
-    for (let y = centerY - badgeRadius - ringThickness - 1; y <= centerY + badgeRadius + ringThickness + 1; y++) {
-      for (let x = centerX - badgeRadius - ringThickness - 1; x <= centerX + badgeRadius + ringThickness + 1; x++) {
+    const goldRingWidth = Math.max(3, Math.floor(width * 0.006));
+    const crimsonRingWidth = Math.max(2, Math.floor(width * 0.003));
+
+    // 2. Draw pristine white medallion disc with double Gold & Crimson bezel
+    for (let y = centerY - badgeRadius - goldRingWidth - crimsonRingWidth - 1; y <= centerY + badgeRadius + goldRingWidth + crimsonRingWidth + 1; y++) {
+      for (let x = centerX - badgeRadius - goldRingWidth - crimsonRingWidth - 1; x <= centerX + badgeRadius + goldRingWidth + crimsonRingWidth + 1; x++) {
         if (x < 0 || x >= width || y < 0 || y >= width) continue;
 
-        const dist = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
+        const dist = Math.hypot(x - centerX, y - centerY);
         const idx = (width * y + x) << 2;
 
         if (dist <= badgeRadius) {
-          // Pure white background inside circle
-          qr.data[idx] = 255;
-          qr.data[idx + 1] = 255;
-          qr.data[idx + 2] = 255;
-          qr.data[idx + 3] = 255;
-        } else if (dist <= badgeRadius + ringThickness) {
-          // Crimson ring border
-          qr.data[idx] = BORDER_COLOR[0];
-          qr.data[idx + 1] = BORDER_COLOR[1];
-          qr.data[idx + 2] = BORDER_COLOR[2];
-          qr.data[idx + 3] = BORDER_COLOR[3];
+          // Pure white background inside circular medallion
+          qr.data[idx] = COLOR_WHITE[0];
+          qr.data[idx + 1] = COLOR_WHITE[1];
+          qr.data[idx + 2] = COLOR_WHITE[2];
+          qr.data[idx + 3] = COLOR_WHITE[3];
+        } else if (dist <= badgeRadius + crimsonRingWidth) {
+          // Fine Crimson inner accent ring
+          qr.data[idx] = COLOR_CRIMSON[0];
+          qr.data[idx + 1] = COLOR_CRIMSON[1];
+          qr.data[idx + 2] = COLOR_CRIMSON[2];
+          qr.data[idx + 3] = COLOR_CRIMSON[3];
+        } else if (dist <= badgeRadius + crimsonRingWidth + goldRingWidth) {
+          // Polished Gold outer bezel ring
+          qr.data[idx] = COLOR_GOLD[0];
+          qr.data[idx + 1] = COLOR_GOLD[1];
+          qr.data[idx + 2] = COLOR_GOLD[2];
+          qr.data[idx + 3] = COLOR_GOLD[3];
         }
       }
     }
 
-    // 3. Scale and composite the logo into the badge with padding
-    const logoTargetSize = Math.floor(badgeSize * 0.82);
-    const logoStartX = centerX - Math.floor(logoTargetSize / 2);
-    const logoStartY = centerY - Math.floor(logoTargetSize / 2);
+    // 3. Composite Prashanth baby emblem with smooth alpha blending
+    const targetSize = Math.floor(badgeSize * 0.82);
+    const startX = centerX - Math.floor(targetSize / 2);
+    const startY = centerY - Math.floor(targetSize / 2);
 
-    for (let ly = 0; ly < logoTargetSize; ly++) {
-      for (let lx = 0; lx < logoTargetSize; lx++) {
-        const destX = logoStartX + lx;
-        const destY = logoStartY + ly;
+    for (let ly = 0; ly < targetSize; ly++) {
+      for (let lx = 0; lx < targetSize; lx++) {
+        const destX = startX + lx;
+        const destY = startY + ly;
         if (destX < 0 || destX >= width || destY < 0 || destY >= width) continue;
 
-        const srcX = Math.floor((lx / logoTargetSize) * logo.width);
-        const srcY = Math.floor((ly / logoTargetSize) * logo.height);
+        const srcX = Math.floor((lx / targetSize) * logo.width);
+        const srcY = Math.floor((ly / targetSize) * logo.height);
         const srcIdx = (logo.width * srcY + srcX) << 2;
 
         const alpha = logo.data[srcIdx + 3] / 255;
@@ -118,7 +132,6 @@ async function generateQrPngBuffer(text, options = {}) {
 
     return PNG.sync.write(qr);
   } catch (err) {
-    // If compositing fails for any reason, return the valid base QR buffer
     return qrBuffer;
   }
 }
