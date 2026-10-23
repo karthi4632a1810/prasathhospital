@@ -1,62 +1,53 @@
 # =============================================================================
-# Local / staging stack: MongoDB + API + built microsite + admin dashboard,
-# all behind NGINX.
+# PRODUCTION stack — Hostinger VPS (194.238.22.210)
+# Default compose file used when running `docker compose up -d --build`
 #
-#   cp backend/.env.example backend/.env    # then edit
-#   docker compose up --build
-#   docker compose exec api npm run seed
-#   docker compose exec api npm run seed:admin
+# Port series (conflict-free with other containers on the VPS):
+#   1008 → Public website (CIIM 2026)
+#   1009 → Admin dashboard
+#   2008 → Backend API (localhost only — Nginx proxies to it)
 #
-# Microsite: http://localhost:8080   API: http://localhost:8080/api/v1/health
-# Admin:     http://localhost:8082
+# Uses MongoDB Atlas (cloud) — no local mongo container needed.
 # =============================================================================
 
 services:
-  mongo:
-    image: mongo:7
-    container_name: prashanth-mongo
-    restart: unless-stopped
-    environment:
-      MONGO_INITDB_DATABASE: prashanth_events
-    volumes:
-      - mongo_data:/data/db
-    ports:
-      - '27017:27017'
-    healthcheck:
-      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-
   api:
     build:
       context: ./backend
-    container_name: prashanth-api
+    container_name: pg_student_biomatrix_backend
     restart: unless-stopped
-    depends_on:
-      mongo:
-        condition: service_healthy
-    # Secrets (JWT_SECRET, SMTP_*, WHATSAPP_*, ADMIN_BOOTSTRAP_*) live in
-    # backend/.env so they never need hand-listing here; structural values
-    # that differ between this compose file and plain `npm run dev` stay
-    # explicit below and win over the file.
-    env_file:
-      - path: ./backend/.env
-        required: false
     environment:
       NODE_ENV: production
       PORT: 5000
-      MONGODB_URI: mongodb://mongo:27017/prashanth_events
-      PUBLIC_SITE_URL: http://localhost:8080
-      API_BASE_URL: http://localhost:8080
-      ADMIN_SITE_URL: http://localhost:8082
-      CORS_ORIGINS: http://localhost:8080,http://localhost:8082
+      MONGODB_URI: ${MONGODB_URI:-mongodb+srv://jiokarthikeyan18_db_user:Oe8OhnOrD164A0dJ@prashantdb.ma6fim0.mongodb.net/prashanth_events?retryWrites=true&w=majority}
+      JWT_SECRET: ${JWT_SECRET:-prashanth-ciim-2026-production-jwt-token-secret-key-v1}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-https://ciim.prashanthfertility.com}
+      API_BASE_URL: ${API_BASE_URL:-https://ciim.prashanthfertility.com}
+      ADMIN_SITE_URL: ${ADMIN_SITE_URL:-https://ciimadmin.prashanthfertility.com}
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://ciim.prashanthfertility.com,https://ciimadmin.prashanthfertility.com,https://ciim.prashanthhospitals.com,https://ciimadmin.prashanthhospitals.com}
+      TRUST_PROXY: 1
       UPLOAD_DIR: /app/uploads
+      ADMIN_BOOTSTRAP_EMAIL: ${ADMIN_BOOTSTRAP_EMAIL:-admin@prashanthhospitals.com}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-admin@prashanth}
+      ADMIN_BOOTSTRAP_NAME: ${ADMIN_BOOTSTRAP_NAME:-Platform Admin}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-infociim@pfrcivf.com}
+      SMTP_PASS: ${SMTP_PASS:-uwjelibmbogyeokw}
+      SMTP_APP_PASS: ${SMTP_APP_PASS:-uwjelibmbogyeokw}
+      MAIL_FROM: ${MAIL_FROM:-CIIM 2026 <infociim@pfrcivf.com>}
+      MAIL_REPLY_TO: ${MAIL_REPLY_TO:-infociim@pfrcivf.com}
+      WHATSAPP_PROVIDER: ${WHATSAPP_PROVIDER:-wati}
+      WATI_BASE_URL: ${WATI_BASE_URL:-https://live-mt-server.wati.io/1080787}
+      WATI_ACCESS_TOKEN: ${WATI_ACCESS_TOKEN:-Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6InBmcmNpdmZob3NwaXRhbEBnbWFpbC5jb20iLCJuYW1laWQiOiJwZnJjaXZmaG9zcGl0YWxAZ21haWwuY29tIiwiZW1haWwiOiJwZnJjaXZmaG9zcGl0YWxAZ21haWwuY29tIiwiYXV0aF90aW1lIjoiMTAvMjAvMjAyNiAxMzo0NDo0NiIsInRlbmFudF9pZCI6IjEwODA3ODciLCJkYl9uYW1lIjoibXQtcHJvZC1UZW5hbnRzIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQURNSU5JU1RSQVRPUiIsImV4cCI6MjUzNDAyMzAwODAwLCJpc3MiOiJDbGFyZV9BSSIsImF1ZCI6IkNsYXJlX0FJIn0.K1hkIPZQ1mNI6nlyTKSQ5hK81Z6RTift8ZdgvyKIXrQ}
+      WHATSAPP_TEMPLATE_NAME: ${WHATSAPP_TEMPLATE_NAME:-ciim2026_registration_1}
+      WHATSAPP_TEMPLATE_LANGUAGE: ${WHATSAPP_TEMPLATE_LANGUAGE:-en_GB}
     volumes:
       - uploads_data:/app/uploads
-    expose:
-      - '5000'
+    ports:
+      - '127.0.0.1:2008:5000'
     healthcheck:
       test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:5000/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 15s
@@ -68,28 +59,26 @@ services:
     build:
       context: ./frontend-public
       args:
-        # Empty base URL -> the SPA calls /api on its own origin, which NGINX proxies.
         VITE_API_BASE_URL: ''
-    container_name: prashanth-web
+    container_name: pg_student_biomatrix_frontend
     restart: unless-stopped
     depends_on:
       - api
     ports:
-      - '8080:80'
+      - '1008:80'
 
   admin:
     build:
       context: ./frontend-admin
       args:
         VITE_API_BASE_URL: ''
-        VITE_PUBLIC_SITE_URL: 'http://localhost:8080'
-    container_name: prashanth-admin
+        VITE_PUBLIC_SITE_URL: 'https://ciim.prashanthfertility.com'
+    container_name: pg_student_biomatrix_admin
     restart: unless-stopped
     depends_on:
       - api
     ports:
-      - '8082:80'
+      - '1009:80'
 
 volumes:
-  mongo_data:
   uploads_data:
