@@ -127,16 +127,31 @@ const sendTestWhatsAppMessage = asyncHandler(async (req, res) => {
     extraParamValue = `\u2028${extra.trim()}\u2028`;
   }
 
-  // Construct parameter array matching WATI template bindings
-  const bodyParams = [
-    { name: '1', value: cleanName },
-    { name: 'Name', value: cleanName },
-    { name: 'DrName', value: cleanName },
-    { name: 'QR', value: finalImageUrl },
-    { name: 'img', value: finalImageUrl },
-    { name: '2', value: extraParamValue },
-    { name: 'extra', value: extraParamValue },
-  ];
+  // Construct clean parameter array matching exact WATI template bindings
+  let bodyParams = [];
+  if (templateName === 'ciim2026_registration_thankyou') {
+    bodyParams = [
+      { name: '1', value: cleanName },
+      { name: 'DrName', value: cleanName },
+      { name: 'img', value: finalImageUrl },
+      { name: '2', value: extraParamValue },
+      { name: 'extra', value: extraParamValue },
+    ];
+  } else if (templateName === 'ciim2026_registration_4') {
+    bodyParams = [
+      { name: '1', value: cleanName },
+      { name: 'Name', value: cleanName },
+      { name: 'QR', value: finalImageUrl },
+      { name: '2', value: extraParamValue },
+      { name: 'extra', value: extraParamValue },
+    ];
+  } else {
+    bodyParams = [
+      { name: '1', value: cleanName },
+      { name: 'Name', value: cleanName },
+      { name: 'QR', value: finalImageUrl },
+    ];
+  }
 
   const result = await sendWhatsAppTemplate({
     to: normalized,
