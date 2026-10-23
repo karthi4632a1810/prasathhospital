@@ -2,11 +2,11 @@
 
 const PDFDocument = require('pdfkit');
 
-const BRAND_DARK = '#073a57';
-const BRAND = '#0e5c8a';
-const ACCENT = '#d26a84';
-const INK = '#1c2b38';
-const INK_MUTED = '#6b8196';
+const BRAND_DARK = '#240e36';
+const BRAND = '#381b4e';
+const ACCENT = '#eb3f67';
+const INK = '#231238';
+const INK_MUTED = '#684c7e';
 
 function formatDate(value) {
   return new Intl.DateTimeFormat('en-IN', {
