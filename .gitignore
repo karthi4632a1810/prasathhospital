@@ -38,3 +38,6 @@ scratch/
 
 image*.png
 
+__pycache__/
+*.pyc
+
