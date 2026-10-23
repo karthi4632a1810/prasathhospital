@@ -71,6 +71,12 @@ const COMMITTEE_PHOTO_MAP = {
   'dr s. r. rathika': '/assets/committee/dr-usha-todadri.png',
   'dr s r rathika': '/assets/committee/dr-usha-todadri.png',
   'dr rathika': '/assets/committee/dr-usha-todadri.png',
+  'dr krupasankari': '/assets/committee/dr-krupasankari.png',
+  'dr krupasankari rajesh': '/assets/committee/dr-krupasankari.png',
+  'dr.krupasankari rajesh': '/assets/committee/dr-krupasankari.png',
+  'dr kirupasankari': '/assets/committee/dr-krupasankari.png',
+  'dr kirupasankari rajesh': '/assets/committee/dr-krupasankari.png',
+  'dr.kirupasankari rajesh': '/assets/committee/dr-krupasankari.png',
 };
 
 function normalizeName(name = '') {
@@ -224,7 +230,7 @@ const CANONICAL_ORGANISING = [
   { order: 8, name: 'Dr Dhivya S', group: 'organising', photoUrl: '/assets/committee/dr-dhivya-s.jpg' },
   { order: 9, name: 'Dr Seeniammal P', group: 'organising', photoUrl: '/assets/committee/dr-seeniammal-p.png' },
   { order: 10, name: 'Dr.Rathika S.R', group: 'organising', photoUrl: '/assets/committee/dr-usha-todadri.png' },
-  { order: 11, name: 'Dr.Krupasankari Rajesh', group: 'organising', photoUrl: '' },
+  { order: 11, name: 'Dr.Krupasankari Rajesh', group: 'organising', photoUrl: '/assets/committee/dr-krupasankari.png' },
 ];
 
 export default function Committee({ committee }) {

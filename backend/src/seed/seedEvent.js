@@ -217,7 +217,7 @@ const eventData = {
     { name: 'Dr Dhivya S', role: '', group: 'organising', photoUrl: '/assets/committee/dr-dhivya-s.jpg', order: 8, isActive: true },
     { name: 'Dr Seeniammal P', role: '', group: 'organising', photoUrl: '/assets/committee/dr-seeniammal-p.png', order: 9, isActive: true },
     { name: 'Dr.Rathika S.R', role: '', group: 'organising', photoUrl: '/assets/committee/dr-usha-todadri.png', order: 10, isActive: true },
-    { name: 'Dr.Krupasankari Rajesh', role: '', group: 'organising', photoUrl: '', order: 11, isActive: true },
+    { name: 'Dr.Krupasankari Rajesh', role: '', group: 'organising', photoUrl: '/assets/committee/dr-krupasankari.png', order: 11, isActive: true },
   ],
 
   agenda: [
