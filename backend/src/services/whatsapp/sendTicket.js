@@ -7,7 +7,7 @@ const logger = require('../../utils/logger');
 function getPublicApiBaseUrl() {
   const url = (env.apiBaseUrl || '').replace(/\/$/, '');
   if (!url || url.includes('localhost') || url.includes('127.0.0.1')) {
-    return 'https://ciim.prashanthfertility.com';
+    return 'https://ciimapi.prashanthfertility.com';
   }
   return url;
 }
@@ -30,7 +30,7 @@ function ticketUrlFor(registration) {
  */
 function cleanDoctorName(name) {
   if (!name) return 'Delegate';
-  return String(name).replace(/^(dr\.?|doctor|prof\.?|mr\.?|mrs\.?|ms\.?)\s+/i, '').trim() || 'Delegate';
+  return String(name).replace(/^(?:dr\.?|doctor|prof\.?|mr\.?|mrs\.?|ms\.?)\s+/i, '').trim() || 'Delegate';
 }
 
 /**
@@ -73,7 +73,6 @@ async function sendTicketConfirmation({ event, ticketType, registration, company
         bodyParams: [
           { name: '1', value: cleanName },
           { name: 'DrName', value: cleanName },
-          { name: 'Name', value: cleanName },
           { name: 'img', value: thankYouImageUrl },
           { name: '2', value: '...' },
           { name: 'extra', value: '...' },
@@ -97,12 +96,9 @@ async function sendTicketConfirmation({ event, ticketType, registration, company
         bodyParams: [
           { name: '1', value: cleanName },
           { name: 'Name', value: cleanName },
-          { name: 'DrName', value: cleanName },
           { name: 'QR', value: qrImageUrl },
           { name: '2', value: linkParam },
           { name: 'extra', value: linkParam },
-          { name: '3', value: registration.registrationCode },
-          { name: '4', value: ticketUrl },
         ],
       });
       logger.info(`Template 2 result for ${registration.registrationCode}:`, secondResult);
