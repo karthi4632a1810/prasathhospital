@@ -82,9 +82,22 @@
 }
 
 @media (width <= 600px) {
+  .drawer__panel {
+    width: 100vw;
+  }
+
   .drawer__body,
   .drawer__header,
   .drawer__footer {
     padding-inline: var(--space-4);
+  }
+
+  .drawer__footer {
+    flex-wrap: wrap;
+  }
+
+  .drawer__footer .btn {
+    flex: 1;
+    min-width: 120px;
   }
 }

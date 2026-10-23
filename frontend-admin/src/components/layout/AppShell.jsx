@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../lib/auth';
 import './AppShell.css';
@@ -68,6 +68,23 @@ export default function AppShell({ children }) {
   const location = useLocation();
   const [navOpen, setNavOpen] = useState(false);
 
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setNavOpen(false);
+  }, [location.pathname]);
+
+  // Prevent background scroll when mobile navigation is open
+  useEffect(() => {
+    if (navOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [navOpen]);
+
   return (
     <div className="shell">
       <button
@@ -76,17 +93,28 @@ export default function AppShell({ children }) {
         aria-hidden={!navOpen}
         data-open={navOpen}
         onClick={() => setNavOpen(false)}
+        aria-label="Close navigation overlay"
       />
 
       <aside className="shell__sidebar" data-open={navOpen}>
         <div className="shell__brand">
-          <span className="shell__brand-mark">
-            <img src="/assets/pf-logo-icon.png" alt="Prashanth Fertility" width="26" height="26" />
-          </span>
-          <span className="shell__brand-text">
-            Prashanth Fertility
-            <small>Events Admin</small>
-          </span>
+          <div className="shell__brand-identity">
+            <span className="shell__brand-mark">
+              <img src="/assets/pf-logo-icon.png" alt="Prashanth Fertility" width="26" height="26" />
+            </span>
+            <span className="shell__brand-text">
+              Prashanth Fertility
+              <small>Events Admin</small>
+            </span>
+          </div>
+          <button
+            type="button"
+            className="shell__sidebar-close"
+            onClick={() => setNavOpen(false)}
+            aria-label="Close navigation menu"
+          >
+            <IconClose />
+          </button>
         </div>
 
         <nav className="shell__nav">
@@ -131,7 +159,7 @@ export default function AppShell({ children }) {
               <span className="shell__user-name">{user?.name}</span>
               <span className="shell__user-role">{user?.role?.replace('_', ' ')}</span>
             </div>
-            <div className="shell__user-avatar" aria-hidden="true">
+            <div className="shell__user-avatar" aria-hidden="true" title={user?.name}>
               {user?.name?.[0]?.toUpperCase() || '?'}
             </div>
             <button type="button" className="shell__signout" onClick={signOut}>
@@ -367,3 +395,20 @@ function IconSend() {
     </svg>
   );
 }
+
+function IconClose() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
