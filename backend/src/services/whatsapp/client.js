@@ -71,24 +71,70 @@ async function postMetaMessage(to, message) {
 
 /**
  * Sends an approved template message via WATI.
+ * Routes to the configured channel (e.g. PRFC - Blast: 919940030935) via WATI v3,
+ * falling back gracefully to v1.
  */
 async function postWatiTemplate(to, name, bodyParams = []) {
   const phone = normalizePhone(to);
   const baseUrl = env.watiBaseUrl.replace(/\/$/, '');
-  const url = `${baseUrl}/api/v1/sendTemplateMessage?whatsappNumber=${phone}`;
+  const channelNumber = env.watiChannelNumber ? normalizePhone(env.watiChannelNumber) : '919940030935';
 
+  const customParams = bodyParams.map((item, idx) => {
+    if (typeof item === 'object' && item !== null && 'name' in item) {
+      return { name: String(item.name), value: String(item.value ?? '') };
+    }
+    return {
+      name: String(idx + 1),
+      value: String(item ?? ''),
+    };
+  });
+
+  // Strategy 1: WATI v3 API (supports explicit channel routing: PRFC - Blast)
+  try {
+    const v3Url = 'https://live-mt-server.wati.io/api/ext/v3/messageTemplates/send';
+    const v3Payload = {
+      template_name: name,
+      broadcast_name: 'CIIM_Ticket_Dispatch',
+      channel_number: channelNumber,
+      recipients: [
+        {
+          phone_number: phone,
+          custom_params: customParams,
+        },
+      ],
+    };
+
+    const response = await fetch(v3Url, {
+      method: 'POST',
+      headers: {
+        Authorization: getWatiToken(),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(v3Payload),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+
+    const body = await response.json().catch(() => ({}));
+
+    if (response.ok && body.success !== false) {
+      const recipient = body.recipients?.[0];
+      const messageId = recipient?.local_message_id || body.broadcast_id || 'wati_v3_sent';
+      return { sent: true, messageId, broadcastId: body.broadcast_id };
+    }
+
+    const v3Error = body.message || (Array.isArray(body.errors) ? body.errors.join('; ') : '') || `HTTP ${response.status}`;
+    logger.warn(`WATI v3 send failed (${response.status}): ${v3Error}, trying v1 fallback...`);
+  } catch (err) {
+    logger.warn('WATI v3 send threw, falling back to v1:', err);
+  }
+
+  // Strategy 2: Fallback to WATI v1 API
+  const url = `${baseUrl}/api/v1/sendTemplateMessage?whatsappNumber=${phone}`;
   const payload = {
     template_name: name,
     broadcast_name: 'CIIM_Ticket_Dispatch',
-    parameters: bodyParams.map((item, idx) => {
-      if (typeof item === 'object' && item !== null && 'name' in item) {
-        return { name: String(item.name), value: String(item.value ?? '') };
-      }
-      return {
-        name: String(idx + 1),
-        value: String(item ?? ''),
-      };
-    }),
+    channel_number: channelNumber,
+    parameters: customParams,
   };
 
   try {
