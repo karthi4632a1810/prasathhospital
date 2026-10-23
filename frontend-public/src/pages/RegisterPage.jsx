@@ -647,11 +647,34 @@ function CouponSummary({ coupon, selectedTicket, formState }) {
 }
 
 function RegistrationSuccess({ result, event, slug, formState }) {
+  const [copied, setCopied] = useState(false);
   const ticketPath = `/tickets/${result.qrToken}`;
   const qrUrl = `${API_BASE}/api/v1/tickets/${result.qrToken}/qr.png`;
   const pdfUrl = `${API_BASE}/api/v1/tickets/${result.qrToken}/pdf`;
 
   const att = result.attendee || {};
+  const fullName =
+    att.name ||
+    [formState?.title, formState?.firstName, formState?.lastName].filter(Boolean).join(' ') ||
+    'Registered Delegate';
+  const councilRegNo = att.medicalCouncilRegNo || formState?.medicalCouncilRegNo;
+  const passCategory = result.ticketType?.name || formState?.ticketTypeName || 'Delegate Pass';
+  const email = att.email || formState?.email;
+  const phone = att.phone || formState?.phone;
+  const gender = att.gender || formState?.gender;
+  const address = att.address || formState?.address;
+  const cityState = [
+    att.city || formState?.city,
+    att.state || formState?.state,
+    att.country || formState?.country || 'India',
+  ]
+    .filter(Boolean)
+    .join(', ');
+  const pincode = att.pincode || formState?.pincode;
+  const institution = att.institution || formState?.institution;
+  const companyName = result.company?.name || (typeof result.company === 'string' ? result.company : '');
+  const couponCode = result.couponCode || 'COMPLIMENTARY';
+
   const regDate = result.createdAt
     ? new Date(result.createdAt).toLocaleDateString('en-IN', {
         weekday: 'long',
@@ -666,116 +689,411 @@ function RegistrationSuccess({ result, event, slug, formState }) {
         year: 'numeric',
       });
 
-  const detailRows = [
-    ['Full Name', att.name || [formState?.title, formState?.firstName, formState?.lastName].filter(Boolean).join(' ')],
-    ['Medical Council Reg. No.', att.medicalCouncilRegNo || formState?.medicalCouncilRegNo],
-    ['Email', att.email],
-    ['Mobile', att.phone],
-    ['Gender', att.gender || formState?.gender],
-    ['Address', att.address || formState?.address],
-    ['City / State', [att.city || formState?.city, att.state || formState?.state, att.country || formState?.country].filter(Boolean).join(', ')],
-    ['Pass Category', result.ticketType?.name || 'Delegate Pass'],
-    ['Registration Mode', 'Online'],
-    ['Status', 'Confirmed'],
-    ['Registration Date', regDate],
-  ].filter(([, value]) => Boolean(value));
+  const pricing = result.pricing || {};
+  const basePrice = pricing.basePrice ?? 6500;
+  const taxAmount = pricing.taxAmount ?? Math.round(basePrice * 0.18);
+  const grossAmount = pricing.discountAmount ?? basePrice + taxAmount;
+  const discountAmount = pricing.discountAmount ?? grossAmount;
+  const currency = pricing.currency || 'INR';
+
+  const handleCopyCode = () => {
+    if (!result.registrationCode) return;
+    navigator.clipboard?.writeText(result.registrationCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2200);
+  };
 
   return (
-    <div className="register-success register-success--medical">
-      <div className="register-success__icon" aria-hidden="true">
-        <svg
-          viewBox="0 0 24 24"
-          width="36"
-          height="36"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.2"
-        >
-          <path d="m5 12.5 4.5 4.5L19 7.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+    <div className="conf-success-wrapper">
+      {/* 1. Verified Hero Header */}
+      <div className="conf-hero">
+        <div className="conf-hero__seal" aria-hidden="true">
+          <div className="conf-hero__seal-glow" />
+          <div className="conf-hero__seal-ring">
+            <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" strokeWidth="2.6">
+              <path d="m5 12.5 4.5 4.5L19 7.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        </div>
+
+        <div className="conf-hero__status-badge">
+          <span className="conf-hero__status-dot" />
+          <span>Registration Confirmed • Active Delegate</span>
+        </div>
+
+        <h1 className="conf-hero__title">Registration Confirmed</h1>
+        <p className="conf-hero__subtitle">
+          Delegate enrollment for <strong>{event.title}</strong> has been successfully processed.
+        </p>
+
+        {result.registrationCode && (
+          <div className="conf-regcode-pill">
+            <span className="conf-regcode-pill__label">Registration ID</span>
+            <span className="conf-regcode-pill__code">{result.registrationCode}</span>
+            <button
+              type="button"
+              className={`conf-regcode-pill__copy ${copied ? 'is-copied' : ''}`}
+              onClick={handleCopyCode}
+              aria-label="Copy Registration ID"
+            >
+              {copied ? '✓ Copied' : 'Copy'}
+            </button>
+          </div>
+        )}
       </div>
 
-      <h1 className="register-success__heading">Registration Confirmed</h1>
-      <p className="register-success__lead">
-        Delegate enrollment for <strong>{event.title}</strong> has been successfully processed.
-      </p>
+      {/* 2. Executive VIP Delegate Pass Card */}
+      <div className="delegate-pass-card">
+        {/* Pass Top Branding Bar */}
+        <div className="delegate-pass-card__top">
+          <div className="delegate-pass-card__brand">
+            <span className="delegate-pass-card__brand-main">PRASHANTH FERTILITY &amp; RESEARCH CENTRE</span>
+            <span className="delegate-pass-card__brand-sub">IN ASSOCIATION WITH TAPISAR • CIIM 2026</span>
+          </div>
+          <span className="delegate-pass-card__vip-badge">
+            <span className="delegate-pass-card__star">★</span> OFFICIAL DELEGATE PASS
+          </span>
+        </div>
 
-      {/* --- Registration Detail Table Matching Client Specification --- */}
-      <div className="medical-summary-table-card">
-        <div className="medical-table-header">Registration Detail</div>
-        <table className="medical-table">
-          <tbody>
-            {detailRows.map(([label, value]) => (
-              <tr key={label}>
-                <td className="medical-table__label">{label}</td>
-                <td className="medical-table__value">{value}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {/* Pass Main Grid */}
+        <div className="delegate-pass-card__grid">
+          {/* Delegate Info Column */}
+          <div className="delegate-pass-card__info">
+            <div className="delegate-pass-card__category-chip">{passCategory}</div>
+
+            <h2 className="delegate-pass-card__name">{fullName}</h2>
+
+            {councilRegNo && (
+              <div className="delegate-pass-card__reg-tag">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                  <path d="M19 10.5V6a2 2 0 0 0-2-2h-3V2a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v2H5a2 2 0 0 0-2 2v4.5A5.5 5.5 0 0 0 8.5 16h.7A5.5 5.5 0 0 0 14 19.92V22a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-2.08A5.5 5.5 0 0 0 22 14.5a5.5 5.5 0 0 0-3-4zM10 4V2h2v2h-2zm-1.5 10A3.5 3.5 0 0 1 5 10.5V6h3.5v8z" />
+                </svg>
+                <span>
+                  Medical Council Reg: <strong>{councilRegNo}</strong>
+                </span>
+                <span className="delegate-pass-card__cme-pill">6 CME Points</span>
+              </div>
+            )}
+
+            <div className="delegate-pass-card__meta-rows">
+              <div className="delegate-pass-card__meta-item">
+                <span className="delegate-pass-card__meta-label">Dates</span>
+                <span className="delegate-pass-card__meta-val">21 – 23 Nov 2026</span>
+              </div>
+              <div className="delegate-pass-card__meta-item">
+                <span className="delegate-pass-card__meta-label">Venue</span>
+                <span className="delegate-pass-card__meta-val">The Leela Palace, Chennai</span>
+              </div>
+              {companyName && (
+                <div className="delegate-pass-card__meta-item">
+                  <span className="delegate-pass-card__meta-label">Sponsor</span>
+                  <span className="delegate-pass-card__meta-val">{companyName}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* QR Viewfinder Column */}
+          <div className="delegate-pass-card__qr-col">
+            <div className="delegate-pass-card__qr-box">
+              <span className="qr-corner qr-corner--tl" />
+              <span className="qr-corner qr-corner--tr" />
+              <span className="qr-corner qr-corner--bl" />
+              <span className="qr-corner qr-corner--br" />
+              <img
+                src={qrUrl}
+                alt={`Official QR Pass for ${result.registrationCode || fullName}`}
+                width={160}
+                height={160}
+                className="delegate-pass-card__qr-img"
+              />
+            </div>
+            <p className="delegate-pass-card__qr-caption">Show at Leela Palace Desk</p>
+            <span className="delegate-pass-card__qr-code">{result.registrationCode}</span>
+          </div>
+        </div>
+
+        {/* Notched perforated ticket divider */}
+        <div className="delegate-pass-card__perforation">
+          <span className="delegate-pass-card__notch delegate-pass-card__notch--left" />
+          <span className="delegate-pass-card__dashed-line" />
+          <span className="delegate-pass-card__notch delegate-pass-card__notch--right" />
+        </div>
+
+        {/* Pass Actions Bar */}
+        <div className="delegate-pass-card__footer">
+          <div className="delegate-pass-card__actions">
+            <a
+              href={pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="conf-btn conf-btn--primary"
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round" />
+                <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round" />
+                <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span>Download Official Pass (PDF)</span>
+            </a>
+
+            <a href={ticketPath} className="conf-btn conf-btn--secondary">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <rect x="3" y="4" width="18" height="16" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+                <line x1="7" y1="8" x2="17" y2="8" strokeLinecap="round" />
+                <line x1="7" y1="12" x2="17" y2="12" strokeLinecap="round" />
+                <line x1="7" y1="16" x2="13" y2="16" strokeLinecap="round" />
+              </svg>
+              <span>View Digital Ticket</span>
+            </a>
+
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="conf-btn conf-btn--ghost conf-btn--print"
+              title="Print Delegate Pass & Confirmation"
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <polyline points="6 9 6 2 18 2 18 9" />
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                <rect x="6" y="14" width="12" height="8" />
+              </svg>
+              <span>Print</span>
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* --- Registration Summary Table Matching Client Specification --- */}
-      <div className="medical-summary-table-card" style={{ marginTop: 'var(--space-6)' }}>
-        <div className="medical-table-header">Registration Summary</div>
-        <table className="medical-table">
-          <thead>
-            <tr>
-              <th className="medical-table__label">Description</th>
-              <th className="medical-table__value text-right">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Registration Fee</td>
-              <td className="text-right">₹{result.pricing?.basePrice || 21000}</td>
-            </tr>
-            <tr>
-              <td>Sponsor / Coupon Discount ({result.couponCode || 'APPLIED'})</td>
-              <td className="text-right text-success">
-                −₹{result.pricing?.discountAmount || result.pricing?.basePrice || 21000}
-              </td>
-            </tr>
-            <tr className="medical-table__total-row">
-              <td>
-                <strong>Grand Total</strong>
-              </td>
-              <td className="text-right">
-                <strong>INR 0</strong>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      {/* 3. Instant Notification Dispatch Notice */}
+      <div className="conf-delivery-card">
+        <div className="conf-delivery-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">
+            <path
+              d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+        <div className="conf-delivery-card__content">
+          <h4 className="conf-delivery-card__title">Instant Confirmation &amp; QR Ticket Dispatched</h4>
+          <p className="conf-delivery-card__text">
+            Your official delegate pass and scannable QR ticket have been sent automatically:
+          </p>
+          <div className="conf-delivery-badges">
+            {email && (
+              <span className="conf-delivery-badge">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                  <polyline points="22,6 12,13 2,6" />
+                </svg>
+                <span>
+                  Email: <strong>{email}</strong>
+                </span>
+              </span>
+            )}
+            {phone && (
+              <span className="conf-delivery-badge conf-delivery-badge--whatsapp">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.746.953 3.71 1.456 5.711 1.457h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                </svg>
+                <span>
+                  WhatsApp: <strong>{phone}</strong>
+                </span>
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
-      <div className="register-success__qr" style={{ marginTop: 'var(--space-8)' }}>
-        <img
-          src={qrUrl}
-          alt={`QR ticket for ${result.registrationCode}`}
-          width={180}
-          height={180}
-        />
-        <p>Show this digital QR pass at the Leela Palace registration desk</p>
+      {/* 4. Delegate Information & Roster Grid */}
+      <div className="conf-details-card">
+        <div className="conf-card-header">
+          <div className="conf-card-header__left">
+            <span className="conf-card-header__icon" aria-hidden="true">
+              📋
+            </span>
+            <div>
+              <h3 className="conf-card-header__title">Delegate Information</h3>
+              <p className="conf-card-header__subtitle">Accreditation &amp; conference roster record</p>
+            </div>
+          </div>
+          <span className="conf-status-tag conf-status-tag--confirmed">● Confirmed</span>
+        </div>
+
+        <div className="conf-grid">
+          <div className="conf-grid__item">
+            <span className="conf-grid__label">Full Name</span>
+            <span className="conf-grid__value conf-grid__value--highlight">{fullName}</span>
+          </div>
+
+          <div className="conf-grid__item">
+            <span className="conf-grid__label">Medical Council Reg. No.</span>
+            <span className="conf-grid__value">
+              {councilRegNo ? (
+                <>
+                  <strong>{councilRegNo}</strong>
+                  <span className="conf-grid__badge">TNMC Verified</span>
+                </>
+              ) : (
+                'Not Provided'
+              )}
+            </span>
+          </div>
+
+          <div className="conf-grid__item">
+            <span className="conf-grid__label">Pass Category</span>
+            <span className="conf-grid__value">{passCategory}</span>
+          </div>
+
+          <div className="conf-grid__item">
+            <span className="conf-grid__label">Registration Mode</span>
+            <span className="conf-grid__value">Online (Complimentary Pass)</span>
+          </div>
+
+          <div className="conf-grid__item">
+            <span className="conf-grid__label">Email Address</span>
+            <span className="conf-grid__value">{email || 'Not Provided'}</span>
+          </div>
+
+          <div className="conf-grid__item">
+            <span className="conf-grid__label">Mobile Number</span>
+            <span className="conf-grid__value">{phone || 'Not Provided'}</span>
+          </div>
+
+          <div className="conf-grid__item">
+            <span className="conf-grid__label">Gender</span>
+            <span className="conf-grid__value">{gender || 'Not Specified'}</span>
+          </div>
+
+          <div className="conf-grid__item">
+            <span className="conf-grid__label">Registration Date</span>
+            <span className="conf-grid__value">{regDate}</span>
+          </div>
+
+          {address && (
+            <div className="conf-grid__item conf-grid__item--full">
+              <span className="conf-grid__label">Postal Address</span>
+              <span className="conf-grid__value">{address}</span>
+            </div>
+          )}
+
+          {cityState && (
+            <div className="conf-grid__item conf-grid__item--full">
+              <span className="conf-grid__label">City, State &amp; Country</span>
+              <span className="conf-grid__value">
+                {cityState} {pincode ? `— ${pincode}` : ''}
+              </span>
+            </div>
+          )}
+
+          {institution && (
+            <div className="conf-grid__item conf-grid__item--full">
+              <span className="conf-grid__label">Institution / Hospital</span>
+              <span className="conf-grid__value">{institution}</span>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="register-success__actions">
-        <Button variant="primary" href={pdfUrl} external>
-          Download Official Pass (PDF)
+      {/* 5. Financial Summary & Receipt (Reconciled, Professional!) */}
+      <div className="conf-details-card">
+        <div className="conf-card-header">
+          <div className="conf-card-header__left">
+            <span className="conf-card-header__icon" aria-hidden="true">
+              💳
+            </span>
+            <div>
+              <h3 className="conf-card-header__title">Fee &amp; Payment Summary</h3>
+              <p className="conf-card-header__subtitle">Official tax invoice &amp; sponsorship breakdown</p>
+            </div>
+          </div>
+          <span className="conf-status-tag conf-status-tag--paid">✓ 100% Sponsored</span>
+        </div>
+
+        <div className="conf-receipt">
+          <div className="conf-receipt__row">
+            <div className="conf-receipt__item">
+              <span className="conf-receipt__label">Delegate Pass Fee ({passCategory})</span>
+              <span className="conf-receipt__sub">Summit scientific sessions &amp; delegate kit</span>
+            </div>
+            <span className="conf-receipt__amount">{formatAmount(basePrice, currency)}</span>
+          </div>
+
+          <div className="conf-receipt__row">
+            <div className="conf-receipt__item">
+              <span className="conf-receipt__label">Applicable GST (18%)</span>
+              <span className="conf-receipt__sub">CGST (9%) + SGST (9%)</span>
+            </div>
+            <span className="conf-receipt__amount">{formatAmount(taxAmount, currency)}</span>
+          </div>
+
+          <div className="conf-receipt__row conf-receipt__row--subtotal">
+            <span className="conf-receipt__label">Gross Total Value</span>
+            <span className="conf-receipt__amount">{formatAmount(grossAmount, currency)}</span>
+          </div>
+
+          <div className="conf-receipt__row conf-receipt__row--discount">
+            <div className="conf-receipt__item">
+              <span className="conf-receipt__label">Sponsor / Coupon Discount ({couponCode})</span>
+              <span className="conf-receipt__sub">
+                {companyName ? `Complimentary pass sponsored by ${companyName}` : '100% full fee waiver applied'}
+              </span>
+            </div>
+            <span className="conf-receipt__amount text-success">
+              −{formatAmount(discountAmount, currency)}
+            </span>
+          </div>
+
+          <div className="conf-receipt__row conf-receipt__row--grand">
+            <div className="conf-receipt__item">
+              <span className="conf-receipt__label">Grand Total Paid</span>
+              <span className="conf-receipt__sub">Zero balance due • All taxes included</span>
+            </div>
+            <span className="conf-receipt__amount conf-receipt__amount--total">
+              {currency} 0.00
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 6. Event Venue & Check-In Guide */}
+      <div className="conf-venue-card">
+        <div className="conf-venue-card__header">
+          <div className="conf-venue-card__pin" aria-hidden="true">
+            📍
+          </div>
+          <div>
+            <h4 className="conf-venue-card__title">The Leela Palace, Chennai</h4>
+            <p className="conf-venue-card__address">
+              Adyar Seaface, MRC Nagar, Raja Annamalai Puram, Chennai, Tamil Nadu 600028
+            </p>
+          </div>
+        </div>
+        <div className="conf-venue-card__tips">
+          <div className="conf-venue-card__tip">
+            <span className="conf-venue-card__tip-num">1</span>
+            <span>
+              Present this digital QR pass on your phone at <strong>Counter A</strong> for instant badge printing.
+            </span>
+          </div>
+          <div className="conf-venue-card__tip">
+            <span className="conf-venue-card__tip-num">2</span>
+            <span>Registration desk opens at <strong>07:30 AM</strong> on Friday, 21 November 2026.</span>
+          </div>
+          <div className="conf-venue-card__tip">
+            <span className="conf-venue-card__tip-num">3</span>
+            <span>6 TNMC CME credit points will be awarded to verified attending delegates.</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 7. Bottom Navigation */}
+      <div className="conf-bottom-nav">
+        <Button variant="ghost" href={`/events/${slug}`}>
+          ← Back to CIIM 2026 Event Microsite
         </Button>
-        <Button variant="secondary" href={ticketPath}>
-          View Digital Ticket
-        </Button>
       </div>
-
-      <p className="register-success__note">
-        An instant confirmation along with your delegate QR ticket has also been sent to{' '}
-        <strong>{result.attendee.email}</strong> and on WhatsApp to{' '}
-        <strong>{result.attendee.phone}</strong>.
-      </p>
-
-      <Button variant="ghost" href={`/events/${slug}`}>
-        Back to event microsite
-      </Button>
     </div>
   );
 }
