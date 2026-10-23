@@ -28,7 +28,7 @@ function cleanDoctorName(name) {
  *   - Attendee pass & registration ID card
  *   - Official Delegate Pass box with inline scannable QR (cid:ticket-qr)
  *   - Direct Digital Pass CTA button
- *   - PDF Ticket pass attachment & scientific brochure
+ *   - PDF Ticket pass attachment
  */
 async function sendTicketEmail({ event, ticketType, registration, companyName }) {
   const ticketUrl = ticketUrlFor(registration);
@@ -313,7 +313,7 @@ async function sendTicketEmail({ event, ticketType, registration, companyName })
     '',
     `Open Digital Pass & Schedule: ${ticketUrl}`,
     '',
-    'Your official PDF ticket pass and scientific brochure are attached.',
+    'Your official PDF ticket pass is attached.',
     '',
     'Warm regards,',
     'Team CIIM 2026',
@@ -322,38 +322,11 @@ async function sendTicketEmail({ event, ticketType, registration, companyName })
     .filter((line) => line !== null)
     .join('\n');
 
-  const fs = require('fs');
-  const path = require('path');
+  // Only attach the delegate ticket pass PDF (plus inline QR for email body display)
   const attachments = [
     { filename: `${registration.registrationCode}.pdf`, content: pdf, contentType: 'application/pdf' },
     { filename: 'ticket-qr.png', content: qr, contentType: 'image/png', cid: 'ticket-qr' },
   ];
-
-  // Attach official brochure if available
-  const brochurePath = path.join(__dirname, '../../../assets/CIIM_2026_Brochure.pdf');
-  if (fs.existsSync(brochurePath)) {
-    attachments.push({
-      filename: 'CIIM_2026_Scientific_Brochure.pdf',
-      path: brochurePath,
-      contentType: 'application/pdf',
-    });
-  }
-
-  // Attach tele-robotic link creative if available
-  const mapCandidates = [
-    path.join(__dirname, '../../../assets/Chennai_to_Apex_Hospital_Moradabad_Tele-Robotic_Link.pdf'),
-    path.join(__dirname, '../../../assets/Chennai_to_Apex_Hospital_Moradabad_Tele-Robotic_Link.png'),
-    path.join(__dirname, '../../../../temp/Chennai_to_Apex_Hospital_Moradabad_Tele-Robotic_Link.png'),
-  ];
-  for (const candidate of mapCandidates) {
-    if (fs.existsSync(candidate)) {
-      attachments.push({
-        filename: 'Chennai_to_Apex_Hospital_Moradabad_Tele-Robotic_Link' + path.extname(candidate),
-        path: candidate,
-      });
-      break;
-    }
-  }
 
   return sendMail({
     to: registration.attendee.email,
