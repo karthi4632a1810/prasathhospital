@@ -181,6 +181,7 @@ const sendTestEmail = asyncHandler(async (req, res) => {
     to,
     name = 'Dr. Karthikeyan',
     ticketLink = 'https://ciim.prashanthfertility.com/tickets/CIIM-TEST-KARTHIKEYAN',
+    qrImageUrl,
     subject,
   } = req.body;
 
@@ -191,6 +192,7 @@ const sendTestEmail = asyncHandler(async (req, res) => {
   const emailData = buildCiimInviteEmail({
     name,
     ticketLink: ticketLink ? ticketLink.trim() : undefined,
+    qrImageUrl: qrImageUrl ? qrImageUrl.trim() : undefined,
   });
 
   const finalSubject = subject && subject.trim() ? subject.trim() : emailData.subject;
@@ -220,11 +222,13 @@ const previewEmail = asyncHandler(async (req, res) => {
   const {
     name = 'Dr. Karthikeyan',
     ticketLink = 'https://ciim.prashanthfertility.com/tickets/CIIM-TEST-KARTHIKEYAN',
+    qrImageUrl,
   } = req.body;
 
   const emailData = buildCiimInviteEmail({
     name,
     ticketLink: ticketLink ? ticketLink.trim() : undefined,
+    qrImageUrl: qrImageUrl ? qrImageUrl.trim() : undefined,
   });
 
   return sendSuccess(res, {

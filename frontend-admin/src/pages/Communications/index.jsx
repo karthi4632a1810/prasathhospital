@@ -76,6 +76,8 @@ export default function Communications() {
   const [emailSubject, setEmailSubject] = useState(
     "You're In! Welcome to CIIM 2026 | A New Era in Infertility Care"
   );
+  const [emailQrType, setEmailQrType] = useState('qr_gold');
+  const [emailCustomQrUrl, setEmailCustomQrUrl] = useState('');
   const [emailSending, setEmailSending] = useState(false);
   const [emailResult, setEmailResult] = useState(null);
   const [emailError, setEmailError] = useState('');
@@ -131,12 +133,20 @@ export default function Communications() {
     return '';
   }, [waExtraMode, waCustomExtra]);
 
+  // Compute final Email QR Code image URL
+  const selectedEmailQrUrl = useMemo(() => {
+    if (emailQrType === 'custom') return emailCustomQrUrl;
+    const found = DEFAULT_IMAGE_PRESETS.find((p) => p.id === emailQrType);
+    return found ? found.url : DEFAULT_IMAGE_PRESETS[0].url;
+  }, [emailQrType, emailCustomQrUrl]);
+
   // Fetch / update email preview
   useEffect(() => {
     communicationsApi
       .previewEmail({
         name: emailName,
         ticketLink: emailTicketLink,
+        qrImageUrl: selectedEmailQrUrl,
       })
       .then((res) => {
         if (res?.data?.html) {
@@ -144,7 +154,7 @@ export default function Communications() {
         }
       })
       .catch(() => {});
-  }, [emailName, emailTicketLink]);
+  }, [emailName, emailTicketLink, selectedEmailQrUrl]);
 
   // Send WhatsApp Test Message
   const handleSendWhatsApp = async (e) => {
@@ -182,6 +192,7 @@ export default function Communications() {
         to: emailTo,
         name: emailName,
         ticketLink: emailTicketLink,
+        qrImageUrl: selectedEmailQrUrl,
         subject: emailSubject,
       });
       setEmailResult(res.data || res);
@@ -575,6 +586,47 @@ export default function Communications() {
                   onChange={(e) => setEmailName(e.target.value)}
                   required
                 />
+              </div>
+
+              {/* Embed QR Code Preset Selector */}
+              <div className="comm-form-group">
+                <label className="comm-form-label">
+                  Embed QR Code on Email Pass Card
+                </label>
+                <div className="comm-preset-grid">
+                  {DEFAULT_IMAGE_PRESETS.filter((p) => p.type === 'qr').map((p) => (
+                    <div
+                      key={p.id}
+                      className={`comm-preset-card ${emailQrType === p.id ? 'is-selected' : ''}`}
+                      onClick={() => setEmailQrType(p.id)}
+                    >
+                      <img src={p.url} alt={p.label} className="comm-preset-thumb" />
+                      <span className="comm-preset-label">{p.label}</span>
+                    </div>
+                  ))}
+                  <div
+                    className={`comm-preset-card ${emailQrType === 'custom' ? 'is-selected' : ''}`}
+                    onClick={() => setEmailQrType('custom')}
+                  >
+                    <div className="comm-preset-thumb" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      🌐
+                    </div>
+                    <span className="comm-preset-label">Custom URL</span>
+                  </div>
+                </div>
+
+                {emailQrType === 'custom' && (
+                  <div style={{ marginTop: '10px' }}>
+                    <input
+                      type="url"
+                      className="comm-input"
+                      placeholder="https://example.com/qr.png"
+                      value={emailCustomQrUrl}
+                      onChange={(e) => setEmailCustomQrUrl(e.target.value)}
+                      required
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Ticket Link */}

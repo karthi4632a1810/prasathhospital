@@ -13,6 +13,7 @@
 function buildCiimInviteEmail({
   name = 'Delegate',
   ticketLink = 'https://ciim.prashanthfertility.com',
+  qrImageUrl = 'https://raw.githubusercontent.com/karthi4632a1810/prasathhospital/main/backend/src/assets/option1_royal_gold_verified.png',
   eventTitle = 'CIIM 2026',
 } = {}) {
   const cleanName = String(name || '').replace(/^Dr\.\s*/i, '').trim() || 'Delegate';
@@ -150,30 +151,65 @@ function buildCiimInviteEmail({
                 </tr>
               </table>
 
-              <!-- Pass & Ticket CTA Button -->
-              ${
-                ticketLink
-                  ? `
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 24px;">
+              <!-- Official Delegate Pass & QR Code Card -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 30px; background: #ffffff; border: 2px dashed #f2c7d9; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(56, 27, 78, 0.04);">
                 <tr>
-                  <td align="center">
-                    <a href="${ticketLink}" target="_blank" style="display: inline-block; padding: 16px 36px; background: linear-gradient(135deg, #eb3f67 0%, #c2185b 100%); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 700; border-radius: 999px; box-shadow: 0 6px 20px rgba(235, 63, 103, 0.35); letter-spacing: 0.3px;">
-                      🎟️ View Your Delegate Pass &amp; QR Code
-                    </a>
-                  </td>
-                </tr>
-                <tr>
-                  <td align="center" style="padding-top: 12px;">
-                    <p style="margin: 0; font-size: 12px; color: #7a6e78;">
-                      Or access your pass directly: <br>
-                      <a href="${ticketLink}" target="_blank" style="color: #eb3f67; word-break: break-all; font-weight: 600;">${ticketLink}</a>
+                  <td style="padding: 26px 20px; text-align: center;">
+                    <span style="display: inline-block; padding: 4px 14px; background: #fff0f5; border: 1px solid #f2c7d9; border-radius: 999px; font-size: 11px; font-weight: 700; color: #821c56; text-transform: uppercase; letter-spacing: 1px;">
+                      Official Delegate Pass &amp; Entry QR
+                    </span>
+
+                    <h3 style="margin: 12px 0 4px 0; font-size: 18px; font-weight: 700; color: #381b4e;">
+                      ${displayName}
+                    </h3>
+                    <p style="margin: 0 0 16px 0; font-size: 12px; color: #7a6e78;">
+                      Delegate Registration Confirmed • The Leela Palace, Chennai
                     </p>
+
+                    <!-- QR Code Frame -->
+                    ${
+                      qrImageUrl
+                        ? `
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 0 auto 16px auto;">
+                      <tr>
+                        <td align="center" style="background: #ffffff; padding: 12px; border-radius: 14px; border: 1px solid #ebdbe3; box-shadow: 0 4px 16px rgba(56, 27, 78, 0.08);">
+                          <img src="${qrImageUrl}" alt="Delegate QR Entry Code" width="180" height="180" style="display: block; width: 180px; height: 180px; object-fit: contain; border-radius: 8px;" />
+                        </td>
+                      </tr>
+                    </table>
+                    <p style="margin: 0 0 18px 0; font-size: 12px; font-weight: 600; color: #821c56;">
+                      📲 Present this QR at the venue check-in desk for fast-track badge issuance
+                    </p>
+                    `
+                        : ''
+                    }
+
+                    <!-- Pass CTA Button -->
+                    ${
+                      ticketLink
+                        ? `
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 0 auto;">
+                      <tr>
+                        <td align="center">
+                          <a href="${ticketLink}" target="_blank" style="display: inline-block; padding: 14px 34px; background: linear-gradient(135deg, #eb3f67 0%, #c2185b 100%); color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 700; border-radius: 999px; box-shadow: 0 6px 18px rgba(235, 63, 103, 0.35); letter-spacing: 0.3px;">
+                            🎟️ Open Digital Pass &amp; Schedule
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="center" style="padding-top: 10px;">
+                          <p style="margin: 0; font-size: 11px; color: #7a6e78;">
+                            Direct pass link: <a href="${ticketLink}" target="_blank" style="color: #eb3f67; word-break: break-all; font-weight: 600;">${ticketLink}</a>
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                    `
+                        : ''
+                    }
                   </td>
                 </tr>
               </table>
-              `
-                  : ''
-              }
 
               <!-- Closing -->
               <p style="margin: 0 0 14px 0; font-size: 14px; line-height: 1.6; color: #3d3040;">
