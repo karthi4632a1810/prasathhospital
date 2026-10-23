@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# CIIM 2026 — VPS Deployment & Update Script
+# CIIM 2026 — VPS Deployment & Update Script (pg_student_biomatrix)
 # Run on VPS: bash scripts/deploy-vps.sh
 # =============================================================================
 set -e

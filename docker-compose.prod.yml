@@ -18,7 +18,7 @@ services:
   api:
     build:
       context: ./backend
-    container_name: ciim-api
+    container_name: pg_student_biomatrix_backend
     restart: unless-stopped
     env_file:
       - path: ./backend/.env.production
@@ -66,7 +66,7 @@ services:
       context: ./frontend-public
       args:
         VITE_API_BASE_URL: ''
-    container_name: ciim-web
+    container_name: pg_student_biomatrix_frontend
     restart: unless-stopped
     depends_on:
       api:
@@ -80,7 +80,7 @@ services:
       args:
         VITE_API_BASE_URL: ''
         VITE_PUBLIC_SITE_URL: 'https://ciim.prashanthhospitals.com'
-    container_name: ciim-admin
+    container_name: pg_student_biomatrix_admin
     restart: unless-stopped
     depends_on:
       api:
