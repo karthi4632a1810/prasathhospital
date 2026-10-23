@@ -80,10 +80,15 @@ async function postWatiTemplate(to, name, bodyParams = []) {
   const payload = {
     template_name: name,
     broadcast_name: 'CIIM_Ticket_Dispatch',
-    parameters: bodyParams.map((text, idx) => ({
-      name: String(idx + 1),
-      value: String(text ?? ''),
-    })),
+    parameters: bodyParams.map((item, idx) => {
+      if (typeof item === 'object' && item !== null && 'name' in item) {
+        return { name: String(item.name), value: String(item.value ?? '') };
+      }
+      return {
+        name: String(idx + 1),
+        value: String(item ?? ''),
+      };
+    }),
   };
 
   try {
