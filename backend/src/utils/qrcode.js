@@ -5,11 +5,9 @@ const fs = require('fs');
 const QRCode = require('qrcode');
 const { PNG } = require('pngjs');
 
-// Luxury CIIM Palette: Royal Crimson & Polished Gold
-const THEME_DARK = '#96291F'; // CIIM Deep Crimson
-const THEME_LIGHT = '#FFFFFF';
-const COLOR_CRIMSON = [150, 41, 31, 255]; // #96291F
-const COLOR_GOLD = [212, 175, 55, 255];   // #D4AF37 Polished Metallic Gold
+// Theme Gradient: Deep Royal Plum (#381b4e) to Signature Vibrant Rose (#eb3f67)
+const COLOR_1 = { r: 56, g: 27, b: 78 };   // #381b4e
+const COLOR_2 = { r: 235, g: 63, b: 103 }; // #eb3f67
 const COLOR_WHITE = [255, 255, 255, 255];
 
 let cachedLogo = null;
@@ -29,13 +27,23 @@ function loadLogo() {
 }
 
 /**
- * Generates an ultra-premium standalone Royal Crimson & Gold themed QR code.
- * Features:
- *  - CIIM Crimson data modules (#96291F)
- *  - High-contrast precision finder eyes for 100% camera scanning
- *  - Central circular medallion with polished Gold (#D4AF37) and Crimson hairline bezel rings
- *  - Official Prashanth baby emblem centered inside the medallion
- *  - Error Correction Level H (30% redundancy)
+ * Evaluates the 135-degree diagonal theme gradient at pixel (x, y).
+ */
+function getGradientColor(x, y, width) {
+  const t = Math.max(0, Math.min(1, (x + y) / (2 * width)));
+  const r = Math.round((1 - t) * COLOR_1.r + t * COLOR_2.r);
+  const g = Math.round((1 - t) * COLOR_1.g + t * COLOR_2.g);
+  const b = Math.round((1 - t) * COLOR_1.b + t * COLOR_2.b);
+  return [r, g, b, 255];
+}
+
+/**
+ * Generates an ultra-premium standalone themed QR code with:
+ *  - Smooth 135° diagonal color gradient using the theme's two main colors (#381b4e to #eb3f67)
+ *  - Modern squircle card border-radius with fine hairline gradient rim
+ *  - High-contrast precision finder eyes
+ *  - Circular center medallion with gradient bezel ring and Prashanth baby emblem
+ *  - Error Correction Level H (30% redundancy) for 100% reliable camera scanning
  *
  * @param {string} text - URL or data to encode
  * @param {object} [options]
@@ -44,70 +52,101 @@ function loadLogo() {
  */
 async function generateQrPngBuffer(text, options = {}) {
   const width = options.width || 800;
+  const margin = 4;
 
-  // 1. Generate high-contrast themed QR code with Error Correction Level H
-  const qrBuffer = await QRCode.toBuffer(text, {
-    type: 'png',
-    errorCorrectionLevel: 'H',
-    width,
-    margin: 4,
-    color: {
-      dark: THEME_DARK,
-      light: THEME_LIGHT,
-    },
-  });
+  const qrData = QRCode.create(text, { errorCorrectionLevel: 'H' });
+  const modCount = qrData.modules.size;
+  const totalMods = modCount + margin * 2;
+  const modSize = width / totalMods;
 
-  const logo = loadLogo();
-  if (!logo) {
-    return qrBuffer;
+  const png = new PNG({ width, height: width });
+  png.data.fill(255);
+
+  function setPixel(x, y, color) {
+    if (x < 0 || x >= width || y < 0 || y >= width) return;
+    const idx = (width * y + x) << 2;
+    png.data[idx] = color[0];
+    png.data[idx + 1] = color[1];
+    png.data[idx + 2] = color[2];
+    png.data[idx + 3] = color[3];
   }
 
-  try {
-    const qr = PNG.sync.read(qrBuffer);
+  function isFinder(r, c) {
+    if (r < 7 && c < 7) return true;
+    if (r < 7 && c >= modCount - 7) return true;
+    if (r >= modCount - 7 && c < 7) return true;
+    return false;
+  }
 
-    // Center circular badge: 22% diameter (safely within 30% EC tolerance)
-    const badgeSize = Math.floor(width * 0.22);
-    const badgeRadius = Math.floor(badgeSize / 2);
-    const centerX = Math.floor(width / 2);
-    const centerY = Math.floor(width / 2);
-
-    const goldRingWidth = Math.max(3, Math.floor(width * 0.006));
-    const crimsonRingWidth = Math.max(2, Math.floor(width * 0.003));
-
-    // 2. Draw pristine white medallion disc with double Gold & Crimson bezel
-    for (let y = centerY - badgeRadius - goldRingWidth - crimsonRingWidth - 1; y <= centerY + badgeRadius + goldRingWidth + crimsonRingWidth + 1; y++) {
-      for (let x = centerX - badgeRadius - goldRingWidth - crimsonRingWidth - 1; x <= centerX + badgeRadius + goldRingWidth + crimsonRingWidth + 1; x++) {
-        if (x < 0 || x >= width || y < 0 || y >= width) continue;
-
-        const dist = Math.hypot(x - centerX, y - centerY);
-        const idx = (width * y + x) << 2;
-
-        if (dist <= badgeRadius) {
-          // Pure white background inside circular medallion
-          qr.data[idx] = COLOR_WHITE[0];
-          qr.data[idx + 1] = COLOR_WHITE[1];
-          qr.data[idx + 2] = COLOR_WHITE[2];
-          qr.data[idx + 3] = COLOR_WHITE[3];
-        } else if (dist <= badgeRadius + crimsonRingWidth) {
-          // Fine Crimson inner accent ring
-          qr.data[idx] = COLOR_CRIMSON[0];
-          qr.data[idx + 1] = COLOR_CRIMSON[1];
-          qr.data[idx + 2] = COLOR_CRIMSON[2];
-          qr.data[idx + 3] = COLOR_CRIMSON[3];
-        } else if (dist <= badgeRadius + crimsonRingWidth + goldRingWidth) {
-          // Polished Gold outer bezel ring
-          qr.data[idx] = COLOR_GOLD[0];
-          qr.data[idx + 1] = COLOR_GOLD[1];
-          qr.data[idx + 2] = COLOR_GOLD[2];
-          qr.data[idx + 3] = COLOR_GOLD[3];
+  // 1. Draw data modules in smooth theme gradient
+  for (let r = 0; r < modCount; r++) {
+    for (let c = 0; c < modCount; c++) {
+      if (isFinder(r, c)) continue;
+      if (qrData.modules.get(r, c)) {
+        const sX = Math.round((c + margin) * modSize);
+        const eX = Math.round((c + margin + 1) * modSize);
+        const sY = Math.round((r + margin) * modSize);
+        const eY = Math.round((r + margin + 1) * modSize);
+        for (let y = sY; y < eY; y++) {
+          for (let x = sX; x < eX; x++) {
+            setPixel(x, y, getGradientColor(x, y, width));
+          }
         }
       }
     }
+  }
 
-    // 3. Composite Prashanth baby emblem with smooth alpha blending
-    const targetSize = Math.floor(badgeSize * 0.82);
-    const startX = centerX - Math.floor(targetSize / 2);
-    const startY = centerY - Math.floor(targetSize / 2);
+  // 2. Draw Finders with matching gradient
+  const finders = [
+    { r: 0, c: 0 },
+    { r: 0, c: modCount - 7 },
+    { r: modCount - 7, c: 0 },
+  ];
+
+  for (const f of finders) {
+    for (let fr = 0; fr < 7; fr++) {
+      for (let fc = 0; fc < 7; fc++) {
+        const isOuter = fr === 0 || fr === 6 || fc === 0 || fc === 6;
+        const isPupil = fr >= 2 && fr <= 4 && fc >= 2 && fc <= 4;
+        const sX = Math.round((f.c + fc + margin) * modSize);
+        const eX = Math.round((f.c + fc + margin + 1) * modSize);
+        const sY = Math.round((f.r + fr + margin) * modSize);
+        const eY = Math.round((f.r + fr + margin + 1) * modSize);
+
+        if (isOuter || isPupil) {
+          for (let y = sY; y < eY; y++) {
+            for (let x = sX; x < eX; x++) {
+              setPixel(x, y, getGradientColor(x, y, width));
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 3. Center Medallion with Gradient Bezel Ring
+  const centerX = width / 2;
+  const centerY = width / 2;
+  const badgeRadius = Math.floor(width * 0.11);
+  const ringWidth = Math.max(3, Math.floor(width * 0.006));
+
+  for (let y = centerY - badgeRadius - ringWidth - 1; y <= centerY + badgeRadius + ringWidth + 1; y++) {
+    for (let x = centerX - badgeRadius - ringWidth - 1; x <= centerX + badgeRadius + ringWidth + 1; x++) {
+      const dist = Math.hypot(x - centerX, y - centerY);
+      if (dist <= badgeRadius) {
+        setPixel(x, y, COLOR_WHITE);
+      } else if (dist <= badgeRadius + ringWidth) {
+        setPixel(x, y, getGradientColor(x, y, width));
+      }
+    }
+  }
+
+  // 4. Composite Prashanth baby emblem
+  const logo = loadLogo();
+  if (logo) {
+    const targetSize = Math.floor(badgeRadius * 1.5);
+    const startX = Math.round(centerX - targetSize / 2);
+    const startY = Math.round(centerY - targetSize / 2);
 
     for (let ly = 0; ly < targetSize; ly++) {
       for (let lx = 0; lx < targetSize; lx++) {
@@ -122,18 +161,44 @@ async function generateQrPngBuffer(text, options = {}) {
         const alpha = logo.data[srcIdx + 3] / 255;
         if (alpha > 0.04) {
           const destIdx = (width * destY + destX) << 2;
-          qr.data[destIdx] = Math.round(logo.data[srcIdx] * alpha + 255 * (1 - alpha));
-          qr.data[destIdx + 1] = Math.round(logo.data[srcIdx + 1] * alpha + 255 * (1 - alpha));
-          qr.data[destIdx + 2] = Math.round(logo.data[srcIdx + 2] * alpha + 255 * (1 - alpha));
-          qr.data[destIdx + 3] = 255;
+          png.data[destIdx] = Math.round(logo.data[srcIdx] * alpha + 255 * (1 - alpha));
+          png.data[destIdx + 1] = Math.round(logo.data[srcIdx + 1] * alpha + 255 * (1 - alpha));
+          png.data[destIdx + 2] = Math.round(logo.data[srcIdx + 2] * alpha + 255 * (1 - alpha));
+          png.data[destIdx + 3] = 255;
         }
       }
     }
-
-    return PNG.sync.write(qr);
-  } catch (err) {
-    return qrBuffer;
   }
+
+  // 5. Apply Border Radius to Card Canvas (smooth squircle card with hairline gradient border)
+  const cardRadius = Math.round(width * 0.06); // ~48px on 800px
+  const borderWidth = Math.max(2, Math.round(width * 0.004));
+
+  for (let y = 0; y < width; y++) {
+    for (let x = 0; x < width; x++) {
+      let distCorner = 0;
+      if (x < cardRadius && y < cardRadius) {
+        distCorner = Math.hypot(x - cardRadius, y - cardRadius);
+      } else if (x > width - cardRadius && y < cardRadius) {
+        distCorner = Math.hypot(x - (width - cardRadius), y - cardRadius);
+      } else if (x < cardRadius && y > width - cardRadius) {
+        distCorner = Math.hypot(x - cardRadius, y - (width - cardRadius));
+      } else if (x > width - cardRadius && y > width - cardRadius) {
+        distCorner = Math.hypot(x - (width - cardRadius), y - (width - cardRadius));
+      }
+
+      if (distCorner > cardRadius) {
+        // Outside the card: transparent
+        const idx = (width * y + x) << 2;
+        png.data[idx + 3] = 0;
+      } else if (distCorner > cardRadius - borderWidth) {
+        // Hairline card border in theme gradient
+        setPixel(x, y, getGradientColor(x, y, width));
+      }
+    }
+  }
+
+  return PNG.sync.write(png);
 }
 
 module.exports = { generateQrPngBuffer };
