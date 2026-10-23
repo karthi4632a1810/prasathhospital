@@ -1,15 +1,12 @@
 # =============================================================================
 # NGINX — CIIM 2026 Public Website
 # Host-level reverse proxy → Docker container on port 1008
-#
-# Place at /etc/nginx/sites-available/ciim.prashanthhospitals.com
-# Symlink: ln -s /etc/nginx/sites-available/ciim.prashanthhospitals.com /etc/nginx/sites-enabled/
 # =============================================================================
 
 server {
     listen 80;
     listen [::]:80;
-    server_name ciim.prashanthhospitals.com;
+    server_name ciim.prashanthfertility.com ciim.prashanthhospitals.com;
 
     client_max_body_size 12M;
 

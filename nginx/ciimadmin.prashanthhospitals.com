@@ -1,15 +1,12 @@
 # =============================================================================
 # NGINX — CIIM 2026 Admin Dashboard
 # Host-level reverse proxy → Docker container on port 1009
-#
-# Place at /etc/nginx/sites-available/ciimadmin.prashanthhospitals.com
-# Symlink: ln -s /etc/nginx/sites-available/ciimadmin.prashanthhospitals.com /etc/nginx/sites-enabled/
 # =============================================================================
 
 server {
     listen 80;
     listen [::]:80;
-    server_name ciimadmin.prashanthhospitals.com;
+    server_name ciimadmin.prashanthfertility.com ciimadmin.prashanthhospitals.com;
 
     client_max_body_size 12M;
 
