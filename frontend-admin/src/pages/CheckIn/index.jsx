@@ -56,7 +56,8 @@ export default function CheckIn() {
   const [cameraStatus, setCameraStatus] = useState('idle'); // idle | starting | active | unavailable
   const [retryCount, setRetryCount] = useState(0);
   const [cameras, setCameras] = useState([]);
-  const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
+  const [activeFacing, setActiveFacing] = useState('environment'); // 'environment' (back) | 'user' (front)
+  const [isSwitching, setIsSwitching] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
   const [torchAvailable, setTorchAvailable] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(() => {
@@ -69,6 +70,8 @@ export default function CheckIn() {
   const scannerRef = useRef(null);
   const scannerDivId = 'checkin-camera';
   const busyRef = useRef(false); // guards against camera rapid duplicate frames
+  const isSwitchingRef = useRef(false);
+  const facingRef = useRef('environment');
 
   const toggleSound = () => {
     setSoundEnabled((prev) => {
@@ -179,118 +182,188 @@ export default function CheckIn() {
     [submitScan]
   );
 
-  // Initialize camera scanner
-  useEffect(() => {
-    let cancelled = false;
-    let activeScanner = null;
+  // Safe stop helper that ensures hardware release
+  const stopScannerInstance = useCallback(async () => {
+    if (scannerRef.current) {
+      try {
+        if (scannerRef.current.isScanning) {
+          await scannerRef.current.stop();
+        }
+      } catch (e) {
+        console.warn('[CheckIn] Scanner stop warning:', e);
+      }
+      try {
+        await scannerRef.current.clear();
+      } catch (e) {
+        console.warn('[CheckIn] Scanner clear warning:', e);
+      }
+      scannerRef.current = null;
+    }
+  }, []);
 
-    async function initScanner() {
+  // Safe camera initializer & switcher with mobile hardware cooldown
+  const startScanner = useCallback(
+    async (targetFacing = 'environment') => {
+      if (isSwitchingRef.current) return;
+      isSwitchingRef.current = true;
+      setIsSwitching(true);
+      setCameraStatus('starting');
+      setTorchOn(false);
+      setTorchAvailable(false);
+
       try {
         const { Html5Qrcode } = await import('html5-qrcode');
-        if (cancelled) return;
 
+        // 1. Stop any currently active camera and await completion
+        await stopScannerInstance();
+
+        // 2. Hardware cooldown delay: allows mobile OS camera driver to cleanly release lock
+        await new Promise((resolve) => setTimeout(resolve, 350));
+
+        // 3. Clean up container DOM
         const container = document.getElementById(scannerDivId);
         if (!container) {
-          if (!cancelled) setCameraStatus('unavailable');
+          setCameraStatus('unavailable');
           return;
         }
+        container.innerHTML = '';
 
-        setCameraStatus('starting');
-
-        if (scannerRef.current) {
-          try {
-            if (scannerRef.current.isScanning) {
-              await scannerRef.current.stop();
-            }
-            await scannerRef.current.clear();
-          } catch {
-            // ignore
-          }
-          scannerRef.current = null;
-        }
-
-        const instance = new Html5Qrcode(scannerDivId);
-        scannerRef.current = instance;
-        activeScanner = instance;
-
+        // 4. Query available cameras
         let availableCameras = [];
         try {
           availableCameras = await Html5Qrcode.getCameras();
-          if (!cancelled && availableCameras && availableCameras.length > 0) {
-            setCameras(availableCameras);
+          if (availableCameras && availableCameras.length > 0) {
+            // Sort cameras so back/rear cameras always come first
+            const sorted = [...availableCameras].sort((a, b) => {
+              const aLabel = (a.label || '').toLowerCase();
+              const bLabel = (b.label || '').toLowerCase();
+              const aBack = aLabel.includes('back') || aLabel.includes('rear') || aLabel.includes('environment');
+              const bBack = bLabel.includes('back') || bLabel.includes('rear') || bLabel.includes('environment');
+              if (aBack && !bBack) return -1;
+              if (!aBack && bBack) return 1;
+              return 0;
+            });
+            setCameras(sorted);
+            availableCameras = sorted;
           }
         } catch {
-          // ignore
+          // ignore enumeration error
         }
+
+        const backCam = availableCameras.find((cam) => {
+          const lbl = (cam.label || '').toLowerCase();
+          return lbl.includes('back') || lbl.includes('rear') || lbl.includes('environment');
+        });
+        const frontCam = availableCameras.find((cam) => {
+          const lbl = (cam.label || '').toLowerCase();
+          return lbl.includes('front') || lbl.includes('user') || lbl.includes('selfie') || lbl.includes('facing front');
+        });
+
+        // 5. Create new Html5Qrcode instance
+        const instance = new Html5Qrcode(scannerDivId);
+        scannerRef.current = instance;
 
         const scanConfig = { fps: 12, qrbox: { width: 240, height: 240 } };
         const onDetect = (decodedText) => handleCameraDetect(decodedText);
         const onIgnore = () => {};
 
-        if (availableCameras.length > 0 && currentCameraIndex < availableCameras.length) {
-          await instance.start(availableCameras[currentCameraIndex].id, scanConfig, onDetect, onIgnore);
-        } else {
+        let actualFacing = targetFacing;
+
+        if (targetFacing === 'environment') {
+          // Priority 1: standard W3C { facingMode: 'environment' } (direct back camera on Android Chrome & iOS Safari)
           try {
             await instance.start({ facingMode: 'environment' }, scanConfig, onDetect, onIgnore);
-          } catch {
-            if (cancelled) return;
-            try {
-              await instance.start({ facingMode: 'user' }, scanConfig, onDetect, onIgnore);
-            } catch (userErr) {
-              if (cancelled) return;
-              if (availableCameras.length > 0) {
-                await instance.start(availableCameras[0].id, scanConfig, onDetect, onIgnore);
-              } else {
-                throw userErr;
+            actualFacing = 'environment';
+          } catch (envErr) {
+            console.warn('[CheckIn] Standard environment facingMode failed, trying backCam ID:', envErr);
+            if (backCam) {
+              await instance.start(backCam.id, scanConfig, onDetect, onIgnore);
+              actualFacing = 'environment';
+            } else {
+              // Priority 2: fallback to front camera if no back camera exists (e.g. laptop webcam)
+              try {
+                await instance.start({ facingMode: 'user' }, scanConfig, onDetect, onIgnore);
+                actualFacing = 'user';
+              } catch (userErr) {
+                if (availableCameras.length > 0) {
+                  await instance.start(availableCameras[0].id, scanConfig, onDetect, onIgnore);
+                  actualFacing = 'user';
+                } else {
+                  throw userErr;
+                }
               }
             }
           }
+        } else {
+          // Front camera requested
+          try {
+            await instance.start({ facingMode: 'user' }, scanConfig, onDetect, onIgnore);
+            actualFacing = 'user';
+          } catch (userErr) {
+            console.warn('[CheckIn] Standard user facingMode failed, trying frontCam ID:', userErr);
+            if (frontCam) {
+              await instance.start(frontCam.id, scanConfig, onDetect, onIgnore);
+              actualFacing = 'user';
+            } else if (availableCameras.length > 0) {
+              const target = availableCameras.find((c) => c.id !== backCam?.id) || availableCameras[0];
+              await instance.start(target.id, scanConfig, onDetect, onIgnore);
+              actualFacing = 'user';
+            } else {
+              throw userErr;
+            }
+          }
         }
 
-        if (!cancelled) {
-          setCameraStatus('active');
-          // Check torch capability
-          try {
-            const track = instance.getRunningTrackCameraCapabilities?.();
-            if (track?.torchFeature?.isSupported?.()) {
-              setTorchAvailable(true);
-            }
-          } catch {
+        setActiveFacing(actualFacing);
+        facingRef.current = actualFacing;
+        setCameraStatus('active');
+
+        // Check torch capability (only supported on back camera)
+        try {
+          const track = instance.getRunningTrackCameraCapabilities?.();
+          if (track?.torchFeature?.isSupported?.()) {
+            setTorchAvailable(true);
+          } else {
             setTorchAvailable(false);
           }
+        } catch {
+          setTorchAvailable(false);
         }
       } catch (err) {
-        if (!cancelled) {
-          console.warn('[CheckIn] Camera start failed:', err);
-          setCameraStatus('unavailable');
-        }
+        console.warn('[CheckIn] Camera start failed:', err);
+        setCameraStatus('unavailable');
+      } finally {
+        isSwitchingRef.current = false;
+        setIsSwitching(false);
       }
-    }
+    },
+    [handleCameraDetect, stopScannerInstance]
+  );
 
-    initScanner();
+  // Initialize camera scanner on mount / retry
+  useEffect(() => {
+    startScanner('environment');
 
     return () => {
-      cancelled = true;
-      if (activeScanner) {
-        try {
-          if (activeScanner.isScanning) {
-            activeScanner.stop().then(() => activeScanner.clear()).catch(() => {});
-          } else {
-            activeScanner.clear();
-          }
-        } catch {
-          // ignore
-        }
-      }
+      stopScannerInstance();
     };
-  }, [retryCount, currentCameraIndex, handleCameraDetect]);
+  }, [retryCount, startScanner, stopScannerInstance]);
 
-  const handleSwitchCamera = () => {
-    if (cameras.length > 1) {
-      setCurrentCameraIndex((prev) => (prev + 1) % cameras.length);
-      setTorchOn(false);
-    }
-  };
+  // Flip/Switch between back and front camera
+  const handleSwitchCamera = useCallback(() => {
+    if (isSwitchingRef.current) return;
+    const nextFacing = facingRef.current === 'environment' ? 'user' : 'environment';
+    startScanner(nextFacing);
+  }, [startScanner]);
+
+  // Explicit retry handler
+  const handleRetryCamera = useCallback(
+    (mode = 'environment') => {
+      if (isSwitchingRef.current) return;
+      startScanner(mode);
+    },
+    [startScanner]
+  );
 
   const handleToggleTorch = async () => {
     if (!scannerRef.current) return;
@@ -452,16 +525,27 @@ export default function CheckIn() {
               </svg>
               QR Scanner
             </h3>
-            {cameras.length > 1 && (
+            <div className="checkin-scanner-header-actions">
               <button
                 type="button"
-                className="checkin-quick-btn"
+                className="checkin-flip-btn"
                 onClick={handleSwitchCamera}
-                title="Switch between front/back camera"
+                disabled={isSwitching || cameraStatus === 'starting'}
+                title={activeFacing === 'environment' ? 'Switch to Front Camera' : 'Switch to Back Camera'}
               >
-                🔄 Flip ({currentCameraIndex + 1}/{cameras.length})
+                <span className="checkin-flip-icon">{isSwitching ? '⏳' : '🔄'}</span>
+                <span className="checkin-flip-text">
+                  {isSwitching
+                    ? 'Switching…'
+                    : activeFacing === 'environment'
+                    ? 'Flip to Front'
+                    : 'Flip to Back'}
+                </span>
+                <span className={`checkin-flip-badge checkin-flip-badge--${activeFacing}`}>
+                  {activeFacing === 'environment' ? 'Back' : 'Front'}
+                </span>
               </button>
-            )}
+            </div>
           </div>
 
           <div className="checkin-viewport">
@@ -488,16 +572,26 @@ export default function CheckIn() {
                 <div className="checkin-viewport__icon">📷</div>
                 <h4 className="checkin-viewport__state-title">Camera Unavailable</h4>
                 <p className="checkin-viewport__state-desc">
-                  Camera permission was not granted or device camera is busy. Check browser permissions or use manual code entry below.
+                  Camera permission was not granted or device camera is busy. Tap below to retry or use manual code entry below.
                 </p>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setRetryCount((c) => c + 1)}
-                  style={{ color: 'var(--white)', borderColor: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.1)' }}
-                >
-                  ↻ Retry Camera
-                </Button>
+                <div className="checkin-viewport__retry-actions">
+                  <button
+                    type="button"
+                    className="checkin-retry-btn checkin-retry-btn--primary"
+                    onClick={() => handleRetryCamera('environment')}
+                    disabled={isSwitching}
+                  >
+                    ↻ Retry Back Camera
+                  </button>
+                  <button
+                    type="button"
+                    className="checkin-retry-btn"
+                    onClick={() => handleRetryCamera('user')}
+                    disabled={isSwitching}
+                  >
+                    ↻ Try Front Camera
+                  </button>
+                </div>
               </div>
             )}
 
@@ -516,11 +610,15 @@ export default function CheckIn() {
           <div className="checkin-viewport-bar">
             <div className="checkin-viewport-bar__left">
               <span style={{ fontSize: '11px', opacity: 0.8 }}>
-                {cameraStatus === 'active' ? '● Camera Feed Active' : '○ Standby'}
+                {cameraStatus === 'active'
+                  ? `● Active (${activeFacing === 'environment' ? 'Rear' : 'Front'} Cam)`
+                  : cameraStatus === 'starting'
+                  ? '◐ Starting…'
+                  : '○ Standby'}
               </span>
             </div>
             <div className="checkin-viewport-bar__right">
-              {torchAvailable && (
+              {torchAvailable && activeFacing === 'environment' && (
                 <button
                   type="button"
                   className="checkin-quick-btn"
@@ -533,7 +631,17 @@ export default function CheckIn() {
               <button
                 type="button"
                 className="checkin-quick-btn"
-                onClick={() => setRetryCount((c) => c + 1)}
+                onClick={handleSwitchCamera}
+                disabled={isSwitching || cameraStatus === 'starting'}
+                title="Switch between front and back camera"
+              >
+                {isSwitching ? '⏳ Switching' : `🔄 ${activeFacing === 'environment' ? 'Front' : 'Back'}`}
+              </button>
+              <button
+                type="button"
+                className="checkin-quick-btn"
+                onClick={() => handleRetryCamera(activeFacing)}
+                disabled={isSwitching}
                 title="Restart Camera"
               >
                 ↻ Restart
