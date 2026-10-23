@@ -77,7 +77,7 @@ const env = {
   smtpPort: readInt('SMTP_PORT', 587),
   smtpSecure: read('SMTP_SECURE', 'false') === 'true', // true for port 465
   smtpUser: read('SMTP_USER', ''),
-  smtpPass: read('SMTP_PASS', ''),
+  smtpPass: read('SMTP_PASS', '') || read('SMTP_APP_PASS', ''),
   mailFrom: read('MAIL_FROM', 'CIIM 2026 <infociim@pfrcivf.com>'),
   mailReplyTo: read('MAIL_REPLY_TO', 'infociim@pfrcivf.com'),
 

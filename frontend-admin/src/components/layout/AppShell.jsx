@@ -28,6 +28,12 @@ const NAV_GROUPS = [
     ],
   },
   {
+    label: 'Communications',
+    items: [
+      { to: '/communications', label: 'WATI & Email', icon: IconSend, roles: OPS_ROLES },
+    ],
+  },
+  {
     label: 'Event day',
     items: [
       { to: '/checkin', label: 'Check-in', icon: IconScan },
@@ -344,6 +350,20 @@ function IconMenu() {
       strokeWidth="1.8"
     >
       <path d="M3.5 6.5h17M3.5 12h17M3.5 17.5h17" strokeLinecap="round" />
+    </svg>
+  );
+}
+function IconSend() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

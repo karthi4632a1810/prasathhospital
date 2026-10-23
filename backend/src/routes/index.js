@@ -19,6 +19,7 @@ const adminUserRoutes = require('./adminUserRoutes');
 const publicFeedbackRoutes = require('./publicFeedbackRoutes');
 const adminFeedbackRoutes = require('./adminFeedbackRoutes');
 const adminAuditLogRoutes = require('./adminAuditLogRoutes');
+const adminCommunicationsRoutes = require('./adminCommunicationsRoutes');
 const { sendSuccess } = require('../utils/response');
 
 const router = express.Router();
@@ -51,5 +52,6 @@ router.use('/admin/users', adminUserRoutes);
 router.use('/feedback', publicFeedbackRoutes);
 router.use('/admin/feedback', adminFeedbackRoutes);
 router.use('/admin/audit-log', adminAuditLogRoutes);
+router.use('/admin/communications', adminCommunicationsRoutes);
 
 module.exports = router;

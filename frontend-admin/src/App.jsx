@@ -9,6 +9,7 @@ import TicketTypes from './pages/TicketTypes';
 import Companies from './pages/Companies';
 import Coupons from './pages/Coupons';
 import Registrations from './pages/Registrations';
+import Communications from './pages/Communications';
 import CheckIn from './pages/CheckIn';
 import Users from './pages/Users';
 import Reports from './pages/Reports';
@@ -79,6 +80,14 @@ export default function App() {
             element={
               <Shielded roles={OPS}>
                 <Registrations />
+              </Shielded>
+            }
+          />
+          <Route
+            path="/communications"
+            element={
+              <Shielded roles={OPS}>
+                <Communications />
               </Shielded>
             }
           />

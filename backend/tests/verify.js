@@ -806,6 +806,30 @@ const base = 'http://127.0.0.1:5099';
     return `${repeats} repeats in 10000`;
   });
 
+  console.log('\n=== 17. Admin Communications & Email Template ===');
+
+  const { buildCiimInviteEmail } = require('../src/services/email/ciimInviteEmail');
+
+  check('buildCiimInviteEmail formats official conference invite faithfully', () => {
+    const email = buildCiimInviteEmail({
+      name: 'Dr. Karthikeyan',
+      ticketLink: 'https://ciim.prashanthfertility.com/tickets/CIIM-TEST-KARTHIKEYAN',
+    });
+    assert(email.subject.includes('Welcome to CIIM 2026'), 'subject missing CIIM 2026');
+    assert(email.html.includes('Dr. Karthikeyan'), 'html missing recipient name');
+    assert(email.html.includes('The Leela Palace, Chennai'), 'html missing venue');
+    assert(email.html.includes('21st &amp; 22nd November 2026'), 'html missing dates');
+    assert(email.html.includes('CIIM-TEST-KARTHIKEYAN'), 'html missing ticket link');
+    assert(email.text.includes('Breaking Boundaries, Elevating Surgical Precision'), 'text missing theme');
+    return 'HTML + Text template verified';
+  });
+
+  const commRes = await fetch(base + '/api/v1/admin/communications/config', { method: 'GET' });
+  check('GET /api/v1/admin/communications/config without a token -> 401', () => {
+    assert(commRes.status === 401, 'status ' + commRes.status);
+    return 'guarded';
+  });
+
   server.close();
   console.log(`\n=== ${pass} passed, ${fail} failed ===\n`);
   process.exit(fail ? 1 : 0);
