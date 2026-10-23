@@ -42,7 +42,8 @@ services:
     # that differ between this compose file and plain `npm run dev` stay
     # explicit below and win over the file.
     env_file:
-      - ./backend/.env
+      - path: ./backend/.env
+        required: false
     environment:
       NODE_ENV: production
       PORT: 5000
