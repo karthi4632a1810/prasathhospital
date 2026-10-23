@@ -602,7 +602,9 @@ function CouponSummary({ coupon, selectedTicket, formState }) {
   return (
     <div className="registration-summary-card">
       <div className="registration-summary-card__header">
-        <h4 className="registration-summary-card__title">Registration Summary</h4>
+        <h4 className="registration-summary-card__title" style={{ color: '#ffffff' }}>
+          Registration Summary
+        </h4>
       </div>
       <table className="summary-table">
         <thead>

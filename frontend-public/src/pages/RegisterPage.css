@@ -244,11 +244,13 @@
 .registration-summary-card__header {
   padding: var(--space-3) var(--space-5);
   background: #8b181b; /* Medical Conference Crimson Header */
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
+.registration-summary-card__header h4,
 .registration-summary-card__title {
   margin: 0;
+  color: #ffffff !important;
   font-size: var(--text-sm);
   font-weight: 700;
   letter-spacing: 0.03em;
