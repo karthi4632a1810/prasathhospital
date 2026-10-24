@@ -75,6 +75,7 @@ export default function WhatsAppMarketing() {
   const [loadingCampaign, setLoadingCampaign] = useState(false);
   const [campaignStatusFilter, setCampaignStatusFilter] = useState('ALL');
   const [campaignSearchFilter, setCampaignSearchFilter] = useState('');
+  const [historySearchQuery, setHistorySearchQuery] = useState('');
 
   // Template Search & Category Filter
   const [templateCategoryTab, setTemplateCategoryTab] = useState('ALL');
@@ -386,12 +387,24 @@ export default function WhatsAppMarketing() {
     });
   }, [parsedContacts, searchFilter, statusFilter]);
 
+  // Filtered Past Broadcasts List (History Tab)
+  const filteredCampaignsList = useMemo(() => {
+    if (!historySearchQuery.trim()) return campaignsList;
+    const q = historySearchQuery.toLowerCase();
+    return campaignsList.filter(
+      (c) =>
+        (c.templateName || '').toLowerCase().includes(q) ||
+        (c.title || '').toLowerCase().includes(q) ||
+        new Date(c.createdAt).toLocaleDateString().includes(q)
+    );
+  }, [campaignsList, historySearchQuery]);
+
   // Campaign Monitor Filtered Recipients (From Database Document)
   const campaignRecipients = activeCampaignData?.recipients || [];
   const campaignStatusCounts = useMemo(() => {
     const counts = { ALL: campaignRecipients.length, READ: 0, DELIVERED: 0, SENT: 0, FAILED: 0, PENDING: 0 };
     campaignRecipients.forEach((r) => {
-      const s = r.status || 'PENDING';
+      const s = (r.status || 'PENDING').toUpperCase();
       if (counts[s] !== undefined) counts[s]++;
       else counts.PENDING++;
     });
@@ -400,12 +413,16 @@ export default function WhatsAppMarketing() {
 
   const filteredCampaignRecipients = useMemo(() => {
     return campaignRecipients.filter((r) => {
-      if (campaignStatusFilter !== 'ALL' && r.status !== campaignStatusFilter) return false;
+      if (campaignStatusFilter !== 'ALL') {
+        const itemStatus = (r.status || 'PENDING').toUpperCase();
+        if (itemStatus !== campaignStatusFilter) return false;
+      }
       if (campaignSearchFilter.trim()) {
         const q = campaignSearchFilter.toLowerCase();
         return (
           (r.name || '').toLowerCase().includes(q) ||
           (r.phone || '').includes(q) ||
+          (r.normalizedPhone || '').includes(q) ||
           String(r.rowIndex) === q
         );
       }
@@ -706,31 +723,65 @@ export default function WhatsAppMarketing() {
     }
   };
 
-  // Export Results as CSV
-  const exportCampaignCsv = (campaignToExport = null) => {
-    const target = campaignToExport || activeCampaignData;
-    const recipients = target?.recipients || parsedContacts;
-    if (!recipients.length) return;
+  // Universal Export Function for Excel (.xlsx) and CSV (.csv)
+  const exportCampaignData = (format = 'xlsx', onlyFiltered = false, customCampaign = null) => {
+    const target = customCampaign || activeCampaignData;
+    if (!target) return;
 
-    const exportData = recipients.map((r, i) => ({
-      Row: r.rowIndex || i + 1,
-      Name: r.name,
-      Phone: r.phone,
-      Status: r.status,
-      MessageId: r.messageId || '',
-      Error: r.error || '',
-      SentAt: r.sentAt ? new Date(r.sentAt).toLocaleString() : '',
-    }));
+    let recipients = target.recipients || [];
+    if (onlyFiltered && !customCampaign) {
+      recipients = filteredCampaignRecipients;
+    }
+
+    if (!recipients.length) {
+      alert('No recipients found to export for this selection.');
+      return;
+    }
+
+    const exportData = recipients.map((r, i) => {
+      const row = {
+        '#': r.rowIndex || i + 1,
+        'Recipient Name': r.name || 'Unknown',
+        'Mobile Number': r.phone || r.normalizedPhone || '',
+        'Delivery Status': r.status || 'PENDING',
+        'Sent Time': r.sentAt ? new Date(r.sentAt).toLocaleString('en-GB') : '',
+        'Delivered Time': r.deliveredAt ? new Date(r.deliveredAt).toLocaleString('en-GB') : '',
+        'Read Time': r.readAt ? new Date(r.readAt).toLocaleString('en-GB') : '',
+        'WATI Message ID': r.messageId || '',
+        'Failure / Error': r.error || '',
+      };
+
+      if (r.params && typeof r.params === 'object') {
+        Object.entries(r.params).forEach(([k, v]) => {
+          row[`Param: ${k}`] = v;
+        });
+      }
+
+      return row;
+    });
+
+    const isFiltered = onlyFiltered && (campaignStatusFilter !== 'ALL' || campaignSearchFilter.trim());
+    const filterTag = isFiltered ? `_${campaignStatusFilter.toLowerCase()}` : '_all';
+    const cleanTemplate = (target.templateName || 'broadcast').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const dateTag = new Date().toISOString().slice(0, 10);
+    const fileName = `whatsapp_${cleanTemplate}${filterTag}_${recipients.length}members_${dateTag}`;
 
     const ws = XLSX.utils.json_to_sheet(exportData);
-    const csvContent = XLSX.utils.sheet_to_csv(ws);
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `whatsapp_campaign_${target?.templateName || 'report'}_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Delivery Status');
+
+    if (format === 'csv') {
+      const csvContent = XLSX.utils.sheet_to_csv(ws);
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${fileName}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      XLSX.writeFile(wb, `${fileName}.xlsx`);
+    }
   };
 
   const selectedCount = selectedIndices.size;
@@ -1407,11 +1458,18 @@ export default function WhatsAppMarketing() {
               <div>
                 <h2 className="wam__card-title">&#128203; Saved Broadcast History</h2>
                 <p className="wam__card-desc">
-                  Select a past dispatch below to inspect its members, live delivery status, and retry
+                  Select a past dispatch below to inspect its members, filter by delivery status, or download reports.
                 </p>
               </div>
 
               <div className="wam__history-actions">
+                <input
+                  type="text"
+                  className="wam__input wam__input--history-search"
+                  placeholder="&#128269; Search history..."
+                  value={historySearchQuery}
+                  onChange={(e) => setHistorySearchQuery(e.target.value)}
+                />
                 <Button variant="secondary" size="sm" onClick={loadCampaigns}>
                   &#128260; Refresh History
                 </Button>
@@ -1429,9 +1487,16 @@ export default function WhatsAppMarketing() {
                   Launch Your First Broadcast
                 </Button>
               </div>
+            ) : filteredCampaignsList.length === 0 ? (
+              <div className="wam__empty-box">
+                <p>No broadcasts match your search "{historySearchQuery}".</p>
+                <Button variant="secondary" size="sm" onClick={() => setHistorySearchQuery('')}>
+                  Clear Search
+                </Button>
+              </div>
             ) : (
               <div className="wam__campaigns-scroll-list">
-                {campaignsList.map((c) => {
+                {filteredCampaignsList.map((c) => {
                   const isSelected = selectedCampaignId === c._id;
                   const dateStr = new Date(c.createdAt).toLocaleDateString('en-GB', {
                     day: '2-digit',
@@ -1476,6 +1541,51 @@ export default function WhatsAppMarketing() {
                           </span>
                         )}
                       </div>
+
+                      {/* Card Quick Export */}
+                      <div className="wam__campaign-card-footer">
+                        <span className="wam__card-export-label">Download:</span>
+                        <button
+                          type="button"
+                          className="wam__card-export-btn"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (activeCampaignData?._id === c._id) {
+                              exportCampaignData('xlsx', false, activeCampaignData);
+                            } else {
+                              try {
+                                const res = await whatsappMarketingApi.getCampaignById(c._id);
+                                exportCampaignData('xlsx', false, res?.data?.campaign);
+                              } catch (err) {
+                                alert('Failed to download: ' + err.message);
+                              }
+                            }
+                          }}
+                          title="Download complete broadcast in Excel (.xlsx)"
+                        >
+                          📊 Excel
+                        </button>
+                        <button
+                          type="button"
+                          className="wam__card-export-btn"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (activeCampaignData?._id === c._id) {
+                              exportCampaignData('csv', false, activeCampaignData);
+                            } else {
+                              try {
+                                const res = await whatsappMarketingApi.getCampaignById(c._id);
+                                exportCampaignData('csv', false, res?.data?.campaign);
+                              } catch (err) {
+                                alert('Failed to download: ' + err.message);
+                              }
+                            }
+                          }}
+                          title="Download complete broadcast in CSV (.csv)"
+                        >
+                          📄 CSV
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -1499,7 +1609,7 @@ export default function WhatsAppMarketing() {
                   </h3>
                   <p className="wam__card-desc">
                     All <strong>{activeCampaignData.total} members</strong> dispatched in this
-                    broadcast are listed below with live delivery status.
+                    broadcast are listed below. Filter by status or download reports at any time.
                   </p>
                 </div>
 
@@ -1515,9 +1625,18 @@ export default function WhatsAppMarketing() {
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => exportCampaignCsv(activeCampaignData)}
+                    onClick={() => exportCampaignData('xlsx', false)}
+                    title="Download complete broadcast as Excel spreadsheet"
                   >
-                    📥 Download CSV Report
+                    📊 Download Excel (.xlsx)
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => exportCampaignData('csv', false)}
+                    title="Download complete broadcast as CSV file"
+                  >
+                    📄 Download CSV (.csv)
                   </Button>
                 </div>
               </div>
@@ -1574,18 +1693,75 @@ export default function WhatsAppMarketing() {
                   >
                     &#9888; Failed ({campaignStatusCounts.FAILED})
                   </button>
+                  {campaignStatusCounts.PENDING > 0 && (
+                    <button
+                      type="button"
+                      className={`wam__status-tab wam__status-tab--pending ${
+                        campaignStatusFilter === 'PENDING' ? 'is-active' : ''
+                      }`}
+                      onClick={() => setCampaignStatusFilter('PENDING')}
+                    >
+                      &#9202; Pending ({campaignStatusCounts.PENDING})
+                    </button>
+                  )}
                 </div>
 
                 <div className="wam__search-bar wam__search-bar--inline">
                   <input
                     type="text"
                     className="wam__input wam__input--search"
-                    placeholder="&#128269; Search members..."
+                    placeholder="&#128269; Search members by name or phone..."
                     value={campaignSearchFilter}
                     onChange={(e) => setCampaignSearchFilter(e.target.value)}
                   />
                 </div>
               </div>
+
+              {/* Active Filter & Filtered Downloads Banner */}
+              {(campaignStatusFilter !== 'ALL' || campaignSearchFilter.trim()) && (
+                <div className="wam__filter-active-bar">
+                  <div className="wam__filter-active-info">
+                    <span className="wam__filter-badge">
+                      Filter: <strong>{campaignStatusFilter !== 'ALL' ? campaignStatusFilter : 'Search Query'}</strong>
+                    </span>
+                    <span className="wam__filter-count-text">
+                      Showing <strong>{filteredCampaignRecipients.length}</strong> of{' '}
+                      {campaignRecipients.length} members
+                    </span>
+                  </div>
+
+                  <div className="wam__filter-active-downloads">
+                    <span className="wam__download-label">Download Filtered List:</span>
+                    <button
+                      type="button"
+                      className="wam__mini-download-btn wam__mini-download-btn--excel"
+                      onClick={() => exportCampaignData('xlsx', true)}
+                      title={`Download ${filteredCampaignRecipients.length} filtered members as Excel (.xlsx)`}
+                    >
+                      📊 Excel ({filteredCampaignRecipients.length})
+                    </button>
+                    <button
+                      type="button"
+                      className="wam__mini-download-btn wam__mini-download-btn--csv"
+                      onClick={() => exportCampaignData('csv', true)}
+                      title={`Download ${filteredCampaignRecipients.length} filtered members as CSV (.csv)`}
+                    >
+                      📄 CSV ({filteredCampaignRecipients.length})
+                    </button>
+                    <button
+                      type="button"
+                      className="wam__filter-reset-link"
+                      onClick={() => {
+                        setCampaignStatusFilter('ALL');
+                        setCampaignSearchFilter('');
+                      }}
+                      title="Clear filter and view all members"
+                    >
+                      ✕ Reset Filter
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Members Table */}
               <div className="wam__table-wrap">
