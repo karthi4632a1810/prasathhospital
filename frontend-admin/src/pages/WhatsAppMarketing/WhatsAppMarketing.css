@@ -1879,3 +1879,37 @@
   border-color: #64748b;
   color: #ffffff;
 }
+
+.wam__card-export-btn--delete {
+  color: #dc2626;
+  border-color: #fecaca;
+  margin-left: auto;
+}
+
+.wam__card-export-btn--delete:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+  color: #b91c1c;
+}
+
+.wam__detail-delete-btn {
+  background: #ffffff;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.45rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.wam__detail-delete-btn:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+  color: #b91c1c;
+}

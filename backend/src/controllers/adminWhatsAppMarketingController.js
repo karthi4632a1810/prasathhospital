@@ -746,14 +746,21 @@ const checkStatuses = asyncHandler(async (req, res) => {
         if (!normalized) return;
 
         try {
-          const resp = await fetch(`${baseUrl}/api/v1/getMessages/${normalized}?pageSize=2`, {
+          const resp = await fetch(`${baseUrl}/api/v1/getMessages/${normalized}?pageSize=5`, {
             headers: { Authorization: token },
             signal: AbortSignal.timeout(6000),
           });
           if (resp.ok) {
             const data = await resp.json();
             const msgs = data.messages?.items || data.messages || [];
-            const latestMsg = msgs[0];
+            // Find latest relevant message (prioritize broadcast/template messages or statusString)
+            const latestMsg =
+              msgs.find(
+                (m) =>
+                  m.statusString &&
+                  (m.eventType === 'broadcastMessage' || m.eventType === 'templateMessage' || !m.eventType)
+              ) || msgs[0];
+
             if (latestMsg) {
               const rawStatus = (latestMsg.statusString || '').toUpperCase();
               let mappedStatus = 'SENT';
@@ -762,13 +769,17 @@ const checkStatuses = asyncHandler(async (req, res) => {
               else if (rawStatus === 'FAILED' || latestMsg.failedDetail) mappedStatus = 'FAILED';
               else mappedStatus = 'SENT';
 
-              statuses[normalized] = {
+              const statusObj = {
                 status: mappedStatus,
                 rawStatus: latestMsg.statusString,
                 messageId: latestMsg.id,
                 created: latestMsg.created,
                 failedDetail: latestMsg.failedDetail || null,
               };
+
+              statuses[normalized] = statusObj;
+              const bare = String(normalized).replace(/^91/, '');
+              statuses[bare] = statusObj;
             }
           }
         } catch (err) {
@@ -781,13 +792,20 @@ const checkStatuses = asyncHandler(async (req, res) => {
   // Update persistent MongoDB campaign document if campaignId was supplied
   if (campaignDoc) {
     campaignDoc.recipients.forEach((rec) => {
-      const p = rec.normalizedPhone || rec.phone;
-      const s = statuses[p];
+      const norm = normalizePhone(rec.normalizedPhone || rec.phone);
+      const bare = String(norm).replace(/^91/, '');
+      const s = statuses[norm] || statuses[bare] || statuses[rec.phone] || statuses[rec.normalizedPhone];
       if (s && s.status) {
         rec.status = s.status;
-        if (s.messageId && !rec.messageId) rec.messageId = s.messageId;
-        if (s.status === 'READ' && !rec.readAt) rec.readAt = new Date();
-        if (s.status === 'DELIVERED' && !rec.deliveredAt) rec.deliveredAt = new Date();
+        if (s.messageId && (!rec.messageId || rec.messageId.startsWith('wati_') || rec.messageId.length < 20)) {
+          rec.messageId = s.messageId;
+        }
+        if (s.status === 'READ') {
+          if (!rec.readAt) rec.readAt = s.created ? new Date(s.created) : new Date();
+          if (!rec.deliveredAt) rec.deliveredAt = rec.readAt;
+        } else if (s.status === 'DELIVERED') {
+          if (!rec.deliveredAt) rec.deliveredAt = s.created ? new Date(s.created) : new Date();
+        }
         if (s.failedDetail) rec.error = s.failedDetail;
       }
     });

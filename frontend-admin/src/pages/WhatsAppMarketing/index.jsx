@@ -170,6 +170,13 @@ export default function WhatsAppMarketing() {
       const res = await whatsappMarketingApi.getCampaignById(campaignId);
       if (res?.data?.campaign) {
         setActiveCampaignData(res.data.campaign);
+        // Automatically check WATI live status in background if any message is not yet READ
+        const needsSync = (res.data.campaign.recipients || []).some(
+          (r) => r.status !== 'READ' && r.status !== 'FAILED'
+        );
+        if (needsSync) {
+          handleRefreshCampaignStatuses(campaignId, true);
+        }
       }
     } catch (err) {
       console.warn('Could not load campaign details:', err);
@@ -653,24 +660,83 @@ export default function WhatsAppMarketing() {
   };
 
   // Sync Live Status from WATI into database
-  const handleRefreshCampaignStatuses = async (campaignId) => {
+  const handleRefreshCampaignStatuses = async (campaignId, isSilent = false) => {
     const targetId = campaignId || activeCampaignData?._id;
     if (!targetId) return;
 
-    setSyncingStatuses(true);
+    if (!isSilent) setSyncingStatuses(true);
     try {
       const res = await whatsappMarketingApi.checkStatuses({ campaignId: targetId });
       if (res?.data?.campaign) {
         setActiveCampaignData(res.data.campaign);
         setLastSyncTime(new Date().toLocaleTimeString());
+        // Update campaign in history list so card numbers match immediately
+        setCampaignsList((prev) =>
+          prev.map((c) => (c._id === res.data.campaign._id ? { ...c, ...res.data.campaign } : c))
+        );
+        if (!isSilent) {
+          const c = res.data.campaign;
+          alert(
+            `Live Status Synced from WATI!\n\n` +
+            `✓✓ Read: ${c.readCount || 0}\n` +
+            `✓✓ Delivered: ${c.deliveredCount || 0}\n` +
+            `✓ Sent: ${c.sentCount || 0}\n` +
+            `⚠️ Failed: ${c.failedCount || 0}`
+          );
+        }
       }
-      loadCampaigns();
     } catch (err) {
-      alert('Status sync failed: ' + (err.message || 'WATI API error'));
+      if (!isSilent) {
+        alert('Status sync failed: ' + (err.message || 'WATI API error'));
+      }
     } finally {
-      setSyncingStatuses(false);
+      if (!isSilent) setSyncingStatuses(false);
     }
   };
+
+  // Delete a campaign permanently from MongoDB
+  const handleDeleteCampaign = async (campaignId, e = null) => {
+    if (e) e.stopPropagation();
+    if (!campaignId) return;
+
+    const confirmDelete = window.confirm(
+      'Are you sure you want to delete this broadcast record?\n\nThis will remove the campaign card and its member logs from the monitor screen.'
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await whatsappMarketingApi.deleteCampaign(campaignId);
+      setCampaignsList((prev) => prev.filter((c) => c._id !== campaignId));
+
+      if (selectedCampaignId === campaignId || activeCampaignData?._id === campaignId) {
+        const remaining = campaignsList.filter((c) => c._id !== campaignId);
+        if (remaining.length > 0) {
+          loadCampaignDetails(remaining[0]._id);
+        } else {
+          setSelectedCampaignId(null);
+          setActiveCampaignData(null);
+        }
+      }
+    } catch (err) {
+      alert('Failed to delete campaign: ' + (err.message || 'Server error'));
+    }
+  };
+
+  // Periodic background status sync while viewing monitor
+  useEffect(() => {
+    if (activeViewMode !== 'MONITOR' || !activeCampaignData?._id) return;
+
+    const needsSync = (activeCampaignData.recipients || []).some(
+      (r) => r.status !== 'READ' && r.status !== 'FAILED'
+    );
+    if (!needsSync) return;
+
+    const interval = setInterval(() => {
+      handleRefreshCampaignStatuses(activeCampaignData._id, true);
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [activeViewMode, activeCampaignData?._id, activeCampaignData?.recipients]);
 
   // Batch Broadcast Execution: sends and persists campaign in MongoDB Atlas
   const executeBroadcast = async () => {
@@ -713,6 +779,9 @@ export default function WhatsAppMarketing() {
         setActiveCampaignData(res.data.campaign);
         setSelectedCampaignId(res.data.campaign._id);
         setActiveViewMode('MONITOR');
+        // Auto-refresh live status from WATI 3s and 8s after dispatch
+        setTimeout(() => handleRefreshCampaignStatuses(res.data.campaign._id, true), 3000);
+        setTimeout(() => handleRefreshCampaignStatuses(res.data.campaign._id, true), 8000);
       }
 
       loadCampaigns();
@@ -1542,7 +1611,7 @@ export default function WhatsAppMarketing() {
                         )}
                       </div>
 
-                      {/* Card Quick Export */}
+                      {/* Card Quick Export & Delete */}
                       <div className="wam__campaign-card-footer">
                         <span className="wam__card-export-label">Download:</span>
                         <button
@@ -1585,6 +1654,14 @@ export default function WhatsAppMarketing() {
                         >
                           📄 CSV
                         </button>
+                        <button
+                          type="button"
+                          className="wam__card-export-btn wam__card-export-btn--delete"
+                          onClick={(e) => handleDeleteCampaign(c._id, e)}
+                          title="Permanently delete this test or broadcast record"
+                        >
+                          🗑 Delete
+                        </button>
                       </div>
                     </div>
                   );
@@ -1617,7 +1694,7 @@ export default function WhatsAppMarketing() {
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => handleRefreshCampaignStatuses(activeCampaignData._id)}
+                    onClick={() => handleRefreshCampaignStatuses(activeCampaignData._id, false)}
                     disabled={syncingStatuses}
                   >
                     {syncingStatuses ? 'Syncing...' : '🔄 Refresh Live Status (WATI)'}
@@ -1638,6 +1715,14 @@ export default function WhatsAppMarketing() {
                   >
                     📄 Download CSV (.csv)
                   </Button>
+                  <button
+                    type="button"
+                    className="wam__detail-delete-btn"
+                    onClick={() => handleDeleteCampaign(activeCampaignData._id)}
+                    title="Permanently delete this entire broadcast log"
+                  >
+                    🗑 Delete Broadcast
+                  </button>
                 </div>
               </div>
 
