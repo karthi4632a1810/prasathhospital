@@ -1,6 +1,7 @@
 'use strict';
 
 const Upload = require('../models/Upload');
+const env = require('../config/env');
 const ApiError = require('../utils/ApiError');
 const { sendSuccess, asyncHandler } = require('../utils/response');
 const { ALLOWED_TYPES } = require('../middleware/upload');
@@ -18,7 +19,10 @@ const uploadImage = asyncHandler(async (req, res) => {
     originalName: String(req.file.originalname || '').slice(0, 200),
     uploadedBy: req.user?._id || null,
   });
-  return sendSuccess(res, { url: `/uploads/${doc._id}${ALLOWED_TYPES[req.file.mimetype]}` }, { status: 201 });
+  const relPath = `/uploads/${doc._id}${ALLOWED_TYPES[req.file.mimetype]}`;
+  const base = (env.publicSiteUrl || env.apiBaseUrl || '').replace(/\/$/, '');
+  const fullUrl = base ? `${base}${relPath}` : relPath;
+  return sendSuccess(res, { url: relPath, fullUrl }, { status: 201 });
 });
 
 // Same lock-down as the static mount: images only, never executable.

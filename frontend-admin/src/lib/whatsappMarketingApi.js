@@ -2,6 +2,11 @@ import { request } from './api';
 
 export const whatsappMarketingApi = {
   getConfig: () => request('/admin/whatsapp-marketing/config'),
+  uploadImage: (file) => {
+    const form = new FormData();
+    form.append('file', file);
+    return request('/admin/uploads', { method: 'POST', body: form });
+  },
   sendTestSingle: (data) =>
     request('/admin/whatsapp-marketing/test-single', {
       method: 'POST',

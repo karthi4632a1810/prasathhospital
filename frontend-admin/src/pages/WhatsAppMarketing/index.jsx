@@ -4,86 +4,26 @@ import { whatsappMarketingApi } from '../../lib/whatsappMarketingApi';
 import Button from '../../components/ui/Button';
 import './WhatsAppMarketing.css';
 
-const DEFAULT_TEMPLATES = [
-  {
-    id: 'ciim2026_invite',
-    name: 'ciim2026_invite',
-    label: 'CIIM 2026 Personal Invitation (Marketing Approved)',
-    category: 'Marketing',
-    status: 'Approved',
-    language: 'English (UK)',
-    description: 'Personal invitation from Dr. Geetha Haripriya & Dr. Samhitha Moturi (Dates: 21 & 22 Nov 2026, The Leela Palace, Chennai) with Register & Call buttons.',
-    defaultImageType: 'none',
-    hasHeaderMedia: false,
-    defaultExtra: '',
-    params: ['Name'],
-    buttons: [
-      { type: 'url', text: 'Register Here', url: 'https://ciim.prashanthfertility.com/' },
-      { type: 'call', text: 'Call Now', phone: '+919600047646' },
-    ],
-  },
-  {
-    id: 'ciim2026_registration_thankyou_02',
-    name: 'ciim2026_registration_thankyou_02',
-    label: 'Thank You Registration Template (Utility)',
-    category: 'Utility',
-    status: 'Approved',
-    language: 'English (UK)',
-    description: 'Header with conference poster banner, welcome letter, and optional custom extra note.',
-    defaultImageType: 'poster',
-    hasHeaderMedia: true,
-    defaultExtra: '...',
-    params: ['DrName', 'extra', 'img'],
-  },
-  {
-    id: 'ciim2026_registration_5',
-    name: 'ciim2026_registration_5',
-    label: 'Registration 5 (QR Header + Ticket Link - Utility)',
-    category: 'Utility',
-    status: 'Approved',
-    language: 'English (UK)',
-    description: 'High-res QR code header with delegate name, dates/venue, and ticket link.',
-    defaultImageType: 'qr_gold',
-    hasHeaderMedia: true,
-    defaultExtra: 'https://ciim.prashanthfertility.com/tickets/CIIM-TEST-KARTHIKEYAN',
-    params: ['Name', 'extra', 'qr', 'QR'],
-  },
-];
+// Default Thank You Poster Banner (QR code options removed as requested)
+const DEFAULT_POSTER_URL =
+  'https://raw.githubusercontent.com/karthi4632a1810/prasathhospital/main/backend/src/assets/thankyou-img.jpg';
 
-const DEFAULT_IMAGE_PRESETS = [
-  {
-    id: 'poster',
-    label: 'Official Thank You Poster Banner',
-    url: 'https://raw.githubusercontent.com/karthi4632a1810/prasathhospital/main/backend/src/assets/thankyou-img.jpg',
-    type: 'poster',
-  },
-  {
-    id: 'qr_gold',
-    label: 'Option 1: Royal Gold Standalone QR Code',
-    url: 'https://raw.githubusercontent.com/karthi4632a1810/prasathhospital/main/backend/src/assets/option1_royal_gold_verified.png',
-    type: 'qr',
-  },
-  {
-    id: 'qr_gradient',
-    label: 'Theme Gradient QR Code',
-    url: 'https://raw.githubusercontent.com/karthi4632a1810/prasathhospital/main/backend/src/assets/sample_royal_qr.png',
-    type: 'qr',
-  },
-];
+const LOCAL_STORAGE_IMAGES_KEY = 'ciim_wam_uploaded_images';
 
-const SAMPLE_CONTACTS = [
-  { Name: 'Dr. Karthikeyan', Phone: '9962460782', Extra: 'Special Guest' },
-  { Name: 'Dr. Priya Sharma', Phone: '9840123456', Extra: 'Senior Delegate' },
-  { Name: 'Dr. Rajesh Kumar', Phone: '9841234567', Extra: 'Speaker' },
-  { Name: 'Dr. Ananya Reddy', Phone: '9884567890', Extra: 'Delegate' },
-  { Name: 'Dr. Suresh Babu', Phone: '9940123987', Extra: 'Faculty' },
-  { Name: 'Dr. Meera Nambiar', Phone: '9840987654', Extra: 'VIP Delegate' },
-  { Name: 'Dr. Vikram Seth', Phone: '9789123456', Extra: 'Delegate' },
-  { Name: 'Dr. Kavitha Raman', Phone: '9841987654', Extra: 'Faculty' },
-  { Name: 'Dr. Arunachalam S', Phone: '9884123789', Extra: 'Delegate' },
-  { Name: 'Dr. Divya Iyer', Phone: '9940567123', Extra: 'Delegate' },
-  { Name: 'Dr. Balaji Mohan', Phone: '9840345678', Extra: 'Delegate' },
-  { Name: 'Dr. Geetha Venkatesh', Phone: '9789345678', Extra: 'Faculty' },
+// Helper to generate sample delegate names & phones
+const SAMPLE_DELEGATES = [
+  { name: 'Dr. Karthikeyan', phone: '9962460782' },
+  { name: 'Dr. Priya Sharma', phone: '9840123456' },
+  { name: 'Dr. Rajesh Kumar', phone: '9841234567' },
+  { name: 'Dr. Ananya Reddy', phone: '9884567890' },
+  { name: 'Dr. Suresh Babu', phone: '9940123987' },
+  { name: 'Dr. Meera Nambiar', phone: '9840987654' },
+  { name: 'Dr. Vikram Seth', phone: '9789123456' },
+  { name: 'Dr. Kavitha Raman', phone: '9841987654' },
+  { name: 'Dr. Arunachalam S', phone: '9884123789' },
+  { name: 'Dr. Divya Iyer', phone: '9940567123' },
+  { name: 'Dr. Balaji Mohan', phone: '9840345678' },
+  { name: 'Dr. Geetha Venkatesh', phone: '9789345678' },
 ];
 
 /**
@@ -129,22 +69,29 @@ function parseRangeString(rangeStr, totalRows) {
 
 export default function WhatsAppMarketing() {
   const [config, setConfig] = useState(null);
+  const [loadingConfig, setLoadingConfig] = useState(true);
 
-  // Template Selection (Defaults directly to the approved Marketing template)
+  // Template Search & Category Filter (All / Marketing / Utility)
+  const [templateCategoryTab, setTemplateCategoryTab] = useState('ALL'); // 'ALL' | 'MARKETING' | 'UTILITY'
+  const [templateSearch, setTemplateSearch] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState('ciim2026_invite');
-  const [imageType, setImageType] = useState('none');
+
+  // Dynamic Template Parameter Values (Key-value map for the chosen template)
+  const [templateParamValues, setTemplateParamValues] = useState({});
+
+  // Image Selection: 'poster' | 'custom' | URL string of uploaded image
+  const [imageType, setImageType] = useState('poster');
   const [customImageUrl, setCustomImageUrl] = useState('');
-  const [globalExtra, setGlobalExtra] = useState('');
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Audience Data
   const [uploadedFile, setUploadedFile] = useState(null);
   const [rawDataRows, setRawDataRows] = useState([]);
   const [availableHeaders, setAvailableHeaders] = useState([]);
-  const [nameCol, setNameCol] = useState('');
-  const [phoneCol, setPhoneCol] = useState('');
-  const [extraCol, setExtraCol] = useState('');
+  const [columnMappings, setColumnMappings] = useState({}); // { [paramKey]: headerName }
 
-  // Contact Delivery Status Map: { [contactId]: { status: 'PENDING' | 'SENT' | 'DELIVERED' | 'READ' | 'FAILED', error?: string, messageId?: string, lastUpdated?: string } }
+  // Contact Delivery Status Map
   const [contactStatuses, setContactStatuses] = useState({});
   const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'READ' | 'DELIVERED' | 'SENT' | 'FAILED' | 'PENDING'
   const [retryingId, setRetryingId] = useState(null);
@@ -158,7 +105,6 @@ export default function WhatsAppMarketing() {
 
   // Single Test Send
   const [testPhone, setTestPhone] = useState('9962460782');
-  const [testName, setTestName] = useState('Dr. Karthikeyan');
   const [testSending, setTestSending] = useState(false);
   const [testResult, setTestResult] = useState(null);
   const [testError, setTestError] = useState('');
@@ -171,6 +117,32 @@ export default function WhatsAppMarketing() {
   const [broadcastError, setBroadcastError] = useState('');
 
   const fileInputRef = useRef(null);
+  const imageInputRef = useRef(null);
+
+  // Load saved uploaded images from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_IMAGES_KEY);
+      if (saved) {
+        setUploadedImages(JSON.parse(saved));
+      }
+    } catch {
+      // Ignore storage error
+    }
+  }, []);
+
+  // Save uploaded images to localStorage
+  const saveUploadedImage = (newImg) => {
+    setUploadedImages((prev) => {
+      const updated = [newImg, ...prev.filter((img) => img.url !== newImg.url)].slice(0, 15);
+      try {
+        localStorage.setItem(LOCAL_STORAGE_IMAGES_KEY, JSON.stringify(updated));
+      } catch {
+        // Ignore storage error
+      }
+      return updated;
+    });
+  };
 
   // Load config on mount
   useEffect(() => {
@@ -186,36 +158,165 @@ export default function WhatsAppMarketing() {
       })
       .catch((err) => {
         console.warn('Could not load marketing config:', err);
+      })
+      .finally(() => {
+        setLoadingConfig(false);
       });
   }, []);
 
-  const templates = config?.templates || DEFAULT_TEMPLATES;
-  const imagePresets = config?.imagePresets || DEFAULT_IMAGE_PRESETS;
-  const activeTemplate = templates.find((t) => t.id === selectedTemplateId) || templates[0];
+  const allTemplates = config?.templates || [];
+  const activeTemplate =
+    allTemplates.find((t) => t.id === selectedTemplateId) ||
+    allTemplates[0] || {
+      id: 'ciim2026_invite',
+      name: 'ciim2026_invite',
+      label: 'CIIM 2026 Personal Invitation',
+      category: 'MARKETING',
+      params: ['Name'],
+      hasHeaderMedia: false,
+    };
 
-  // Update default extra and image when template changes
-  const handleTemplateChange = (templateId) => {
+  // Filter templates by category and search query
+  const filteredTemplates = useMemo(() => {
+    return allTemplates.filter((t) => {
+      if (templateCategoryTab !== 'ALL' && t.category !== templateCategoryTab) {
+        return false;
+      }
+      if (templateSearch.trim()) {
+        const q = templateSearch.toLowerCase();
+        return (
+          t.name.toLowerCase().includes(q) ||
+          (t.label || '').toLowerCase().includes(q) ||
+          (t.body || '').toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+  }, [allTemplates, templateCategoryTab, templateSearch]);
+
+  // Handle template selection
+  const handleSelectTemplate = (templateId) => {
     setSelectedTemplateId(templateId);
-    const tmpl = templates.find((t) => t.id === templateId);
-    if (tmpl) {
-      if (tmpl.defaultImageType) setImageType(tmpl.defaultImageType);
-      else setImageType('none');
-      if (tmpl.defaultExtra !== undefined) setGlobalExtra(tmpl.defaultExtra);
+    const tmpl = allTemplates.find((t) => t.id === templateId);
+    if (!tmpl) return;
+
+    // Reset or initialize default parameter values
+    const newParamValues = {};
+    (tmpl.params || []).forEach((paramKey) => {
+      const lower = paramKey.toLowerCase();
+      if (lower.includes('name') || lower === 'drname' || lower === 'delegate') {
+        newParamValues[paramKey] = 'Dr. Karthikeyan';
+      } else if (lower.includes('extra') || lower.includes('link') || lower.includes('url')) {
+        newParamValues[paramKey] = '...';
+      } else {
+        newParamValues[paramKey] = '';
+      }
+    });
+    setTemplateParamValues(newParamValues);
+
+    if (tmpl.hasHeaderMedia) {
+      setImageType((prev) => (prev === 'none' ? 'poster' : prev));
+    } else {
+      setImageType('none');
+    }
+
+    // Auto update column mappings if a file was already loaded
+    if (availableHeaders.length > 0) {
+      updateColumnMappingsForTemplate(tmpl, availableHeaders);
     }
   };
 
-  // Process and normalize uploaded rows
+  // Helper to update column mappings based on template parameters
+  const updateColumnMappingsForTemplate = (tmpl, headers) => {
+    const mappings = {
+      Phone:
+        headers.find((h) => /^(phone|mobile|whatsapp|contact|phone_?no|cell)/i.test(h)) ||
+        headers[1] ||
+        headers[0],
+    };
+
+    (tmpl.params || []).forEach((paramKey) => {
+      const lower = paramKey.toLowerCase();
+      const match = headers.find((h) => {
+        const hLower = h.toLowerCase();
+        if (hLower === lower) return true;
+        if (lower.includes('name') && /^(name|full_?name|doctor|delegate|dr)/i.test(h)) return true;
+        if ((lower.includes('extra') || lower.includes('link')) && /^(extra|link|ticket|notes)/i.test(h))
+          return true;
+        return false;
+      });
+      mappings[paramKey] = match || headers[0] || '';
+    });
+
+    setColumnMappings(mappings);
+  };
+
+  // Upload an image file for templates
+  const handleUploadNewImage = async (file) => {
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const res = await whatsappMarketingApi.uploadImage(file);
+      const url = res?.data?.fullUrl || res?.data?.url;
+      if (url) {
+        const newImgObj = {
+          name: file.name,
+          url,
+          uploadedAt: new Date().toLocaleTimeString(),
+        };
+        saveUploadedImage(newImgObj);
+        setImageType(url);
+      }
+    } catch (err) {
+      alert(`Image upload failed: ${err.message || 'Server error'}`);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  // Determine final image URL
+  const resolvedImageUrl = useMemo(() => {
+    if (imageType === 'none') return '';
+    if (imageType === 'poster') return DEFAULT_POSTER_URL;
+    if (imageType === 'custom') return customImageUrl.trim();
+    if (imageType.startsWith('http://') || imageType.startsWith('https://')) return imageType;
+    return DEFAULT_POSTER_URL;
+  }, [imageType, customImageUrl]);
+
+  // Process and normalize uploaded rows with dynamic template parameter extraction
   const parsedContacts = useMemo(() => {
     if (!rawDataRows.length) return [];
 
-    return rawDataRows.map((row, index) => {
-      const rawName = nameCol ? String(row[nameCol] || '').trim() : '';
-      const rawPhone = phoneCol ? String(row[phoneCol] || '').trim() : '';
-      const rawExtra = extraCol ? String(row[extraCol] || '').trim() : '';
+    const phoneCol = columnMappings.Phone || 'Phone';
+    const declaredParams = activeTemplate.params || ['Name'];
 
+    return rawDataRows.map((row, index) => {
+      const rawPhone = String(row[phoneCol] || row.Phone || row.phone || row.mobile || '').trim();
       const digitsOnly = rawPhone.replace(/[^\d]/g, '');
       const isValidPhone = digitsOnly.length >= 10;
       const normalizedPhone = digitsOnly.length === 10 ? `91${digitsOnly}` : digitsOnly;
+
+      // Extract each parameter required by the template from the row
+      const rowParams = {};
+      declaredParams.forEach((paramKey) => {
+        const mappedCol = columnMappings[paramKey];
+        const val =
+          mappedCol && row[mappedCol] !== undefined
+            ? String(row[mappedCol]).trim()
+            : row[paramKey] !== undefined
+            ? String(row[paramKey]).trim()
+            : templateParamValues[paramKey] || '';
+        rowParams[paramKey] = val;
+      });
+
+      // Name fallback
+      const primaryNameParam = declaredParams.find((p) => /name/i.test(p)) || declaredParams[0];
+      const delegateName =
+        rowParams[primaryNameParam] ||
+        row.Name ||
+        row.name ||
+        row.DrName ||
+        `Recipient #${index + 1}`;
 
       const currentStatusInfo = contactStatuses[index] || {
         status: isValidPhone ? 'PENDING' : 'FAILED',
@@ -225,11 +326,11 @@ export default function WhatsAppMarketing() {
       return {
         id: index,
         rowNumber: index + 1,
-        name: rawName || `Recipient #${index + 1}`,
-        rawPhone: rawPhone,
+        name: delegateName,
+        rawPhone,
         phone: normalizedPhone,
         isValidPhone,
-        extra: rawExtra || globalExtra,
+        params: rowParams,
         status: currentStatusInfo.status,
         error: currentStatusInfo.error,
         messageId: currentStatusInfo.messageId,
@@ -237,7 +338,7 @@ export default function WhatsAppMarketing() {
         originalData: row,
       };
     });
-  }, [rawDataRows, nameCol, phoneCol, extraCol, globalExtra, contactStatuses]);
+  }, [rawDataRows, columnMappings, activeTemplate, templateParamValues, contactStatuses]);
 
   // Status Counts
   const statusCounts = useMemo(() => {
@@ -250,14 +351,10 @@ export default function WhatsAppMarketing() {
     return counts;
   }, [parsedContacts]);
 
-  // Filtered contacts for table view (filtered by search and status tab)
+  // Filtered contacts for table view
   const filteredContacts = useMemo(() => {
     return parsedContacts.filter((c) => {
-      // Status filter
-      if (statusFilter !== 'ALL' && c.status !== statusFilter) {
-        return false;
-      }
-      // Search filter
+      if (statusFilter !== 'ALL' && c.status !== statusFilter) return false;
       if (searchFilter.trim()) {
         const q = searchFilter.toLowerCase();
         return (
@@ -270,7 +367,7 @@ export default function WhatsAppMarketing() {
     });
   }, [parsedContacts, searchFilter, statusFilter]);
 
-  // Handle Range Input Change
+  // Range Input Change
   const handleApplyRange = (e) => {
     if (e) e.preventDefault();
     if (!parsedContacts.length) return;
@@ -315,7 +412,7 @@ export default function WhatsAppMarketing() {
     });
   };
 
-  // Handle File Parsing (Excel, CSV, JSON)
+  // Handle File Upload (Excel, CSV, JSON)
   const processUploadedFile = async (file) => {
     if (!file) return;
     setUploadedFile(file);
@@ -329,9 +426,7 @@ export default function WhatsAppMarketing() {
           if (Array.isArray(jsonContent.users)) jsonContent = jsonContent.users;
           else if (Array.isArray(jsonContent.contacts)) jsonContent = jsonContent.contacts;
           else if (Array.isArray(jsonContent.data)) jsonContent = jsonContent.data;
-          else {
-            throw new Error('JSON file must contain an array of contact objects.');
-          }
+          else throw new Error('JSON file must contain an array of contact objects.');
         }
         setupRowsAndHeaders(jsonContent);
       } else {
@@ -340,9 +435,7 @@ export default function WhatsAppMarketing() {
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
         const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-        if (!rows.length) {
-          throw new Error('The uploaded spreadsheet is empty or has no data rows.');
-        }
+        if (!rows.length) throw new Error('The uploaded spreadsheet has no data rows.');
         setupRowsAndHeaders(rows);
       }
     } catch (err) {
@@ -357,22 +450,8 @@ export default function WhatsAppMarketing() {
 
     const headers = Object.keys(rows[0]);
     setAvailableHeaders(headers);
+    updateColumnMappingsForTemplate(activeTemplate, headers);
 
-    const detectedName = headers.find((h) =>
-      /^(name|full_?name|doctor_?name|delegate|dr_?name|dr\s*name|client)/i.test(h)
-    );
-    const detectedPhone = headers.find((h) =>
-      /^(phone|mobile|whatsapp|contact|phone_?no|cell|mobile_?no|tel)/i.test(h)
-    );
-    const detectedExtra = headers.find((h) =>
-      /^(extra|ticket|link|ticket_?url|notes|remarks|role)/i.test(h)
-    );
-
-    setNameCol(detectedName || headers[0] || '');
-    setPhoneCol(detectedPhone || (headers.length > 1 ? headers[1] : headers[0]) || '');
-    setExtraCol(detectedExtra || '');
-
-    // Reset statuses and select all rows
     setContactStatuses({});
     const all = new Set(rows.map((_, i) => i));
     setSelectedIndices(all);
@@ -380,40 +459,78 @@ export default function WhatsAppMarketing() {
     setBroadcastResults(null);
   };
 
-  // Download Sample Templates
+  // Generate dynamic sample data matching EXACT parameters of the currently chosen template
+  const generateTemplateSampleData = () => {
+    const declaredParams = activeTemplate.params || ['Name'];
+
+    return SAMPLE_DELEGATES.map((del, idx) => {
+      const sampleRow = {
+        Phone: del.phone,
+      };
+
+      declaredParams.forEach((paramKey) => {
+        const lower = paramKey.toLowerCase();
+        if (lower.includes('name') || lower === 'drname' || lower === 'delegate') {
+          sampleRow[paramKey] = del.name;
+        } else if (lower.includes('extra') || lower.includes('note')) {
+          sampleRow[paramKey] = idx % 2 === 0 ? 'VIP Delegate' : 'Special Guest';
+        } else if (lower.includes('date')) {
+          sampleRow[paramKey] = '21 Nov 2026';
+        } else if (lower.includes('venue') || lower.includes('branch') || lower.includes('location')) {
+          sampleRow[paramKey] = 'The Leela Palace, Chennai';
+        } else if (lower.includes('link') || lower.includes('url')) {
+          sampleRow[paramKey] = 'https://ciim.prashanthfertility.com/';
+        } else if (lower.includes('doctor')) {
+          sampleRow[paramKey] = 'Dr. Geetha Haripriya';
+        } else if (lower.includes('uhid')) {
+          sampleRow[paramKey] = `UH100${20 + idx}`;
+        } else {
+          sampleRow[paramKey] = `Sample ${paramKey} ${idx + 1}`;
+        }
+      });
+
+      return sampleRow;
+    });
+  };
+
+  // Dynamic Sample File Downloads
   const downloadSampleExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(SAMPLE_CONTACTS);
+    const sampleData = generateTemplateSampleData();
+    const ws = XLSX.utils.json_to_sheet(sampleData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'WhatsApp_Contacts');
-    XLSX.writeFile(wb, 'ciim2026_marketing_sample_contacts.xlsx');
+    XLSX.utils.book_append_sheet(wb, ws, 'Contacts');
+    XLSX.writeFile(wb, `${activeTemplate.name}_sample.xlsx`);
   };
 
   const downloadSampleCsv = () => {
-    const ws = XLSX.utils.json_to_sheet(SAMPLE_CONTACTS);
+    const sampleData = generateTemplateSampleData();
+    const ws = XLSX.utils.json_to_sheet(sampleData);
     const csvContent = XLSX.utils.sheet_to_csv(ws);
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'ciim2026_marketing_sample_contacts.csv';
+    a.download = `${activeTemplate.name}_sample.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
   const downloadSampleJson = () => {
-    const jsonStr = JSON.stringify(SAMPLE_CONTACTS, null, 2);
+    const sampleData = generateTemplateSampleData();
+    const jsonStr = JSON.stringify(sampleData, null, 2);
     const blob = new Blob([jsonStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'ciim2026_marketing_sample_contacts.json';
+    a.download = `${activeTemplate.name}_sample.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
   const loadSampleIntoEditor = () => {
-    setupRowsAndHeaders(SAMPLE_CONTACTS);
-    setUploadedFile({ name: 'ciim_invite_sample_delegates.xlsx' });
+    const sampleData = generateTemplateSampleData();
+    setupRowsAndHeaders(sampleData);
+    setUploadedFile({ name: `${activeTemplate.name}_sample.xlsx (Preloaded)` });
   };
 
   // Single Test Send
@@ -423,13 +540,16 @@ export default function WhatsAppMarketing() {
     setTestSending(true);
 
     try {
+      const primaryNameParam = (activeTemplate.params || []).find((p) => /name/i.test(p)) || 'Name';
+      const testNameVal = templateParamValues[primaryNameParam] || 'Dr. Karthikeyan';
+
       const res = await whatsappMarketingApi.sendTestSingle({
         phone: testPhone,
         templateName: selectedTemplateId,
-        name: testName,
-        extra: globalExtra,
+        name: testNameVal,
+        customParamsValues: templateParamValues,
         imageType: activeTemplate.hasHeaderMedia ? imageType : 'none',
-        customImageUrl,
+        customImageUrl: resolvedImageUrl,
       });
       setTestResult(res?.data || { success: true });
     } catch (err) {
@@ -449,9 +569,9 @@ export default function WhatsAppMarketing() {
         phone: contact.phone || contact.rawPhone,
         name: contact.name,
         templateName: selectedTemplateId,
-        extra: contact.extra,
+        customParamsValues: contact.params || templateParamValues,
         imageType: activeTemplate.hasHeaderMedia ? imageType : 'none',
-        customImageUrl,
+        customImageUrl: resolvedImageUrl,
       });
 
       if (res?.data?.sent) {
@@ -495,8 +615,6 @@ export default function WhatsAppMarketing() {
       alert('There are no failed contacts to retry.');
       return;
     }
-
-    // Select only failed contacts
     const failedSet = new Set(failedContacts.map((c) => c.id));
     setSelectedIndices(failedSet);
     setShowConfirmModal(true);
@@ -534,7 +652,6 @@ export default function WhatsAppMarketing() {
       });
       setLastSyncTime(new Date().toLocaleTimeString());
     } catch (err) {
-      console.warn('Failed checking WATI statuses:', err);
       alert('Could not refresh statuses: ' + (err.message || 'WATI API error'));
     } finally {
       setSyncingStatuses(false);
@@ -560,13 +677,14 @@ export default function WhatsAppMarketing() {
       const payload = {
         templateName: selectedTemplateId,
         imageType: activeTemplate.hasHeaderMedia ? imageType : 'none',
-        customImageUrl,
-        globalExtra,
+        customImageUrl: resolvedImageUrl,
+        globalParams: templateParamValues,
         recipients: selectedContacts.map((c) => ({
           rowIndex: c.rowNumber,
           name: c.name,
           phone: c.phone,
-          extra: c.extra,
+          params: c.params,
+          originalData: c.originalData,
         })),
         throttleMs: 120,
       };
@@ -575,7 +693,6 @@ export default function WhatsAppMarketing() {
       setBroadcastProgress(100);
       setBroadcastResults(res?.data);
 
-      // Update contactStatuses map with the dispatch results
       if (res?.data?.results) {
         setContactStatuses((prev) => {
           const updated = { ...prev };
@@ -638,41 +755,81 @@ export default function WhatsAppMarketing() {
             <span className="wam__chip wam__chip--channel">
               Channel: 919940030935 (PRFC - Blast)
             </span>
-            <span className="wam__chip wam__chip--marketing">
-              ✨ Marketing Approved: ciim2026_invite
+            <span className="wam__chip wam__chip--total-templates">
+              {allTemplates.length} Approved Templates Loaded
             </span>
           </div>
-          <h1 className="wam__title">WhatsApp Marketing & Campaign Dispatch</h1>
+          <h1 className="wam__title">WhatsApp Marketing & Multi-Template Dispatch</h1>
           <p className="wam__subtitle">
-            Send client-approved marketing invitations, track live statuses (
-            <strong>Sent</strong>, <strong>Delivered</strong>, <strong>Read</strong>,{' '}
-            <strong>Failed</strong>), filter audience by delivery state, and retry instantly.
+            Choose from all WATI <strong>Marketing</strong> & <strong>Utility</strong> templates,
+            upload custom banners, customize dynamic parameters, filter by delivery status, and
+            broadcast personalized messages.
           </p>
         </div>
 
         <div className="wam__header-actions">
           <Button variant="secondary" onClick={loadSampleIntoEditor}>
-            Load Demo Contacts (12)
+            Load Sample for {activeTemplate.name}
           </Button>
         </div>
       </header>
 
       {/* Main Grid */}
       <div className="wam__grid">
-        {/* Step 1: Choose Template & Media */}
+        {/* Step 1: Choose Template & Dynamic Parameters */}
         <section className="wam__card wam__card--template">
           <div className="wam__card-header">
             <span className="wam__step-pill">Step 1</span>
             <div>
-              <h2 className="wam__card-title">Approved Template: ciim2026_invite</h2>
+              <h2 className="wam__card-title">Choose WATI Template</h2>
               <p className="wam__card-desc">
-                Official approved marketing invitation with interactive action buttons
+                Filter by Marketing or Utility, then configure parameters & header media below
               </p>
             </div>
           </div>
 
+          {/* Template Category Tabs */}
+          <div className="wam__cat-bar">
+            <div className="wam__cat-tabs">
+              <button
+                type="button"
+                className={`wam__cat-tab ${templateCategoryTab === 'ALL' ? 'is-active' : ''}`}
+                onClick={() => setTemplateCategoryTab('ALL')}
+              >
+                All ({allTemplates.length})
+              </button>
+              <button
+                type="button"
+                className={`wam__cat-tab wam__cat-tab--mkt ${
+                  templateCategoryTab === 'MARKETING' ? 'is-active' : ''
+                }`}
+                onClick={() => setTemplateCategoryTab('MARKETING')}
+              >
+                Marketing ({config?.marketingCount || 0})
+              </button>
+              <button
+                type="button"
+                className={`wam__cat-tab wam__cat-tab--utl ${
+                  templateCategoryTab === 'UTILITY' ? 'is-active' : ''
+                }`}
+                onClick={() => setTemplateCategoryTab('UTILITY')}
+              >
+                Utility ({config?.utilityCount || 0})
+              </button>
+            </div>
+
+            <input
+              type="text"
+              className="wam__input wam__input--tmpl-search"
+              placeholder="&#128269; Search templates..."
+              value={templateSearch}
+              onChange={(e) => setTemplateSearch(e.target.value)}
+            />
+          </div>
+
+          {/* Template List Cards */}
           <div className="wam__template-selector">
-            {templates.map((tmpl) => (
+            {filteredTemplates.map((tmpl) => (
               <label
                 key={tmpl.id}
                 className={`wam__template-card ${
@@ -684,77 +841,161 @@ export default function WhatsAppMarketing() {
                   name="template"
                   value={tmpl.id}
                   checked={selectedTemplateId === tmpl.id}
-                  onChange={() => handleTemplateChange(tmpl.id)}
+                  onChange={() => handleSelectTemplate(tmpl.id)}
                 />
                 <div className="wam__template-card-body">
                   <div className="wam__template-card-title-row">
                     <span className="wam__template-name">{tmpl.label || tmpl.name}</span>
                     <span
                       className={`wam__tag ${
-                        tmpl.category === 'Marketing' ? 'wam__tag--purple' : 'wam__tag--green'
+                        tmpl.category === 'MARKETING' ? 'wam__tag--purple' : 'wam__tag--green'
                       }`}
                     >
-                      {tmpl.category || 'Utility'} &bull; {tmpl.status || 'Approved'}
+                      {tmpl.category} &bull; Approved
                     </span>
                   </div>
-                  <p className="wam__template-desc">{tmpl.description}</p>
+                  <p className="wam__template-desc">
+                    {tmpl.body ? tmpl.body.slice(0, 110) + '...' : 'WATI Approved Template'}
+                  </p>
                   <div className="wam__template-meta">
                     <code className="wam__template-code">{tmpl.name}</code>
-                    <span className="wam__lang-badge">{tmpl.language || 'English (UK)'}</span>
+                    {tmpl.hasHeaderMedia && (
+                      <span className="wam__media-badge">&#128444; Image Header</span>
+                    )}
+                    <span className="wam__lang-badge">{tmpl.language || 'en_GB'}</span>
                   </div>
                 </div>
               </label>
             ))}
           </div>
 
-          {/* Header Media / Image Preset (Only if template requires header media) */}
-          {activeTemplate.hasHeaderMedia ? (
-            <div className="wam__form-group">
-              <label className="wam__label">Header Media / Banner</label>
-              <div className="wam__image-presets">
-                {imagePresets.map((preset) => (
+          {/* Active Template Parameters Configuration */}
+          <div className="wam__param-section">
+            <h3 className="wam__section-heading">
+              &#9881; Parameters for <code>{activeTemplate.name}</code>
+            </h3>
+
+            {/* Header Media / Image Uploader (Visible only if template requires an image) */}
+            {activeTemplate.hasHeaderMedia ? (
+              <div className="wam__form-group">
+                <label className="wam__label">
+                  Template Header Image / Banner
+                  <span className="wam__label-hint">(Select default, upload new, or paste URL)</span>
+                </label>
+
+                {/* Image Mode Buttons */}
+                <div className="wam__image-modes">
                   <button
                     type="button"
-                    key={preset.id}
-                    className={`wam__preset-btn ${imageType === preset.id ? 'is-active' : ''}`}
-                    onClick={() => setImageType(preset.id)}
+                    className={`wam__preset-btn ${imageType === 'poster' ? 'is-active' : ''}`}
+                    onClick={() => setImageType('poster')}
                   >
-                    <img src={preset.url} alt={preset.label} className="wam__preset-thumb" />
-                    <span className="wam__preset-text">{preset.label}</span>
+                    <img
+                      src={DEFAULT_POSTER_URL}
+                      alt="Thank you poster"
+                      className="wam__preset-thumb"
+                    />
+                    <span className="wam__preset-text">Default Thank You Poster</span>
                   </button>
-                ))}
-                <button
-                  type="button"
-                  className={`wam__preset-btn ${imageType === 'custom' ? 'is-active' : ''}`}
-                  onClick={() => setImageType('custom')}
-                >
-                  <span className="wam__preset-custom-icon">&#128279;</span>
-                  <span className="wam__preset-text">Custom URL</span>
-                </button>
-              </div>
 
-              {imageType === 'custom' && (
+                  <button
+                    type="button"
+                    className="wam__preset-btn wam__preset-btn--upload"
+                    onClick={() => imageInputRef.current?.click()}
+                  >
+                    <span className="wam__preset-custom-icon">&#128228;</span>
+                    <span className="wam__preset-text">
+                      {uploadingImage ? 'Uploading...' : '+ Upload New Image'}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`wam__preset-btn ${imageType === 'custom' ? 'is-active' : ''}`}
+                    onClick={() => setImageType('custom')}
+                  >
+                    <span className="wam__preset-custom-icon">&#128279;</span>
+                    <span className="wam__preset-text">Custom Image URL</span>
+                  </button>
+                </div>
+
                 <input
-                  type="url"
-                  className="wam__input"
-                  placeholder="https://example.com/banner.jpg"
-                  value={customImageUrl}
-                  onChange={(e) => setCustomImageUrl(e.target.value)}
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/jpg"
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) handleUploadNewImage(e.target.files[0]);
+                  }}
                 />
-              )}
-            </div>
-          ) : (
-            <div className="wam__notice-box">
-              <span className="wam__notice-icon">&#10004;</span>
-              <div>
-                <strong>Header Media: None required</strong>
-                <p className="wam__notice-sub">
-                  This approved marketing template delivers a clean, high-conversion text invitation
-                  with interactive Call & Register action buttons.
-                </p>
+
+                {/* Uploaded Images Gallery for Future Use */}
+                {uploadedImages.length > 0 && (
+                  <div className="wam__uploaded-gallery">
+                    <span className="wam__gallery-label">Uploaded Image Gallery:</span>
+                    <div className="wam__gallery-list">
+                      {uploadedImages.map((img, i) => (
+                        <div
+                          key={i}
+                          className={`wam__gallery-item ${imageType === img.url ? 'is-active' : ''}`}
+                          onClick={() => setImageType(img.url)}
+                          title={img.name}
+                        >
+                          <img src={img.url} alt={img.name} />
+                          <span className="wam__gallery-name">{img.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {imageType === 'custom' && (
+                  <input
+                    type="url"
+                    className="wam__input"
+                    placeholder="https://example.com/banner.jpg"
+                    value={customImageUrl}
+                    onChange={(e) => setCustomImageUrl(e.target.value)}
+                  />
+                )}
               </div>
+            ) : (
+              <div className="wam__notice-box">
+                <span className="wam__notice-icon">&#10004;</span>
+                <div>
+                  <strong>No Header Image Required</strong>
+                  <p className="wam__notice-sub">
+                    This template is formatted as a direct text message with interactive action
+                    buttons.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Dynamic Text Parameter Fields for Selected Template */}
+            <div className="wam__dynamic-fields">
+              {(activeTemplate.params || ['Name']).map((paramKey) => (
+                <div className="wam__form-group" key={paramKey}>
+                  <label className="wam__label">
+                    Parameter: <code>&#123;&#123;{paramKey}&#125;&#125;</code>
+                    <span className="wam__label-hint">Default value (overridden by uploaded file)</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="wam__input"
+                    placeholder={`Default value for ${paramKey}`}
+                    value={templateParamValues[paramKey] ?? ''}
+                    onChange={(e) =>
+                      setTemplateParamValues((prev) => ({
+                        ...prev,
+                        [paramKey]: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              ))}
             </div>
-          )}
+          </div>
 
           {/* Live Template Preview Bubble */}
           <div className="wam__preview-box">
@@ -762,73 +1003,33 @@ export default function WhatsAppMarketing() {
               <span className="wam__preview-title">WhatsApp Live Message Preview</span>
             </div>
             <div className="wam__chat-bubble">
-              {activeTemplate.hasHeaderMedia && (
+              {activeTemplate.hasHeaderMedia && resolvedImageUrl && (
                 <div className="wam__chat-media">
-                  <img
-                    src={
-                      imageType === 'custom' && customImageUrl
-                        ? customImageUrl
-                        : (imagePresets.find((p) => p.id === imageType) || imagePresets[0]).url
-                    }
-                    alt="Template Banner"
-                    className="wam__chat-img"
-                  />
+                  <img src={resolvedImageUrl} alt="Header Banner" className="wam__chat-img" />
                 </div>
               )}
               <div className="wam__chat-text">
-                {selectedTemplateId === 'ciim2026_invite' ? (
-                  <>
-                    <p className="wam__chat-inviter">
-                      A Personal Invitation from Dr. Geetha Haripriya & Dr. Samhitha Moturi
-                    </p>
-                    <p>
-                      <strong>Dear Dr. {testName.replace(/^Dr\.\s*/i, '')},</strong>
-                    </p>
-                    <p>
-                      I am delighted to invite you to{' '}
-                      <strong>CIIM 2026 – Controversies in Infertility Management!</strong> ✨
-                    </p>
-                    <p>
-                      📅 <strong>21st & 22nd November 2026</strong>
-                      <br />
-                      📍 <strong>The Leela Palace, Chennai</strong>
-                    </p>
-                    <p>
-                      Join us for an inspiring exchange of knowledge and advancements in infertility
-                      care.
-                    </p>
-                    <p>🤝 Your presence would mean a lot!</p>
-                    <p className="wam__chat-link">
-                      🔗 Register here: https://ciim.prashanthfertility.com/
-                    </p>
-                    <p>🎟️ Coupon Code Enquiries & Assistance</p>
-                    <p>📞 Call or WhatsApp: +91 96000 47646</p>
-                    <p className="wam__chat-closing">
-                      Warm regards,
-                      <br />
-                      Organising committee, CIIM 2026
-                    </p>
-                    <div className="wam__chat-buttons">
-                      <div className="wam__chat-btn-item">&#128279; Register Here</div>
-                      <div className="wam__chat-btn-item">&#128222; Call Now</div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <p>
-                      <strong>Dear Dr. {testName.replace(/^Dr\.\s*/i, '')},</strong>
-                    </p>
-                    <p>
-                      Thank you for confirming your presence at the{' '}
-                      <strong>2nd Chennai International Infertility Meet (CIIM 2026)</strong>.
-                    </p>
-                    <p>
-                      <strong>Date:</strong> 06 - 08 February 2026
-                      <br />
-                      <strong>Venue:</strong> ITC Grand Chola, Guindy, Chennai
-                    </p>
-                  </>
+                <p className="wam__chat-preview-content">
+                  {activeTemplate.body
+                    ? activeTemplate.body.replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (match, p) => {
+                        return (
+                          templateParamValues[p] ||
+                          (p.toLowerCase().includes('name') ? 'Dr. Karthikeyan' : match)
+                        );
+                      })
+                    : 'Template Body'}
+                </p>
+
+                {activeTemplate.buttons && activeTemplate.buttons.length > 0 && (
+                  <div className="wam__chat-buttons">
+                    {activeTemplate.buttons.map((btn, i) => (
+                      <div key={i} className="wam__chat-btn-item">
+                        {btn}
+                      </div>
+                    ))}
+                  </div>
                 )}
+
                 <span className="wam__chat-time">
                   12:45 PM &bull; <span className="wam__chat-ticks">&#10003;&#10003;</span>
                 </span>
@@ -844,16 +1045,9 @@ export default function WhatsAppMarketing() {
             </p>
             <div className="wam__single-test-fields">
               <input
-                type="text"
-                className="wam__input"
-                placeholder="Doctor Name (e.g. Dr. Karthikeyan)"
-                value={testName}
-                onChange={(e) => setTestName(e.target.value)}
-              />
-              <input
                 type="tel"
                 className="wam__input"
-                placeholder="Mobile (10 digits)"
+                placeholder="Mobile (10 digits e.g. 9962460782)"
                 value={testPhone}
                 onChange={(e) => setTestPhone(e.target.value)}
               />
@@ -872,9 +1066,7 @@ export default function WhatsAppMarketing() {
                 <strong>{testResult.status || 'SENT'}</strong>
               </div>
             )}
-            {testError && (
-              <div className="wam__alert wam__alert--error">&#9888; {testError}</div>
-            )}
+            {testError && <div className="wam__alert wam__alert--error">&#9888; {testError}</div>}
           </div>
         </section>
 
@@ -883,7 +1075,7 @@ export default function WhatsAppMarketing() {
           <div className="wam__card-header">
             <span className="wam__step-pill">Step 2 & 3</span>
             <div>
-              <h2 className="wam__card-title">Audience & Delivery Tracking</h2>
+              <h2 className="wam__card-title">Audience Data & Status Tracking</h2>
               <p className="wam__card-desc">
                 Upload contact files, select range (e.g. 1-20, 35-49), monitor delivery states &
                 retry
@@ -930,9 +1122,11 @@ export default function WhatsAppMarketing() {
             </div>
           </div>
 
-          {/* Sample Templates Download Bar */}
+          {/* Dynamic Sample Templates Download Bar (Adapts to Active Template Parameters) */}
           <div className="wam__sample-bar">
-            <span className="wam__sample-label">Download Sample Files:</span>
+            <span className="wam__sample-label">
+              Download Sample Formats for <strong>{activeTemplate.name}</strong>:
+            </span>
             <button type="button" className="wam__sample-link" onClick={downloadSampleExcel}>
               &#128196; Excel (.xlsx)
             </button>
@@ -947,14 +1141,18 @@ export default function WhatsAppMarketing() {
           {/* Column Mapping Controls */}
           {availableHeaders.length > 0 && (
             <div className="wam__col-mapping">
-              <div className="wam__mapping-title">&#9881; Column Mapping:</div>
+              <div className="wam__mapping-title">
+                &#9881; Column Mapping for <code>{activeTemplate.name}</code>:
+              </div>
               <div className="wam__mapping-fields">
                 <div className="wam__mapping-item">
-                  <label>Name Column:</label>
+                  <label>Mobile Number Column:</label>
                   <select
                     className="wam__select"
-                    value={nameCol}
-                    onChange={(e) => setNameCol(e.target.value)}
+                    value={columnMappings.Phone || ''}
+                    onChange={(e) =>
+                      setColumnMappings((prev) => ({ ...prev, Phone: e.target.value }))
+                    }
                   >
                     {availableHeaders.map((h) => (
                       <option key={h} value={h}>
@@ -964,36 +1162,25 @@ export default function WhatsAppMarketing() {
                   </select>
                 </div>
 
-                <div className="wam__mapping-item">
-                  <label>Phone Column:</label>
-                  <select
-                    className="wam__select"
-                    value={phoneCol}
-                    onChange={(e) => setPhoneCol(e.target.value)}
-                  >
-                    {availableHeaders.map((h) => (
-                      <option key={h} value={h}>
-                        {h}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="wam__mapping-item">
-                  <label>Extra / Link (Opt):</label>
-                  <select
-                    className="wam__select"
-                    value={extraCol}
-                    onChange={(e) => setExtraCol(e.target.value)}
-                  >
-                    <option value="">-- None --</option>
-                    {availableHeaders.map((h) => (
-                      <option key={h} value={h}>
-                        {h}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {(activeTemplate.params || ['Name']).map((paramKey) => (
+                  <div className="wam__mapping-item" key={paramKey}>
+                    <label>Parameter &#123;&#123;{paramKey}&#125;&#125; Column:</label>
+                    <select
+                      className="wam__select"
+                      value={columnMappings[paramKey] || ''}
+                      onChange={(e) =>
+                        setColumnMappings((prev) => ({ ...prev, [paramKey]: e.target.value }))
+                      }
+                    >
+                      <option value="">-- Use Default / Blank --</option>
+                      {availableHeaders.map((h) => (
+                        <option key={h} value={h}>
+                          {h}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -1167,6 +1354,7 @@ export default function WhatsAppMarketing() {
                       <th style={{ width: 65 }}>Row</th>
                       <th>Recipient Name</th>
                       <th>Mobile Number</th>
+                      <th>Custom Parameters</th>
                       <th style={{ width: 130 }}>Delivery Status</th>
                       <th style={{ width: 95 }}>Action</th>
                     </tr>
@@ -1194,12 +1382,7 @@ export default function WhatsAppMarketing() {
                           <td>
                             <div className="wam__delegate-cell">
                               <span className="wam__avatar">{contact.name.charAt(0) || 'D'}</span>
-                              <div>
-                                <span className="wam__delegate-name">{contact.name}</span>
-                                {contact.extra && (
-                                  <span className="wam__delegate-extra">{contact.extra}</span>
-                                )}
-                              </div>
+                              <span className="wam__delegate-name">{contact.name}</span>
                             </div>
                           </td>
                           <td>
@@ -1210,6 +1393,15 @@ export default function WhatsAppMarketing() {
                             >
                               {contact.phone || contact.rawPhone || 'No Phone'}
                             </span>
+                          </td>
+                          <td>
+                            <div className="wam__params-pill-list">
+                              {Object.entries(contact.params || {}).map(([k, v]) => (
+                                <span key={k} className="wam__param-mini-badge" title={`${k}: ${v}`}>
+                                  <strong>{k}:</strong> {String(v).slice(0, 20)}
+                                </span>
+                              ))}
+                            </div>
                           </td>
                           <td>
                             <span className={`wam__status-badge wam__status-badge--${contact.status.toLowerCase()}`}>
@@ -1364,12 +1556,12 @@ export default function WhatsAppMarketing() {
                 <strong>Selected Rows:</strong> {rangeInput || `${selectedCount} contacts`}
               </div>
               <div>
-                <strong>Channel:</strong> 919940030935 (PRFC - Blast)
+                <strong>Header Media:</strong> {activeTemplate.hasHeaderMedia ? imageType : 'None (Text Only)'}
               </div>
             </div>
             <p className="wam__modal-note">
-              Messages will be sent sequentially with personalized recipient names. Are you sure you
-              wish to proceed?
+              Messages will be sent sequentially with personalized recipient parameters. Are you
+              sure you wish to proceed?
             </p>
             <div className="wam__modal-actions">
               <Button variant="ghost" onClick={() => setShowConfirmModal(false)}>
