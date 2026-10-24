@@ -4,6 +4,52 @@ import { whatsappMarketingApi } from '../../lib/whatsappMarketingApi';
 import Button from '../../components/ui/Button';
 import './WhatsAppMarketing.css';
 
+const DEFAULT_TEMPLATES = [
+  {
+    id: 'ciim2026_invite',
+    name: 'ciim2026_invite',
+    label: 'CIIM 2026 Personal Invitation (Marketing Approved)',
+    category: 'Marketing',
+    status: 'Approved',
+    language: 'English (UK)',
+    description: 'Personal invitation from Dr. Geetha Haripriya & Dr. Samhitha Moturi (Dates: 21 & 22 Nov 2026, The Leela Palace, Chennai) with Register & Call buttons.',
+    defaultImageType: 'none',
+    hasHeaderMedia: false,
+    defaultExtra: '',
+    params: ['Name'],
+    buttons: [
+      { type: 'url', text: 'Register Here', url: 'https://ciim.prashanthfertility.com/' },
+      { type: 'call', text: 'Call Now', phone: '+919600047646' },
+    ],
+  },
+  {
+    id: 'ciim2026_registration_thankyou_02',
+    name: 'ciim2026_registration_thankyou_02',
+    label: 'Thank You Registration Template (Utility)',
+    category: 'Utility',
+    status: 'Approved',
+    language: 'English (UK)',
+    description: 'Header with conference poster banner, welcome letter, and optional custom extra note.',
+    defaultImageType: 'poster',
+    hasHeaderMedia: true,
+    defaultExtra: '...',
+    params: ['DrName', 'extra', 'img'],
+  },
+  {
+    id: 'ciim2026_registration_5',
+    name: 'ciim2026_registration_5',
+    label: 'Registration 5 (QR Header + Ticket Link - Utility)',
+    category: 'Utility',
+    status: 'Approved',
+    language: 'English (UK)',
+    description: 'High-res QR code header with delegate name, dates/venue, and ticket link.',
+    defaultImageType: 'qr_gold',
+    hasHeaderMedia: true,
+    defaultExtra: 'https://ciim.prashanthfertility.com/tickets/CIIM-TEST-KARTHIKEYAN',
+    params: ['Name', 'extra', 'qr', 'QR'],
+  },
+];
+
 const DEFAULT_IMAGE_PRESETS = [
   {
     id: 'poster',
@@ -25,43 +71,12 @@ const DEFAULT_IMAGE_PRESETS = [
   },
 ];
 
-const DEFAULT_TEMPLATES = [
-  {
-    id: 'ciim2026_registration_thankyou_02',
-    name: 'ciim2026_registration_thankyou_02',
-    label: 'Thank You Registration Template (Utility)',
-    description: 'Header with official conference poster, personalized welcome letter, and optional custom extra note.',
-    defaultImageType: 'poster',
-    defaultExtra: '...',
-    params: ['DrName', 'extra', 'img'],
-  },
-  {
-    id: 'ciim2026_registration_5',
-    name: 'ciim2026_registration_5',
-    label: 'Registration 5 (QR Header + Ticket Link - Utility)',
-    description: 'High-res QR code header with delegate name, dates/venue, and ticket link.',
-    defaultImageType: 'qr_gold',
-    defaultExtra: 'https://ciim.prashanthfertility.com/tickets/CIIM-TEST-KARTHIKEYAN',
-    params: ['Name', 'extra', 'qr', 'QR'],
-  },
-  {
-    id: 'ciim2026_registration_1',
-    name: 'ciim2026_registration_1',
-    label: 'Registration 1 (QR Code Header - Utility)',
-    description: 'Standard confirmed registration template with QR image header.',
-    defaultImageType: 'qr_gold',
-    defaultExtra: '',
-    params: ['Name', 'QR'],
-  },
-];
-
-// Sample demo contacts for 1-click template download & immediate testing
 const SAMPLE_CONTACTS = [
   { Name: 'Dr. Karthikeyan', Phone: '9962460782', Extra: 'Special Guest' },
   { Name: 'Dr. Priya Sharma', Phone: '9840123456', Extra: 'Senior Delegate' },
   { Name: 'Dr. Rajesh Kumar', Phone: '9841234567', Extra: 'Speaker' },
   { Name: 'Dr. Ananya Reddy', Phone: '9884567890', Extra: 'Delegate' },
-  { Name: 'Dr. Suresh Babu', Phone: '9940123987', Extra: 'Workshop Pass' },
+  { Name: 'Dr. Suresh Babu', Phone: '9940123987', Extra: 'Faculty' },
   { Name: 'Dr. Meera Nambiar', Phone: '9840987654', Extra: 'VIP Delegate' },
   { Name: 'Dr. Vikram Seth', Phone: '9789123456', Extra: 'Delegate' },
   { Name: 'Dr. Kavitha Raman', Phone: '9841987654', Extra: 'Faculty' },
@@ -73,7 +88,6 @@ const SAMPLE_CONTACTS = [
 
 /**
  * Parses range expressions like "1-20, 35-49, 55"
- * Returns a Set of 0-based row indices.
  */
 function parseRangeString(rangeStr, totalRows) {
   if (!rangeStr || !rangeStr.trim() || totalRows <= 0) {
@@ -115,13 +129,12 @@ function parseRangeString(rangeStr, totalRows) {
 
 export default function WhatsAppMarketing() {
   const [config, setConfig] = useState(null);
-  const [loadingConfig, setLoadingConfig] = useState(true);
 
-  // Template & Media Selection
-  const [selectedTemplateId, setSelectedTemplateId] = useState('ciim2026_registration_thankyou_02');
-  const [imageType, setImageType] = useState('poster');
+  // Template Selection (Defaults directly to the approved Marketing template)
+  const [selectedTemplateId, setSelectedTemplateId] = useState('ciim2026_invite');
+  const [imageType, setImageType] = useState('none');
   const [customImageUrl, setCustomImageUrl] = useState('');
-  const [globalExtra, setGlobalExtra] = useState('...');
+  const [globalExtra, setGlobalExtra] = useState('');
 
   // Audience Data
   const [uploadedFile, setUploadedFile] = useState(null);
@@ -130,6 +143,13 @@ export default function WhatsAppMarketing() {
   const [nameCol, setNameCol] = useState('');
   const [phoneCol, setPhoneCol] = useState('');
   const [extraCol, setExtraCol] = useState('');
+
+  // Contact Delivery Status Map: { [contactId]: { status: 'PENDING' | 'SENT' | 'DELIVERED' | 'READ' | 'FAILED', error?: string, messageId?: string, lastUpdated?: string } }
+  const [contactStatuses, setContactStatuses] = useState({});
+  const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'READ' | 'DELIVERED' | 'SENT' | 'FAILED' | 'PENDING'
+  const [retryingId, setRetryingId] = useState(null);
+  const [syncingStatuses, setSyncingStatuses] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState(null);
 
   // Selection & Range
   const [selectedIndices, setSelectedIndices] = useState(new Set());
@@ -147,8 +167,6 @@ export default function WhatsAppMarketing() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [broadcasting, setBroadcasting] = useState(false);
   const [broadcastProgress, setBroadcastProgress] = useState(0);
-  const [broadcastCurrent, setBroadcastCurrent] = useState(0);
-  const [broadcastTotal, setBroadcastTotal] = useState(0);
   const [broadcastResults, setBroadcastResults] = useState(null);
   const [broadcastError, setBroadcastError] = useState('');
 
@@ -161,13 +179,13 @@ export default function WhatsAppMarketing() {
       .then((res) => {
         if (res?.data) {
           setConfig(res.data);
+          if (res.data.primaryTemplate) {
+            setSelectedTemplateId(res.data.primaryTemplate);
+          }
         }
       })
       .catch((err) => {
         console.warn('Could not load marketing config:', err);
-      })
-      .finally(() => {
-        setLoadingConfig(false);
       });
   }, []);
 
@@ -181,6 +199,7 @@ export default function WhatsAppMarketing() {
     const tmpl = templates.find((t) => t.id === templateId);
     if (tmpl) {
       if (tmpl.defaultImageType) setImageType(tmpl.defaultImageType);
+      else setImageType('none');
       if (tmpl.defaultExtra !== undefined) setGlobalExtra(tmpl.defaultExtra);
     }
   };
@@ -194,10 +213,14 @@ export default function WhatsAppMarketing() {
       const rawPhone = phoneCol ? String(row[phoneCol] || '').trim() : '';
       const rawExtra = extraCol ? String(row[extraCol] || '').trim() : '';
 
-      // Normalize phone digits
       const digitsOnly = rawPhone.replace(/[^\d]/g, '');
       const isValidPhone = digitsOnly.length >= 10;
       const normalizedPhone = digitsOnly.length === 10 ? `91${digitsOnly}` : digitsOnly;
+
+      const currentStatusInfo = contactStatuses[index] || {
+        status: isValidPhone ? 'PENDING' : 'FAILED',
+        error: isValidPhone ? null : 'Invalid phone number (must be at least 10 digits)',
+      };
 
       return {
         id: index,
@@ -207,19 +230,45 @@ export default function WhatsAppMarketing() {
         phone: normalizedPhone,
         isValidPhone,
         extra: rawExtra || globalExtra,
+        status: currentStatusInfo.status,
+        error: currentStatusInfo.error,
+        messageId: currentStatusInfo.messageId,
+        lastUpdated: currentStatusInfo.lastUpdated,
         originalData: row,
       };
     });
-  }, [rawDataRows, nameCol, phoneCol, extraCol, globalExtra]);
+  }, [rawDataRows, nameCol, phoneCol, extraCol, globalExtra, contactStatuses]);
 
-  // Filtered contacts for table view
+  // Status Counts
+  const statusCounts = useMemo(() => {
+    const counts = { ALL: parsedContacts.length, READ: 0, DELIVERED: 0, SENT: 0, FAILED: 0, PENDING: 0 };
+    parsedContacts.forEach((c) => {
+      const s = c.status || 'PENDING';
+      if (counts[s] !== undefined) counts[s]++;
+      else counts.PENDING++;
+    });
+    return counts;
+  }, [parsedContacts]);
+
+  // Filtered contacts for table view (filtered by search and status tab)
   const filteredContacts = useMemo(() => {
-    if (!searchFilter.trim()) return parsedContacts;
-    const q = searchFilter.toLowerCase();
-    return parsedContacts.filter(
-      (c) => c.name.toLowerCase().includes(q) || c.phone.includes(q) || String(c.rowNumber) === q
-    );
-  }, [parsedContacts, searchFilter]);
+    return parsedContacts.filter((c) => {
+      // Status filter
+      if (statusFilter !== 'ALL' && c.status !== statusFilter) {
+        return false;
+      }
+      // Search filter
+      if (searchFilter.trim()) {
+        const q = searchFilter.toLowerCase();
+        return (
+          c.name.toLowerCase().includes(q) ||
+          c.phone.includes(q) ||
+          String(c.rowNumber) === q
+        );
+      }
+      return true;
+    });
+  }, [parsedContacts, searchFilter, statusFilter]);
 
   // Handle Range Input Change
   const handleApplyRange = (e) => {
@@ -286,7 +335,6 @@ export default function WhatsAppMarketing() {
         }
         setupRowsAndHeaders(jsonContent);
       } else {
-        // Excel (.xlsx, .xls) or CSV
         const buffer = await file.arrayBuffer();
         const workbook = XLSX.read(buffer, { type: 'array' });
         const firstSheetName = workbook.SheetNames[0];
@@ -310,7 +358,6 @@ export default function WhatsAppMarketing() {
     const headers = Object.keys(rows[0]);
     setAvailableHeaders(headers);
 
-    // Auto-detect columns
     const detectedName = headers.find((h) =>
       /^(name|full_?name|doctor_?name|delegate|dr_?name|dr\s*name|client)/i.test(h)
     );
@@ -325,7 +372,8 @@ export default function WhatsAppMarketing() {
     setPhoneCol(detectedPhone || (headers.length > 1 ? headers[1] : headers[0]) || '');
     setExtraCol(detectedExtra || '');
 
-    // Default select all rows
+    // Reset statuses and select all rows
+    setContactStatuses({});
     const all = new Set(rows.map((_, i) => i));
     setSelectedIndices(all);
     setRangeInput(`1-${rows.length}`);
@@ -337,7 +385,7 @@ export default function WhatsAppMarketing() {
     const ws = XLSX.utils.json_to_sheet(SAMPLE_CONTACTS);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'WhatsApp_Contacts');
-    XLSX.writeFile(wb, 'whatsapp_marketing_sample_contacts.xlsx');
+    XLSX.writeFile(wb, 'ciim2026_marketing_sample_contacts.xlsx');
   };
 
   const downloadSampleCsv = () => {
@@ -347,7 +395,7 @@ export default function WhatsAppMarketing() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'whatsapp_marketing_sample_contacts.csv';
+    a.download = 'ciim2026_marketing_sample_contacts.csv';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -358,15 +406,14 @@ export default function WhatsAppMarketing() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'whatsapp_marketing_sample_contacts.json';
+    a.download = 'ciim2026_marketing_sample_contacts.json';
     a.click();
     URL.revokeObjectURL(url);
   };
 
-  // Load sample contacts directly into editor for instant preview
   const loadSampleIntoEditor = () => {
     setupRowsAndHeaders(SAMPLE_CONTACTS);
-    setUploadedFile({ name: 'sample_ciim_delegates.xlsx (Preloaded)' });
+    setUploadedFile({ name: 'ciim_invite_sample_delegates.xlsx' });
   };
 
   // Single Test Send
@@ -381,7 +428,7 @@ export default function WhatsAppMarketing() {
         templateName: selectedTemplateId,
         name: testName,
         extra: globalExtra,
-        imageType,
+        imageType: activeTemplate.hasHeaderMedia ? imageType : 'none',
         customImageUrl,
       });
       setTestResult(res?.data || { success: true });
@@ -389,6 +436,108 @@ export default function WhatsAppMarketing() {
       setTestError(err.message || 'Failed to deliver test message.');
     } finally {
       setTestSending(false);
+    }
+  };
+
+  // Retry Single Contact Send
+  const handleRetrySingle = async (contact, e) => {
+    if (e) e.stopPropagation();
+    setRetryingId(contact.id);
+
+    try {
+      const res = await whatsappMarketingApi.resendSingle({
+        phone: contact.phone || contact.rawPhone,
+        name: contact.name,
+        templateName: selectedTemplateId,
+        extra: contact.extra,
+        imageType: activeTemplate.hasHeaderMedia ? imageType : 'none',
+        customImageUrl,
+      });
+
+      if (res?.data?.sent) {
+        setContactStatuses((prev) => ({
+          ...prev,
+          [contact.id]: {
+            status: 'SENT',
+            messageId: res.data.messageId,
+            error: null,
+            lastUpdated: new Date().toLocaleTimeString(),
+          },
+        }));
+      } else {
+        setContactStatuses((prev) => ({
+          ...prev,
+          [contact.id]: {
+            status: 'FAILED',
+            error: res?.data?.error || 'Failed to deliver',
+            lastUpdated: new Date().toLocaleTimeString(),
+          },
+        }));
+      }
+    } catch (err) {
+      setContactStatuses((prev) => ({
+        ...prev,
+        [contact.id]: {
+          status: 'FAILED',
+          error: err.message || 'Network error',
+          lastUpdated: new Date().toLocaleTimeString(),
+        },
+      }));
+    } finally {
+      setRetryingId(null);
+    }
+  };
+
+  // Retry All Failed Contacts
+  const handleRetryAllFailed = async () => {
+    const failedContacts = parsedContacts.filter((c) => c.status === 'FAILED');
+    if (!failedContacts.length) {
+      alert('There are no failed contacts to retry.');
+      return;
+    }
+
+    // Select only failed contacts
+    const failedSet = new Set(failedContacts.map((c) => c.id));
+    setSelectedIndices(failedSet);
+    setShowConfirmModal(true);
+  };
+
+  // Query WATI for real-time delivery and read statuses
+  const handleRefreshLiveStatuses = async () => {
+    const sentContacts = parsedContacts.filter((c) => c.status && c.status !== 'PENDING');
+    if (!sentContacts.length) {
+      alert('No messages have been sent yet. Broadcast messages first to check delivery and read status.');
+      return;
+    }
+
+    setSyncingStatuses(true);
+    try {
+      const phones = sentContacts.map((c) => c.phone).filter(Boolean);
+      const res = await whatsappMarketingApi.checkStatuses({ phones });
+      const serverStatuses = res?.data?.statuses || {};
+
+      setContactStatuses((prev) => {
+        const updated = { ...prev };
+        parsedContacts.forEach((contact) => {
+          const s = serverStatuses[contact.phone];
+          if (s && s.status) {
+            updated[contact.id] = {
+              ...(updated[contact.id] || {}),
+              status: s.status,
+              messageId: s.messageId || updated[contact.id]?.messageId,
+              error: s.failedDetail || null,
+              lastUpdated: new Date().toLocaleTimeString(),
+            };
+          }
+        });
+        return updated;
+      });
+      setLastSyncTime(new Date().toLocaleTimeString());
+    } catch (err) {
+      console.warn('Failed checking WATI statuses:', err);
+      alert('Could not refresh statuses: ' + (err.message || 'WATI API error'));
+    } finally {
+      setSyncingStatuses(false);
     }
   };
 
@@ -405,15 +554,12 @@ export default function WhatsAppMarketing() {
     }
 
     setBroadcasting(true);
-    setBroadcastTotal(selectedContacts.length);
-    setBroadcastCurrent(0);
-    setBroadcastProgress(5);
+    setBroadcastProgress(10);
 
     try {
-      // Chunk or execute batch request
       const payload = {
         templateName: selectedTemplateId,
-        imageType,
+        imageType: activeTemplate.hasHeaderMedia ? imageType : 'none',
         customImageUrl,
         globalExtra,
         recipients: selectedContacts.map((c) => ({
@@ -428,6 +574,25 @@ export default function WhatsAppMarketing() {
       const res = await whatsappMarketingApi.sendBatch(payload);
       setBroadcastProgress(100);
       setBroadcastResults(res?.data);
+
+      // Update contactStatuses map with the dispatch results
+      if (res?.data?.results) {
+        setContactStatuses((prev) => {
+          const updated = { ...prev };
+          res.data.results.forEach((r) => {
+            const contact = parsedContacts.find((c) => c.rowNumber === r.rowIndex);
+            if (contact) {
+              updated[contact.id] = {
+                status: r.status || (r.sent ? 'SENT' : 'FAILED'),
+                messageId: r.messageId,
+                error: r.error,
+                lastUpdated: new Date().toLocaleTimeString(),
+              };
+            }
+          });
+          return updated;
+        });
+      }
     } catch (err) {
       setBroadcastError(err.message || 'Error occurred while broadcasting WhatsApp messages.');
     } finally {
@@ -437,14 +602,23 @@ export default function WhatsAppMarketing() {
 
   // Export Results as CSV
   const exportResultsCsv = () => {
-    if (!broadcastResults?.results?.length) return;
-    const ws = XLSX.utils.json_to_sheet(broadcastResults.results);
+    if (!parsedContacts.length) return;
+    const exportData = parsedContacts.map((c) => ({
+      Row: c.rowNumber,
+      Name: c.name,
+      Phone: c.phone,
+      Status: c.status,
+      MessageId: c.messageId || '',
+      Error: c.error || '',
+      LastUpdated: c.lastUpdated || '',
+    }));
+    const ws = XLSX.utils.json_to_sheet(exportData);
     const csvContent = XLSX.utils.sheet_to_csv(ws);
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `whatsapp_broadcast_report_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `whatsapp_marketing_delivery_report_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -464,11 +638,15 @@ export default function WhatsAppMarketing() {
             <span className="wam__chip wam__chip--channel">
               Channel: 919940030935 (PRFC - Blast)
             </span>
+            <span className="wam__chip wam__chip--marketing">
+              ✨ Marketing Approved: ciim2026_invite
+            </span>
           </div>
-          <h1 className="wam__title">WhatsApp Marketing & Broadcast</h1>
+          <h1 className="wam__title">WhatsApp Marketing & Campaign Dispatch</h1>
           <p className="wam__subtitle">
-            Upload contact lists (.xlsx, .csv, .json), select custom audience ranges (e.g. 1-20, 35-49),
-            pick an approved WATI template, and broadcast personalized messages.
+            Send client-approved marketing invitations, track live statuses (
+            <strong>Sent</strong>, <strong>Delivered</strong>, <strong>Read</strong>,{' '}
+            <strong>Failed</strong>), filter audience by delivery state, and retry instantly.
           </p>
         </div>
 
@@ -479,15 +657,17 @@ export default function WhatsAppMarketing() {
         </div>
       </header>
 
-      {/* Main Grid: Left Config, Right Audience & Execution */}
+      {/* Main Grid */}
       <div className="wam__grid">
         {/* Step 1: Choose Template & Media */}
         <section className="wam__card wam__card--template">
           <div className="wam__card-header">
             <span className="wam__step-pill">Step 1</span>
             <div>
-              <h2 className="wam__card-title">Choose WATI Template</h2>
-              <p className="wam__card-desc">Select official approved utility template & header media</p>
+              <h2 className="wam__card-title">Approved Template: ciim2026_invite</h2>
+              <p className="wam__card-desc">
+                Official approved marketing invitation with interactive action buttons
+              </p>
             </div>
           </div>
 
@@ -497,7 +677,7 @@ export default function WhatsAppMarketing() {
                 key={tmpl.id}
                 className={`wam__template-card ${
                   selectedTemplateId === tmpl.id ? 'is-selected' : ''
-                }`}
+                } ${tmpl.id === 'ciim2026_invite' ? 'wam__template-card--primary' : ''}`}
               >
                 <input
                   type="radio"
@@ -509,67 +689,72 @@ export default function WhatsAppMarketing() {
                 <div className="wam__template-card-body">
                   <div className="wam__template-card-title-row">
                     <span className="wam__template-name">{tmpl.label || tmpl.name}</span>
-                    <span className="wam__tag wam__tag--green">Utility</span>
+                    <span
+                      className={`wam__tag ${
+                        tmpl.category === 'Marketing' ? 'wam__tag--purple' : 'wam__tag--green'
+                      }`}
+                    >
+                      {tmpl.category || 'Utility'} &bull; {tmpl.status || 'Approved'}
+                    </span>
                   </div>
                   <p className="wam__template-desc">{tmpl.description}</p>
-                  <code className="wam__template-code">{tmpl.name}</code>
+                  <div className="wam__template-meta">
+                    <code className="wam__template-code">{tmpl.name}</code>
+                    <span className="wam__lang-badge">{tmpl.language || 'English (UK)'}</span>
+                  </div>
                 </div>
               </label>
             ))}
           </div>
 
-          {/* Header Image Preset */}
-          <div className="wam__form-group">
-            <label className="wam__label">Header Media / Banner</label>
-            <div className="wam__image-presets">
-              {imagePresets.map((preset) => (
+          {/* Header Media / Image Preset (Only if template requires header media) */}
+          {activeTemplate.hasHeaderMedia ? (
+            <div className="wam__form-group">
+              <label className="wam__label">Header Media / Banner</label>
+              <div className="wam__image-presets">
+                {imagePresets.map((preset) => (
+                  <button
+                    type="button"
+                    key={preset.id}
+                    className={`wam__preset-btn ${imageType === preset.id ? 'is-active' : ''}`}
+                    onClick={() => setImageType(preset.id)}
+                  >
+                    <img src={preset.url} alt={preset.label} className="wam__preset-thumb" />
+                    <span className="wam__preset-text">{preset.label}</span>
+                  </button>
+                ))}
                 <button
                   type="button"
-                  key={preset.id}
-                  className={`wam__preset-btn ${imageType === preset.id ? 'is-active' : ''}`}
-                  onClick={() => setImageType(preset.id)}
+                  className={`wam__preset-btn ${imageType === 'custom' ? 'is-active' : ''}`}
+                  onClick={() => setImageType('custom')}
                 >
-                  <img src={preset.url} alt={preset.label} className="wam__preset-thumb" />
-                  <span className="wam__preset-text">{preset.label}</span>
+                  <span className="wam__preset-custom-icon">&#128279;</span>
+                  <span className="wam__preset-text">Custom URL</span>
                 </button>
-              ))}
-              <button
-                type="button"
-                className={`wam__preset-btn ${imageType === 'custom' ? 'is-active' : ''}`}
-                onClick={() => setImageType('custom')}
-              >
-                <span className="wam__preset-custom-icon">&#128279;</span>
-                <span className="wam__preset-text">Custom URL</span>
-              </button>
+              </div>
+
+              {imageType === 'custom' && (
+                <input
+                  type="url"
+                  className="wam__input"
+                  placeholder="https://example.com/banner.jpg"
+                  value={customImageUrl}
+                  onChange={(e) => setCustomImageUrl(e.target.value)}
+                />
+              )}
             </div>
-
-            {imageType === 'custom' && (
-              <input
-                type="url"
-                className="wam__input"
-                placeholder="https://example.com/banner.jpg"
-                value={customImageUrl}
-                onChange={(e) => setCustomImageUrl(e.target.value)}
-              />
-            )}
-          </div>
-
-          {/* Extra / Link Parameter */}
-          <div className="wam__form-group">
-            <label className="wam__label">
-              Extra Parameter Value
-              <span className="wam__label-hint">
-                (Used if contact row does not specify a custom extra)
-              </span>
-            </label>
-            <input
-              type="text"
-              className="wam__input"
-              value={globalExtra}
-              onChange={(e) => setGlobalExtra(e.target.value)}
-              placeholder="e.g. https://ciim.prashanthfertility.com or ..."
-            />
-          </div>
+          ) : (
+            <div className="wam__notice-box">
+              <span className="wam__notice-icon">&#10004;</span>
+              <div>
+                <strong>Header Media: None required</strong>
+                <p className="wam__notice-sub">
+                  This approved marketing template delivers a clean, high-conversion text invitation
+                  with interactive Call & Register action buttons.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Live Template Preview Bubble */}
           <div className="wam__preview-box">
@@ -577,23 +762,62 @@ export default function WhatsAppMarketing() {
               <span className="wam__preview-title">WhatsApp Live Message Preview</span>
             </div>
             <div className="wam__chat-bubble">
-              <div className="wam__chat-media">
-                <img
-                  src={
-                    imageType === 'custom' && customImageUrl
-                      ? customImageUrl
-                      : (imagePresets.find((p) => p.id === imageType) || imagePresets[0]).url
-                  }
-                  alt="Template Banner"
-                  className="wam__chat-img"
-                />
-              </div>
+              {activeTemplate.hasHeaderMedia && (
+                <div className="wam__chat-media">
+                  <img
+                    src={
+                      imageType === 'custom' && customImageUrl
+                        ? customImageUrl
+                        : (imagePresets.find((p) => p.id === imageType) || imagePresets[0]).url
+                    }
+                    alt="Template Banner"
+                    className="wam__chat-img"
+                  />
+                </div>
+              )}
               <div className="wam__chat-text">
-                <p>
-                  <strong>Dear Dr. {testName.replace(/^Dr\.\s*/i, '')},</strong>
-                </p>
-                {selectedTemplateId === 'ciim2026_registration_thankyou_02' ? (
+                {selectedTemplateId === 'ciim2026_invite' ? (
                   <>
+                    <p className="wam__chat-inviter">
+                      A Personal Invitation from Dr. Geetha Haripriya & Dr. Samhitha Moturi
+                    </p>
+                    <p>
+                      <strong>Dear Dr. {testName.replace(/^Dr\.\s*/i, '')},</strong>
+                    </p>
+                    <p>
+                      I am delighted to invite you to{' '}
+                      <strong>CIIM 2026 – Controversies in Infertility Management!</strong> ✨
+                    </p>
+                    <p>
+                      📅 <strong>21st & 22nd November 2026</strong>
+                      <br />
+                      📍 <strong>The Leela Palace, Chennai</strong>
+                    </p>
+                    <p>
+                      Join us for an inspiring exchange of knowledge and advancements in infertility
+                      care.
+                    </p>
+                    <p>🤝 Your presence would mean a lot!</p>
+                    <p className="wam__chat-link">
+                      🔗 Register here: https://ciim.prashanthfertility.com/
+                    </p>
+                    <p>🎟️ Coupon Code Enquiries & Assistance</p>
+                    <p>📞 Call or WhatsApp: +91 96000 47646</p>
+                    <p className="wam__chat-closing">
+                      Warm regards,
+                      <br />
+                      Organising committee, CIIM 2026
+                    </p>
+                    <div className="wam__chat-buttons">
+                      <div className="wam__chat-btn-item">&#128279; Register Here</div>
+                      <div className="wam__chat-btn-item">&#128222; Call Now</div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p>
+                      <strong>Dear Dr. {testName.replace(/^Dr\.\s*/i, '')},</strong>
+                    </p>
                     <p>
                       Thank you for confirming your presence at the{' '}
                       <strong>2nd Chennai International Infertility Meet (CIIM 2026)</strong>.
@@ -603,24 +827,6 @@ export default function WhatsAppMarketing() {
                       <br />
                       <strong>Venue:</strong> ITC Grand Chola, Guindy, Chennai
                     </p>
-                    {globalExtra && globalExtra !== '...' && <p>{globalExtra}</p>}
-                    <p>We look forward to welcoming you.</p>
-                  </>
-                ) : (
-                  <>
-                    <p>
-                      Your registration for <strong>CIIM 2026</strong> is confirmed.
-                    </p>
-                    <p>
-                      <strong>Venue:</strong> ITC Grand Chola, Chennai
-                      <br />
-                      <strong>Dates:</strong> 06 - 08 February 2026
-                    </p>
-                    {globalExtra && (
-                      <p className="wam__chat-link">
-                        &#127915; {globalExtra}
-                      </p>
-                    )}
                   </>
                 )}
                 <span className="wam__chat-time">
@@ -662,25 +868,25 @@ export default function WhatsAppMarketing() {
 
             {testResult && (
               <div className="wam__alert wam__alert--success">
-                &#10004; Test message delivered to {testPhone}! Message ID: {testResult.messageId}
+                &#10004; Test invitation delivered to {testPhone}! Status:{' '}
+                <strong>{testResult.status || 'SENT'}</strong>
               </div>
             )}
             {testError && (
-              <div className="wam__alert wam__alert--error">
-                &#9888; {testError}
-              </div>
+              <div className="wam__alert wam__alert--error">&#9888; {testError}</div>
             )}
           </div>
         </section>
 
-        {/* Step 2 & 3: File Upload, Range Selection & Audience Table */}
+        {/* Step 2 & 3: File Upload, Audience Table, Status Filter & Retries */}
         <section className="wam__card wam__card--audience">
           <div className="wam__card-header">
             <span className="wam__step-pill">Step 2 & 3</span>
             <div>
-              <h2 className="wam__card-title">Upload Audience & Select Range</h2>
+              <h2 className="wam__card-title">Audience & Delivery Tracking</h2>
               <p className="wam__card-desc">
-                Upload contacts file, specify exact rows or range (e.g. 1-20, 35-49)
+                Upload contact files, select range (e.g. 1-20, 35-49), monitor delivery states &
+                retry
               </p>
             </div>
           </div>
@@ -726,7 +932,7 @@ export default function WhatsAppMarketing() {
 
           {/* Sample Templates Download Bar */}
           <div className="wam__sample-bar">
-            <span className="wam__sample-label">Download Sample Formats:</span>
+            <span className="wam__sample-label">Download Sample Files:</span>
             <button type="button" className="wam__sample-link" onClick={downloadSampleExcel}>
               &#128196; Excel (.xlsx)
             </button>
@@ -738,7 +944,7 @@ export default function WhatsAppMarketing() {
             </button>
           </div>
 
-          {/* Column Mapping Controls (Visible when headers are present) */}
+          {/* Column Mapping Controls */}
           {availableHeaders.length > 0 && (
             <div className="wam__col-mapping">
               <div className="wam__mapping-title">&#9881; Column Mapping:</div>
@@ -780,7 +986,7 @@ export default function WhatsAppMarketing() {
                     value={extraCol}
                     onChange={(e) => setExtraCol(e.target.value)}
                   >
-                    <option value="">-- None (Use Global Extra) --</option>
+                    <option value="">-- None --</option>
                     {availableHeaders.map((h) => (
                       <option key={h} value={h}>
                         {h}
@@ -792,7 +998,7 @@ export default function WhatsAppMarketing() {
             </div>
           )}
 
-          {/* Range Selection & Quick Action Controls */}
+          {/* Range Selection & Status Tracking Section */}
           {parsedContacts.length > 0 && (
             <div className="wam__range-section">
               <div className="wam__range-header">
@@ -842,12 +1048,100 @@ export default function WhatsAppMarketing() {
                 <button type="button" className="wam__quick-btn" onClick={invertSelection}>
                   Invert
                 </button>
-                <button type="button" className="wam__quick-btn wam__quick-btn--clear" onClick={clearSelection}>
+                <button
+                  type="button"
+                  className="wam__quick-btn wam__quick-btn--clear"
+                  onClick={clearSelection}
+                >
                   Clear
                 </button>
               </div>
 
-              {/* Search Table */}
+              {/* Status Filter Bar & Refresh Button */}
+              <div className="wam__status-filter-bar">
+                <div className="wam__status-tabs">
+                  <button
+                    type="button"
+                    className={`wam__status-tab ${statusFilter === 'ALL' ? 'is-active' : ''}`}
+                    onClick={() => setStatusFilter('ALL')}
+                  >
+                    All ({statusCounts.ALL})
+                  </button>
+                  <button
+                    type="button"
+                    className={`wam__status-tab wam__status-tab--read ${
+                      statusFilter === 'READ' ? 'is-active' : ''
+                    }`}
+                    onClick={() => setStatusFilter('READ')}
+                  >
+                    &#10003;&#10003; Read ({statusCounts.READ})
+                  </button>
+                  <button
+                    type="button"
+                    className={`wam__status-tab wam__status-tab--delivered ${
+                      statusFilter === 'DELIVERED' ? 'is-active' : ''
+                    }`}
+                    onClick={() => setStatusFilter('DELIVERED')}
+                  >
+                    &#10003;&#10003; Delivered ({statusCounts.DELIVERED})
+                  </button>
+                  <button
+                    type="button"
+                    className={`wam__status-tab wam__status-tab--sent ${
+                      statusFilter === 'SENT' ? 'is-active' : ''
+                    }`}
+                    onClick={() => setStatusFilter('SENT')}
+                  >
+                    &#10003; Sent ({statusCounts.SENT})
+                  </button>
+                  <button
+                    type="button"
+                    className={`wam__status-tab wam__status-tab--failed ${
+                      statusFilter === 'FAILED' ? 'is-active' : ''
+                    }`}
+                    onClick={() => setStatusFilter('FAILED')}
+                  >
+                    &#9888; Failed ({statusCounts.FAILED})
+                  </button>
+                  <button
+                    type="button"
+                    className={`wam__status-tab wam__status-tab--pending ${
+                      statusFilter === 'PENDING' ? 'is-active' : ''
+                    }`}
+                    onClick={() => setStatusFilter('PENDING')}
+                  >
+                    Pending ({statusCounts.PENDING})
+                  </button>
+                </div>
+
+                <div className="wam__status-actions">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleRefreshLiveStatuses}
+                    disabled={syncingStatuses}
+                  >
+                    {syncingStatuses ? 'Syncing...' : '🔄 Refresh Live Status (WATI)'}
+                  </Button>
+                  {statusCounts.FAILED > 0 && (
+                    <button
+                      type="button"
+                      className="wam__quick-btn wam__quick-btn--retry-all"
+                      onClick={handleRetryAllFailed}
+                    >
+                      ↻ Retry All Failed ({statusCounts.FAILED})
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {lastSyncTime && (
+                <div className="wam__sync-indicator">
+                  Last live status sync from WATI: {lastSyncTime}
+                </div>
+              )}
+
+              {/* Search Bar */}
               <div className="wam__search-bar">
                 <input
                   type="text"
@@ -870,16 +1164,17 @@ export default function WhatsAppMarketing() {
                           onChange={(e) => (e.target.checked ? selectAll() : clearSelection())}
                         />
                       </th>
-                      <th style={{ width: 70 }}>Row</th>
+                      <th style={{ width: 65 }}>Row</th>
                       <th>Recipient Name</th>
                       <th>Mobile Number</th>
-                      <th>Extra Parameter</th>
-                      <th style={{ width: 90 }}>Status</th>
+                      <th style={{ width: 130 }}>Delivery Status</th>
+                      <th style={{ width: 95 }}>Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredContacts.map((contact) => {
                       const isSelected = selectedIndices.has(contact.id);
+                      const isRetrying = retryingId === contact.id;
                       return (
                         <tr
                           key={contact.id}
@@ -899,7 +1194,12 @@ export default function WhatsAppMarketing() {
                           <td>
                             <div className="wam__delegate-cell">
                               <span className="wam__avatar">{contact.name.charAt(0) || 'D'}</span>
-                              <span className="wam__delegate-name">{contact.name}</span>
+                              <div>
+                                <span className="wam__delegate-name">{contact.name}</span>
+                                {contact.extra && (
+                                  <span className="wam__delegate-extra">{contact.extra}</span>
+                                )}
+                              </div>
                             </div>
                           </td>
                           <td>
@@ -912,18 +1212,49 @@ export default function WhatsAppMarketing() {
                             </span>
                           </td>
                           <td>
-                            <span className="wam__extra-cell">
-                              {contact.extra || globalExtra || '-'}
+                            <span className={`wam__status-badge wam__status-badge--${contact.status.toLowerCase()}`}>
+                              {contact.status === 'READ' && (
+                                <>
+                                  <span className="wam__tick wam__tick--blue">&#10003;&#10003;</span> Read
+                                </>
+                              )}
+                              {contact.status === 'DELIVERED' && (
+                                <>
+                                  <span className="wam__tick">&#10003;&#10003;</span> Delivered
+                                </>
+                              )}
+                              {contact.status === 'SENT' && (
+                                <>
+                                  <span className="wam__tick">&#10003;</span> Sent
+                                </>
+                              )}
+                              {contact.status === 'FAILED' && (
+                                <>
+                                  <span className="wam__tick wam__tick--error">&#9888;</span> Failed
+                                </>
+                              )}
+                              {contact.status === 'PENDING' && (
+                                <>
+                                  <span className="wam__tick">&#9202;</span> Pending
+                                </>
+                              )}
                             </span>
+                            {contact.error && (
+                              <span className="wam__status-error" title={contact.error}>
+                                {contact.error}
+                              </span>
+                            )}
                           </td>
-                          <td>
-                            <span
-                              className={`wam__row-status ${
-                                isSelected ? 'wam__row-status--ready' : 'wam__row-status--skipped'
-                              }`}
+                          <td onClick={(e) => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              className="wam__retry-btn"
+                              onClick={(e) => handleRetrySingle(contact, e)}
+                              disabled={isRetrying || !contact.isValidPhone}
+                              title="Resend WhatsApp message to this recipient"
                             >
-                              {isSelected ? 'Ready' : 'Skipped'}
-                            </span>
+                              {isRetrying ? 'Sending...' : '↻ Retry'}
+                            </button>
                           </td>
                         </tr>
                       );
@@ -935,10 +1266,11 @@ export default function WhatsAppMarketing() {
               {/* Broadcast Action Card */}
               <div className="wam__broadcast-box">
                 <div className="wam__broadcast-info">
-                  <h4 className="wam__broadcast-heading">&#128640; Ready to Launch Campaign</h4>
+                  <h4 className="wam__broadcast-heading">&#128640; Launch WhatsApp Campaign</h4>
                   <p className="wam__broadcast-sub">
-                    You have selected <strong>{selectedCount}</strong> recipient(s). Each will receive
-                    the <code>{activeTemplate.name}</code> template customized with their name and phone.
+                    Broadcast template <code>{activeTemplate.name}</code> to{' '}
+                    <strong>{selectedCount}</strong> selected recipient(s) using channel{' '}
+                    <strong>919940030935 (PRFC - Blast)</strong>.
                   </p>
                 </div>
 
@@ -991,7 +1323,7 @@ export default function WhatsAppMarketing() {
 
               <div className="wam__results-stats">
                 <div className="wam__stat-box">
-                  <span className="wam__stat-label">Total Selected</span>
+                  <span className="wam__stat-label">Total Targeted</span>
                   <span className="wam__stat-val">{broadcastResults.total}</span>
                 </div>
                 <div className="wam__stat-box wam__stat-box--green">
@@ -1002,44 +1334,6 @@ export default function WhatsAppMarketing() {
                   <span className="wam__stat-label">Failed / Invalid</span>
                   <span className="wam__stat-val">{broadcastResults.failedCount}</span>
                 </div>
-              </div>
-
-              {/* Delivery Log Table */}
-              <div className="wam__log-table-wrap">
-                <table className="wam__table wam__table--log">
-                  <thead>
-                    <tr>
-                      <th>Row</th>
-                      <th>Name</th>
-                      <th>Phone</th>
-                      <th>Status</th>
-                      <th>Details</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {broadcastResults.results?.map((res, i) => (
-                      <tr key={i}>
-                        <td>#{res.rowIndex}</td>
-                        <td>{res.name}</td>
-                        <td>{res.phone || res.normalizedPhone}</td>
-                        <td>
-                          {res.sent ? (
-                            <span className="wam__log-badge wam__log-badge--success">
-                              &#10004; Sent
-                            </span>
-                          ) : (
-                            <span className="wam__log-badge wam__log-badge--fail">
-                              &#10008; Failed
-                            </span>
-                          )}
-                        </td>
-                        <td className="wam__log-detail">
-                          {res.sent ? `ID: ${res.messageId}` : res.error}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               </div>
             </div>
           )}
@@ -1064,13 +1358,13 @@ export default function WhatsAppMarketing() {
             </p>
             <div className="wam__modal-summary">
               <div>
-                <strong>Template:</strong> {activeTemplate.name}
+                <strong>Template:</strong> {activeTemplate.name} ({activeTemplate.category})
               </div>
               <div>
                 <strong>Selected Rows:</strong> {rangeInput || `${selectedCount} contacts`}
               </div>
               <div>
-                <strong>Header Media:</strong> {imageType}
+                <strong>Channel:</strong> 919940030935 (PRFC - Blast)
               </div>
             </div>
             <p className="wam__modal-note">
