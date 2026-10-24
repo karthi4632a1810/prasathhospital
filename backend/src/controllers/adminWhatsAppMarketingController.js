@@ -1,13 +1,14 @@
 'use strict';
 
 const env = require('../config/env');
+const WhatsAppCampaign = require('../models/WhatsAppCampaign');
 const { sendWhatsAppTemplate, normalizePhone } = require('../services/whatsapp/client');
 const { recordAudit } = require('../services/auditLog');
 const ApiError = require('../utils/ApiError');
 const { sendSuccess, asyncHandler } = require('../utils/response');
 const logger = require('../utils/logger');
 
-// Clean default poster preset (QR code presets removed as requested)
+// Clean default poster preset (QR code options removed as requested)
 const IMAGE_PRESETS = [
   {
     id: 'poster',
@@ -101,7 +102,7 @@ const FALLBACK_CORE_TEMPLATES = [
 
 let cachedTemplates = null;
 let lastTemplatesFetch = 0;
-const CACHE_TTL_MS = 60 * 1000; // 1 minute cache
+const CACHE_TTL_MS = 60 * 1000;
 
 /**
  * Fetches all approved templates directly from WATI API, categorized by MARKETING and UTILITY
@@ -135,7 +136,6 @@ async function fetchWatiTemplates() {
     const data = await res.json();
     const rawTemplates = data.messageTemplates || [];
 
-    // Filter only APPROVED templates
     const approved = rawTemplates.filter((t) => (t.status || '').toUpperCase() === 'APPROVED');
 
     const parsed = approved.map((t) => {
@@ -150,12 +150,10 @@ async function fetchWatiTemplates() {
         customParams.find((p) => ['img', 'qr', 'QR'].includes(p.paramName))?.paramName ||
         (hasHeaderImage ? 'img' : null);
 
-      // Non-image text parameters
       const nonImageParams = customParams
         .filter((p) => !['img', 'qr', 'QR'].includes(p.paramName))
         .map((p) => p.paramName);
 
-      // Extract placeholders from body if customParams is empty
       if (!nonImageParams.length && t.body) {
         const matches = t.body.match(/\{\{([a-zA-Z0-9_]+)\}\}/g);
         if (matches) {
@@ -168,10 +166,8 @@ async function fetchWatiTemplates() {
         }
       }
 
-      // Buttons
       const buttons = (t.buttons || []).map((b) => b.parameter?.text || b.text || 'Button');
 
-      // Human-friendly title
       let label = templateName
         .replace(/^ciim2026_/, 'CIIM 2026: ')
         .replace(/_/g, ' ')
@@ -195,7 +191,6 @@ async function fetchWatiTemplates() {
       };
     });
 
-    // Priority sort: CIIM 2026 flagship templates first, then other Marketing, then Utility
     const priorityOrder = [
       'ciim2026_invite',
       'ciim2026_registration_thankyou_02',
@@ -246,7 +241,6 @@ function buildTemplateBodyParams(templateName, { name, extra, customParamsValues
     extraParamValue = `\u2028${extraParamValue.trim()}\u2028`;
   }
 
-  // Fast-path for ciim2026_invite
   if (templateName === 'ciim2026_invite') {
     return [
       { name: 'Name', value: cleanName },
@@ -264,7 +258,6 @@ function buildTemplateBodyParams(templateName, { name, extra, customParamsValues
     }
   };
 
-  // If template has header image, supply image parameters
   if (templateObj?.hasHeaderMedia || ['ciim2026_registration_thankyou_02', 'ciim2026_registration_5', 'ciim2026_registration_thankyou', 'ciim2026_registration_4', 'ciim2026_registration_1'].includes(templateName)) {
     const finalImg = imageUrl || IMAGE_PRESETS[0].url;
     addParam('img', finalImg);
@@ -272,7 +265,6 @@ function buildTemplateBodyParams(templateName, { name, extra, customParamsValues
     addParam('QR', finalImg);
   }
 
-  // Dynamically map non-image template parameters
   const declaredParams = templateObj?.params || ['Name', 'extra'];
   declaredParams.forEach((paramKey, idx) => {
     const lower = paramKey.toLowerCase();
@@ -292,7 +284,6 @@ function buildTemplateBodyParams(templateName, { name, extra, customParamsValues
     addParam(String(idx + 1), val);
   });
 
-  // Always supply standard fallback bindings
   addParam('Name', cleanName);
   addParam('DrName', cleanName);
   addParam('1', cleanName);
@@ -319,6 +310,44 @@ const getMarketingConfig = asyncHandler(async (req, res) => {
     marketingCount: templates.filter((t) => t.category === 'MARKETING').length,
     utilityCount: templates.filter((t) => t.category === 'UTILITY').length,
   });
+});
+
+/**
+ * GET /api/v1/admin/whatsapp-marketing/campaigns
+ * Retrieves persistent campaign history from MongoDB Atlas
+ */
+const getCampaigns = asyncHandler(async (req, res) => {
+  const campaigns = await WhatsAppCampaign.find({}, '-recipients')
+    .sort({ createdAt: -1 })
+    .limit(50)
+    .lean();
+
+  return sendSuccess(res, { campaigns });
+});
+
+/**
+ * GET /api/v1/admin/whatsapp-marketing/campaigns/:id
+ * Retrieves full campaign details and all recipient items
+ */
+const getCampaignById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const campaign = await WhatsAppCampaign.findById(id).lean();
+
+  if (!campaign) {
+    throw ApiError.notFound('Campaign not found.');
+  }
+
+  return sendSuccess(res, { campaign });
+});
+
+/**
+ * DELETE /api/v1/admin/whatsapp-marketing/campaigns/:id
+ */
+const deleteCampaign = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  await WhatsAppCampaign.findByIdAndDelete(id);
+
+  return sendSuccess(res, { deleted: true }, { message: 'Campaign deleted.' });
 });
 
 /**
@@ -381,9 +410,12 @@ const sendTestSingle = asyncHandler(async (req, res) => {
 
 /**
  * POST /api/v1/admin/whatsapp-marketing/resend-single
+ * Retries sending to 1 recipient and updates the campaign document in MongoDB
  */
 const resendSingle = asyncHandler(async (req, res) => {
   const {
+    campaignId,
+    recipientId,
     phone,
     name,
     templateName = 'ciim2026_invite',
@@ -419,49 +451,70 @@ const resendSingle = asyncHandler(async (req, res) => {
     templateObj,
   });
 
+  let sendResult = { sent: false, error: 'Unknown' };
   try {
-    const result = await sendWhatsAppTemplate({
+    sendResult = await sendWhatsAppTemplate({
       to: normalized,
       name: templateName,
       language: env.whatsappTemplateLanguage || 'en_GB',
       bodyParams,
     });
-
-    if (result.sent) {
-      return sendSuccess(
-        res,
-        {
-          sent: true,
-          status: 'SENT',
-          phone: normalized,
-          messageId: result.messageId,
-          sentAt: new Date().toISOString(),
-        },
-        { message: 'Message resent successfully.' }
-      );
-    }
-
-    return sendSuccess(res, {
-      sent: false,
-      status: 'FAILED',
-      phone: normalized,
-      error: result.error || result.reason || 'Send failed',
-    });
   } catch (err) {
-    return sendSuccess(res, {
-      sent: false,
-      status: 'FAILED',
-      phone: normalized,
-      error: err.message || 'Exception during resend',
-    });
+    sendResult = { sent: false, error: err.message || 'Exception during resend' };
   }
+
+  const finalStatus = sendResult.sent ? 'SENT' : 'FAILED';
+  const sentTime = new Date();
+
+  // If a campaignId is provided, update the persistent campaign record in MongoDB
+  let updatedCampaign = null;
+  if (campaignId) {
+    try {
+      const camp = await WhatsAppCampaign.findById(campaignId);
+      if (camp) {
+        const item = camp.recipients.id(recipientId) || camp.recipients.find((r) => r.phone === phone || r.normalizedPhone === normalized);
+        if (item) {
+          item.status = finalStatus;
+          item.messageId = sendResult.messageId || item.messageId;
+          item.error = sendResult.sent ? null : (sendResult.error || 'Resend failed');
+          item.sentAt = sentTime;
+        }
+
+        // Recalculate stats
+        camp.sentCount = camp.recipients.filter((r) => ['SENT', 'DELIVERED', 'READ'].includes(r.status)).length;
+        camp.deliveredCount = camp.recipients.filter((r) => ['DELIVERED', 'READ'].includes(r.status)).length;
+        camp.readCount = camp.recipients.filter((r) => r.status === 'READ').length;
+        camp.failedCount = camp.recipients.filter((r) => r.status === 'FAILED').length;
+        await camp.save();
+        updatedCampaign = camp.toObject();
+      }
+    } catch (dbErr) {
+      logger.warn('Failed to update campaign in DB on resend:', dbErr.message);
+    }
+  }
+
+  return sendSuccess(
+    res,
+    {
+      sent: sendResult.sent,
+      status: finalStatus,
+      phone: normalized,
+      messageId: sendResult.messageId,
+      error: sendResult.sent ? null : (sendResult.error || 'Resend failed'),
+      sentAt: sentTime.toISOString(),
+      campaign: updatedCampaign,
+    },
+    { message: sendResult.sent ? 'Message resent successfully.' : 'Message resend failed.' }
+  );
 });
 
 /**
  * POST /api/v1/admin/whatsapp-marketing/send-batch
+ * Dispatches batch messages and saves campaign persistently in MongoDB
  */
 const sendBatch = asyncHandler(async (req, res) => {
   const {
+    title,
     templateName = 'ciim2026_invite',
     recipients = [],
     imageType = 'none',
@@ -484,6 +537,7 @@ const sendBatch = asyncHandler(async (req, res) => {
 
   const finalImageUrl = resolveImageUrl(imageType, customImageUrl);
   const results = [];
+  const recipientsDataForDb = [];
   let sentCount = 0;
   let failedCount = 0;
 
@@ -500,7 +554,7 @@ const sendBatch = asyncHandler(async (req, res) => {
 
     if (!normalizedPhone || normalizedPhone.length < 10) {
       failedCount++;
-      results.push({
+      const failItem = {
         rowIndex: originalRowIndex,
         name: recipientName,
         phone: rawPhone,
@@ -508,12 +562,14 @@ const sendBatch = asyncHandler(async (req, res) => {
         sent: false,
         status: 'FAILED',
         error: 'Invalid or missing phone number',
-        sentAt: new Date().toISOString(),
-      });
+        sentAt: new Date(),
+        params: item.params || {},
+      };
+      results.push(failItem);
+      recipientsDataForDb.push(failItem);
       continue;
     }
 
-    // Merge row-specific custom params with global params
     const customParamsValues = {
       ...(globalParams || {}),
       ...(item.params || {}),
@@ -538,7 +594,7 @@ const sendBatch = asyncHandler(async (req, res) => {
 
       if (resSend.sent) {
         sentCount++;
-        results.push({
+        const successItem = {
           rowIndex: originalRowIndex,
           name: recipientName,
           phone: rawPhone,
@@ -546,12 +602,16 @@ const sendBatch = asyncHandler(async (req, res) => {
           sent: true,
           status: 'SENT',
           messageId: resSend.messageId,
+          broadcastId: resSend.broadcastId || null,
           error: null,
-          sentAt: new Date().toISOString(),
-        });
+          sentAt: new Date(),
+          params: customParamsValues,
+        };
+        results.push(successItem);
+        recipientsDataForDb.push(successItem);
       } else {
         failedCount++;
-        results.push({
+        const failItem = {
           rowIndex: originalRowIndex,
           name: recipientName,
           phone: rawPhone,
@@ -559,12 +619,15 @@ const sendBatch = asyncHandler(async (req, res) => {
           sent: false,
           status: 'FAILED',
           error: resSend.error || resSend.reason || 'WATI API rejected message',
-          sentAt: new Date().toISOString(),
-        });
+          sentAt: new Date(),
+          params: customParamsValues,
+        };
+        results.push(failItem);
+        recipientsDataForDb.push(failItem);
       }
     } catch (err) {
       failedCount++;
-      results.push({
+      const errorItem = {
         rowIndex: originalRowIndex,
         name: recipientName,
         phone: rawPhone,
@@ -572,13 +635,38 @@ const sendBatch = asyncHandler(async (req, res) => {
         sent: false,
         status: 'FAILED',
         error: err.message || 'Network exception during send',
-        sentAt: new Date().toISOString(),
-      });
+        sentAt: new Date(),
+        params: customParamsValues,
+      };
+      results.push(errorItem);
+      recipientsDataForDb.push(errorItem);
     }
 
     if (i < recipients.length - 1 && throttleMs > 0) {
       await new Promise((resolve) => setTimeout(resolve, Math.min(throttleMs, 2000)));
     }
+  }
+
+  // Create persistent WhatsAppCampaign document in MongoDB Atlas
+  let savedCampaign = null;
+  try {
+    const defaultTitle = `${templateName} Broadcast (${recipients.length} recipients)`;
+    savedCampaign = await WhatsAppCampaign.create({
+      title: title || defaultTitle,
+      templateName,
+      channelNumber: '919940030935',
+      headerImageUrl: finalImageUrl,
+      total: recipients.length,
+      sentCount,
+      deliveredCount: 0,
+      readCount: 0,
+      failedCount,
+      recipients: recipientsDataForDb,
+      dispatchedBy: req.user?._id || null,
+      dispatcherName: req.user?.name || 'Platform Admin',
+    });
+  } catch (dbErr) {
+    logger.error('Failed to save WhatsAppCampaign to database:', dbErr);
   }
 
   // Audit log
@@ -587,6 +675,7 @@ const sendBatch = asyncHandler(async (req, res) => {
     entityType: 'whatsapp_marketing',
     entityId: templateName,
     meta: {
+      campaignId: savedCampaign?._id,
       templateName,
       totalRecipients: recipients.length,
       sentCount,
@@ -600,6 +689,7 @@ const sendBatch = asyncHandler(async (req, res) => {
   return sendSuccess(
     res,
     {
+      campaign: savedCampaign,
       templateName,
       total: recipients.length,
       sentCount,
@@ -614,11 +704,25 @@ const sendBatch = asyncHandler(async (req, res) => {
 
 /**
  * POST /api/v1/admin/whatsapp-marketing/check-statuses
+ * Syncs real-time DELIVERED and READ statuses from WATI and persists to MongoDB Atlas
  */
 const checkStatuses = asyncHandler(async (req, res) => {
-  const { phones = [] } = req.body;
-  if (!Array.isArray(phones) || !phones.length) {
-    return sendSuccess(res, { statuses: {} });
+  const { campaignId, phones = [] } = req.body;
+
+  let targetPhones = [...phones];
+  let campaignDoc = null;
+
+  if (campaignId) {
+    campaignDoc = await WhatsAppCampaign.findById(campaignId);
+    if (campaignDoc && !targetPhones.length) {
+      targetPhones = campaignDoc.recipients
+        .filter((r) => r.status !== 'FAILED')
+        .map((r) => r.normalizedPhone || r.phone);
+    }
+  }
+
+  if (!targetPhones.length) {
+    return sendSuccess(res, { statuses: {}, campaign: campaignDoc });
   }
 
   const baseUrl = (env.watiBaseUrl || '').replace(/\/$/, '');
@@ -631,11 +735,11 @@ const checkStatuses = asyncHandler(async (req, res) => {
   }
 
   const statuses = {};
-  const targetPhones = phones.slice(0, 100);
+  const limitedPhones = targetPhones.slice(0, 100);
 
   const batchSize = 5;
-  for (let i = 0; i < targetPhones.length; i += batchSize) {
-    const chunk = targetPhones.slice(i, i + batchSize);
+  for (let i = 0; i < limitedPhones.length; i += batchSize) {
+    const chunk = limitedPhones.slice(i, i + batchSize);
     await Promise.all(
       chunk.map(async (rawPhone) => {
         const normalized = normalizePhone(rawPhone);
@@ -674,11 +778,38 @@ const checkStatuses = asyncHandler(async (req, res) => {
     );
   }
 
-  return sendSuccess(res, { statuses });
+  // Update persistent MongoDB campaign document if campaignId was supplied
+  if (campaignDoc) {
+    campaignDoc.recipients.forEach((rec) => {
+      const p = rec.normalizedPhone || rec.phone;
+      const s = statuses[p];
+      if (s && s.status) {
+        rec.status = s.status;
+        if (s.messageId && !rec.messageId) rec.messageId = s.messageId;
+        if (s.status === 'READ' && !rec.readAt) rec.readAt = new Date();
+        if (s.status === 'DELIVERED' && !rec.deliveredAt) rec.deliveredAt = new Date();
+        if (s.failedDetail) rec.error = s.failedDetail;
+      }
+    });
+
+    campaignDoc.deliveredCount = campaignDoc.recipients.filter((r) => ['DELIVERED', 'READ'].includes(r.status)).length;
+    campaignDoc.readCount = campaignDoc.recipients.filter((r) => r.status === 'READ').length;
+    campaignDoc.sentCount = campaignDoc.recipients.filter((r) => ['SENT', 'DELIVERED', 'READ'].includes(r.status)).length;
+    campaignDoc.failedCount = campaignDoc.recipients.filter((r) => r.status === 'FAILED').length;
+    await campaignDoc.save();
+  }
+
+  return sendSuccess(res, {
+    statuses,
+    campaign: campaignDoc ? campaignDoc.toObject() : null,
+  });
 });
 
 module.exports = {
   getMarketingConfig,
+  getCampaigns,
+  getCampaignById,
+  deleteCampaign,
   sendTestSingle,
   resendSingle,
   sendBatch,

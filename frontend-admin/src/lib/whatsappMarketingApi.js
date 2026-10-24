@@ -2,6 +2,10 @@ import { request } from './api';
 
 export const whatsappMarketingApi = {
   getConfig: () => request('/admin/whatsapp-marketing/config'),
+  getCampaigns: () => request('/admin/whatsapp-marketing/campaigns'),
+  getCampaignById: (id) => request(`/admin/whatsapp-marketing/campaigns/${id}`),
+  deleteCampaign: (id) =>
+    request(`/admin/whatsapp-marketing/campaigns/${id}`, { method: 'DELETE' }),
   uploadImage: (file) => {
     const form = new FormData();
     form.append('file', file);

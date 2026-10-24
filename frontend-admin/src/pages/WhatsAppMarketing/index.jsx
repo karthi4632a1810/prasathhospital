@@ -4,13 +4,11 @@ import { whatsappMarketingApi } from '../../lib/whatsappMarketingApi';
 import Button from '../../components/ui/Button';
 import './WhatsAppMarketing.css';
 
-// Default Thank You Poster Banner (QR code options removed as requested)
 const DEFAULT_POSTER_URL =
   'https://raw.githubusercontent.com/karthi4632a1810/prasathhospital/main/backend/src/assets/thankyou-img.jpg';
 
 const LOCAL_STORAGE_IMAGES_KEY = 'ciim_wam_uploaded_images';
 
-// Helper to generate sample delegate names & phones
 const SAMPLE_DELEGATES = [
   { name: 'Dr. Karthikeyan', phone: '9962460782' },
   { name: 'Dr. Priya Sharma', phone: '9840123456' },
@@ -26,9 +24,6 @@ const SAMPLE_DELEGATES = [
   { name: 'Dr. Geetha Venkatesh', phone: '9789345678' },
 ];
 
-/**
- * Parses range expressions like "1-20, 35-49, 55"
- */
 function parseRangeString(rangeStr, totalRows) {
   if (!rangeStr || !rangeStr.trim() || totalRows <= 0) {
     return new Set();
@@ -69,17 +64,25 @@ function parseRangeString(rangeStr, totalRows) {
 
 export default function WhatsAppMarketing() {
   const [config, setConfig] = useState(null);
-  const [loadingConfig, setLoadingConfig] = useState(true);
 
-  // Template Search & Category Filter (All / Marketing / Utility)
-  const [templateCategoryTab, setTemplateCategoryTab] = useState('ALL'); // 'ALL' | 'MARKETING' | 'UTILITY'
+  // Main Page View Mode: 'DISPATCH' (create & send) | 'MONITOR' (saved campaign logs)
+  const [activeViewMode, setActiveViewMode] = useState('DISPATCH');
+
+  // Persistent Campaigns from Database
+  const [campaignsList, setCampaignsList] = useState([]);
+  const [selectedCampaignId, setSelectedCampaignId] = useState(null);
+  const [activeCampaignData, setActiveCampaignData] = useState(null);
+  const [loadingCampaign, setLoadingCampaign] = useState(false);
+  const [campaignStatusFilter, setCampaignStatusFilter] = useState('ALL');
+  const [campaignSearchFilter, setCampaignSearchFilter] = useState('');
+
+  // Template Search & Category Filter
+  const [templateCategoryTab, setTemplateCategoryTab] = useState('ALL');
   const [templateSearch, setTemplateSearch] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState('ciim2026_invite');
-
-  // Dynamic Template Parameter Values (Key-value map for the chosen template)
   const [templateParamValues, setTemplateParamValues] = useState({});
 
-  // Image Selection: 'poster' | 'custom' | URL string of uploaded image
+  // Image Selection
   const [imageType, setImageType] = useState('poster');
   const [customImageUrl, setCustomImageUrl] = useState('');
   const [uploadedImages, setUploadedImages] = useState([]);
@@ -89,11 +92,11 @@ export default function WhatsAppMarketing() {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [rawDataRows, setRawDataRows] = useState([]);
   const [availableHeaders, setAvailableHeaders] = useState([]);
-  const [columnMappings, setColumnMappings] = useState({}); // { [paramKey]: headerName }
+  const [columnMappings, setColumnMappings] = useState({});
 
-  // Contact Delivery Status Map
+  // Dispatch In-Session State
   const [contactStatuses, setContactStatuses] = useState({});
-  const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'READ' | 'DELIVERED' | 'SENT' | 'FAILED' | 'PENDING'
+  const [statusFilter, setStatusFilter] = useState('ALL');
   const [retryingId, setRetryingId] = useState(null);
   const [syncingStatuses, setSyncingStatuses] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState(null);
@@ -123,28 +126,58 @@ export default function WhatsAppMarketing() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_IMAGES_KEY);
-      if (saved) {
-        setUploadedImages(JSON.parse(saved));
-      }
+      if (saved) setUploadedImages(JSON.parse(saved));
     } catch {
-      // Ignore storage error
+      // Ignore
     }
   }, []);
 
-  // Save uploaded images to localStorage
   const saveUploadedImage = (newImg) => {
     setUploadedImages((prev) => {
       const updated = [newImg, ...prev.filter((img) => img.url !== newImg.url)].slice(0, 15);
       try {
         localStorage.setItem(LOCAL_STORAGE_IMAGES_KEY, JSON.stringify(updated));
       } catch {
-        // Ignore storage error
+        // Ignore
       }
       return updated;
     });
   };
 
-  // Load config on mount
+  // Fetch campaigns from database
+  const loadCampaigns = async () => {
+    try {
+      const res = await whatsappMarketingApi.getCampaigns();
+      if (res?.data?.campaigns) {
+        setCampaignsList(res.data.campaigns);
+        // If no campaign selected yet, default to most recent
+        if (!selectedCampaignId && res.data.campaigns.length > 0) {
+          loadCampaignDetails(res.data.campaigns[0]._id);
+        }
+      }
+    } catch (err) {
+      console.warn('Could not load campaigns:', err);
+    }
+  };
+
+  // Fetch full details of a specific campaign (including all recipient members)
+  const loadCampaignDetails = async (campaignId) => {
+    if (!campaignId) return;
+    setLoadingCampaign(true);
+    setSelectedCampaignId(campaignId);
+    try {
+      const res = await whatsappMarketingApi.getCampaignById(campaignId);
+      if (res?.data?.campaign) {
+        setActiveCampaignData(res.data.campaign);
+      }
+    } catch (err) {
+      console.warn('Could not load campaign details:', err);
+    } finally {
+      setLoadingCampaign(false);
+    }
+  };
+
+  // Initial Load: config and campaigns
   useEffect(() => {
     whatsappMarketingApi
       .getConfig()
@@ -158,10 +191,9 @@ export default function WhatsAppMarketing() {
       })
       .catch((err) => {
         console.warn('Could not load marketing config:', err);
-      })
-      .finally(() => {
-        setLoadingConfig(false);
       });
+
+    loadCampaigns();
   }, []);
 
   const allTemplates = config?.templates || [];
@@ -176,12 +208,10 @@ export default function WhatsAppMarketing() {
       hasHeaderMedia: false,
     };
 
-  // Filter templates by category and search query
+  // Filter templates
   const filteredTemplates = useMemo(() => {
     return allTemplates.filter((t) => {
-      if (templateCategoryTab !== 'ALL' && t.category !== templateCategoryTab) {
-        return false;
-      }
+      if (templateCategoryTab !== 'ALL' && t.category !== templateCategoryTab) return false;
       if (templateSearch.trim()) {
         const q = templateSearch.toLowerCase();
         return (
@@ -194,13 +224,11 @@ export default function WhatsAppMarketing() {
     });
   }, [allTemplates, templateCategoryTab, templateSearch]);
 
-  // Handle template selection
   const handleSelectTemplate = (templateId) => {
     setSelectedTemplateId(templateId);
     const tmpl = allTemplates.find((t) => t.id === templateId);
     if (!tmpl) return;
 
-    // Reset or initialize default parameter values
     const newParamValues = {};
     (tmpl.params || []).forEach((paramKey) => {
       const lower = paramKey.toLowerCase();
@@ -220,13 +248,11 @@ export default function WhatsAppMarketing() {
       setImageType('none');
     }
 
-    // Auto update column mappings if a file was already loaded
     if (availableHeaders.length > 0) {
       updateColumnMappingsForTemplate(tmpl, availableHeaders);
     }
   };
 
-  // Helper to update column mappings based on template parameters
   const updateColumnMappingsForTemplate = (tmpl, headers) => {
     const mappings = {
       Phone:
@@ -251,7 +277,6 @@ export default function WhatsAppMarketing() {
     setColumnMappings(mappings);
   };
 
-  // Upload an image file for templates
   const handleUploadNewImage = async (file) => {
     if (!file) return;
     setUploadingImage(true);
@@ -274,7 +299,6 @@ export default function WhatsAppMarketing() {
     }
   };
 
-  // Determine final image URL
   const resolvedImageUrl = useMemo(() => {
     if (imageType === 'none') return '';
     if (imageType === 'poster') return DEFAULT_POSTER_URL;
@@ -283,7 +307,6 @@ export default function WhatsAppMarketing() {
     return DEFAULT_POSTER_URL;
   }, [imageType, customImageUrl]);
 
-  // Process and normalize uploaded rows with dynamic template parameter extraction
   const parsedContacts = useMemo(() => {
     if (!rawDataRows.length) return [];
 
@@ -296,7 +319,6 @@ export default function WhatsAppMarketing() {
       const isValidPhone = digitsOnly.length >= 10;
       const normalizedPhone = digitsOnly.length === 10 ? `91${digitsOnly}` : digitsOnly;
 
-      // Extract each parameter required by the template from the row
       const rowParams = {};
       declaredParams.forEach((paramKey) => {
         const mappedCol = columnMappings[paramKey];
@@ -309,7 +331,6 @@ export default function WhatsAppMarketing() {
         rowParams[paramKey] = val;
       });
 
-      // Name fallback
       const primaryNameParam = declaredParams.find((p) => /name/i.test(p)) || declaredParams[0];
       const delegateName =
         rowParams[primaryNameParam] ||
@@ -340,7 +361,6 @@ export default function WhatsAppMarketing() {
     });
   }, [rawDataRows, columnMappings, activeTemplate, templateParamValues, contactStatuses]);
 
-  // Status Counts
   const statusCounts = useMemo(() => {
     const counts = { ALL: parsedContacts.length, READ: 0, DELIVERED: 0, SENT: 0, FAILED: 0, PENDING: 0 };
     parsedContacts.forEach((c) => {
@@ -351,7 +371,6 @@ export default function WhatsAppMarketing() {
     return counts;
   }, [parsedContacts]);
 
-  // Filtered contacts for table view
   const filteredContacts = useMemo(() => {
     return parsedContacts.filter((c) => {
       if (statusFilter !== 'ALL' && c.status !== statusFilter) return false;
@@ -367,7 +386,33 @@ export default function WhatsAppMarketing() {
     });
   }, [parsedContacts, searchFilter, statusFilter]);
 
-  // Range Input Change
+  // Campaign Monitor Filtered Recipients (From Database Document)
+  const campaignRecipients = activeCampaignData?.recipients || [];
+  const campaignStatusCounts = useMemo(() => {
+    const counts = { ALL: campaignRecipients.length, READ: 0, DELIVERED: 0, SENT: 0, FAILED: 0, PENDING: 0 };
+    campaignRecipients.forEach((r) => {
+      const s = r.status || 'PENDING';
+      if (counts[s] !== undefined) counts[s]++;
+      else counts.PENDING++;
+    });
+    return counts;
+  }, [campaignRecipients]);
+
+  const filteredCampaignRecipients = useMemo(() => {
+    return campaignRecipients.filter((r) => {
+      if (campaignStatusFilter !== 'ALL' && r.status !== campaignStatusFilter) return false;
+      if (campaignSearchFilter.trim()) {
+        const q = campaignSearchFilter.toLowerCase();
+        return (
+          (r.name || '').toLowerCase().includes(q) ||
+          (r.phone || '').includes(q) ||
+          String(r.rowIndex) === q
+        );
+      }
+      return true;
+    });
+  }, [campaignRecipients, campaignStatusFilter, campaignSearchFilter]);
+
   const handleApplyRange = (e) => {
     if (e) e.preventDefault();
     if (!parsedContacts.length) return;
@@ -375,7 +420,6 @@ export default function WhatsAppMarketing() {
     setSelectedIndices(newSelected);
   };
 
-  // Quick Selection Helpers
   const selectAll = () => {
     const all = new Set(parsedContacts.map((_, i) => i));
     setSelectedIndices(all);
@@ -412,7 +456,6 @@ export default function WhatsAppMarketing() {
     });
   };
 
-  // Handle File Upload (Excel, CSV, JSON)
   const processUploadedFile = async (file) => {
     if (!file) return;
     setUploadedFile(file);
@@ -459,15 +502,11 @@ export default function WhatsAppMarketing() {
     setBroadcastResults(null);
   };
 
-  // Generate dynamic sample data matching EXACT parameters of the currently chosen template
   const generateTemplateSampleData = () => {
     const declaredParams = activeTemplate.params || ['Name'];
 
     return SAMPLE_DELEGATES.map((del, idx) => {
-      const sampleRow = {
-        Phone: del.phone,
-      };
-
+      const sampleRow = { Phone: del.phone };
       declaredParams.forEach((paramKey) => {
         const lower = paramKey.toLowerCase();
         if (lower.includes('name') || lower === 'drname' || lower === 'delegate') {
@@ -488,12 +527,10 @@ export default function WhatsAppMarketing() {
           sampleRow[paramKey] = `Sample ${paramKey} ${idx + 1}`;
         }
       });
-
       return sampleRow;
     });
   };
 
-  // Dynamic Sample File Downloads
   const downloadSampleExcel = () => {
     const sampleData = generateTemplateSampleData();
     const ws = XLSX.utils.json_to_sheet(sampleData);
@@ -533,7 +570,6 @@ export default function WhatsAppMarketing() {
     setUploadedFile({ name: `${activeTemplate.name}_sample.xlsx (Preloaded)` });
   };
 
-  // Single Test Send
   const handleTestSend = async () => {
     setTestError('');
     setTestResult(null);
@@ -559,106 +595,67 @@ export default function WhatsAppMarketing() {
     }
   };
 
-  // Retry Single Contact Send
-  const handleRetrySingle = async (contact, e) => {
+  // Resend / Retry for a specific contact (updates MongoDB campaign document)
+  const handleRetryRecipient = async (recipient, campaignId = null, e = null) => {
     if (e) e.stopPropagation();
-    setRetryingId(contact.id);
+    const recId = recipient._id || recipient.id;
+    setRetryingId(recId);
 
     try {
       const res = await whatsappMarketingApi.resendSingle({
-        phone: contact.phone || contact.rawPhone,
-        name: contact.name,
-        templateName: selectedTemplateId,
-        customParamsValues: contact.params || templateParamValues,
-        imageType: activeTemplate.hasHeaderMedia ? imageType : 'none',
-        customImageUrl: resolvedImageUrl,
+        campaignId: campaignId || activeCampaignData?._id,
+        recipientId: recipient._id,
+        phone: recipient.phone || recipient.rawPhone,
+        name: recipient.name,
+        templateName: activeCampaignData?.templateName || selectedTemplateId,
+        customParamsValues: recipient.params || templateParamValues,
+        imageType: 'none',
+        customImageUrl: '',
       });
 
-      if (res?.data?.sent) {
+      if (res?.data?.campaign) {
+        setActiveCampaignData(res.data.campaign);
+      } else if (res?.data?.sent) {
+        // Fallback update in session
         setContactStatuses((prev) => ({
           ...prev,
-          [contact.id]: {
+          [recId]: {
             status: 'SENT',
             messageId: res.data.messageId,
             error: null,
             lastUpdated: new Date().toLocaleTimeString(),
           },
         }));
-      } else {
-        setContactStatuses((prev) => ({
-          ...prev,
-          [contact.id]: {
-            status: 'FAILED',
-            error: res?.data?.error || 'Failed to deliver',
-            lastUpdated: new Date().toLocaleTimeString(),
-          },
-        }));
       }
+      loadCampaigns();
     } catch (err) {
-      setContactStatuses((prev) => ({
-        ...prev,
-        [contact.id]: {
-          status: 'FAILED',
-          error: err.message || 'Network error',
-          lastUpdated: new Date().toLocaleTimeString(),
-        },
-      }));
+      alert('Resend failed: ' + err.message);
     } finally {
       setRetryingId(null);
     }
   };
 
-  // Retry All Failed Contacts
-  const handleRetryAllFailed = async () => {
-    const failedContacts = parsedContacts.filter((c) => c.status === 'FAILED');
-    if (!failedContacts.length) {
-      alert('There are no failed contacts to retry.');
-      return;
-    }
-    const failedSet = new Set(failedContacts.map((c) => c.id));
-    setSelectedIndices(failedSet);
-    setShowConfirmModal(true);
-  };
-
-  // Query WATI for real-time delivery and read statuses
-  const handleRefreshLiveStatuses = async () => {
-    const sentContacts = parsedContacts.filter((c) => c.status && c.status !== 'PENDING');
-    if (!sentContacts.length) {
-      alert('No messages have been sent yet. Broadcast messages first to check delivery and read status.');
-      return;
-    }
+  // Sync Live Status from WATI into database
+  const handleRefreshCampaignStatuses = async (campaignId) => {
+    const targetId = campaignId || activeCampaignData?._id;
+    if (!targetId) return;
 
     setSyncingStatuses(true);
     try {
-      const phones = sentContacts.map((c) => c.phone).filter(Boolean);
-      const res = await whatsappMarketingApi.checkStatuses({ phones });
-      const serverStatuses = res?.data?.statuses || {};
-
-      setContactStatuses((prev) => {
-        const updated = { ...prev };
-        parsedContacts.forEach((contact) => {
-          const s = serverStatuses[contact.phone];
-          if (s && s.status) {
-            updated[contact.id] = {
-              ...(updated[contact.id] || {}),
-              status: s.status,
-              messageId: s.messageId || updated[contact.id]?.messageId,
-              error: s.failedDetail || null,
-              lastUpdated: new Date().toLocaleTimeString(),
-            };
-          }
-        });
-        return updated;
-      });
-      setLastSyncTime(new Date().toLocaleTimeString());
+      const res = await whatsappMarketingApi.checkStatuses({ campaignId: targetId });
+      if (res?.data?.campaign) {
+        setActiveCampaignData(res.data.campaign);
+        setLastSyncTime(new Date().toLocaleTimeString());
+      }
+      loadCampaigns();
     } catch (err) {
-      alert('Could not refresh statuses: ' + (err.message || 'WATI API error'));
+      alert('Status sync failed: ' + (err.message || 'WATI API error'));
     } finally {
       setSyncingStatuses(false);
     }
   };
 
-  // Batch Broadcast Execution
+  // Batch Broadcast Execution: sends and persists campaign in MongoDB Atlas
   const executeBroadcast = async () => {
     setShowConfirmModal(false);
     setBroadcastError('');
@@ -675,6 +672,7 @@ export default function WhatsAppMarketing() {
 
     try {
       const payload = {
+        title: `${activeTemplate.label || activeTemplate.name} (${selectedContacts.length} recipients)`,
         templateName: selectedTemplateId,
         imageType: activeTemplate.hasHeaderMedia ? imageType : 'none',
         customImageUrl: resolvedImageUrl,
@@ -693,23 +691,14 @@ export default function WhatsAppMarketing() {
       setBroadcastProgress(100);
       setBroadcastResults(res?.data);
 
-      if (res?.data?.results) {
-        setContactStatuses((prev) => {
-          const updated = { ...prev };
-          res.data.results.forEach((r) => {
-            const contact = parsedContacts.find((c) => c.rowNumber === r.rowIndex);
-            if (contact) {
-              updated[contact.id] = {
-                status: r.status || (r.sent ? 'SENT' : 'FAILED'),
-                messageId: r.messageId,
-                error: r.error,
-                lastUpdated: new Date().toLocaleTimeString(),
-              };
-            }
-          });
-          return updated;
-        });
+      // If a campaign document was created in MongoDB, switch to Monitor view and load it
+      if (res?.data?.campaign) {
+        setActiveCampaignData(res.data.campaign);
+        setSelectedCampaignId(res.data.campaign._id);
+        setActiveViewMode('MONITOR');
       }
+
+      loadCampaigns();
     } catch (err) {
       setBroadcastError(err.message || 'Error occurred while broadcasting WhatsApp messages.');
     } finally {
@@ -718,24 +707,28 @@ export default function WhatsAppMarketing() {
   };
 
   // Export Results as CSV
-  const exportResultsCsv = () => {
-    if (!parsedContacts.length) return;
-    const exportData = parsedContacts.map((c) => ({
-      Row: c.rowNumber,
-      Name: c.name,
-      Phone: c.phone,
-      Status: c.status,
-      MessageId: c.messageId || '',
-      Error: c.error || '',
-      LastUpdated: c.lastUpdated || '',
+  const exportCampaignCsv = (campaignToExport = null) => {
+    const target = campaignToExport || activeCampaignData;
+    const recipients = target?.recipients || parsedContacts;
+    if (!recipients.length) return;
+
+    const exportData = recipients.map((r, i) => ({
+      Row: r.rowIndex || i + 1,
+      Name: r.name,
+      Phone: r.phone,
+      Status: r.status,
+      MessageId: r.messageId || '',
+      Error: r.error || '',
+      SentAt: r.sentAt ? new Date(r.sentAt).toLocaleString() : '',
     }));
+
     const ws = XLSX.utils.json_to_sheet(exportData);
     const csvContent = XLSX.utils.sheet_to_csv(ws);
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `whatsapp_marketing_delivery_report_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `whatsapp_campaign_${target?.templateName || 'report'}_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -756,423 +749,423 @@ export default function WhatsAppMarketing() {
               Channel: 919940030935 (PRFC - Blast)
             </span>
             <span className="wam__chip wam__chip--total-templates">
-              {allTemplates.length} Approved Templates Loaded
+              {allTemplates.length} Templates &bull; {campaignsList.length} Saved Broadcasts
             </span>
           </div>
-          <h1 className="wam__title">WhatsApp Marketing & Multi-Template Dispatch</h1>
+          <h1 className="wam__title">WhatsApp Marketing & Persistent Campaign Monitor</h1>
           <p className="wam__subtitle">
-            Choose from all WATI <strong>Marketing</strong> & <strong>Utility</strong> templates,
-            upload custom banners, customize dynamic parameters, filter by delivery status, and
-            broadcast personalized messages.
+            Broadcast personalized messages and <strong>persist every dispatch</strong> in database.
+            Monitor member statuses (Sent, Delivered, Read, Failed) anytime—even after page refresh!
           </p>
         </div>
 
-        <div className="wam__header-actions">
-          <Button variant="secondary" onClick={loadSampleIntoEditor}>
-            Load Sample for {activeTemplate.name}
-          </Button>
+        {/* Top View Mode Switcher (New Dispatch vs Live Monitor & History) */}
+        <div className="wam__view-switcher">
+          <button
+            type="button"
+            className={`wam__view-btn ${activeViewMode === 'DISPATCH' ? 'is-active' : ''}`}
+            onClick={() => setActiveViewMode('DISPATCH')}
+          >
+            &#128640; New Dispatch & Upload
+          </button>
+          <button
+            type="button"
+            className={`wam__view-btn ${activeViewMode === 'MONITOR' ? 'is-active' : ''}`}
+            onClick={() => {
+              setActiveViewMode('MONITOR');
+              loadCampaigns();
+            }}
+          >
+            &#128203; Saved Broadcast Monitor ({campaignsList.length})
+          </button>
         </div>
       </header>
 
-      {/* Main Grid */}
-      <div className="wam__grid">
-        {/* Step 1: Choose Template & Dynamic Parameters */}
-        <section className="wam__card wam__card--template">
-          <div className="wam__card-header">
-            <span className="wam__step-pill">Step 1</span>
-            <div>
-              <h2 className="wam__card-title">Choose WATI Template</h2>
-              <p className="wam__card-desc">
-                Filter by Marketing or Utility, then configure parameters & header media below
-              </p>
-            </div>
-          </div>
-
-          {/* Template Category Tabs */}
-          <div className="wam__cat-bar">
-            <div className="wam__cat-tabs">
-              <button
-                type="button"
-                className={`wam__cat-tab ${templateCategoryTab === 'ALL' ? 'is-active' : ''}`}
-                onClick={() => setTemplateCategoryTab('ALL')}
-              >
-                All ({allTemplates.length})
-              </button>
-              <button
-                type="button"
-                className={`wam__cat-tab wam__cat-tab--mkt ${
-                  templateCategoryTab === 'MARKETING' ? 'is-active' : ''
-                }`}
-                onClick={() => setTemplateCategoryTab('MARKETING')}
-              >
-                Marketing ({config?.marketingCount || 0})
-              </button>
-              <button
-                type="button"
-                className={`wam__cat-tab wam__cat-tab--utl ${
-                  templateCategoryTab === 'UTILITY' ? 'is-active' : ''
-                }`}
-                onClick={() => setTemplateCategoryTab('UTILITY')}
-              >
-                Utility ({config?.utilityCount || 0})
-              </button>
+      {/* VIEW MODE 1: DISPATCH / CREATE NEW BROADCAST */}
+      {activeViewMode === 'DISPATCH' && (
+        <div className="wam__grid">
+          {/* Step 1: Choose Template & Dynamic Parameters */}
+          <section className="wam__card wam__card--template">
+            <div className="wam__card-header">
+              <span className="wam__step-pill">Step 1</span>
+              <div>
+                <h2 className="wam__card-title">Choose WATI Template</h2>
+                <p className="wam__card-desc">
+                  Filter by Marketing or Utility, then configure parameters & header media below
+                </p>
+              </div>
             </div>
 
-            <input
-              type="text"
-              className="wam__input wam__input--tmpl-search"
-              placeholder="&#128269; Search templates..."
-              value={templateSearch}
-              onChange={(e) => setTemplateSearch(e.target.value)}
-            />
-          </div>
+            {/* Template Category Tabs */}
+            <div className="wam__cat-bar">
+              <div className="wam__cat-tabs">
+                <button
+                  type="button"
+                  className={`wam__cat-tab ${templateCategoryTab === 'ALL' ? 'is-active' : ''}`}
+                  onClick={() => setTemplateCategoryTab('ALL')}
+                >
+                  All ({allTemplates.length})
+                </button>
+                <button
+                  type="button"
+                  className={`wam__cat-tab wam__cat-tab--mkt ${
+                    templateCategoryTab === 'MARKETING' ? 'is-active' : ''
+                  }`}
+                  onClick={() => setTemplateCategoryTab('MARKETING')}
+                >
+                  Marketing ({config?.marketingCount || 0})
+                </button>
+                <button
+                  type="button"
+                  className={`wam__cat-tab wam__cat-tab--utl ${
+                    templateCategoryTab === 'UTILITY' ? 'is-active' : ''
+                  }`}
+                  onClick={() => setTemplateCategoryTab('UTILITY')}
+                >
+                  Utility ({config?.utilityCount || 0})
+                </button>
+              </div>
 
-          {/* Template List Cards */}
-          <div className="wam__template-selector">
-            {filteredTemplates.map((tmpl) => (
-              <label
-                key={tmpl.id}
-                className={`wam__template-card ${
-                  selectedTemplateId === tmpl.id ? 'is-selected' : ''
-                } ${tmpl.id === 'ciim2026_invite' ? 'wam__template-card--primary' : ''}`}
-              >
-                <input
-                  type="radio"
-                  name="template"
-                  value={tmpl.id}
-                  checked={selectedTemplateId === tmpl.id}
-                  onChange={() => handleSelectTemplate(tmpl.id)}
-                />
-                <div className="wam__template-card-body">
-                  <div className="wam__template-card-title-row">
-                    <span className="wam__template-name">{tmpl.label || tmpl.name}</span>
-                    <span
-                      className={`wam__tag ${
-                        tmpl.category === 'MARKETING' ? 'wam__tag--purple' : 'wam__tag--green'
-                      }`}
-                    >
-                      {tmpl.category} &bull; Approved
-                    </span>
+              <input
+                type="text"
+                className="wam__input wam__input--tmpl-search"
+                placeholder="&#128269; Search templates..."
+                value={templateSearch}
+                onChange={(e) => setTemplateSearch(e.target.value)}
+              />
+            </div>
+
+            {/* Template List Cards */}
+            <div className="wam__template-selector">
+              {filteredTemplates.map((tmpl) => (
+                <label
+                  key={tmpl.id}
+                  className={`wam__template-card ${
+                    selectedTemplateId === tmpl.id ? 'is-selected' : ''
+                  } ${tmpl.id === 'ciim2026_invite' ? 'wam__template-card--primary' : ''}`}
+                >
+                  <input
+                    type="radio"
+                    name="template"
+                    value={tmpl.id}
+                    checked={selectedTemplateId === tmpl.id}
+                    onChange={() => handleSelectTemplate(tmpl.id)}
+                  />
+                  <div className="wam__template-card-body">
+                    <div className="wam__template-card-title-row">
+                      <span className="wam__template-name">{tmpl.label || tmpl.name}</span>
+                      <span
+                        className={`wam__tag ${
+                          tmpl.category === 'MARKETING' ? 'wam__tag--purple' : 'wam__tag--green'
+                        }`}
+                      >
+                        {tmpl.category} &bull; Approved
+                      </span>
+                    </div>
+                    <p className="wam__template-desc">
+                      {tmpl.body ? tmpl.body.slice(0, 110) + '...' : 'WATI Approved Template'}
+                    </p>
+                    <div className="wam__template-meta">
+                      <code className="wam__template-code">{tmpl.name}</code>
+                      {tmpl.hasHeaderMedia && (
+                        <span className="wam__media-badge">&#128444; Image Header</span>
+                      )}
+                      <span className="wam__lang-badge">{tmpl.language || 'en_GB'}</span>
+                    </div>
                   </div>
-                  <p className="wam__template-desc">
-                    {tmpl.body ? tmpl.body.slice(0, 110) + '...' : 'WATI Approved Template'}
-                  </p>
-                  <div className="wam__template-meta">
-                    <code className="wam__template-code">{tmpl.name}</code>
-                    {tmpl.hasHeaderMedia && (
-                      <span className="wam__media-badge">&#128444; Image Header</span>
-                    )}
-                    <span className="wam__lang-badge">{tmpl.language || 'en_GB'}</span>
-                  </div>
-                </div>
-              </label>
-            ))}
-          </div>
-
-          {/* Active Template Parameters Configuration */}
-          <div className="wam__param-section">
-            <h3 className="wam__section-heading">
-              &#9881; Parameters for <code>{activeTemplate.name}</code>
-            </h3>
-
-            {/* Header Media / Image Uploader (Visible only if template requires an image) */}
-            {activeTemplate.hasHeaderMedia ? (
-              <div className="wam__form-group">
-                <label className="wam__label">
-                  Template Header Image / Banner
-                  <span className="wam__label-hint">(Select default, upload new, or paste URL)</span>
                 </label>
+              ))}
+            </div>
 
-                {/* Image Mode Buttons */}
-                <div className="wam__image-modes">
-                  <button
-                    type="button"
-                    className={`wam__preset-btn ${imageType === 'poster' ? 'is-active' : ''}`}
-                    onClick={() => setImageType('poster')}
-                  >
-                    <img
-                      src={DEFAULT_POSTER_URL}
-                      alt="Thank you poster"
-                      className="wam__preset-thumb"
+            {/* Active Template Parameters Configuration */}
+            <div className="wam__param-section">
+              <h3 className="wam__section-heading">
+                &#9881; Parameters for <code>{activeTemplate.name}</code>
+              </h3>
+
+              {/* Header Media / Image Uploader */}
+              {activeTemplate.hasHeaderMedia ? (
+                <div className="wam__form-group">
+                  <label className="wam__label">
+                    Template Header Image / Banner
+                    <span className="wam__label-hint">(Select default, upload new, or paste URL)</span>
+                  </label>
+
+                  <div className="wam__image-modes">
+                    <button
+                      type="button"
+                      className={`wam__preset-btn ${imageType === 'poster' ? 'is-active' : ''}`}
+                      onClick={() => setImageType('poster')}
+                    >
+                      <img
+                        src={DEFAULT_POSTER_URL}
+                        alt="Thank you poster"
+                        className="wam__preset-thumb"
+                      />
+                      <span className="wam__preset-text">Default Poster</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="wam__preset-btn wam__preset-btn--upload"
+                      onClick={() => imageInputRef.current?.click()}
+                    >
+                      <span className="wam__preset-custom-icon">&#128228;</span>
+                      <span className="wam__preset-text">
+                        {uploadingImage ? 'Uploading...' : '+ Upload New Image'}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`wam__preset-btn ${imageType === 'custom' ? 'is-active' : ''}`}
+                      onClick={() => setImageType('custom')}
+                    >
+                      <span className="wam__preset-custom-icon">&#128279;</span>
+                      <span className="wam__preset-text">Custom Image URL</span>
+                    </button>
+                  </div>
+
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/jpg"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) handleUploadNewImage(e.target.files[0]);
+                    }}
+                  />
+
+                  {uploadedImages.length > 0 && (
+                    <div className="wam__uploaded-gallery">
+                      <span className="wam__gallery-label">Uploaded Image Gallery:</span>
+                      <div className="wam__gallery-list">
+                        {uploadedImages.map((img, i) => (
+                          <div
+                            key={i}
+                            className={`wam__gallery-item ${imageType === img.url ? 'is-active' : ''}`}
+                            onClick={() => setImageType(img.url)}
+                            title={img.name}
+                          >
+                            <img src={img.url} alt={img.name} />
+                            <span className="wam__gallery-name">{img.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {imageType === 'custom' && (
+                    <input
+                      type="url"
+                      className="wam__input"
+                      placeholder="https://example.com/banner.jpg"
+                      value={customImageUrl}
+                      onChange={(e) => setCustomImageUrl(e.target.value)}
                     />
-                    <span className="wam__preset-text">Default Thank You Poster</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className="wam__preset-btn wam__preset-btn--upload"
-                    onClick={() => imageInputRef.current?.click()}
-                  >
-                    <span className="wam__preset-custom-icon">&#128228;</span>
-                    <span className="wam__preset-text">
-                      {uploadingImage ? 'Uploading...' : '+ Upload New Image'}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`wam__preset-btn ${imageType === 'custom' ? 'is-active' : ''}`}
-                    onClick={() => setImageType('custom')}
-                  >
-                    <span className="wam__preset-custom-icon">&#128279;</span>
-                    <span className="wam__preset-text">Custom Image URL</span>
-                  </button>
+                  )}
                 </div>
+              ) : (
+                <div className="wam__notice-box">
+                  <span className="wam__notice-icon">&#10004;</span>
+                  <div>
+                    <strong>No Header Image Required</strong>
+                    <p className="wam__notice-sub">
+                      This template is formatted as a direct text message with interactive action
+                      buttons.
+                    </p>
+                  </div>
+                </div>
+              )}
 
-                <input
-                  ref={imageInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/jpg"
-                  style={{ display: 'none' }}
-                  onChange={(e) => {
-                    if (e.target.files?.[0]) handleUploadNewImage(e.target.files[0]);
-                  }}
-                />
+              {/* Dynamic Text Parameter Fields */}
+              <div className="wam__dynamic-fields">
+                {(activeTemplate.params || ['Name']).map((paramKey) => (
+                  <div className="wam__form-group" key={paramKey}>
+                    <label className="wam__label">
+                      Parameter: <code>&#123;&#123;{paramKey}&#125;&#125;</code>
+                      <span className="wam__label-hint">Default value (overridden by uploaded file)</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="wam__input"
+                      placeholder={`Default value for ${paramKey}`}
+                      value={templateParamValues[paramKey] ?? ''}
+                      onChange={(e) =>
+                        setTemplateParamValues((prev) => ({
+                          ...prev,
+                          [paramKey]: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
 
-                {/* Uploaded Images Gallery for Future Use */}
-                {uploadedImages.length > 0 && (
-                  <div className="wam__uploaded-gallery">
-                    <span className="wam__gallery-label">Uploaded Image Gallery:</span>
-                    <div className="wam__gallery-list">
-                      {uploadedImages.map((img, i) => (
-                        <div
-                          key={i}
-                          className={`wam__gallery-item ${imageType === img.url ? 'is-active' : ''}`}
-                          onClick={() => setImageType(img.url)}
-                          title={img.name}
-                        >
-                          <img src={img.url} alt={img.name} />
-                          <span className="wam__gallery-name">{img.name}</span>
+            {/* Live Template Preview Bubble */}
+            <div className="wam__preview-box">
+              <div className="wam__preview-header">
+                <span className="wam__preview-title">WhatsApp Live Message Preview</span>
+              </div>
+              <div className="wam__chat-bubble">
+                {activeTemplate.hasHeaderMedia && resolvedImageUrl && (
+                  <div className="wam__chat-media">
+                    <img src={resolvedImageUrl} alt="Header Banner" className="wam__chat-img" />
+                  </div>
+                )}
+                <div className="wam__chat-text">
+                  <p className="wam__chat-preview-content">
+                    {activeTemplate.body
+                      ? activeTemplate.body.replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (match, p) => {
+                          return (
+                            templateParamValues[p] ||
+                            (p.toLowerCase().includes('name') ? 'Dr. Karthikeyan' : match)
+                          );
+                        })
+                      : 'Template Body'}
+                  </p>
+
+                  {activeTemplate.buttons && activeTemplate.buttons.length > 0 && (
+                    <div className="wam__chat-buttons">
+                      {activeTemplate.buttons.map((btn, i) => (
+                        <div key={i} className="wam__chat-btn-item">
+                          {btn}
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {imageType === 'custom' && (
-                  <input
-                    type="url"
-                    className="wam__input"
-                    placeholder="https://example.com/banner.jpg"
-                    value={customImageUrl}
-                    onChange={(e) => setCustomImageUrl(e.target.value)}
-                  />
-                )}
-              </div>
-            ) : (
-              <div className="wam__notice-box">
-                <span className="wam__notice-icon">&#10004;</span>
-                <div>
-                  <strong>No Header Image Required</strong>
-                  <p className="wam__notice-sub">
-                    This template is formatted as a direct text message with interactive action
-                    buttons.
-                  </p>
+                  <span className="wam__chat-time">
+                    12:45 PM &bull; <span className="wam__chat-ticks">&#10003;&#10003;</span>
+                  </span>
                 </div>
               </div>
-            )}
-
-            {/* Dynamic Text Parameter Fields for Selected Template */}
-            <div className="wam__dynamic-fields">
-              {(activeTemplate.params || ['Name']).map((paramKey) => (
-                <div className="wam__form-group" key={paramKey}>
-                  <label className="wam__label">
-                    Parameter: <code>&#123;&#123;{paramKey}&#125;&#125;</code>
-                    <span className="wam__label-hint">Default value (overridden by uploaded file)</span>
-                  </label>
-                  <input
-                    type="text"
-                    className="wam__input"
-                    placeholder={`Default value for ${paramKey}`}
-                    value={templateParamValues[paramKey] ?? ''}
-                    onChange={(e) =>
-                      setTemplateParamValues((prev) => ({
-                        ...prev,
-                        [paramKey]: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Live Template Preview Bubble */}
-          <div className="wam__preview-box">
-            <div className="wam__preview-header">
-              <span className="wam__preview-title">WhatsApp Live Message Preview</span>
-            </div>
-            <div className="wam__chat-bubble">
-              {activeTemplate.hasHeaderMedia && resolvedImageUrl && (
-                <div className="wam__chat-media">
-                  <img src={resolvedImageUrl} alt="Header Banner" className="wam__chat-img" />
-                </div>
-              )}
-              <div className="wam__chat-text">
-                <p className="wam__chat-preview-content">
-                  {activeTemplate.body
-                    ? activeTemplate.body.replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (match, p) => {
-                        return (
-                          templateParamValues[p] ||
-                          (p.toLowerCase().includes('name') ? 'Dr. Karthikeyan' : match)
-                        );
-                      })
-                    : 'Template Body'}
-                </p>
-
-                {activeTemplate.buttons && activeTemplate.buttons.length > 0 && (
-                  <div className="wam__chat-buttons">
-                    {activeTemplate.buttons.map((btn, i) => (
-                      <div key={i} className="wam__chat-btn-item">
-                        {btn}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <span className="wam__chat-time">
-                  12:45 PM &bull; <span className="wam__chat-ticks">&#10003;&#10003;</span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Single Test Send Box */}
-          <div className="wam__single-test">
-            <h3 className="wam__single-test-title">&#128241; Send 1 Test Message</h3>
-            <p className="wam__single-test-desc">
-              Verify message formatting on your phone before broadcasting.
-            </p>
-            <div className="wam__single-test-fields">
-              <input
-                type="tel"
-                className="wam__input"
-                placeholder="Mobile (10 digits e.g. 9962460782)"
-                value={testPhone}
-                onChange={(e) => setTestPhone(e.target.value)}
-              />
-              <Button
-                variant="secondary"
-                onClick={handleTestSend}
-                disabled={testSending || !testPhone}
-              >
-                {testSending ? 'Sending...' : 'Test Send'}
-              </Button>
             </div>
 
-            {testResult && (
-              <div className="wam__alert wam__alert--success">
-                &#10004; Test invitation delivered to {testPhone}! Status:{' '}
-                <strong>{testResult.status || 'SENT'}</strong>
-              </div>
-            )}
-            {testError && <div className="wam__alert wam__alert--error">&#9888; {testError}</div>}
-          </div>
-        </section>
-
-        {/* Step 2 & 3: File Upload, Audience Table, Status Filter & Retries */}
-        <section className="wam__card wam__card--audience">
-          <div className="wam__card-header">
-            <span className="wam__step-pill">Step 2 & 3</span>
-            <div>
-              <h2 className="wam__card-title">Audience Data & Status Tracking</h2>
-              <p className="wam__card-desc">
-                Upload contact files, select range (e.g. 1-20, 35-49), monitor delivery states &
-                retry
+            {/* Single Test Send Box */}
+            <div className="wam__single-test">
+              <h3 className="wam__single-test-title">&#128241; Send 1 Test Message</h3>
+              <p className="wam__single-test-desc">
+                Verify message formatting on your phone before broadcasting.
               </p>
-            </div>
-          </div>
-
-          {/* Drag & Drop Zone */}
-          <div
-            className={`wam__dropzone ${uploadedFile ? 'has-file' : ''}`}
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              if (e.dataTransfer.files?.[0]) processUploadedFile(e.dataTransfer.files[0]);
-            }}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".xlsx,.xls,.csv,.json"
-              style={{ display: 'none' }}
-              onChange={(e) => {
-                if (e.target.files?.[0]) processUploadedFile(e.target.files[0]);
-              }}
-            />
-            <div className="wam__dropzone-icon">&#128194;</div>
-            <div className="wam__dropzone-content">
-              {uploadedFile ? (
-                <>
-                  <p className="wam__dropzone-filename">{uploadedFile.name}</p>
-                  <p className="wam__dropzone-sub">
-                    {totalCount} contacts loaded &bull; Click to replace file
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="wam__dropzone-label">
-                    Drag and drop your contact file here, or <span className="wam__link">Browse</span>
-                  </p>
-                  <p className="wam__dropzone-types">Supports Excel (.xlsx, .xls), CSV (.csv), JSON (.json)</p>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Dynamic Sample Templates Download Bar (Adapts to Active Template Parameters) */}
-          <div className="wam__sample-bar">
-            <span className="wam__sample-label">
-              Download Sample Formats for <strong>{activeTemplate.name}</strong>:
-            </span>
-            <button type="button" className="wam__sample-link" onClick={downloadSampleExcel}>
-              &#128196; Excel (.xlsx)
-            </button>
-            <button type="button" className="wam__sample-link" onClick={downloadSampleCsv}>
-              &#128195; CSV (.csv)
-            </button>
-            <button type="button" className="wam__sample-link" onClick={downloadSampleJson}>
-              &#123;&#125; JSON (.json)
-            </button>
-          </div>
-
-          {/* Column Mapping Controls */}
-          {availableHeaders.length > 0 && (
-            <div className="wam__col-mapping">
-              <div className="wam__mapping-title">
-                &#9881; Column Mapping for <code>{activeTemplate.name}</code>:
+              <div className="wam__single-test-fields">
+                <input
+                  type="tel"
+                  className="wam__input"
+                  placeholder="Mobile (10 digits e.g. 9962460782)"
+                  value={testPhone}
+                  onChange={(e) => setTestPhone(e.target.value)}
+                />
+                <Button
+                  variant="secondary"
+                  onClick={handleTestSend}
+                  disabled={testSending || !testPhone}
+                >
+                  {testSending ? 'Sending...' : 'Test Send'}
+                </Button>
               </div>
-              <div className="wam__mapping-fields">
-                <div className="wam__mapping-item">
-                  <label>Mobile Number Column:</label>
-                  <select
-                    className="wam__select"
-                    value={columnMappings.Phone || ''}
-                    onChange={(e) =>
-                      setColumnMappings((prev) => ({ ...prev, Phone: e.target.value }))
-                    }
-                  >
-                    {availableHeaders.map((h) => (
-                      <option key={h} value={h}>
-                        {h}
-                      </option>
-                    ))}
-                  </select>
-                </div>
 
-                {(activeTemplate.params || ['Name']).map((paramKey) => (
-                  <div className="wam__mapping-item" key={paramKey}>
-                    <label>Parameter &#123;&#123;{paramKey}&#125;&#125; Column:</label>
+              {testResult && (
+                <div className="wam__alert wam__alert--success">
+                  &#10004; Test invitation delivered to {testPhone}! Status:{' '}
+                  <strong>{testResult.status || 'SENT'}</strong>
+                </div>
+              )}
+              {testError && <div className="wam__alert wam__alert--error">&#9888; {testError}</div>}
+            </div>
+          </section>
+
+          {/* Step 2 & 3: File Upload & Audience Selection */}
+          <section className="wam__card wam__card--audience">
+            <div className="wam__card-header">
+              <span className="wam__step-pill">Step 2 & 3</span>
+              <div>
+                <h2 className="wam__card-title">Audience Data & Row Selection</h2>
+                <p className="wam__card-desc">
+                  Upload contact list, select subset range (e.g. 1-20, 35-49), and broadcast
+                </p>
+              </div>
+            </div>
+
+            {/* Drag & Drop Zone */}
+            <div
+              className={`wam__dropzone ${uploadedFile ? 'has-file' : ''}`}
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (e.dataTransfer.files?.[0]) processUploadedFile(e.dataTransfer.files[0]);
+              }}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv,.json"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  if (e.target.files?.[0]) processUploadedFile(e.target.files[0]);
+                }}
+              />
+              <div className="wam__dropzone-icon">&#128194;</div>
+              <div className="wam__dropzone-content">
+                {uploadedFile ? (
+                  <>
+                    <p className="wam__dropzone-filename">{uploadedFile.name}</p>
+                    <p className="wam__dropzone-sub">
+                      {totalCount} contacts loaded &bull; Click to replace file
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="wam__dropzone-label">
+                      Drag and drop your contact file here, or <span className="wam__link">Browse</span>
+                    </p>
+                    <p className="wam__dropzone-types">Supports Excel (.xlsx, .xls), CSV (.csv), JSON (.json)</p>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Dynamic Sample Templates Download Bar */}
+            <div className="wam__sample-bar">
+              <span className="wam__sample-label">
+                Sample Formats for <strong>{activeTemplate.name}</strong>:
+              </span>
+              <button type="button" className="wam__sample-link" onClick={downloadSampleExcel}>
+                &#128196; Excel (.xlsx)
+              </button>
+              <button type="button" className="wam__sample-link" onClick={downloadSampleCsv}>
+                &#128195; CSV (.csv)
+              </button>
+              <button type="button" className="wam__sample-link" onClick={downloadSampleJson}>
+                &#123;&#125; JSON (.json)
+              </button>
+              <button
+                type="button"
+                className="wam__sample-link wam__sample-link--load"
+                onClick={loadSampleIntoEditor}
+              >
+                &#9889; Load Sample (12)
+              </button>
+            </div>
+
+            {/* Column Mapping Controls */}
+            {availableHeaders.length > 0 && (
+              <div className="wam__col-mapping">
+                <div className="wam__mapping-title">
+                  &#9881; Column Mapping for <code>{activeTemplate.name}</code>:
+                </div>
+                <div className="wam__mapping-fields">
+                  <div className="wam__mapping-item">
+                    <label>Mobile Number Column:</label>
                     <select
                       className="wam__select"
-                      value={columnMappings[paramKey] || ''}
+                      value={columnMappings.Phone || ''}
                       onChange={(e) =>
-                        setColumnMappings((prev) => ({ ...prev, [paramKey]: e.target.value }))
+                        setColumnMappings((prev) => ({ ...prev, Phone: e.target.value }))
                       }
                     >
-                      <option value="">-- Use Default / Blank --</option>
                       {availableHeaders.map((h) => (
                         <option key={h} value={h}>
                           {h}
@@ -1180,145 +1173,352 @@ export default function WhatsAppMarketing() {
                       ))}
                     </select>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {/* Range Selection & Status Tracking Section */}
-          {parsedContacts.length > 0 && (
-            <div className="wam__range-section">
-              <div className="wam__range-header">
-                <div>
-                  <h3 className="wam__range-title">&#127919; Target Range & Subsets</h3>
-                  <p className="wam__range-desc">
-                    Enter custom row ranges like <code>1-20, 35-49</code> to target specific users.
-                  </p>
-                </div>
-                <div className="wam__selection-stat">
-                  Selected: <strong>{selectedCount}</strong> / {totalCount}
+                  {(activeTemplate.params || ['Name']).map((paramKey) => (
+                    <div className="wam__mapping-item" key={paramKey}>
+                      <label>Parameter &#123;&#123;{paramKey}&#125;&#125; Column:</label>
+                      <select
+                        className="wam__select"
+                        value={columnMappings[paramKey] || ''}
+                        onChange={(e) =>
+                          setColumnMappings((prev) => ({ ...prev, [paramKey]: e.target.value }))
+                        }
+                      >
+                        <option value="">-- Use Default / Blank --</option>
+                        {availableHeaders.map((h) => (
+                          <option key={h} value={h}>
+                            {h}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
                 </div>
               </div>
+            )}
 
-              {/* Range Input Box */}
-              <form className="wam__range-form" onSubmit={handleApplyRange}>
-                <div className="wam__range-input-wrap">
-                  <span className="wam__range-prefix">&#9776; Rows:</span>
+            {/* Range Selection & Controls */}
+            {parsedContacts.length > 0 && (
+              <div className="wam__range-section">
+                <div className="wam__range-header">
+                  <div>
+                    <h3 className="wam__range-title">&#127919; Target Range & Subsets</h3>
+                    <p className="wam__range-desc">
+                      Enter custom row ranges like <code>1-20, 35-49</code> to target specific users.
+                    </p>
+                  </div>
+                  <div className="wam__selection-stat">
+                    Selected: <strong>{selectedCount}</strong> / {totalCount}
+                  </div>
+                </div>
+
+                {/* Range Input Box */}
+                <form className="wam__range-form" onSubmit={handleApplyRange}>
+                  <div className="wam__range-input-wrap">
+                    <span className="wam__range-prefix">&#9776; Rows:</span>
+                    <input
+                      type="text"
+                      className="wam__input wam__input--range"
+                      placeholder="e.g. 1-20, 35-49, 55"
+                      value={rangeInput}
+                      onChange={(e) => setRangeInput(e.target.value)}
+                    />
+                    <Button variant="primary" size="sm" type="submit">
+                      Apply Range
+                    </Button>
+                  </div>
+                </form>
+
+                {/* Quick Preset Buttons */}
+                <div className="wam__quick-buttons">
+                  <span className="wam__quick-label">Quick Select:</span>
+                  <button type="button" className="wam__quick-btn" onClick={selectAll}>
+                    All ({totalCount})
+                  </button>
+                  <button type="button" className="wam__quick-btn" onClick={() => selectFirstN(10)}>
+                    First 10
+                  </button>
+                  <button type="button" className="wam__quick-btn" onClick={() => selectFirstN(25)}>
+                    First 25
+                  </button>
+                  <button type="button" className="wam__quick-btn" onClick={() => selectFirstN(50)}>
+                    First 50
+                  </button>
+                  <button type="button" className="wam__quick-btn" onClick={invertSelection}>
+                    Invert
+                  </button>
+                  <button
+                    type="button"
+                    className="wam__quick-btn wam__quick-btn--clear"
+                    onClick={clearSelection}
+                  >
+                    Clear
+                  </button>
+                </div>
+
+                {/* Search Bar */}
+                <div className="wam__search-bar">
                   <input
                     type="text"
-                    className="wam__input wam__input--range"
-                    placeholder="e.g. 1-20, 35-49, 55"
-                    value={rangeInput}
-                    onChange={(e) => setRangeInput(e.target.value)}
+                    className="wam__input wam__input--search"
+                    placeholder="&#128269; Search list by name, phone or row number..."
+                    value={searchFilter}
+                    onChange={(e) => setSearchFilter(e.target.value)}
                   />
-                  <Button variant="primary" size="sm" type="submit">
-                    Apply Range
-                  </Button>
                 </div>
-              </form>
 
-              {/* Quick Preset Buttons */}
-              <div className="wam__quick-buttons">
-                <span className="wam__quick-label">Quick Select:</span>
-                <button type="button" className="wam__quick-btn" onClick={selectAll}>
-                  All ({totalCount})
-                </button>
-                <button type="button" className="wam__quick-btn" onClick={() => selectFirstN(10)}>
-                  First 10
-                </button>
-                <button type="button" className="wam__quick-btn" onClick={() => selectFirstN(25)}>
-                  First 25
-                </button>
-                <button type="button" className="wam__quick-btn" onClick={() => selectFirstN(50)}>
-                  First 50
-                </button>
-                <button type="button" className="wam__quick-btn" onClick={invertSelection}>
-                  Invert
-                </button>
-                <button
-                  type="button"
-                  className="wam__quick-btn wam__quick-btn--clear"
-                  onClick={clearSelection}
-                >
-                  Clear
-                </button>
+                {/* Interactive Table */}
+                <div className="wam__table-wrap">
+                  <table className="wam__table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: 40 }}>
+                          <input
+                            type="checkbox"
+                            checked={selectedCount === totalCount && totalCount > 0}
+                            onChange={(e) => (e.target.checked ? selectAll() : clearSelection())}
+                          />
+                        </th>
+                        <th style={{ width: 65 }}>Row</th>
+                        <th>Recipient Name</th>
+                        <th>Mobile Number</th>
+                        <th>Bound Parameters</th>
+                        <th style={{ width: 90 }}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredContacts.map((contact) => {
+                        const isSelected = selectedIndices.has(contact.id);
+                        return (
+                          <tr
+                            key={contact.id}
+                            className={`wam__table-row ${isSelected ? 'is-selected' : ''}`}
+                            onClick={() => toggleRow(contact.id)}
+                          >
+                            <td onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => toggleRow(contact.id)}
+                              />
+                            </td>
+                            <td>
+                              <span className="wam__row-num">#{contact.rowNumber}</span>
+                            </td>
+                            <td>
+                              <div className="wam__delegate-cell">
+                                <span className="wam__avatar">{contact.name.charAt(0) || 'D'}</span>
+                                <span className="wam__delegate-name">{contact.name}</span>
+                              </div>
+                            </td>
+                            <td>
+                              <span
+                                className={`wam__phone-cell ${
+                                  contact.isValidPhone ? 'is-valid' : 'is-invalid'
+                                }`}
+                              >
+                                {contact.phone || contact.rawPhone || 'No Phone'}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="wam__params-pill-list">
+                                {Object.entries(contact.params || {}).map(([k, v]) => (
+                                  <span key={k} className="wam__param-mini-badge" title={`${k}: ${v}`}>
+                                    <strong>{k}:</strong> {String(v).slice(0, 15)}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td>
+                              <span
+                                className={`wam__status-badge ${
+                                  isSelected ? 'wam__status-badge--ready' : 'wam__status-badge--pending'
+                                }`}
+                              >
+                                {isSelected ? 'Selected' : 'Skipped'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Broadcast Action Box */}
+                <div className="wam__broadcast-box">
+                  <div className="wam__broadcast-info">
+                    <h4 className="wam__broadcast-heading">&#128640; Ready to Broadcast</h4>
+                    <p className="wam__broadcast-sub">
+                      Broadcast template <code>{activeTemplate.name}</code> to{' '}
+                      <strong>{selectedCount}</strong> selected recipient(s). All records will be
+                      persisted in MongoDB Atlas.
+                    </p>
+                  </div>
+
+                  <div className="wam__broadcast-actions">
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      disabled={broadcasting || selectedCount === 0}
+                      onClick={() => setShowConfirmModal(true)}
+                    >
+                      {broadcasting
+                        ? 'Broadcasting Messages...'
+                        : `Send to ${selectedCount} Selected Recipient(s)`}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Broadcast Progress State */}
+            {broadcasting && (
+              <div className="wam__progress-card">
+                <h4 className="wam__progress-title">Broadcasting Messages...</h4>
+                <p className="wam__progress-sub">
+                  Sequential dispatch active to protect delivery rates. Automatically saving to
+                  database...
+                </p>
+                <div className="wam__progress-bar-bg">
+                  <div
+                    className="wam__progress-bar-fill"
+                    style={{ width: `${broadcastProgress}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+
+            {broadcastError && (
+              <div className="wam__alert wam__alert--error">
+                &#9888; Broadcast Error: {broadcastError}
+              </div>
+            )}
+          </section>
+        </div>
+      )}
+
+      {/* VIEW MODE 2: PERSISTENT LIVE MONITOR & CAMPAIGN HISTORY */}
+      {activeViewMode === 'MONITOR' && (
+        <div className="wam__monitor-view">
+          {/* Top Bar: List of past campaigns */}
+          <div className="wam__card wam__card--campaign-selector">
+            <div className="wam__history-header">
+              <div>
+                <h2 className="wam__card-title">&#128203; Saved Broadcast History</h2>
+                <p className="wam__card-desc">
+                  Select a past dispatch below to inspect its members, live delivery status, and retry
+                </p>
               </div>
 
-              {/* Status Filter Bar & Refresh Button */}
-              <div className="wam__status-filter-bar">
-                <div className="wam__status-tabs">
-                  <button
-                    type="button"
-                    className={`wam__status-tab ${statusFilter === 'ALL' ? 'is-active' : ''}`}
-                    onClick={() => setStatusFilter('ALL')}
-                  >
-                    All ({statusCounts.ALL})
-                  </button>
-                  <button
-                    type="button"
-                    className={`wam__status-tab wam__status-tab--read ${
-                      statusFilter === 'READ' ? 'is-active' : ''
-                    }`}
-                    onClick={() => setStatusFilter('READ')}
-                  >
-                    &#10003;&#10003; Read ({statusCounts.READ})
-                  </button>
-                  <button
-                    type="button"
-                    className={`wam__status-tab wam__status-tab--delivered ${
-                      statusFilter === 'DELIVERED' ? 'is-active' : ''
-                    }`}
-                    onClick={() => setStatusFilter('DELIVERED')}
-                  >
-                    &#10003;&#10003; Delivered ({statusCounts.DELIVERED})
-                  </button>
-                  <button
-                    type="button"
-                    className={`wam__status-tab wam__status-tab--sent ${
-                      statusFilter === 'SENT' ? 'is-active' : ''
-                    }`}
-                    onClick={() => setStatusFilter('SENT')}
-                  >
-                    &#10003; Sent ({statusCounts.SENT})
-                  </button>
-                  <button
-                    type="button"
-                    className={`wam__status-tab wam__status-tab--failed ${
-                      statusFilter === 'FAILED' ? 'is-active' : ''
-                    }`}
-                    onClick={() => setStatusFilter('FAILED')}
-                  >
-                    &#9888; Failed ({statusCounts.FAILED})
-                  </button>
-                  <button
-                    type="button"
-                    className={`wam__status-tab wam__status-tab--pending ${
-                      statusFilter === 'PENDING' ? 'is-active' : ''
-                    }`}
-                    onClick={() => setStatusFilter('PENDING')}
-                  >
-                    Pending ({statusCounts.PENDING})
-                  </button>
+              <div className="wam__history-actions">
+                <Button variant="secondary" size="sm" onClick={loadCampaigns}>
+                  &#128260; Refresh History
+                </Button>
+                <Button variant="primary" size="sm" onClick={() => setActiveViewMode('DISPATCH')}>
+                  + New Dispatch
+                </Button>
+              </div>
+            </div>
+
+            {/* Campaign Cards List */}
+            {campaignsList.length === 0 ? (
+              <div className="wam__empty-box">
+                <p>No broadcast campaigns found in database yet.</p>
+                <Button variant="primary" size="sm" onClick={() => setActiveViewMode('DISPATCH')}>
+                  Launch Your First Broadcast
+                </Button>
+              </div>
+            ) : (
+              <div className="wam__campaigns-scroll-list">
+                {campaignsList.map((c) => {
+                  const isSelected = selectedCampaignId === c._id;
+                  const dateStr = new Date(c.createdAt).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                  });
+                  const timeStr = new Date(c.createdAt).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  });
+
+                  return (
+                    <div
+                      key={c._id}
+                      className={`wam__campaign-card ${isSelected ? 'is-selected' : ''}`}
+                      onClick={() => loadCampaignDetails(c._id)}
+                    >
+                      <div className="wam__campaign-card-top">
+                        <span className="wam__campaign-time">
+                          &#128347; {dateStr} at {timeStr}
+                        </span>
+                        <span className="wam__tag wam__tag--purple">
+                          {c.templateName}
+                        </span>
+                      </div>
+                      <h4 className="wam__campaign-title">
+                        {c.title || `${c.templateName} (${c.total} recipients)`}
+                      </h4>
+                      <div className="wam__campaign-stats-row">
+                        <span className="wam__c-stat wam__c-stat--total">
+                          Total: <strong>{c.total}</strong>
+                        </span>
+                        <span className="wam__c-stat wam__c-stat--delivered">
+                          Delivered: <strong>{c.deliveredCount || 0}</strong>
+                        </span>
+                        <span className="wam__c-stat wam__c-stat--read">
+                          Read: <strong>{c.readCount || 0}</strong>
+                        </span>
+                        {c.failedCount > 0 && (
+                          <span className="wam__c-stat wam__c-stat--failed">
+                            Failed: <strong>{c.failedCount}</strong>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Active Campaign Detail Monitor (The Table of All Members Sent At This Time!) */}
+          {activeCampaignData && (
+            <div className="wam__card wam__card--campaign-detail">
+              <div className="wam__detail-header">
+                <div className="wam__detail-title-wrap">
+                  <div className="wam__detail-meta-pill">
+                    &#128347; Dispatched at{' '}
+                    {new Date(activeCampaignData.createdAt).toLocaleDateString('en-GB')}{' '}
+                    {new Date(activeCampaignData.createdAt).toLocaleTimeString()}
+                  </div>
+                  <h3 className="wam__card-title">
+                    {activeCampaignData.title} &bull;{' '}
+                    <code className="wam__template-code">{activeCampaignData.templateName}</code>
+                  </h3>
+                  <p className="wam__card-desc">
+                    All <strong>{activeCampaignData.total} members</strong> dispatched in this
+                    broadcast are listed below with live delivery status.
+                  </p>
                 </div>
 
-                <div className="wam__status-actions">
+                <div className="wam__detail-actions">
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={handleRefreshLiveStatuses}
+                    onClick={() => handleRefreshCampaignStatuses(activeCampaignData._id)}
                     disabled={syncingStatuses}
                   >
                     {syncingStatuses ? 'Syncing...' : '🔄 Refresh Live Status (WATI)'}
                   </Button>
-                  {statusCounts.FAILED > 0 && (
-                    <button
-                      type="button"
-                      className="wam__quick-btn wam__quick-btn--retry-all"
-                      onClick={handleRetryAllFailed}
-                    >
-                      ↻ Retry All Failed ({statusCounts.FAILED})
-                    </button>
-                  )}
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => exportCampaignCsv(activeCampaignData)}
+                  >
+                    📥 Download CSV Report
+                  </Button>
                 </div>
               </div>
 
@@ -1328,121 +1528,150 @@ export default function WhatsAppMarketing() {
                 </div>
               )}
 
-              {/* Search Bar */}
-              <div className="wam__search-bar">
-                <input
-                  type="text"
-                  className="wam__input wam__input--search"
-                  placeholder="&#128269; Search table by name, phone or row number..."
-                  value={searchFilter}
-                  onChange={(e) => setSearchFilter(e.target.value)}
-                />
+              {/* Status Filter Bar for this Campaign */}
+              <div className="wam__status-filter-bar">
+                <div className="wam__status-tabs">
+                  <button
+                    type="button"
+                    className={`wam__status-tab ${campaignStatusFilter === 'ALL' ? 'is-active' : ''}`}
+                    onClick={() => setCampaignStatusFilter('ALL')}
+                  >
+                    All ({campaignStatusCounts.ALL})
+                  </button>
+                  <button
+                    type="button"
+                    className={`wam__status-tab wam__status-tab--read ${
+                      campaignStatusFilter === 'READ' ? 'is-active' : ''
+                    }`}
+                    onClick={() => setCampaignStatusFilter('READ')}
+                  >
+                    &#10003;&#10003; Read ({campaignStatusCounts.READ})
+                  </button>
+                  <button
+                    type="button"
+                    className={`wam__status-tab wam__status-tab--delivered ${
+                      campaignStatusFilter === 'DELIVERED' ? 'is-active' : ''
+                    }`}
+                    onClick={() => setCampaignStatusFilter('DELIVERED')}
+                  >
+                    &#10003;&#10003; Delivered ({campaignStatusCounts.DELIVERED})
+                  </button>
+                  <button
+                    type="button"
+                    className={`wam__status-tab wam__status-tab--sent ${
+                      campaignStatusFilter === 'SENT' ? 'is-active' : ''
+                    }`}
+                    onClick={() => setCampaignStatusFilter('SENT')}
+                  >
+                    &#10003; Sent ({campaignStatusCounts.SENT})
+                  </button>
+                  <button
+                    type="button"
+                    className={`wam__status-tab wam__status-tab--failed ${
+                      campaignStatusFilter === 'FAILED' ? 'is-active' : ''
+                    }`}
+                    onClick={() => setCampaignStatusFilter('FAILED')}
+                  >
+                    &#9888; Failed ({campaignStatusCounts.FAILED})
+                  </button>
+                </div>
+
+                <div className="wam__search-bar wam__search-bar--inline">
+                  <input
+                    type="text"
+                    className="wam__input wam__input--search"
+                    placeholder="&#128269; Search members..."
+                    value={campaignSearchFilter}
+                    onChange={(e) => setCampaignSearchFilter(e.target.value)}
+                  />
+                </div>
               </div>
 
-              {/* Interactive Audience Table */}
+              {/* Members Table */}
               <div className="wam__table-wrap">
                 <table className="wam__table">
                   <thead>
                     <tr>
-                      <th style={{ width: 40 }}>
-                        <input
-                          type="checkbox"
-                          checked={selectedCount === totalCount && totalCount > 0}
-                          onChange={(e) => (e.target.checked ? selectAll() : clearSelection())}
-                        />
-                      </th>
-                      <th style={{ width: 65 }}>Row</th>
+                      <th style={{ width: 60 }}>#</th>
                       <th>Recipient Name</th>
                       <th>Mobile Number</th>
-                      <th>Custom Parameters</th>
-                      <th style={{ width: 130 }}>Delivery Status</th>
+                      <th style={{ width: 140 }}>Delivery Status</th>
+                      <th>Sent Time</th>
+                      <th>WATI Message ID</th>
                       <th style={{ width: 95 }}>Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredContacts.map((contact) => {
-                      const isSelected = selectedIndices.has(contact.id);
-                      const isRetrying = retryingId === contact.id;
+                    {filteredCampaignRecipients.map((rec, i) => {
+                      const isRetrying = retryingId === rec._id;
+                      const timeString = rec.sentAt
+                        ? new Date(rec.sentAt).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                          })
+                        : '-';
+
                       return (
-                        <tr
-                          key={contact.id}
-                          className={`wam__table-row ${isSelected ? 'is-selected' : ''}`}
-                          onClick={() => toggleRow(contact.id)}
-                        >
-                          <td onClick={(e) => e.stopPropagation()}>
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => toggleRow(contact.id)}
-                            />
-                          </td>
+                        <tr key={rec._id || i}>
                           <td>
-                            <span className="wam__row-num">#{contact.rowNumber}</span>
+                            <span className="wam__row-num">#{rec.rowIndex || i + 1}</span>
                           </td>
                           <td>
                             <div className="wam__delegate-cell">
-                              <span className="wam__avatar">{contact.name.charAt(0) || 'D'}</span>
-                              <span className="wam__delegate-name">{contact.name}</span>
+                              <span className="wam__avatar">{rec.name?.charAt(0) || 'D'}</span>
+                              <span className="wam__delegate-name">{rec.name}</span>
                             </div>
                           </td>
                           <td>
-                            <span
-                              className={`wam__phone-cell ${
-                                contact.isValidPhone ? 'is-valid' : 'is-invalid'
-                              }`}
-                            >
-                              {contact.phone || contact.rawPhone || 'No Phone'}
+                            <span className="wam__phone-cell is-valid">
+                              {rec.phone || rec.normalizedPhone}
                             </span>
                           </td>
                           <td>
-                            <div className="wam__params-pill-list">
-                              {Object.entries(contact.params || {}).map(([k, v]) => (
-                                <span key={k} className="wam__param-mini-badge" title={`${k}: ${v}`}>
-                                  <strong>{k}:</strong> {String(v).slice(0, 20)}
-                                </span>
-                              ))}
-                            </div>
-                          </td>
-                          <td>
-                            <span className={`wam__status-badge wam__status-badge--${contact.status.toLowerCase()}`}>
-                              {contact.status === 'READ' && (
+                            <span className={`wam__status-badge wam__status-badge--${(rec.status || 'pending').toLowerCase()}`}>
+                              {rec.status === 'READ' && (
                                 <>
                                   <span className="wam__tick wam__tick--blue">&#10003;&#10003;</span> Read
                                 </>
                               )}
-                              {contact.status === 'DELIVERED' && (
+                              {rec.status === 'DELIVERED' && (
                                 <>
                                   <span className="wam__tick">&#10003;&#10003;</span> Delivered
                                 </>
                               )}
-                              {contact.status === 'SENT' && (
+                              {rec.status === 'SENT' && (
                                 <>
                                   <span className="wam__tick">&#10003;</span> Sent
                                 </>
                               )}
-                              {contact.status === 'FAILED' && (
+                              {rec.status === 'FAILED' && (
                                 <>
                                   <span className="wam__tick wam__tick--error">&#9888;</span> Failed
                                 </>
                               )}
-                              {contact.status === 'PENDING' && (
+                              {(!rec.status || rec.status === 'PENDING') && (
                                 <>
                                   <span className="wam__tick">&#9202;</span> Pending
                                 </>
                               )}
                             </span>
-                            {contact.error && (
-                              <span className="wam__status-error" title={contact.error}>
-                                {contact.error}
+                            {rec.error && (
+                              <span className="wam__status-error" title={rec.error}>
+                                {rec.error}
                               </span>
                             )}
                           </td>
-                          <td onClick={(e) => e.stopPropagation()}>
+                          <td style={{ fontSize: '0.75rem', color: '#64748b' }}>{timeString}</td>
+                          <td style={{ fontSize: '0.72rem', fontFamily: 'monospace', color: '#64748b' }}>
+                            {rec.messageId ? rec.messageId.slice(0, 18) + '...' : '-'}
+                          </td>
+                          <td>
                             <button
                               type="button"
                               className="wam__retry-btn"
-                              onClick={(e) => handleRetrySingle(contact, e)}
-                              disabled={isRetrying || !contact.isValidPhone}
+                              onClick={(e) => handleRetryRecipient(rec, activeCampaignData._id, e)}
+                              disabled={isRetrying}
                               title="Resend WhatsApp message to this recipient"
                             >
                               {isRetrying ? 'Sending...' : '↻ Retry'}
@@ -1454,89 +1683,10 @@ export default function WhatsAppMarketing() {
                   </tbody>
                 </table>
               </div>
-
-              {/* Broadcast Action Card */}
-              <div className="wam__broadcast-box">
-                <div className="wam__broadcast-info">
-                  <h4 className="wam__broadcast-heading">&#128640; Launch WhatsApp Campaign</h4>
-                  <p className="wam__broadcast-sub">
-                    Broadcast template <code>{activeTemplate.name}</code> to{' '}
-                    <strong>{selectedCount}</strong> selected recipient(s) using channel{' '}
-                    <strong>919940030935 (PRFC - Blast)</strong>.
-                  </p>
-                </div>
-
-                <div className="wam__broadcast-actions">
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    disabled={broadcasting || selectedCount === 0}
-                    onClick={() => setShowConfirmModal(true)}
-                  >
-                    {broadcasting
-                      ? 'Broadcasting Messages...'
-                      : `Send to ${selectedCount} Selected Recipient(s)`}
-                  </Button>
-                </div>
-              </div>
             </div>
           )}
-
-          {/* Broadcast Progress State */}
-          {broadcasting && (
-            <div className="wam__progress-card">
-              <h4 className="wam__progress-title">Broadcasting Messages...</h4>
-              <p className="wam__progress-sub">
-                Throttled dispatch active to protect delivery rates. Please do not close this window.
-              </p>
-              <div className="wam__progress-bar-bg">
-                <div
-                  className="wam__progress-bar-fill"
-                  style={{ width: `${broadcastProgress}%` }}
-                ></div>
-              </div>
-            </div>
-          )}
-
-          {/* Broadcast Results Summary */}
-          {broadcastResults && (
-            <div className="wam__results-card">
-              <div className="wam__results-header">
-                <div>
-                  <h3 className="wam__results-title">&#10004; Broadcast Execution Complete</h3>
-                  <p className="wam__results-sub">
-                    Campaign finished for template <code>{broadcastResults.templateName}</code>
-                  </p>
-                </div>
-                <Button variant="secondary" size="sm" onClick={exportResultsCsv}>
-                  &#128229; Download CSV Report
-                </Button>
-              </div>
-
-              <div className="wam__results-stats">
-                <div className="wam__stat-box">
-                  <span className="wam__stat-label">Total Targeted</span>
-                  <span className="wam__stat-val">{broadcastResults.total}</span>
-                </div>
-                <div className="wam__stat-box wam__stat-box--green">
-                  <span className="wam__stat-label">Delivered Successfully</span>
-                  <span className="wam__stat-val">{broadcastResults.sentCount}</span>
-                </div>
-                <div className="wam__stat-box wam__stat-box--red">
-                  <span className="wam__stat-label">Failed / Invalid</span>
-                  <span className="wam__stat-val">{broadcastResults.failedCount}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {broadcastError && (
-            <div className="wam__alert wam__alert--error">
-              &#9888; Broadcast Error: {broadcastError}
-            </div>
-          )}
-        </section>
-      </div>
+        </div>
+      )}
 
       {/* Confirmation Modal */}
       {showConfirmModal && (
@@ -1560,8 +1710,7 @@ export default function WhatsAppMarketing() {
               </div>
             </div>
             <p className="wam__modal-note">
-              Messages will be sent sequentially with personalized recipient parameters. Are you
-              sure you wish to proceed?
+              This campaign will be permanently saved to your database and can be monitored anytime.
             </p>
             <div className="wam__modal-actions">
               <Button variant="ghost" onClick={() => setShowConfirmModal(false)}>
