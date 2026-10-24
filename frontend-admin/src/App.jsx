@@ -10,6 +10,7 @@ import Companies from './pages/Companies';
 import Coupons from './pages/Coupons';
 import Registrations from './pages/Registrations';
 import Communications from './pages/Communications';
+import WhatsAppMarketing from './pages/WhatsAppMarketing';
 import CheckIn from './pages/CheckIn';
 import Users from './pages/Users';
 import Reports from './pages/Reports';
@@ -88,6 +89,14 @@ export default function App() {
             element={
               <Shielded roles={OPS}>
                 <Communications />
+              </Shielded>
+            }
+          />
+          <Route
+            path="/whatsapp-marketing"
+            element={
+              <Shielded roles={OPS}>
+                <WhatsAppMarketing />
               </Shielded>
             }
           />
