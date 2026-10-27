@@ -673,6 +673,32 @@ const syncDelivery = asyncHandler(async (req, res) => {
 });
 
 /**
+ * POST /api/v1/admin/whatsapp-marketing/campaigns/:id/retry-failed
+ * Retries all failed recipients in a campaign sequentially 1-by-1
+ */
+const retryFailed = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { throttleMs = 120 } = req.body || {};
+  const templates = await fetchWatiTemplates();
+  const campaign = await WhatsAppCampaign.findById(id).lean();
+  if (!campaign) throw ApiError.notFound('Campaign not found.');
+
+  const templateObj = templates.find((t) => t.name === campaign.templateName);
+
+  const progress = await campaignRunner.retryFailedCampaign({
+    campaignId: id,
+    templateObj,
+    throttleMs,
+  });
+
+  return sendSuccess(
+    res,
+    { progress, campaignId: id },
+    { message: `1-by-1 retry initiated for ${progress.total || 0} failed recipient(s).` }
+  );
+});
+
+/**
  * POST /api/v1/admin/whatsapp-marketing/check-statuses
  * Syncs real-time DELIVERED and READ statuses from WATI and persists to MongoDB Atlas
  */
@@ -807,6 +833,8 @@ module.exports = {
   resumeCampaign,
   stopCampaign,
   syncDelivery,
+  retryFailed,
   checkStatuses,
 };
+
 

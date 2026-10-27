@@ -1723,6 +1723,32 @@
   cursor: not-allowed;
 }
 
+.wam__th-retry-all-link {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  color: #92400e;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  display: inline-block;
+}
+
+.wam__th-retry-all-link:hover:not(:disabled) {
+  background: #fde68a;
+  border-color: #d97706;
+  color: #78350f;
+  transform: translateY(-1px);
+}
+
+.wam__th-retry-all-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* History Search Input */
 .wam__input--history-search {
   max-width: 220px;
@@ -1824,6 +1850,26 @@
   transform: translateY(-1px);
 }
 
+.wam__mini-download-btn--retry-failed {
+  color: #b45309;
+  border: 1px solid #fcd34d;
+  background: #fffbeb;
+  font-weight: 700;
+}
+
+.wam__mini-download-btn--retry-failed:hover:not(:disabled) {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #92400e;
+  transform: translateY(-1px);
+}
+
+.wam__mini-download-btn--retry-failed:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .wam__filter-reset-link {
   background: none;
   border: none;
@@ -1890,6 +1936,40 @@
   background: #fee2e2;
   border-color: #f87171;
   color: #b91c1c;
+}
+
+.wam__detail-retry-all-btn {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  border: 1px solid #b45309;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(217, 119, 6, 0.25);
+}
+
+.wam__detail-retry-all-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(217, 119, 6, 0.35);
+}
+
+.wam__detail-retry-all-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.wam__detail-retry-all-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .wam__detail-delete-btn {

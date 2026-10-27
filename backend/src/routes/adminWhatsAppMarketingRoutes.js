@@ -15,6 +15,7 @@ const {
   resumeCampaign,
   stopCampaign,
   syncDelivery,
+  retryFailed,
   checkStatuses,
 } = require('../controllers/adminWhatsAppMarketingController');
 const { requireAuth, requireRole } = require('../middleware/auth');
@@ -36,6 +37,7 @@ router.post('/campaigns/:id/pause', pauseCampaign);
 router.post('/campaigns/:id/resume', resumeCampaign);
 router.post('/campaigns/:id/stop', stopCampaign);
 router.post('/campaigns/:id/sync-delivery', syncDelivery);
+router.post('/campaigns/:id/retry-failed', retryFailed);
 
 router.post('/test-single', sendTestSingle);
 router.post('/resend-single', resendSingle);

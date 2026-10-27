@@ -126,6 +126,7 @@ export default function WhatsAppMarketing() {
   const [liveProgress, setLiveProgress] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [syncingDeliveries, setSyncingDeliveries] = useState(false);
+  const [retryingAll, setRetryingAll] = useState(false);
 
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -922,6 +923,44 @@ export default function WhatsAppMarketing() {
       if (!silent) alert('Delivery sync failed: ' + err.message);
     } finally {
       setSyncingDeliveries(false);
+    }
+  };
+
+  const handleRetryAllFailed = async (campaignIdToRetry) => {
+    const targetId = campaignIdToRetry || activeCampaignData?._id;
+    if (!targetId) return;
+
+    const targetCampaign =
+      activeCampaignData?._id === targetId ? activeCampaignData : campaignsList.find((c) => c._id === targetId);
+    const failedCount =
+      (activeCampaignData?._id === targetId ? campaignStatusCounts.FAILED : 0) ||
+      targetCampaign?.failedCount ||
+      (targetCampaign?.recipients?.filter((r) => (r.status || '').toUpperCase() === 'FAILED').length) ||
+      0;
+
+    if (failedCount === 0) {
+      alert('There are no failed recipients in this broadcast to retry.');
+      return;
+    }
+
+    const confirmRetry = window.confirm(
+      `↻ Retry All ${failedCount} Failed Messages?\n\nAll failed messages will be dispatched sequentially (one-by-one) with live monitoring to protect deliverability.`
+    );
+    if (!confirmRetry) return;
+
+    setRetryingAll(true);
+    try {
+      const res = await whatsappMarketingApi.retryFailed(targetId, { throttleMs: 120 });
+      if (res?.data?.progress) {
+        setLiveCampaignId(targetId);
+        setLiveProgress(res.data.progress);
+        setLiveMonitorOpen(true);
+        loadCampaigns();
+      }
+    } catch (err) {
+      alert('Failed to launch retry: ' + (err.message || 'Server error'));
+    } finally {
+      setRetryingAll(false);
     }
   };
 
@@ -1848,6 +1887,19 @@ export default function WhatsAppMarketing() {
                       🔴 Open Live Monitor
                     </Button>
                   )}
+                  {(campaignStatusCounts.FAILED > 0 || (activeCampaignData.failedCount > 0)) && (
+                    <button
+                      type="button"
+                      className="wam__detail-retry-all-btn"
+                      onClick={() => handleRetryAllFailed(activeCampaignData._id)}
+                      disabled={retryingAll || actionLoading}
+                      title={`Retry all ${campaignStatusCounts.FAILED || activeCampaignData.failedCount} failed messages sequentially one-by-one`}
+                    >
+                      {retryingAll
+                        ? '⏳ Retrying Failed...'
+                        : `↻ Retry All Failed (${campaignStatusCounts.FAILED || activeCampaignData.failedCount})`}
+                    </button>
+                  )}
                   <Button
                     variant="secondary"
                     size="sm"
@@ -1999,6 +2051,17 @@ export default function WhatsAppMarketing() {
                     >
                       📄 CSV ({filteredCampaignRecipients.length})
                     </button>
+                    {(campaignStatusFilter === 'FAILED' || campaignStatusCounts.FAILED > 0) && (
+                      <button
+                        type="button"
+                        className="wam__mini-download-btn wam__mini-download-btn--retry-failed"
+                        onClick={() => handleRetryAllFailed(activeCampaignData._id)}
+                        disabled={retryingAll || !campaignStatusCounts.FAILED}
+                        title={`Sequentially retry all ${campaignStatusCounts.FAILED} failed messages one-by-one`}
+                      >
+                        {retryingAll ? '⏳ Retrying...' : `↻ Retry All Failed (${campaignStatusCounts.FAILED})`}
+                      </button>
+                    )}
                     <button
                       type="button"
                       className="wam__filter-reset-link"
@@ -2025,7 +2088,21 @@ export default function WhatsAppMarketing() {
                       <th style={{ width: 140 }}>Delivery Status</th>
                       <th>Sent Time</th>
                       <th>WATI Message ID</th>
-                      <th style={{ width: 95 }}>Action</th>
+                      <th style={{ width: 105, textAlign: 'center' }}>
+                        {campaignStatusFilter === 'FAILED' && campaignStatusCounts.FAILED > 0 ? (
+                          <button
+                            type="button"
+                            className="wam__th-retry-all-link"
+                            onClick={() => handleRetryAllFailed(activeCampaignData._id)}
+                            disabled={retryingAll}
+                            title={`Retry all ${campaignStatusCounts.FAILED} failed messages sequentially`}
+                          >
+                            ↻ Retry All ({campaignStatusCounts.FAILED})
+                          </button>
+                        ) : (
+                          'Action'
+                        )}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>

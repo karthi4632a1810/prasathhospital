@@ -38,6 +38,11 @@ export const whatsappMarketingApi = {
     request(`/admin/whatsapp-marketing/campaigns/${id}/stop`, { method: 'POST' }),
   syncDelivery: (id) =>
     request(`/admin/whatsapp-marketing/campaigns/${id}/sync-delivery`, { method: 'POST' }),
+  retryFailed: (id, data = {}) =>
+    request(`/admin/whatsapp-marketing/campaigns/${id}/retry-failed`, {
+      method: 'POST',
+      body: data,
+    }),
   checkStatuses: (data) =>
     request('/admin/whatsapp-marketing/check-statuses', {
       method: 'POST',

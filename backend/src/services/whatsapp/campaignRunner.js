@@ -673,8 +673,277 @@ async function syncCampaignDelivery(campaignId) {
   };
 }
 
+/**
+ * The asynchronous 1-by-1 retry loop for failed recipients
+ */
+async function runRetryLoop(job, failedRecipients, templateObj) {
+  logger.info(`[CampaignRunner] Starting 1-by-1 retry loop for campaign ${job.id}: ${failedRecipients.length} failed recipients`);
+
+  const campaignDoc = await WhatsAppCampaign.findById(job.id);
+  if (!campaignDoc) {
+    logger.error(`[CampaignRunner] Campaign ${job.id} not found for retry.`);
+    job.status = 'FAILED';
+    return;
+  }
+
+  let unpersistedCount = 0;
+
+  for (let i = job.currentIndex; i < failedRecipients.length; i++) {
+    job.currentIndex = i;
+
+    if (job.status === 'STOPPED') break;
+
+    while (job.status === 'PAUSED') {
+      await sleep(400);
+      if (job.status === 'STOPPED') break;
+    }
+    if (job.status === 'STOPPED') break;
+
+    const item = failedRecipients[i];
+    const originalRowIndex = item.rowIndex !== undefined ? item.rowIndex : i + 1;
+    const recipientName = item.name ? String(item.name).trim() : 'Delegate';
+    const rawPhone = item.phone ? String(item.phone).trim() : '';
+    const normalizedPhone = normalizePhone(rawPhone);
+    const extraVal =
+      item.extra !== undefined && item.extra !== null && item.extra !== ''
+        ? String(item.extra).trim()
+        : (job.globalExtra || '');
+
+    job.currentRecipient = {
+      rowIndex: originalRowIndex,
+      name: recipientName,
+      phone: rawPhone,
+      normalizedPhone,
+      status: 'SENDING',
+      time: new Date(),
+    };
+    broadcastJobEvent(job, 'SENDING', { recipient: job.currentRecipient });
+
+    if (!normalizedPhone || normalizedPhone.length < 10) {
+      job.failedCount++;
+      job.processedCount++;
+      const failLog = {
+        rowIndex: originalRowIndex,
+        name: recipientName,
+        phone: rawPhone,
+        normalizedPhone: '',
+        sent: false,
+        status: 'FAILED',
+        error: 'Invalid or missing phone number',
+        sentAt: new Date(),
+      };
+      job.recentLogs.push({ ...failLog, time: new Date() });
+      broadcastJobEvent(job, 'PROGRESS', getJobProgressSnapshot(job));
+      unpersistedCount++;
+      continue;
+    }
+
+    const customParamsValues = {
+      ...(job.globalParams || {}),
+      ...(item.params || {}),
+      ...(item.originalData || {}),
+    };
+
+    const bodyParams = buildBodyParams(job.templateName, {
+      name: recipientName,
+      extra: extraVal,
+      customParamsValues,
+      imageUrl: job.headerImageUrl,
+      templateObj,
+    });
+
+    let sendResult = { sent: false, error: 'Unknown' };
+    try {
+      sendResult = await sendWhatsAppTemplate({
+        to: normalizedPhone,
+        name: job.templateName,
+        language: env.whatsappTemplateLanguage || 'en_GB',
+        bodyParams,
+      });
+    } catch (err) {
+      sendResult = { sent: false, error: err.message || 'Network exception during resend' };
+    }
+
+    job.processedCount++;
+
+    // Locate recipient in the live campaign document
+    const docItem =
+      (item._id && typeof campaignDoc.recipients.id === 'function' ? campaignDoc.recipients.id(item._id) : null) ||
+      campaignDoc.recipients.find(
+        (r) =>
+          (item._id && String(r._id) === String(item._id)) ||
+          r.rowIndex === originalRowIndex ||
+          (r.phone === rawPhone && r.status === 'FAILED') ||
+          (r.normalizedPhone === normalizedPhone && r.status === 'FAILED')
+      );
+
+    if (sendResult.sent) {
+      job.sentCount++;
+      if (docItem) {
+        docItem.status = 'SENT';
+        docItem.messageId = sendResult.messageId || 'wati_sent';
+        docItem.broadcastId = sendResult.broadcastId || docItem.broadcastId || null;
+        docItem.error = null;
+        docItem.sentAt = new Date();
+      }
+      const successLog = {
+        rowIndex: originalRowIndex,
+        name: recipientName,
+        phone: rawPhone,
+        normalizedPhone,
+        sent: true,
+        status: 'SENT',
+        messageId: sendResult.messageId || 'wati_sent',
+        error: null,
+      };
+      job.currentRecipient = { ...successLog, time: new Date() };
+      job.recentLogs.push({ ...successLog, time: new Date() });
+    } else {
+      job.failedCount++;
+      if (docItem) {
+        docItem.status = 'FAILED';
+        docItem.error = sendResult.error || sendResult.reason || 'WATI API rejected message';
+        docItem.sentAt = new Date();
+      }
+      const failLog = {
+        rowIndex: originalRowIndex,
+        name: recipientName,
+        phone: rawPhone,
+        normalizedPhone,
+        sent: false,
+        status: 'FAILED',
+        error: sendResult.error || sendResult.reason || 'WATI API rejected message',
+      };
+      job.currentRecipient = { ...failLog, time: new Date() };
+      job.recentLogs.push({ ...failLog, time: new Date() });
+    }
+
+    if (job.recentLogs.length > 80) {
+      job.recentLogs = job.recentLogs.slice(-60);
+    }
+
+    broadcastJobEvent(job, 'PROGRESS', getJobProgressSnapshot(job));
+
+    unpersistedCount++;
+    if (unpersistedCount >= 8 || i === failedRecipients.length - 1) {
+      try {
+        campaignDoc.sentCount = campaignDoc.recipients.filter((r) =>
+          ['SENT', 'DELIVERED', 'READ'].includes(r.status)
+        ).length;
+        campaignDoc.deliveredCount = campaignDoc.recipients.filter((r) =>
+          ['DELIVERED', 'READ'].includes(r.status)
+        ).length;
+        campaignDoc.readCount = campaignDoc.recipients.filter((r) => r.status === 'READ').length;
+        campaignDoc.failedCount = campaignDoc.recipients.filter((r) => r.status === 'FAILED').length;
+        await campaignDoc.save();
+      } catch (err) {
+        logger.warn(`Failed to persist retry batch to DB: ${err.message}`);
+      }
+      unpersistedCount = 0;
+    }
+
+    if (i < failedRecipients.length - 1 && job.throttleMs > 0) {
+      await sleep(job.throttleMs);
+    }
+  }
+
+  if (job.status !== 'STOPPED') {
+    job.status = 'COMPLETED';
+    job.completedAt = new Date();
+  }
+
+  try {
+    campaignDoc.sentCount = campaignDoc.recipients.filter((r) =>
+      ['SENT', 'DELIVERED', 'READ'].includes(r.status)
+    ).length;
+    campaignDoc.deliveredCount = campaignDoc.recipients.filter((r) =>
+      ['DELIVERED', 'READ'].includes(r.status)
+    ).length;
+    campaignDoc.readCount = campaignDoc.recipients.filter((r) => r.status === 'READ').length;
+    campaignDoc.failedCount = campaignDoc.recipients.filter((r) => r.status === 'FAILED').length;
+    await campaignDoc.save();
+  } catch (err) {
+    logger.warn(`Failed final retry save: ${err.message}`);
+  }
+
+  logger.info(
+    `[CampaignRunner] Finished 1-by-1 retry for campaign ${job.id}: ${job.sentCount} sent, ${job.failedCount} still failed`
+  );
+
+  broadcastJobEvent(job, 'COMPLETED', getJobProgressSnapshot(job));
+}
+
+/**
+ * Starts 1-by-1 retry for all failed recipients in a campaign
+ */
+async function retryFailedCampaign({ campaignId, templateObj, throttleMs = 120 }) {
+  const idStr = campaignId.toString();
+
+  // If already running
+  if (activeJobs.has(idStr)) {
+    const existing = activeJobs.get(idStr);
+    if (existing.status === 'RUNNING' || existing.status === 'PAUSED') {
+      return getJobProgressSnapshot(existing);
+    }
+  }
+
+  const campaign = await WhatsAppCampaign.findById(campaignId);
+  if (!campaign) throw new Error('Campaign not found.');
+
+  const failedRecipients = campaign.recipients.filter((r) => r.status === 'FAILED');
+  if (failedRecipients.length === 0) {
+    return {
+      campaignId,
+      status: 'COMPLETED',
+      total: 0,
+      processedCount: 0,
+      sentCount: 0,
+      failedCount: 0,
+      message: 'No failed recipients found to retry.',
+    };
+  }
+
+  const job = {
+    id: idStr,
+    campaignId,
+    title: `Retry Failed — ${campaign.title || campaign.templateName} (${failedRecipients.length} recipients)`,
+    templateName: campaign.templateName,
+    headerImageUrl: campaign.headerImageUrl,
+    globalParams: campaign.globalParams || {},
+    globalExtra: campaign.globalExtra || '',
+    throttleMs: typeof throttleMs === 'number' ? Math.max(50, throttleMs) : 120,
+    status: 'RUNNING',
+    total: failedRecipients.length,
+    processedCount: 0,
+    sentCount: 0,
+    deliveredCount: 0,
+    readCount: 0,
+    failedCount: 0,
+    currentIndex: 0,
+    currentRecipient: null,
+    startedAt: new Date(),
+    completedAt: null,
+    recentLogs: [],
+    recipientsState: failedRecipients.map((r) => r.toObject()),
+    sseClients: new Set(),
+    isRetryJob: true,
+  };
+
+  activeJobs.set(idStr, job);
+
+  // Launch non-blocking async 1-by-1 retry loop
+  runRetryLoop(job, failedRecipients.map((r) => r.toObject()), templateObj).catch((err) => {
+    logger.error(`[CampaignRunner] Error in retry loop ${idStr}:`, err);
+    job.status = 'FAILED';
+    broadcastJobEvent(job, 'ERROR', { error: err.message });
+  });
+
+  return getJobProgressSnapshot(job);
+}
+
 module.exports = {
   startCampaign,
+  retryFailedCampaign,
   getJobStatus,
   pauseCampaign,
   resumeCampaign,
@@ -683,3 +952,4 @@ module.exports = {
   syncCampaignDelivery,
   buildBodyParams,
 };
+
