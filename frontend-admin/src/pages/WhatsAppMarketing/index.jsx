@@ -120,8 +120,50 @@ export default function WhatsAppMarketing() {
   const [broadcastResults, setBroadcastResults] = useState(null);
   const [broadcastError, setBroadcastError] = useState('');
 
+  // Live 1-by-1 Broadcast Monitor State
+  const [liveMonitorOpen, setLiveMonitorOpen] = useState(false);
+  const [liveCampaignId, setLiveCampaignId] = useState(null);
+  const [liveProgress, setLiveProgress] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [syncingDeliveries, setSyncingDeliveries] = useState(false);
+
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
+
+  // Live progress poller for ongoing broadcast
+  useEffect(() => {
+    if (!liveCampaignId) return;
+
+    let isMounted = true;
+    let timer = null;
+
+    const pollLiveProgress = async () => {
+      try {
+        const res = await whatsappMarketingApi.getLiveProgress(liveCampaignId);
+        if (!isMounted) return;
+        if (res?.data?.progress) {
+          const p = res.data.progress;
+          setLiveProgress(p);
+          if (p.status === 'RUNNING' || p.status === 'PAUSED') {
+            timer = setTimeout(pollLiveProgress, 1200);
+          } else if (p.status === 'COMPLETED') {
+            loadCampaigns();
+            loadCampaignDetails(liveCampaignId);
+          }
+        }
+      } catch {
+        if (!isMounted) return;
+        timer = setTimeout(pollLiveProgress, 2500);
+      }
+    };
+
+    pollLiveProgress();
+
+    return () => {
+      isMounted = false;
+      if (timer) clearTimeout(timer);
+    };
+  }, [liveCampaignId]);
 
   // Load saved uploaded images from localStorage
   useEffect(() => {
@@ -738,7 +780,7 @@ export default function WhatsAppMarketing() {
     return () => clearInterval(interval);
   }, [activeViewMode, activeCampaignData?._id, activeCampaignData?.recipients]);
 
-  // Batch Broadcast Execution: sends and persists campaign in MongoDB Atlas
+  // Batch Broadcast Execution: starts asynchronous 1-by-1 live broadcast
   const executeBroadcast = async () => {
     setShowConfirmModal(false);
     setBroadcastError('');
@@ -751,7 +793,7 @@ export default function WhatsAppMarketing() {
     }
 
     setBroadcasting(true);
-    setBroadcastProgress(10);
+    setBroadcastProgress(5);
 
     try {
       const payload = {
@@ -767,28 +809,119 @@ export default function WhatsAppMarketing() {
           params: c.params,
           originalData: c.originalData,
         })),
-        throttleMs: 120,
+        throttleMs: 100,
       };
 
       const res = await whatsappMarketingApi.sendBatch(payload);
-      setBroadcastProgress(100);
-      setBroadcastResults(res?.data);
+      const newCampaignId = res?.data?.campaignId || res?.data?.campaign?._id;
 
-      // If a campaign document was created in MongoDB, switch to Monitor view and load it
-      if (res?.data?.campaign) {
-        setActiveCampaignData(res.data.campaign);
-        setSelectedCampaignId(res.data.campaign._id);
-        setActiveViewMode('MONITOR');
-        // Auto-refresh live status from WATI 3s and 8s after dispatch
-        setTimeout(() => handleRefreshCampaignStatuses(res.data.campaign._id, true), 3000);
-        setTimeout(() => handleRefreshCampaignStatuses(res.data.campaign._id, true), 8000);
+      if (newCampaignId) {
+        setLiveCampaignId(newCampaignId);
+        setLiveProgress(
+          res.data.initialProgress || {
+            campaignId: newCampaignId,
+            templateName: selectedTemplateId,
+            title: payload.title,
+            status: 'RUNNING',
+            total: selectedContacts.length,
+            processedCount: 0,
+            sentCount: 0,
+            deliveredCount: 0,
+            readCount: 0,
+            failedCount: 0,
+            pendingCount: selectedContacts.length,
+            percentage: 0,
+            speed: 0,
+            etaSeconds: 0,
+            currentRecipient: null,
+            recentLogs: [],
+          }
+        );
+        setLiveMonitorOpen(true);
+        loadCampaigns();
       }
-
-      loadCampaigns();
     } catch (err) {
       setBroadcastError(err.message || 'Error occurred while broadcasting WhatsApp messages.');
+      alert('Broadcast Launch Error: ' + (err.message || 'Server error occurred.'));
     } finally {
       setBroadcasting(false);
+    }
+  };
+
+  const handlePauseBroadcast = async () => {
+    if (!liveCampaignId) return;
+    setActionLoading(true);
+    try {
+      const res = await whatsappMarketingApi.pauseCampaign(liveCampaignId);
+      if (res?.data?.progress) setLiveProgress(res.data.progress);
+    } catch (err) {
+      alert('Failed to pause: ' + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleResumeBroadcast = async () => {
+    if (!liveCampaignId) return;
+    setActionLoading(true);
+    try {
+      const res = await whatsappMarketingApi.resumeCampaign(liveCampaignId);
+      if (res?.data?.progress) setLiveProgress(res.data.progress);
+    } catch (err) {
+      alert('Failed to resume: ' + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleStopBroadcast = async () => {
+    if (!liveCampaignId) return;
+    if (!window.confirm('Are you sure you want to stop this broadcast? Remaining unsent messages will not be dispatched.')) {
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const res = await whatsappMarketingApi.stopCampaign(liveCampaignId);
+      if (res?.data?.progress) setLiveProgress(res.data.progress);
+      loadCampaigns();
+      loadCampaignDetails(liveCampaignId);
+    } catch (err) {
+      alert('Failed to stop: ' + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleSyncCampaignDelivery = async (campaignIdToSync, silent = false) => {
+    const targetId = campaignIdToSync || liveCampaignId || selectedCampaignId;
+    if (!targetId) return;
+    setSyncingDeliveries(true);
+    try {
+      const res = await whatsappMarketingApi.syncDelivery(targetId);
+      if (res?.data) {
+        if (liveProgress && liveCampaignId === targetId) {
+          setLiveProgress((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  deliveredCount: res.data.deliveredCount,
+                  readCount: res.data.readCount,
+                  sentCount: res.data.sentCount,
+                  failedCount: res.data.failedCount,
+                }
+              : null
+          );
+        }
+        loadCampaignDetails(targetId);
+        loadCampaigns();
+        if (!silent) {
+          alert(`Handset Deliveries Synced!\n\n✓ Delivered: ${res.data.deliveredCount}\n✓ Read: ${res.data.readCount}`);
+        }
+      }
+    } catch (err) {
+      if (!silent) alert('Delivery sync failed: ' + err.message);
+    } finally {
+      setSyncingDeliveries(false);
     }
   };
 
@@ -898,6 +1031,16 @@ export default function WhatsAppMarketing() {
           >
             &#128203; Saved Broadcast Monitor ({campaignsList.length})
           </button>
+          {liveCampaignId && liveProgress && (
+            <button
+              type="button"
+              className="wam__view-btn wam__view-btn--live-active"
+              onClick={() => setLiveMonitorOpen(true)}
+            >
+              <span className="wam__chip-dot"></span>
+              🔴 Live Monitor ({liveProgress.processedCount}/{liveProgress.total})
+            </button>
+          )}
         </div>
       </header>
 
@@ -1691,13 +1834,36 @@ export default function WhatsAppMarketing() {
                 </div>
 
                 <div className="wam__detail-actions">
+                  {(activeCampaignData.status === 'RUNNING' ||
+                    activeCampaignData.status === 'PAUSED' ||
+                    activeCampaignData._id === liveCampaignId) && (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => {
+                        setLiveCampaignId(activeCampaignData._id);
+                        setLiveMonitorOpen(true);
+                      }}
+                    >
+                      🔴 Open Live Monitor
+                    </Button>
+                  )}
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleSyncCampaignDelivery(activeCampaignData._id)}
+                    disabled={syncingDeliveries}
+                    title="Check handsets for delivery and read status"
+                  >
+                    {syncingDeliveries ? 'Syncing...' : '🔄 Sync Handset Deliveries'}
+                  </Button>
                   <Button
                     variant="secondary"
                     size="sm"
                     onClick={() => handleRefreshCampaignStatuses(activeCampaignData._id, false)}
                     disabled={syncingStatuses}
                   >
-                    {syncingStatuses ? 'Syncing...' : '🔄 Refresh Live Status (WATI)'}
+                    {syncingStatuses ? 'Refreshing...' : '⚡ Full Status Refresh'}
                   </Button>
                   <Button
                     variant="secondary"
@@ -1980,6 +2146,310 @@ export default function WhatsAppMarketing() {
               <Button variant="primary" onClick={executeBroadcast}>
                 Yes, Send {selectedCount} Messages
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Live Broadcast Mini-Widget (when modal minimized but campaign running) */}
+      {!liveMonitorOpen && liveCampaignId && liveProgress && (liveProgress.status === 'RUNNING' || liveProgress.status === 'PAUSED') && (
+        <div
+          className="wam__floating-live-widget"
+          onClick={() => setLiveMonitorOpen(true)}
+          title="Click to open full Live Broadcast Monitor"
+        >
+          <div className="wam__floating-pulse"></div>
+          <div className="wam__floating-content">
+            <span className="wam__floating-title">
+              {liveProgress.status === 'RUNNING' ? '🔴 Live WhatsApp Dispatch' : '⏸ Dispatch Paused'}
+            </span>
+            <span className="wam__floating-stat">
+              {liveProgress.processedCount} / {liveProgress.total} ({liveProgress.percentage}%) &bull; Click to Monitor
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Live 1-by-1 Broadcast Monitor Modal */}
+      {liveMonitorOpen && liveProgress && (
+        <div className="wam__modal-overlay wam__modal-overlay--live">
+          <div className="wam__modal wam__modal--live">
+            {/* Header */}
+            <div className="wam__live-modal-header">
+              <div className="wam__live-header-info">
+                <div className="wam__live-badge-row">
+                  {liveProgress.status === 'RUNNING' && (
+                    <span className="wam__live-pill wam__live-pill--running">
+                      <span className="wam__live-pulse-dot"></span>
+                      LIVE 1-BY-1 BROADCASTING
+                    </span>
+                  )}
+                  {liveProgress.status === 'PAUSED' && (
+                    <span className="wam__live-pill wam__live-pill--paused">
+                      ⏸ BROADCAST PAUSED
+                    </span>
+                  )}
+                  {liveProgress.status === 'STOPPED' && (
+                    <span className="wam__live-pill wam__live-pill--stopped">
+                      ⏹ BROADCAST STOPPED
+                    </span>
+                  )}
+                  {liveProgress.status === 'COMPLETED' && (
+                    <span className="wam__live-pill wam__live-pill--completed">
+                      🎉 ALL 1,500 MESSAGES DISPATCHED
+                    </span>
+                  )}
+                  <span className="wam__live-tag">{liveProgress.templateName}</span>
+                </div>
+                <h3 className="wam__live-modal-title">
+                  {liveProgress.title || 'WhatsApp Bulk Broadcast Live Monitor'}
+                </h3>
+              </div>
+              <div className="wam__live-header-actions">
+                <button
+                  type="button"
+                  className="wam__live-close-btn"
+                  onClick={() => setLiveMonitorOpen(false)}
+                  title="Minimize monitor (broadcast continues sending in background)"
+                >
+                  ✕ Minimize
+                </button>
+              </div>
+            </div>
+
+            {/* Live Progress Bar Section */}
+            <div className="wam__live-progress-section">
+              <div className="wam__live-progress-labels">
+                <span className="wam__live-progress-count">
+                  <strong>{liveProgress.processedCount}</strong> of <strong>{liveProgress.total}</strong> processed ({liveProgress.percentage}%)
+                </span>
+                <span className="wam__live-speed-meta">
+                  {liveProgress.status === 'RUNNING' && (
+                    <>
+                      ⚡ ~{liveProgress.speed || 0} msgs/sec &bull; ⏱ Est. Remaining:{' '}
+                      {Math.floor((liveProgress.etaSeconds || 0) / 60)}m {(liveProgress.etaSeconds || 0) % 60}s
+                    </>
+                  )}
+                  {liveProgress.status === 'COMPLETED' && '✓ 100% Broadcast Completed'}
+                  {liveProgress.status === 'PAUSED' && 'Broadcast paused by admin'}
+                </span>
+              </div>
+              <div className="wam__live-bar-track">
+                <div
+                  className={`wam__live-bar-fill ${liveProgress.status === 'RUNNING' ? 'is-animated' : ''}`}
+                  style={{ width: `${Math.max(1, liveProgress.percentage)}%` }}
+                >
+                  <span className="wam__live-bar-glow"></span>
+                </div>
+              </div>
+            </div>
+
+            {/* Live KPI Metric Cards */}
+            <div className="wam__live-kpi-grid">
+              <div className="wam__live-kpi-card wam__live-kpi-card--total">
+                <span className="wam__live-kpi-label">Total Recipients</span>
+                <span className="wam__live-kpi-value">{liveProgress.total}</span>
+                <span className="wam__live-kpi-sub">Target list size</span>
+              </div>
+
+              <div className="wam__live-kpi-card wam__live-kpi-card--sent">
+                <span className="wam__live-kpi-label">Dispatched (Sent)</span>
+                <span className="wam__live-kpi-value">
+                  <span className="wam__live-check">&#10003;</span> {liveProgress.sentCount}
+                </span>
+                <span className="wam__live-kpi-sub">WATI server accepted</span>
+              </div>
+
+              <div className="wam__live-kpi-card wam__live-kpi-card--delivered">
+                <div className="wam__live-kpi-header-row">
+                  <span className="wam__live-kpi-label">Delivered</span>
+                  <button
+                    type="button"
+                    className="wam__live-sync-mini-btn"
+                    onClick={() => handleSyncCampaignDelivery(liveCampaignId)}
+                    disabled={syncingDeliveries}
+                    title="Check handsets for delivery"
+                  >
+                    {syncingDeliveries ? 'Syncing...' : '🔄 Sync'}
+                  </button>
+                </div>
+                <span className="wam__live-kpi-value">
+                  <span className="wam__live-ticks">&#10003;&#10003;</span> {liveProgress.deliveredCount || 0}
+                </span>
+                <span className="wam__live-kpi-sub">Reached user devices</span>
+              </div>
+
+              <div className="wam__live-kpi-card wam__live-kpi-card--read">
+                <span className="wam__live-kpi-label">Read / Seen</span>
+                <span className="wam__live-kpi-value">
+                  <span className="wam__live-ticks wam__live-ticks--blue">&#10003;&#10003;</span> {liveProgress.readCount || 0}
+                </span>
+                <span className="wam__live-kpi-sub">Opened in WhatsApp</span>
+              </div>
+
+              <div className="wam__live-kpi-card wam__live-kpi-card--failed">
+                <span className="wam__live-kpi-label">Failed / Invalid</span>
+                <span className="wam__live-kpi-value">
+                  <span className="wam__live-cross">&#9888;</span> {liveProgress.failedCount}
+                </span>
+                <span className="wam__live-kpi-sub">Rejections or invalid #</span>
+              </div>
+
+              <div className="wam__live-kpi-card wam__live-kpi-card--pending">
+                <span className="wam__live-kpi-label">Remaining Queue</span>
+                <span className="wam__live-kpi-value">{liveProgress.pendingCount}</span>
+                <span className="wam__live-kpi-sub">Waiting for send turn</span>
+              </div>
+            </div>
+
+            {/* Currently Sending Now Card */}
+            {liveProgress.status === 'RUNNING' && liveProgress.currentRecipient && (
+              <div className="wam__live-current-card">
+                <div className="wam__live-current-spinner"></div>
+                <div className="wam__live-current-info">
+                  <span className="wam__live-current-tag">CURRENTLY DISPATCHING (1-BY-1):</span>
+                  <h4 className="wam__live-current-name">
+                    {liveProgress.currentRecipient.name} ({liveProgress.currentRecipient.phone})
+                  </h4>
+                  <span className="wam__live-current-row">Row #{liveProgress.currentRecipient.rowIndex}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Completion Banner */}
+            {liveProgress.status === 'COMPLETED' && (
+              <div className="wam__live-completed-card">
+                <div className="wam__live-completed-icon">🎉</div>
+                <div className="wam__live-completed-info">
+                  <h4 className="wam__live-completed-title">1,500 Bulk Broadcast Completed Successfully!</h4>
+                  <p className="wam__live-completed-desc">
+                    All <strong>{liveProgress.total}</strong> messages have been processed. <strong>{liveProgress.sentCount}</strong> delivered to WATI, <strong>{liveProgress.failedCount}</strong> invalid/failed.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Live Terminal / 1-by-1 Feed */}
+            <div className="wam__live-feed-card">
+              <div className="wam__live-feed-header">
+                <span className="wam__live-feed-title">&#128220; Live 1-by-1 Stream Feed (Real-Time Status)</span>
+                <span className="wam__live-feed-count">{liveProgress.recentLogs?.length || 0} recent items</span>
+              </div>
+              <div className="wam__live-feed-scroll">
+                {(liveProgress.recentLogs && liveProgress.recentLogs.length > 0) ? (
+                  [...liveProgress.recentLogs].reverse().map((log, idx) => {
+                    const timeStr = log.time ? new Date(log.time).toLocaleTimeString() : '';
+                    return (
+                      <div
+                        key={idx}
+                        className={`wam__live-feed-row ${log.status === 'SENT' ? 'is-sent' : 'is-failed'}`}
+                      >
+                        <span className="wam__live-feed-time">[{timeStr}]</span>
+                        <span className={`wam__live-feed-status ${log.status === 'SENT' ? 'wam__live-feed-status--sent' : 'wam__live-feed-status--failed'}`}>
+                          {log.status === 'SENT' ? '✓ SENT' : '⚠ FAILED'}
+                        </span>
+                        <span className="wam__live-feed-name">
+                          {log.name} ({log.phone || log.normalizedPhone})
+                        </span>
+                        <span className="wam__live-feed-msg">
+                          {log.status === 'SENT' ? `ID: ${log.messageId || 'wati_sent'}` : `Error: ${log.error || 'Failed'}`}
+                        </span>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="wam__live-feed-empty">
+                    <span>Initializing dispatch stream...</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Controls Footer */}
+            <div className="wam__live-modal-footer">
+              <div className="wam__live-footer-left">
+                {liveProgress.status === 'RUNNING' && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handlePauseBroadcast}
+                    disabled={actionLoading}
+                  >
+                    ⏸ Pause Broadcast
+                  </Button>
+                )}
+                {liveProgress.status === 'PAUSED' && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleResumeBroadcast}
+                    disabled={actionLoading}
+                  >
+                    ▶ Resume Broadcast
+                  </Button>
+                )}
+                {(liveProgress.status === 'RUNNING' || liveProgress.status === 'PAUSED') && (
+                  <button
+                    type="button"
+                    className="wam__live-stop-btn"
+                    onClick={handleStopBroadcast}
+                    disabled={actionLoading}
+                  >
+                    ⏹ Stop Broadcast
+                  </button>
+                )}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleSyncCampaignDelivery(liveCampaignId)}
+                  disabled={syncingDeliveries}
+                >
+                  {syncingDeliveries ? 'Syncing...' : '🔄 Check Handset Deliveries (WATI)'}
+                </Button>
+              </div>
+
+              <div className="wam__live-footer-right">
+                <button
+                  type="button"
+                  className="wam__live-download-btn"
+                  onClick={async () => {
+                    try {
+                      const res = await whatsappMarketingApi.getCampaignById(liveCampaignId);
+                      if (res?.data?.campaign) exportCampaignData('xlsx', false, res.data.campaign);
+                    } catch (err) {
+                      alert('Download failed: ' + err.message);
+                    }
+                  }}
+                >
+                  📊 Excel
+                </button>
+                <button
+                  type="button"
+                  className="wam__live-download-btn"
+                  onClick={async () => {
+                    try {
+                      const res = await whatsappMarketingApi.getCampaignById(liveCampaignId);
+                      if (res?.data?.campaign) exportCampaignData('csv', false, res.data.campaign);
+                    } catch (err) {
+                      alert('Download failed: ' + err.message);
+                    }
+                  }}
+                >
+                  📄 CSV
+                </button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    setLiveMonitorOpen(false);
+                    loadCampaigns();
+                    loadCampaignDetails(liveCampaignId);
+                    setActiveViewMode('MONITOR');
+                  }}
+                >
+                  View Full Screen Monitor &rarr;
+                </Button>
+              </div>
             </div>
           </div>
         </div>

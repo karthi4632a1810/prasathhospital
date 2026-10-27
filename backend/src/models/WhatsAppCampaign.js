@@ -37,6 +37,13 @@ const WhatsAppCampaignSchema = new Schema(
     deliveredCount: { type: Number, default: 0 },
     readCount: { type: Number, default: 0 },
     failedCount: { type: Number, default: 0 },
+    status: {
+      type: String,
+      enum: ['PENDING', 'RUNNING', 'PAUSED', 'STOPPED', 'COMPLETED', 'FAILED'],
+      default: 'PENDING',
+      index: true,
+    },
+    completedAt: { type: Date, default: null },
     recipients: [RecipientSchema],
     dispatchedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     dispatcherName: { type: String, trim: true, default: 'Admin' },

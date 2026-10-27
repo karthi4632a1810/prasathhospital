@@ -7,6 +7,7 @@ const { recordAudit } = require('../services/auditLog');
 const ApiError = require('../utils/ApiError');
 const { sendSuccess, asyncHandler } = require('../utils/response');
 const logger = require('../utils/logger');
+const campaignRunner = require('../services/whatsapp/campaignRunner');
 
 // Clean default poster preset (QR code options removed as requested)
 const IMAGE_PRESETS = [
@@ -510,7 +511,7 @@ const resendSingle = asyncHandler(async (req, res) => {
 
 /**
  * POST /api/v1/admin/whatsapp-marketing/send-batch
- * Dispatches batch messages and saves campaign persistently in MongoDB
+ * Dispatches batch messages asynchronously 1-by-1 with live monitoring and MongoDB persistence
  */
 const sendBatch = asyncHandler(async (req, res) => {
   const {
@@ -521,185 +522,154 @@ const sendBatch = asyncHandler(async (req, res) => {
     customImageUrl = '',
     globalExtra = '',
     globalParams = {},
-    throttleMs = 120,
+    throttleMs = 100,
   } = req.body;
 
   if (!Array.isArray(recipients) || recipients.length === 0) {
     throw ApiError.badRequest('At least 1 recipient is required.');
   }
 
-  if (recipients.length > 1000) {
-    throw ApiError.badRequest('Maximum 1,000 recipients per batch upload.');
+  if (recipients.length > 10000) {
+    throw ApiError.badRequest('Maximum 10,000 recipients per batch broadcast.');
   }
 
   const templates = await fetchWatiTemplates();
   const templateObj = templates.find((t) => t.name === templateName);
-
   const finalImageUrl = resolveImageUrl(imageType, customImageUrl);
-  const results = [];
-  const recipientsDataForDb = [];
-  let sentCount = 0;
-  let failedCount = 0;
 
-  logger.info(`Starting WhatsApp marketing broadcast: ${recipients.length} recipients with template ${templateName}`);
-
-  for (let i = 0; i < recipients.length; i++) {
-    const item = recipients[i];
-    const originalRowIndex = item.rowIndex !== undefined ? item.rowIndex : i + 1;
-    const recipientName = item.name ? String(item.name).trim() : 'Delegate';
-    const rawPhone = item.phone ? String(item.phone).trim() : '';
-    const normalizedPhone = normalizePhone(rawPhone);
-    const extraVal =
-      item.extra !== undefined && item.extra !== null && item.extra !== '' ? String(item.extra).trim() : globalExtra;
-
-    if (!normalizedPhone || normalizedPhone.length < 10) {
-      failedCount++;
-      const failItem = {
-        rowIndex: originalRowIndex,
-        name: recipientName,
-        phone: rawPhone,
-        normalizedPhone: '',
-        sent: false,
-        status: 'FAILED',
-        error: 'Invalid or missing phone number',
-        sentAt: new Date(),
-        params: item.params || {},
-      };
-      results.push(failItem);
-      recipientsDataForDb.push(failItem);
-      continue;
-    }
-
-    const customParamsValues = {
+  const defaultTitle = `${templateName} Broadcast (${recipients.length} recipients)`;
+  const recipientsDataForDb = recipients.map((r, idx) => ({
+    rowIndex: r.rowIndex !== undefined ? r.rowIndex : idx + 1,
+    name: r.name ? String(r.name).trim() : 'Delegate',
+    phone: r.phone ? String(r.phone).trim() : '',
+    normalizedPhone: normalizePhone(r.phone),
+    status: 'PENDING',
+    error: null,
+    sentAt: new Date(),
+    params: {
       ...(globalParams || {}),
-      ...(item.params || {}),
-      ...(item.originalData || {}),
-    };
-
-    const bodyParams = buildTemplateBodyParams(templateName, {
-      name: recipientName,
-      extra: extraVal,
-      customParamsValues,
-      imageUrl: finalImageUrl,
-      templateObj,
-    });
-
-    try {
-      const resSend = await sendWhatsAppTemplate({
-        to: normalizedPhone,
-        name: templateName,
-        language: env.whatsappTemplateLanguage || 'en_GB',
-        bodyParams,
-      });
-
-      if (resSend.sent) {
-        sentCount++;
-        const successItem = {
-          rowIndex: originalRowIndex,
-          name: recipientName,
-          phone: rawPhone,
-          normalizedPhone,
-          sent: true,
-          status: 'SENT',
-          messageId: resSend.messageId,
-          broadcastId: resSend.broadcastId || null,
-          error: null,
-          sentAt: new Date(),
-          params: customParamsValues,
-        };
-        results.push(successItem);
-        recipientsDataForDb.push(successItem);
-      } else {
-        failedCount++;
-        const failItem = {
-          rowIndex: originalRowIndex,
-          name: recipientName,
-          phone: rawPhone,
-          normalizedPhone,
-          sent: false,
-          status: 'FAILED',
-          error: resSend.error || resSend.reason || 'WATI API rejected message',
-          sentAt: new Date(),
-          params: customParamsValues,
-        };
-        results.push(failItem);
-        recipientsDataForDb.push(failItem);
-      }
-    } catch (err) {
-      failedCount++;
-      const errorItem = {
-        rowIndex: originalRowIndex,
-        name: recipientName,
-        phone: rawPhone,
-        normalizedPhone,
-        sent: false,
-        status: 'FAILED',
-        error: err.message || 'Network exception during send',
-        sentAt: new Date(),
-        params: customParamsValues,
-      };
-      results.push(errorItem);
-      recipientsDataForDb.push(errorItem);
-    }
-
-    if (i < recipients.length - 1 && throttleMs > 0) {
-      await new Promise((resolve) => setTimeout(resolve, Math.min(throttleMs, 2000)));
-    }
-  }
+      ...(r.params || {}),
+      ...(r.originalData || {}),
+    },
+  }));
 
   // Create persistent WhatsAppCampaign document in MongoDB Atlas
-  let savedCampaign = null;
-  try {
-    const defaultTitle = `${templateName} Broadcast (${recipients.length} recipients)`;
-    savedCampaign = await WhatsAppCampaign.create({
-      title: title || defaultTitle,
-      templateName,
-      channelNumber: '919940030935',
-      headerImageUrl: finalImageUrl,
-      total: recipients.length,
-      sentCount,
-      deliveredCount: 0,
-      readCount: 0,
-      failedCount,
-      recipients: recipientsDataForDb,
-      dispatchedBy: req.user?._id || null,
-      dispatcherName: req.user?.name || 'Platform Admin',
-    });
-  } catch (dbErr) {
-    logger.error('Failed to save WhatsAppCampaign to database:', dbErr);
-  }
+  const savedCampaign = await WhatsAppCampaign.create({
+    title: title || defaultTitle,
+    templateName,
+    channelNumber: '919940030935',
+    headerImageUrl: finalImageUrl,
+    total: recipients.length,
+    sentCount: 0,
+    deliveredCount: 0,
+    readCount: 0,
+    failedCount: 0,
+    status: 'RUNNING',
+    recipients: recipientsDataForDb,
+    dispatchedBy: req.user?._id || null,
+    dispatcherName: req.user?.name || 'Platform Admin',
+  });
+
+  // Start background 1-by-1 runner
+  const initialSnapshot = campaignRunner.startCampaign({
+    campaignId: savedCampaign._id,
+    title: savedCampaign.title,
+    templateName,
+    headerImageUrl: finalImageUrl,
+    recipients,
+    templateObj,
+    globalParams,
+    globalExtra,
+    throttleMs,
+  });
 
   // Audit log
   recordAudit(req, {
-    action: 'whatsapp_marketing.broadcast',
+    action: 'whatsapp_marketing.broadcast_started',
     entityType: 'whatsapp_marketing',
     entityId: templateName,
     meta: {
-      campaignId: savedCampaign?._id,
+      campaignId: savedCampaign._id,
       templateName,
       totalRecipients: recipients.length,
-      sentCount,
-      failedCount,
       sampleRecipients: recipients.slice(0, 3).map((r) => r.phone),
     },
   }).catch(() => {});
 
-  logger.info(`Finished WhatsApp marketing broadcast: ${sentCount} sent, ${failedCount} failed of ${recipients.length}`);
+  logger.info(`Started 1-by-1 WhatsApp broadcast: ${recipients.length} recipients for campaign ${savedCampaign._id}`);
 
   return sendSuccess(
     res,
     {
       campaign: savedCampaign,
-      templateName,
+      campaignId: savedCampaign._id,
+      status: 'RUNNING',
       total: recipients.length,
-      sentCount,
-      failedCount,
-      results,
+      initialProgress: initialSnapshot,
     },
     {
-      message: `WhatsApp broadcast completed: ${sentCount} sent, ${failedCount} failed.`,
+      message: `WhatsApp broadcast started: delivering to ${recipients.length} recipient(s) one-by-one.`,
     }
   );
+});
+
+/**
+ * GET /api/v1/admin/whatsapp-marketing/campaigns/:id/live-progress
+ */
+const getLiveProgress = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const progress = await campaignRunner.getJobStatus(id);
+  if (!progress) {
+    throw ApiError.notFound('Campaign not found.');
+  }
+  return sendSuccess(res, { progress });
+});
+
+/**
+ * GET /api/v1/admin/whatsapp-marketing/campaigns/:id/live-stream
+ */
+const getLiveStream = (req, res) => {
+  const { id } = req.params;
+  campaignRunner.subscribeToJobStream(id, req, res);
+};
+
+/**
+ * POST /api/v1/admin/whatsapp-marketing/campaigns/:id/pause
+ */
+const pauseCampaign = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const progress = await campaignRunner.pauseCampaign(id);
+  return sendSuccess(res, { progress }, { message: 'Campaign paused.' });
+});
+
+/**
+ * POST /api/v1/admin/whatsapp-marketing/campaigns/:id/resume
+ */
+const resumeCampaign = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const templates = await fetchWatiTemplates();
+  const progress = await campaignRunner.resumeCampaign(id, templates);
+  return sendSuccess(res, { progress }, { message: 'Campaign resumed.' });
+});
+
+/**
+ * POST /api/v1/admin/whatsapp-marketing/campaigns/:id/stop
+ */
+const stopCampaign = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const progress = await campaignRunner.stopCampaign(id);
+  return sendSuccess(res, { progress }, { message: 'Campaign stopped.' });
+});
+
+/**
+ * POST /api/v1/admin/whatsapp-marketing/campaigns/:id/sync-delivery
+ */
+const syncDelivery = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const result = await campaignRunner.syncCampaignDelivery(id);
+  return sendSuccess(res, result, {
+    message: `Delivery sync complete: ${result.syncedCount} status updates applied.`,
+  });
 });
 
 /**
@@ -831,5 +801,12 @@ module.exports = {
   sendTestSingle,
   resendSingle,
   sendBatch,
+  getLiveProgress,
+  getLiveStream,
+  pauseCampaign,
+  resumeCampaign,
+  stopCampaign,
+  syncDelivery,
   checkStatuses,
 };
+
