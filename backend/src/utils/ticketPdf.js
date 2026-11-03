@@ -17,18 +17,23 @@ const LINE_COLOR = '#f0d5e2'; // Hairline Divider
 const BG_SUBTLE = '#fdf6f9'; // Soft Blush Container Fill
 
 /** Formats date in event timezone (IST) */
-function formatEventDate(startDate) {
-  if (!startDate) return '21 – 23 November 2026';
+function formatEventDate(startDate, endDate) {
+  if (!startDate) return '21 – 22 November 2026';
   try {
-    const fmt = new Intl.DateTimeFormat('en-IN', {
-      timeZone: 'Asia/Kolkata',
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-    return fmt.format(new Date(startDate));
+    const s = new Date(startDate);
+    const e = endDate ? new Date(endDate) : null;
+    const startDay = s.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric' });
+    const month = s.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', month: 'short' });
+    const year = s.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', year: 'numeric' });
+    if (e) {
+      const endDay = e.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric' });
+      if (endDay !== startDay) {
+        return `${startDay} – ${endDay} ${month} ${year}`;
+      }
+    }
+    return `${startDay} ${month} ${year}`;
   } catch {
-    return '21 – 23 November 2026';
+    return '21 – 22 November 2026';
   }
 }
 
@@ -135,7 +140,7 @@ async function streamTicketPdf(res, { event, ticketType, registration, checkInUr
     .font('Helvetica-Bold')
     .fontSize(8)
     .fillColor('#fbdbea')
-    .text(formatEventDate(event.startDate), padX, 328, { width: padW });
+    .text(formatEventDate(event.startDate, event.endDate), padX, 328, { width: padW });
 
   const venueTitle = event.venue?.name || 'The Leela Palace, Chennai';
   doc
@@ -206,7 +211,7 @@ async function streamTicketPdf(res, { event, ticketType, registration, checkInUr
 
   // Event Date, Time & Venue
   doc.font('Helvetica-Bold').fontSize(8.5).fillColor(INK_BODY);
-  doc.text(`Dates: ${formatEventDate(event.startDate)} · ${formatEventTime(event.startDate)}`, bodyX, curY, { width: contentWidth });
+  doc.text(`Dates: ${formatEventDate(event.startDate, event.endDate)} · ${formatEventTime(event.startDate)}`, bodyX, curY, { width: contentWidth });
   curY += 12;
 
   doc.font('Helvetica').fontSize(8).fillColor(INK_MUTED);

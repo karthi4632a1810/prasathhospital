@@ -6,7 +6,7 @@ import SiteFooter from '../components/SiteFooter';
 import { LoadingState, ErrorState, NotFoundState } from '../components/ui/States';
 
 import { api } from '../lib/api';
-import { formatDate, formatTime } from '../lib/format';
+import { formatDate, formatDateRange, formatTime } from '../lib/format';
 import './TicketPage.css';
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
@@ -98,7 +98,9 @@ export default function TicketPage() {
                     <line x1="3" y1="10" x2="21" y2="10" />
                   </svg>
                   <span>
-                    {formatDate(ticket.event.startDate)} · {formatTime(ticket.event.startDate)}
+                    {ticket.event?.endDate
+                      ? formatDateRange(ticket.event.startDate, ticket.event.endDate)
+                      : formatDate(ticket.event?.startDate)} · {formatTime(ticket.event?.startDate)}
                   </span>
                 </div>
                 {ticket.event.venue?.name && (
@@ -306,7 +308,7 @@ export default function TicketPage() {
               </div>
               <div className="ticket-venue-card__tip">
                 <span className="ticket-venue-card__badge-num">3</span>
-                <span>Registration desk opens at <strong>07:30 AM</strong> on Friday, 21 November 2026.</span>
+                <span>Registration desk opens at <strong>07:30 AM</strong> on Saturday, 21 November 2026.</span>
               </div>
             </div>
           </div>

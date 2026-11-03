@@ -778,7 +778,7 @@ function RegistrationSuccess({ result, event, slug, formState }) {
             <div className="delegate-pass-card__meta-rows">
               <div className="delegate-pass-card__meta-item">
                 <span className="delegate-pass-card__meta-label">Dates</span>
-                <span className="delegate-pass-card__meta-val">21 – 23 Nov 2026</span>
+                <span className="delegate-pass-card__meta-val">21 – 22 Nov 2026</span>
               </div>
               <div className="delegate-pass-card__meta-item">
                 <span className="delegate-pass-card__meta-label">Venue</span>
@@ -1079,7 +1079,7 @@ function RegistrationSuccess({ result, event, slug, formState }) {
           </div>
           <div className="conf-venue-card__tip">
             <span className="conf-venue-card__tip-num">2</span>
-            <span>Registration desk opens at <strong>07:30 AM</strong> on Friday, 21 November 2026.</span>
+            <span>Registration desk opens at <strong>07:30 AM</strong> on Saturday, 21 November 2026.</span>
           </div>
           <div className="conf-venue-card__tip">
             <span className="conf-venue-card__tip-num">3</span>
