@@ -15,6 +15,7 @@ import CheckIn from './pages/CheckIn';
 import Users from './pages/Users';
 import Reports from './pages/Reports';
 import Feedback from './pages/Feedback';
+import TopicQuestions from './pages/TopicQuestions';
 import AuditLog from './pages/AuditLog';
 import Help from './pages/Help';
 import ComingSoon from './pages/ComingSoon';
@@ -113,6 +114,14 @@ export default function App() {
             element={
               <Shielded roles={OPS}>
                 <Feedback />
+              </Shielded>
+            }
+          />
+          <Route
+            path="/topic-questions"
+            element={
+              <Shielded roles={OPS}>
+                <TopicQuestions />
               </Shielded>
             }
           />

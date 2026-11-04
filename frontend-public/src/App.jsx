@@ -4,6 +4,7 @@ import EventMicrosite from './pages/EventMicrosite';
 import RegisterPage from './pages/RegisterPage';
 import TicketPage from './pages/TicketPage';
 import FeedbackPage from './pages/FeedbackPage';
+import AskDoctorPage from './pages/AskDoctorPage';
 import { NotFoundState } from './components/ui/States';
 
 function ScrollToTop() {
@@ -27,6 +28,8 @@ export default function App() {
         <Route path="/events/:slug/register" element={<RegisterPage />} />
         <Route path="/tickets/:qrToken" element={<TicketPage />} />
         <Route path="/feedback/:qrToken" element={<FeedbackPage />} />
+        <Route path="/ask-questions" element={<AskDoctorPage />} />
+        <Route path="/events/:slug/ask-questions" element={<AskDoctorPage />} />
 
         <Route path="/404" element={<NotFoundState />} />
         <Route path="*" element={<Navigate to="/404" replace />} />

@@ -73,6 +73,9 @@ export const api = {
   register: (payload, opts) =>
     request('/registrations', { method: 'POST', body: JSON.stringify(payload), ...opts }),
   getTicket: (qrToken, opts) => request(`/tickets/${encodeURIComponent(qrToken)}`, opts),
+  submitTopicQuestions: (payload, opts) =>
+    request('/topic-questions', { method: 'POST', body: JSON.stringify(payload), ...opts }),
+  getTopicQuestionTopics: (opts) => request('/topic-questions/topics', opts),
   submitFeedback: (payload, opts) =>
     request('/feedback', { method: 'POST', body: JSON.stringify(payload), ...opts }),
 };

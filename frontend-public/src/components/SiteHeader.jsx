@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { id: 'speakers', label: 'Speakers' },
   { id: 'committee', label: 'Committee' },
   { id: 'agenda', label: 'Agenda' },
+  { id: 'ask-questions', label: 'Ask Faculty' },
   { id: 'tickets', label: 'Passes' },
   { id: 'venue', label: 'Venue' },
   { id: 'faq', label: 'FAQ' },

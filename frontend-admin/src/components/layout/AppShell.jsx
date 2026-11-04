@@ -39,6 +39,7 @@ const NAV_GROUPS = [
     items: [
       { to: '/checkin', label: 'Check-in', icon: IconScan },
       { to: '/feedback', label: 'Feedback', icon: IconStar, roles: OPS_ROLES },
+      { to: '/topic-questions', label: 'Doctor Questions', icon: IconHelp, roles: OPS_ROLES },
     ],
   },
   {

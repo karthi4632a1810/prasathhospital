@@ -15,6 +15,7 @@ import About from '../sections/About';
 import Speakers from '../sections/Speakers';
 import Committee from '../sections/Committee';
 import Agenda from '../sections/Agenda';
+import AskTopicsCta from '../sections/AskTopicsCta';
 import Tickets from '../sections/Tickets';
 import Venue from '../sections/Venue';
 import Sponsors from '../sections/Sponsors';
@@ -91,6 +92,7 @@ export default function EventMicrosite() {
     if (sec.speakers !== false && event.speakers?.length) list.push('speakers');
     if (sec.committee !== false && event.committee?.length) list.push('committee');
     if (sec.agenda !== false) list.push('agenda');
+    list.push('ask-questions');
     if (sec.tickets !== false && ticketTypes.length) list.push('tickets');
     if (sec.venue !== false && (event.mode === 'virtual' || event.venue?.name)) list.push('venue');
     if (sec.sponsors !== false && event.sponsors?.length) list.push('sponsors');
@@ -172,6 +174,7 @@ export default function EventMicrosite() {
         {sections.agenda !== false && (
           <Agenda agenda={event.agenda} />
         )}
+        <AskTopicsCta />
         {sections.tickets !== false && ticketTypes.length > 0 && (
           <Tickets ticketTypes={ticketTypes} onSelect={goToRegistration} canRegister={canRegister} />
         )}
