@@ -8,13 +8,15 @@ export default function SiteFooter({ event }) {
     <footer className="site-footer">
       <div className="container site-footer__inner">
         <div className="site-footer__brand">
-          <span className="site-footer__mark">
-            <img src="/assets/pf-logo-icon.png" alt="Prashanth Fertility" width="30" height="30" />
-          </span>
-          <span className="site-footer__mark site-footer__mark--tapisar">
-            <img src="/assets/tapisar-logo.png" alt="TAPISAR" width="30" height="30" />
-          </span>
-          <div>
+          <div className="site-footer__logos">
+            <span className="site-footer__mark">
+              <img src="/assets/pf-logo-icon.png" alt="Prashanth Fertility" width="30" height="30" />
+            </span>
+            <span className="site-footer__mark site-footer__mark--tapisar">
+              <img src="/assets/tapisar-logo.png" alt="TAPISAR" width="30" height="30" />
+            </span>
+          </div>
+          <div className="site-footer__titles">
             <p className="site-footer__name">Prashanth Fertility &amp; Research Centre</p>
             <p className="site-footer__tagline">In association with TAPISAR (Tamil Nadu &amp; Pondicherry Chapter of ISAR)</p>
           </div>
