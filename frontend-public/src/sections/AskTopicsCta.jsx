@@ -21,8 +21,8 @@ export default function AskTopicsCta() {
             <span>THE FOLLOWING TOPICS</span>
           </h2>
           <p className="ask-topics-cta__subtitle">
-            Attending doctors and delegates can submit their questions, case doubts, and discussion
-            points for live debate during CIIM 2026.
+            Attending doctors and delegates can submit questions on <strong>any clinical topic</strong>.
+            The 5 focus themes below are suggestions to inspire your questions for live debate during CIIM 2026.
           </p>
 
           <div className="ask-topics-cta__grid">

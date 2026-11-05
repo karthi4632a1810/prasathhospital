@@ -8,14 +8,9 @@ const QuestionItemSchema = new Schema(
   {
     topic: {
       type: String,
-      required: true,
-      enum: [
-        'Thin Endometrium',
-        'Low Ovarian Reserve & Exosomes',
-        'Recurrent Implantation Failure',
-        'Recurrent Pregnancy Loss',
-        'Adenomyosis & Fertility',
-      ],
+      trim: true,
+      default: 'General / CME Question',
+      maxlength: 120,
     },
     question: {
       type: String,
@@ -26,7 +21,7 @@ const QuestionItemSchema = new Schema(
     targetFaculty: {
       type: String,
       trim: true,
-      default: 'Any Faculty / Open Panel',
+      default: 'Organising Committee of CME',
       maxlength: 120,
     },
     clinicalCase: {

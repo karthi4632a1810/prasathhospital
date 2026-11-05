@@ -5,14 +5,6 @@ import { LoadingState, ErrorState, EmptyState } from '../../components/ui/States
 import Button from '../../components/ui/Button';
 import './index.css';
 
-const TOPIC_OPTIONS = [
-  'Thin Endometrium',
-  'Low Ovarian Reserve & Exosomes',
-  'Recurrent Implantation Failure',
-  'Recurrent Pregnancy Loss',
-  'Adenomyosis & Fertility',
-];
-
 export default function TopicQuestions() {
   const [data, setData] = useState(null);
   const [meta, setMeta] = useState(null);
@@ -21,7 +13,6 @@ export default function TopicQuestions() {
 
   // Filters
   const [search, setSearch] = useState('');
-  const [selectedTopic, setSelectedTopic] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
 
   // Export & Action state
@@ -35,7 +26,6 @@ export default function TopicQuestions() {
     topicQuestionApi
       .list({
         search: search.trim(),
-        topic: selectedTopic,
         status: selectedStatus,
       })
       .then((res) => {
@@ -44,7 +34,7 @@ export default function TopicQuestions() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [search, selectedTopic, selectedStatus]);
+  }, [search, selectedStatus]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -102,8 +92,10 @@ export default function TopicQuestions() {
   };
 
   // Handle Delete Individual Question
-  const handleDeleteQuestion = async (submissionId, questionId, questionText, topicName) => {
-    const preview = questionText ? questionText.slice(0, 70) + (questionText.length > 70 ? '...' : '') : 'this question';
+  const handleDeleteQuestion = async (submissionId, questionId, questionText) => {
+    const preview = questionText
+      ? questionText.slice(0, 70) + (questionText.length > 70 ? '...' : '')
+      : 'this question';
     const confirmed = window.confirm(`Are you sure you want to delete this question?\n\n"${preview}"`);
     if (!confirmed) return;
 
@@ -114,7 +106,7 @@ export default function TopicQuestions() {
       setActionSuccess('Question deleted successfully.');
 
       if (res.data?.deletedSubmission) {
-        // If the last question was deleted, the submission is also removed
+        // If the last question was deleted, remove submission
         setData((prev) => (prev || []).filter((item) => item._id !== submissionId));
         if (meta) {
           setMeta((prev) => ({
@@ -135,17 +127,10 @@ export default function TopicQuestions() {
           })
         );
         if (meta) {
-          setMeta((prev) => {
-            const nextCounts = { ...(prev.topicCounts || {}) };
-            if (topicName && nextCounts[topicName] > 0) {
-              nextCounts[topicName]--;
-            }
-            return {
-              ...prev,
-              totalQuestions: Math.max((prev.totalQuestions || 1) - 1, 0),
-              topicCounts: nextCounts,
-            };
-          });
+          setMeta((prev) => ({
+            ...prev,
+            totalQuestions: Math.max((prev.totalQuestions || 1) - 1, 0),
+          }));
         }
       }
 
@@ -168,8 +153,6 @@ export default function TopicQuestions() {
     }
   };
 
-  const topicCounts = meta?.topicCounts || {};
-
   return (
     <div className="topic-questions-page">
       {/* Header */}
@@ -177,7 +160,7 @@ export default function TopicQuestions() {
         <div>
           <h2 className="page-header__title">Doctor Questions</h2>
           <p className="page-header__subtitle">
-            Clinical doubts, debate points, and questions submitted by doctors for the 5 panel topics at CIIM 2026.
+            Clinical doubts, debate points, and questions submitted by doctors for the CME Organising Committee at CIIM 2026.
           </p>
         </div>
 
@@ -217,34 +200,13 @@ export default function TopicQuestions() {
         </div>
       </div>
 
-      {/* Topic Count Filter Chips */}
-      <div className="tq-topic-pills">
-        <button
-          type="button"
-          className={`tq-pill ${selectedTopic === '' ? 'is-active' : ''}`}
-          onClick={() => setSelectedTopic('')}
-        >
-          All Topics ({meta?.totalQuestions || 0})
-        </button>
-        {TOPIC_OPTIONS.map((top) => (
-          <button
-            key={top}
-            type="button"
-            className={`tq-pill ${selectedTopic === top ? 'is-active' : ''}`}
-            onClick={() => setSelectedTopic(selectedTopic === top ? '' : top)}
-          >
-            {top} ({topicCounts[top] || 0})
-          </button>
-        ))}
-      </div>
-
       {/* Search and Filters Bar */}
       <div className="tq-filter-bar card">
         <div className="tq-filter-bar__inner">
           <div className="tq-filter-bar__search">
             <input
               type="text"
-              placeholder="Search by doctor name, phone, email, hospital, or question keyword..."
+              placeholder="Search by doctor name, phone, email, or question text..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="field__input"
@@ -252,19 +214,6 @@ export default function TopicQuestions() {
           </div>
 
           <div className="tq-filter-bar__selects">
-            <select
-              className="field__select"
-              value={selectedTopic}
-              onChange={(e) => setSelectedTopic(e.target.value)}
-            >
-              <option value="">All Topics</option>
-              {TOPIC_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-
             <select
               className="field__select"
               value={selectedStatus}
@@ -276,13 +225,12 @@ export default function TopicQuestions() {
               <option value="addressed">Addressed</option>
             </select>
 
-            {(search || selectedTopic || selectedStatus) && (
+            {(search || selectedStatus) && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => {
                   setSearch('');
-                  setSelectedTopic('');
                   setSelectedStatus('');
                 }}
               >
@@ -302,7 +250,7 @@ export default function TopicQuestions() {
         <EmptyState
           title="No questions found"
           message={
-            search || selectedTopic || selectedStatus
+            search || selectedStatus
               ? 'No submissions match your active filter criteria.'
               : 'Doctor submissions from the public form will appear here in real-time.'
           }
@@ -313,25 +261,16 @@ export default function TopicQuestions() {
             const isShortlisted = item.status === 'shortlisted';
             const questions = item.questions || [];
 
-            // Filter questions inside card if topic filter active
-            const displayQuestions = selectedTopic
-              ? questions.filter((q) => q.topic === selectedTopic)
-              : questions;
-
-            if (selectedTopic && displayQuestions.length === 0) return null;
-
             return (
               <div
                 key={item._id}
                 className={`card tq-card ${isShortlisted ? 'tq-card--shortlisted' : ''}`}
               >
+                {/* Doctor Info Header */}
                 <div className="tq-card__header">
                   <div className="tq-card__doctor">
                     <h3 className="tq-card__doctor-name">
                       {item.doctorName}
-                      {item.delegateId && (
-                        <span className="tq-card__delegate-badge">ID: {item.delegateId}</span>
-                      )}
                     </h3>
 
                     <div className="tq-card__doctor-meta">
@@ -345,8 +284,6 @@ export default function TopicQuestions() {
                           ✉️ {item.email}
                         </a>
                       )}
-                      {item.hospital && <span>🏥 {item.hospital}</span>}
-                      {item.city && <span>📍 {item.city}</span>}
                     </div>
                   </div>
 
@@ -391,25 +328,18 @@ export default function TopicQuestions() {
                   </div>
                 </div>
 
-                {/* Questions List */}
+                {/* Questions List (Clean: Question #, Text, and Delete) */}
                 <div className="tq-card__body">
                   <div className="tq-questions-grid">
-                    {displayQuestions.map((q) => (
-                      <div key={q._id} className="tq-q-box">
+                    {questions.map((q, qIdx) => (
+                      <div key={q._id || qIdx} className="tq-q-box">
                         <div className="tq-q-box__top">
-                          <div className="tq-q-box__tags">
-                            <span className="tq-topic-tag">{q.topic}</span>
-                            {q.targetFaculty && q.targetFaculty !== 'Any Faculty / Open Panel' && (
-                              <span className="tq-target-tag">
-                                Target: <strong>{q.targetFaculty}</strong>
-                              </span>
-                            )}
-                          </div>
+                          <span className="tq-q-box__num">Question #{qIdx + 1}</span>
 
                           <button
                             type="button"
                             className="tq-delete-q-btn"
-                            onClick={() => handleDeleteQuestion(item._id, q._id, q.question, q.topic)}
+                            onClick={() => handleDeleteQuestion(item._id, q._id, q.question)}
                             title="Delete this question"
                           >
                             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.4">
@@ -421,12 +351,6 @@ export default function TopicQuestions() {
                         </div>
 
                         <p className="tq-q-box__text">{q.question}</p>
-
-                        {q.clinicalCase && (
-                          <div className="tq-q-box__case">
-                            <strong>Patient / Case Context:</strong> {q.clinicalCase}
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>

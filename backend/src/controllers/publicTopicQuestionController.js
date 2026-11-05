@@ -6,6 +6,8 @@ const ApiError = require('../utils/ApiError');
 const { sendSuccess, asyncHandler } = require('../utils/response');
 
 const VALID_TOPICS = [
+  'General / Common Question',
+  'General / CME Question',
   'Thin Endometrium',
   'Low Ovarian Reserve & Exosomes',
   'Recurrent Implantation Failure',
@@ -19,7 +21,7 @@ const PHONE_RE = /^\+?\d{9,15}$/;
 /**
  * POST /api/v1/topic-questions
  * Body: {
- *   doctorName,
+ *   doctorName (or name),
  *   email,
  *   phone,
  *   hospital,
@@ -34,7 +36,7 @@ const PHONE_RE = /^\+?\d{9,15}$/;
 const submitTopicQuestions = asyncHandler(async (req, res) => {
   const body = req.body || {};
 
-  const doctorName = String(body.doctorName || '').trim();
+  const doctorName = String(body.doctorName || body.name || '').trim();
   const email = String(body.email || '').trim().toLowerCase();
   const phone = String(body.phone || '').replace(/[\s()-]/g, '');
   const hospital = String(body.hospital || '').trim();
@@ -43,7 +45,7 @@ const submitTopicQuestions = asyncHandler(async (req, res) => {
   const eventSlug = String(body.eventSlug || '').trim();
 
   if (!doctorName || doctorName.length < 2) {
-    throw ApiError.badRequest('Please provide the doctor’s full name.');
+    throw ApiError.badRequest('Please enter your name.');
   }
 
   if (!email || !EMAIL_RE.test(email)) {
@@ -51,27 +53,26 @@ const submitTopicQuestions = asyncHandler(async (req, res) => {
   }
 
   if (!phone || !PHONE_RE.test(phone)) {
-    throw ApiError.badRequest('Please enter a valid phone or WhatsApp number (10 to 15 digits).');
+    throw ApiError.badRequest('Please enter a valid phone or WhatsApp number (at least 10 digits).');
   }
 
   const rawQuestions = Array.isArray(body.questions) ? body.questions : [];
   if (rawQuestions.length === 0) {
-    throw ApiError.badRequest('Please submit at least one clinical question.');
+    throw ApiError.badRequest('Please submit at least one question.');
   }
 
   const cleanedQuestions = [];
   for (const item of rawQuestions) {
-    const topic = String(item.topic || '').trim();
+    let topic = String(item.topic || 'General / Common Question').trim();
+    if (!topic || !VALID_TOPICS.includes(topic)) {
+      topic = 'General / Common Question';
+    }
     const questionText = String(item.question || '').trim();
-    const targetFaculty = String(item.targetFaculty || 'Any Faculty / Open Panel').trim();
+    const targetFaculty = String(item.targetFaculty || 'Organising Committee of CME').trim();
     const clinicalCase = String(item.clinicalCase || '').trim();
 
-    if (!VALID_TOPICS.includes(topic)) {
-      throw ApiError.badRequest(`Invalid topic: "${topic}". Please select from the 5 supported topics.`);
-    }
-
-    if (!questionText || questionText.length < 5) {
-      throw ApiError.badRequest(`Question text under "${topic}" is too short. Please provide a detailed question.`);
+    if (!questionText || questionText.length < 3) {
+      throw ApiError.badRequest('Question text is too short. Please provide a clear question.');
     }
 
     cleanedQuestions.push({

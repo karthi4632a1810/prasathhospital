@@ -45,6 +45,7 @@ const listTopicQuestions = asyncHandler(async (req, res) => {
   const allRecords = await TopicQuestion.find({}).select('questions status').lean();
 
   const topicCounts = {
+    'General / Common Question': 0,
     'Thin Endometrium': 0,
     'Low Ovarian Reserve & Exosomes': 0,
     'Recurrent Implantation Failure': 0,
@@ -59,9 +60,8 @@ const listTopicQuestions = asyncHandler(async (req, res) => {
     if (doc.status === 'shortlisted') shortlistedCount++;
     (doc.questions || []).forEach((q) => {
       totalQuestionsCount++;
-      if (topicCounts[q.topic] !== undefined) {
-        topicCounts[q.topic]++;
-      }
+      const topicName = q.topic || 'General / Common Question';
+      topicCounts[topicName] = (topicCounts[topicName] || 0) + 1;
     });
   });
 
@@ -114,14 +114,8 @@ const exportTopicQuestionsCsv = asyncHandler(async (_req, res) => {
         doctorName: doc.doctorName,
         phone: doc.phone,
         email: doc.email,
-        hospital: doc.hospital || '',
-        city: doc.city || '',
-        delegateId: doc.delegateId || '',
         questionIndex: idx + 1,
-        topic: q.topic,
         question: q.question,
-        targetFaculty: q.targetFaculty || 'Any Faculty',
-        clinicalCase: q.clinicalCase || '',
         status: doc.status || 'pending',
         submittedAt: doc.createdAt ? new Date(doc.createdAt).toLocaleString('en-IN') : '',
       });
@@ -133,13 +127,8 @@ const exportTopicQuestionsCsv = asyncHandler(async (_req, res) => {
     { key: 'doctorName', label: 'Doctor Name' },
     { key: 'phone', label: 'Mobile / WhatsApp' },
     { key: 'email', label: 'Email' },
-    { key: 'hospital', label: 'Hospital / Clinic' },
-    { key: 'city', label: 'City' },
-    { key: 'delegateId', label: 'Delegate ID' },
-    { key: 'topic', label: 'Topic' },
-    { key: 'question', label: 'Clinical Question' },
-    { key: 'targetFaculty', label: 'Target Faculty' },
-    { key: 'clinicalCase', label: 'Case Context' },
+    { key: 'questionIndex', label: 'Question #' },
+    { key: 'question', label: 'Submitted Question' },
     { key: 'status', label: 'Status' },
     { key: 'submittedAt', label: 'Submitted Date & Time' },
   ];
