@@ -2,6 +2,7 @@
 
 const env = require('../config/env');
 const WhatsAppCampaign = require('../models/WhatsAppCampaign');
+const Registration = require('../models/Registration');
 const { sendWhatsAppTemplate, normalizePhone } = require('../services/whatsapp/client');
 const { recordAudit } = require('../services/auditLog');
 const ApiError = require('../utils/ApiError');
@@ -173,7 +174,9 @@ async function fetchWatiTemplates() {
         .replace(/^ciim2026_/, 'CIIM 2026: ')
         .replace(/_/g, ' ')
         .replace(/\b\w/g, (c) => c.toUpperCase());
-      if (templateName === 'ciim2026_invite') {
+      if (templateName === 'ciim2026_drgh_invite') {
+        label = 'CIIM 2026: Dr. Geetha Haripriya Video Invitation';
+      } else if (templateName === 'ciim2026_invite' || templateName === 'ciim2026_drgh_invite') {
         label = 'CIIM 2026 Personal Invitation (Dr. Geetha Haripriya & Dr. Samhitha Moturi)';
       }
 
@@ -193,6 +196,7 @@ async function fetchWatiTemplates() {
     });
 
     const priorityOrder = [
+      'ciim2026_drgh_invite',
       'ciim2026_invite',
       'ciim2026_registration_thankyou_02',
       'ciim2026_registration_5',
@@ -304,7 +308,7 @@ const getMarketingConfig = asyncHandler(async (req, res) => {
 
   return sendSuccess(res, {
     templates,
-    primaryTemplate: 'ciim2026_invite',
+    primaryTemplate: templates.some((t) => t.name === 'ciim2026_drgh_invite') ? 'ciim2026_drgh_invite' : 'ciim2026_invite',
     imagePresets: IMAGE_PRESETS,
     defaultChannel: '919940030935 (PRFC - Blast)',
     configured: Boolean(env.watiAccessToken || env.whatsappAccessToken),
@@ -819,6 +823,28 @@ const checkStatuses = asyncHandler(async (req, res) => {
   });
 });
 
+
+/**
+ * GET /api/v1/admin/whatsapp-marketing/registrations-audience
+ * Returns confirmed event registrations as a ready-to-broadcast audience list
+ */
+const getRegistrationsAudience = asyncHandler(async (req, res) => {
+  const registrations = await Registration.find({ status: { $ne: 'cancelled' } })
+    .select('name phone email delegateId')
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const contacts = registrations.map((r, idx) => ({
+    Name: r.name || 'Delegate',
+    Phone: r.phone || '',
+    Email: r.email || '',
+    DelegateId: r.delegateId || '',
+    Index: idx + 1,
+  }));
+
+  return sendSuccess(res, { contacts, total: contacts.length });
+});
+
 module.exports = {
   getMarketingConfig,
   getCampaigns,
@@ -835,6 +861,7 @@ module.exports = {
   syncDelivery,
   retryFailed,
   checkStatuses,
+  getRegistrationsAudience,
 };
 
 

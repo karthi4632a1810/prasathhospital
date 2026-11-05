@@ -80,7 +80,7 @@ export default function WhatsAppMarketing() {
   // Template Search & Category Filter
   const [templateCategoryTab, setTemplateCategoryTab] = useState('ALL');
   const [templateSearch, setTemplateSearch] = useState('');
-  const [selectedTemplateId, setSelectedTemplateId] = useState('ciim2026_invite');
+  const [selectedTemplateId, setSelectedTemplateId] = useState('ciim2026_drgh_invite');
   const [templateParamValues, setTemplateParamValues] = useState({});
 
   // Image Selection
@@ -92,6 +92,17 @@ export default function WhatsAppMarketing() {
   // Audience Data
   const [uploadedFile, setUploadedFile] = useState(null);
   const [rawDataRows, setRawDataRows] = useState([]);
+  const [savedAudience, setSavedAudience] = useState(() => {
+    try {
+      const cached = localStorage.getItem('ciim_saved_audience');
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [showCampaignPicker, setShowCampaignPicker] = useState(false);
+  const [loadingCampaignAudience, setLoadingCampaignAudience] = useState(false);
+  const [loadingRegistrations, setLoadingRegistrations] = useState(false);
   const [availableHeaders, setAvailableHeaders] = useState([]);
   const [columnMappings, setColumnMappings] = useState({});
 
@@ -554,7 +565,63 @@ export default function WhatsAppMarketing() {
     }
   };
 
-  const setupRowsAndHeaders = (rows) => {
+  const handleLoadSavedAudience = () => {
+    if (!savedAudience || !savedAudience.rows || !savedAudience.rows.length) {
+      alert('No saved audience found in your browser cache.');
+      return;
+    }
+    setupRowsAndHeaders(savedAudience.rows, savedAudience.filename);
+    setUploadedFile({ name: `${savedAudience.filename || 'Saved Contact List'} (${savedAudience.rows.length} contacts)` });
+  };
+
+  const handleLoadAudienceFromCampaign = async (campaignId) => {
+    if (!campaignId) return;
+    setLoadingCampaignAudience(true);
+    try {
+      const res = await whatsappMarketingApi.getCampaignById(campaignId);
+      const c = res?.data?.campaign;
+      if (!c || !c.recipients || !c.recipients.length) {
+        alert('No recipient contacts found in this broadcast record.');
+        return;
+      }
+      const rows = c.recipients.map((r) => ({
+        Name: r.name || 'Delegate',
+        Phone: r.phone || r.normalizedPhone || '',
+        ...(r.params || {}),
+      }));
+      const fileName = `${c.title || c.templateName} (${rows.length} contacts)`;
+      setUploadedFile({ name: fileName });
+      setupRowsAndHeaders(rows, fileName);
+      setShowCampaignPicker(false);
+      alert(`Successfully loaded ${rows.length} contacts from "${c.title || c.templateName}"!`);
+    } catch (err) {
+      alert('Failed to load audience: ' + (err.message || 'Server error'));
+    } finally {
+      setLoadingCampaignAudience(false);
+    }
+  };
+
+  const handleLoadEventRegistrations = async () => {
+    setLoadingRegistrations(true);
+    try {
+      const res = await whatsappMarketingApi.getRegistrationsAudience();
+      const contacts = res?.data?.contacts || [];
+      if (!contacts.length) {
+        alert('No confirmed registrations found in database.');
+        return;
+      }
+      const fileName = `Confirmed Event Registrations (${contacts.length} delegates)`;
+      setUploadedFile({ name: fileName });
+      setupRowsAndHeaders(contacts, fileName);
+      alert(`Successfully loaded ${contacts.length} confirmed delegates from event registrations!`);
+    } catch (err) {
+      alert('Failed to load registrations: ' + (err.message || 'Server error'));
+    } finally {
+      setLoadingRegistrations(false);
+    }
+  };
+
+  const setupRowsAndHeaders = (rows, customName = null) => {
     if (!rows || !rows.length) return;
     setRawDataRows(rows);
 
@@ -567,6 +634,18 @@ export default function WhatsAppMarketing() {
     setSelectedIndices(all);
     setRangeInput(`1-${rows.length}`);
     setBroadcastResults(null);
+    try {
+      const info = {
+        filename: customName || uploadedFile?.name || 'Contact List (1400+ Users)',
+        rowCount: rows.length,
+        rows: rows,
+        savedAt: new Date().toLocaleDateString(),
+      };
+      localStorage.setItem('ciim_saved_audience', JSON.stringify(info));
+      setSavedAudience(info);
+    } catch (e) {
+      console.warn('LocalStorage save failed:', e);
+    }
   };
 
   const generateTemplateSampleData = () => {
@@ -1144,7 +1223,7 @@ export default function WhatsAppMarketing() {
                   key={tmpl.id}
                   className={`wam__template-card ${
                     selectedTemplateId === tmpl.id ? 'is-selected' : ''
-                  } ${tmpl.id === 'ciim2026_invite' ? 'wam__template-card--primary' : ''}`}
+                  } ${(tmpl.id === 'ciim2026_invite' || tmpl.id === 'ciim2026_drgh_invite') ? 'wam__template-card--primary' : ''}`}
                 >
                   <input
                     type="radio"
@@ -1156,22 +1235,29 @@ export default function WhatsAppMarketing() {
                   <div className="wam__template-card-body">
                     <div className="wam__template-card-title-row">
                       <span className="wam__template-name">{tmpl.label || tmpl.name}</span>
-                      <span
-                        className={`wam__tag ${
-                          tmpl.category === 'MARKETING' ? 'wam__tag--purple' : 'wam__tag--green'
-                        }`}
-                      >
-                        {tmpl.category} &bull; Approved
-                      </span>
+                      <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                        {(tmpl.hasVideoHeader || tmpl.id === 'ciim2026_drgh_invite' || tmpl.name === 'ciim2026_drgh_invite') && (
+                          <span className="wam__tag wam__tag--video">🎬 Video Template</span>
+                        )}
+                        <span
+                          className={`wam__tag ${
+                            tmpl.category === 'MARKETING' ? 'wam__tag--purple' : 'wam__tag--green'
+                          }`}
+                        >
+                          {tmpl.category} &bull; Approved
+                        </span>
+                      </div>
                     </div>
                     <p className="wam__template-desc">
                       {tmpl.body ? tmpl.body.slice(0, 110) + '...' : 'WATI Approved Template'}
                     </p>
                     <div className="wam__template-meta">
                       <code className="wam__template-code">{tmpl.name}</code>
-                      {tmpl.hasHeaderMedia && (
+                      {(tmpl.hasVideoHeader || tmpl.id === 'ciim2026_drgh_invite' || tmpl.name === 'ciim2026_drgh_invite') ? (
+                        <span className="wam__media-badge wam__media-badge--video">🎬 Pre-attached Video Header</span>
+                      ) : tmpl.hasHeaderMedia ? (
                         <span className="wam__media-badge">&#128444; Image Header</span>
-                      )}
+                      ) : null}
                       <span className="wam__lang-badge">{tmpl.language || 'en_GB'}</span>
                     </div>
                   </div>
@@ -1185,8 +1271,18 @@ export default function WhatsAppMarketing() {
                 &#9881; Parameters for <code>{activeTemplate.name}</code>
               </h3>
 
-              {/* Header Media / Image Uploader */}
-              {activeTemplate.hasHeaderMedia ? (
+              {/* Header Media (Video or Image Uploader) */}
+              {(activeTemplate.hasVideoHeader || activeTemplate.id === 'ciim2026_drgh_invite' || activeTemplate.name === 'ciim2026_drgh_invite') ? (
+                <div className="wam__video-banner-box">
+                  <div className="wam__video-banner-icon">🎬</div>
+                  <div className="wam__video-banner-content">
+                    <strong>Pre-attached Video Header: dr_ghp_invite_ciim_2026.mp4</strong>
+                    <p>
+                      This approved Meta/WATI template has Dr. Geetha Haripriya's personal video invitation permanently pre-attached. No upload is required — it will be delivered automatically with every WhatsApp message!
+                    </p>
+                  </div>
+                </div>
+              ) : activeTemplate.hasHeaderMedia ? (
                 <div className="wam__form-group">
                   <label className="wam__label">
                     Template Header Image / Banner
@@ -1311,11 +1407,19 @@ export default function WhatsAppMarketing() {
                 <span className="wam__preview-title">WhatsApp Live Message Preview</span>
               </div>
               <div className="wam__chat-bubble">
-                {activeTemplate.hasHeaderMedia && resolvedImageUrl && (
+                {(activeTemplate.hasVideoHeader || activeTemplate.id === 'ciim2026_drgh_invite' || activeTemplate.name === 'ciim2026_drgh_invite') ? (
+                  <div className="wam__chat-media wam__chat-media--video">
+                    <div className="wam__chat-video-icon">🎬</div>
+                    <div>
+                      <div className="wam__chat-video-title">Invitation Video from Dr. Geetha Haripriya</div>
+                      <div className="wam__chat-video-meta">MP4 Video &bull; Pre-attached in WATI (CIIM 2026)</div>
+                    </div>
+                  </div>
+                ) : activeTemplate.hasHeaderMedia && resolvedImageUrl ? (
                   <div className="wam__chat-media">
                     <img src={resolvedImageUrl} alt="Header Banner" className="wam__chat-img" />
                   </div>
-                )}
+                ) : null}
                 <div className="wam__chat-text">
                   <p className="wam__chat-preview-content">
                     {activeTemplate.body
@@ -1388,6 +1492,43 @@ export default function WhatsAppMarketing() {
                   Upload contact list, select subset range (e.g. 1-20, 35-49), and broadcast
                 </p>
               </div>
+            </div>
+
+            {/* Quick Audience Selection & Reuse Toolbar */}
+            <div className="wam__audience-toolbar">
+              {savedAudience && (
+                <button
+                  type="button"
+                  className="wam__audience-tool-btn wam__audience-tool-btn--saved"
+                  onClick={handleLoadSavedAudience}
+                  title="Click to reload the previously uploaded 1400 user data"
+                >
+                  <span>⚡</span>
+                  <span>Reuse Last Upload: <strong>{savedAudience.filename || 'Audience'}</strong> ({savedAudience.rowCount || savedAudience.rows?.length || 0} contacts)</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                className="wam__audience-tool-btn"
+                onClick={() => setShowCampaignPicker(true)}
+                disabled={!campaignsList || campaignsList.length === 0}
+                title="Select a past broadcast to reload all its recipient contacts"
+              >
+                <span>📋</span>
+                <span>Load from Previous Broadcast ({campaignsList?.length || 0})</span>
+              </button>
+
+              <button
+                type="button"
+                className="wam__audience-tool-btn"
+                onClick={handleLoadEventRegistrations}
+                disabled={loadingRegistrations}
+                title="Load all registered doctors from event registrations database"
+              >
+                <span>👥</span>
+                <span>{loadingRegistrations ? 'Loading...' : 'Load Confirmed Event Registrations'}</span>
+              </button>
             </div>
 
             {/* Drag & Drop Zone */}
@@ -2527,6 +2668,46 @@ export default function WhatsAppMarketing() {
                   View Full Screen Monitor &rarr;
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Modal: Pick Past Campaign Audience */}
+      {showCampaignPicker && (
+        <div className="wam__campaign-picker-overlay" onClick={() => setShowCampaignPicker(false)}>
+          <div className="wam__campaign-picker-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="wam__campaign-picker-header">
+              <h3 className="wam__campaign-picker-title">📋 Select Previous Broadcast to Reuse Audience</h3>
+              <button
+                type="button"
+                className="wam__btn-icon-close"
+                onClick={() => setShowCampaignPicker(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="wam__campaign-picker-body">
+              <p style={{ margin: '0 0 10px 0', fontSize: '0.825rem', color: '#64748b' }}>
+                Select any previous campaign below to instantly load all its recipient contacts into the current workspace:
+              </p>
+              {campaignsList.map((c) => (
+                <div key={c._id} className="wam__campaign-item">
+                  <div>
+                    <div className="wam__campaign-item-name">{c.title || c.templateName}</div>
+                    <div className="wam__campaign-item-sub">
+                      Template: <code>{c.templateName}</code> &bull; Total: <strong>{c.total || 0} contacts</strong> &bull; {new Date(c.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    disabled={loadingCampaignAudience}
+                    onClick={() => handleLoadAudienceFromCampaign(c._id)}
+                  >
+                    {loadingCampaignAudience ? 'Loading...' : 'Load Audience'}
+                  </Button>
+                </div>
+              ))}
             </div>
           </div>
         </div>

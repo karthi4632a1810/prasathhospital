@@ -30,6 +30,15 @@ const IMAGE_PRESETS = [
 
 const TEMPLATES = [
   {
+    id: 'ciim2026_drgh_invite',
+    name: 'ciim2026_drgh_invite',
+    label: 'CIIM 2026: Dr. Geetha Haripriya Video Invite (Marketing)',
+    description: 'Video invite from Dr. Geetha Haripriya with personal greeting, conference dates, and buttons.',
+    defaultImageType: 'none',
+    defaultExtra: '',
+    params: ['Name'],
+  },
+  {
     id: 'ciim2026_registration_thankyou_02',
     name: 'ciim2026_registration_thankyou_02',
     label: 'Thank You Registration Template (Utility)',
@@ -120,7 +129,12 @@ const sendTestWhatsAppMessage = asyncHandler(async (req, res) => {
 
   // Format extra parameter
   let extraParamValue = extra || '';
-  if (templateName === 'ciim2026_registration_thankyou_02' || templateName === 'ciim2026_registration_thankyou') {
+  if (templateName === 'ciim2026_drgh_invite') {
+    bodyParams = [
+      { name: '1', value: cleanName },
+      { name: 'Name', value: cleanName },
+    ];
+  } else if (templateName === 'ciim2026_registration_thankyou_02' || templateName === 'ciim2026_registration_thankyou') {
     extraParamValue = extra ? extra.trim() : '...';
   } else if (extra && extra.startsWith('http')) {
     // Add Unicode line break above and below for clean paragraph isolation

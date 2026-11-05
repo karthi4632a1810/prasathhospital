@@ -17,6 +17,7 @@ const {
   syncDelivery,
   retryFailed,
   checkStatuses,
+  getRegistrationsAudience,
 } = require('../controllers/adminWhatsAppMarketingController');
 const { requireAuth, requireRole } = require('../middleware/auth');
 
@@ -43,6 +44,7 @@ router.post('/test-single', sendTestSingle);
 router.post('/resend-single', resendSingle);
 router.post('/send-batch', sendBatch);
 router.post('/check-statuses', checkStatuses);
+router.get('/registrations-audience', getRegistrationsAudience);
 
 module.exports = router;
 

@@ -2709,3 +2709,255 @@
   gap: 0.5rem !important;
 }
 
+
+
+/* ============================================================
+   VIDEO TEMPLATE & AUDIENCE REUSE STYLES
+   ============================================================ */
+
+/* Video Badges */
+.wam__tag--video {
+  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em;
+  box-shadow: 0 1px 3px rgba(124, 58, 237, 0.3);
+}
+
+.wam__media-badge--video {
+  background: #f3e8ff !important;
+  color: #6b21a8 !important;
+  border: 1px solid #d8b4fe !important;
+  font-weight: 700 !important;
+}
+
+/* Video Header Banner in Parameters Box */
+.wam__video-banner-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: linear-gradient(135deg, #fbf7ff 0%, #f3e8ff 100%);
+  border: 1px solid #d8b4fe;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.wam__video-banner-icon {
+  font-size: 2rem;
+  line-height: 1;
+  background: #ffffff;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(107, 33, 168, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wam__video-banner-content strong {
+  display: block;
+  font-size: 0.95rem;
+  color: #581c87;
+  margin-bottom: 4px;
+}
+
+.wam__video-banner-content p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: #6b21a8;
+}
+
+/* Chat Preview Video Bubble Header */
+.wam__chat-media--video {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  color: #ffffff;
+  border-radius: 8px 8px 2px 2px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: -6px -6px 8px -6px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.wam__chat-video-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.wam__chat-video-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.3;
+}
+
+.wam__chat-video-meta {
+  font-size: 0.725rem;
+  color: #c7d2fe;
+  margin-top: 2px;
+}
+
+/* Audience Reuse Toolbar */
+.wam__audience-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+}
+
+.wam__audience-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.wam__audience-tool-btn:hover:not(:disabled) {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+  transform: translateY(-1px);
+}
+
+.wam__audience-tool-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wam__audience-tool-btn--saved {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-color: #6ee7b7;
+  color: #065f46;
+  font-weight: 700;
+}
+
+.wam__audience-tool-btn--saved:hover:not(:disabled) {
+  background: #a7f3d0;
+  border-color: #34d399;
+}
+
+/* Campaign Picker Modal */
+.wam__campaign-picker-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.wam__campaign-picker-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 640px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: wamModalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes wamModalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.wam__campaign-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.wam__campaign-picker-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.wam__btn-icon-close {
+  background: transparent;
+  border: none;
+  font-size: 1.15rem;
+  color: #64748b;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+.wam__btn-icon-close:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.wam__campaign-picker-body {
+  padding: 18px 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wam__campaign-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  transition: all 0.15s ease;
+}
+
+.wam__campaign-item:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.wam__campaign-item-name {
+  font-size: 0.925rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 2px;
+}
+
+.wam__campaign-item-sub {
+  font-size: 0.775rem;
+  color: #64748b;
+}
+
+.wam__campaign-item-sub code {
+  background: #f1f5f9;
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: #475569;
+  font-size: 0.75rem;
+}

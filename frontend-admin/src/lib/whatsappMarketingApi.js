@@ -48,6 +48,8 @@ export const whatsappMarketingApi = {
       method: 'POST',
       body: data,
     }),
+  getRegistrationsAudience: () =>
+    request('/admin/whatsapp-marketing/registrations-audience'),
   getStreamUrl: (id) => {
     const token = getToken();
     return `${BASE_URL}/api/v1/admin/whatsapp-marketing/campaigns/${id}/live-stream${token ? `?token=${encodeURIComponent(token)}` : ''}`;
