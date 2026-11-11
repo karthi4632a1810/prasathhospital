@@ -2854,6 +2854,18 @@
   border-color: #34d399;
 }
 
+.wam__audience-tool-btn--event {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-color: #86efac;
+  color: #15803d;
+  font-weight: 700;
+}
+
+.wam__audience-tool-btn--event:hover:not(:disabled) {
+  background: #bbf7d0;
+  border-color: #4ade80;
+}
+
 /* Campaign Picker Modal */
 .wam__campaign-picker-overlay {
   position: fixed;

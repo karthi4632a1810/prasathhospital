@@ -48,8 +48,13 @@ export const whatsappMarketingApi = {
       method: 'POST',
       body: data,
     }),
-  getRegistrationsAudience: () =>
-    request('/admin/whatsapp-marketing/registrations-audience'),
+  getRegistrationsAudience: (params = {}) => {
+    const clean = Object.fromEntries(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== '')
+    );
+    const qs = new URLSearchParams(clean).toString();
+    return request(`/admin/whatsapp-marketing/registrations-audience${qs ? `?${qs}` : ''}`);
+  },
   getStreamUrl: (id) => {
     const token = getToken();
     return `${BASE_URL}/api/v1/admin/whatsapp-marketing/campaigns/${id}/live-stream${token ? `?token=${encodeURIComponent(token)}` : ''}`;

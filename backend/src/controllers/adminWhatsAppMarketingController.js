@@ -23,6 +23,33 @@ const IMAGE_PRESETS = [
 // Fallback core templates in case of offline/network issues with WATI
 const FALLBACK_CORE_TEMPLATES = [
   {
+    id: 'ciim2026_2what_works',
+    name: 'ciim2026_2what_works',
+    label: 'CIIM 2026: What Works & What Doesn’t (Marketing)',
+    category: 'MARKETING',
+    status: 'APPROVED',
+    language: 'English',
+    body: 'A Personal Invitation to CIIM 2026 – Controversies in Infertility Management! ✨\n\nDear Dr. {{Name}},\n\nI am delighted to invite you to CIIM 2026 – Controversies in Infertility Management!\n\nJoin us for an inspiring session exploring what works and what doesn’t in modern infertility care.\n\n📅 21st & 22nd November 2026\n📍 The Leela Palace, Chennai\n\nJoin us for an inspiring exchange of knowledge and advancements in infertility care.\n\n🤝 Your presence would mean a lot!\n\n🔗 Register here: https://ciim.prashanthfertility.com/\n\n🎟️ Coupon Code Enquiries & Assistance\n📞 Call or WhatsApp: +91 96000 47646\n\nWarm regards,\nOrganising committee, CIIM 2026',
+    hasHeaderMedia: false,
+    imageParam: null,
+    params: ['Name'],
+    buttons: ['Register Here', 'Call Now (+91 96000 47646)'],
+  },
+  {
+    id: 'ciim2026_drgh_invite',
+    name: 'ciim2026_drgh_invite',
+    label: 'CIIM 2026: Dr. Geetha Haripriya Video Invitation',
+    category: 'MARKETING',
+    status: 'APPROVED',
+    language: 'English (UK)',
+    body: 'A Personal Video Invitation from Dr. Geetha Haripriya\n\nDear Dr. {{Name}},\n\nI am delighted to invite you to CIIM 2026 – Controversies in Infertility Management! ✨\n\n📅 21st & 22nd November 2026\n📍 The Leela Palace, Chennai\n\nWatch my personal invitation video above!\n\n🔗 Register here: https://ciim.prashanthfertility.com/\n\nWarm regards,\nDr. Geetha Haripriya\nChairperson, CIIM 2026',
+    hasHeaderMedia: false,
+    hasVideoHeader: true,
+    imageParam: null,
+    params: ['Name'],
+    buttons: ['Register Here', 'Call Now (+91 96000 47646)'],
+  },
+  {
     id: 'ciim2026_invite',
     name: 'ciim2026_invite',
     label: 'CIIM 2026 Personal Invitation',
@@ -174,9 +201,11 @@ async function fetchWatiTemplates() {
         .replace(/^ciim2026_/, 'CIIM 2026: ')
         .replace(/_/g, ' ')
         .replace(/\b\w/g, (c) => c.toUpperCase());
-      if (templateName === 'ciim2026_drgh_invite') {
+      if (templateName === 'ciim2026_2what_works') {
+        label = 'CIIM 2026: What Works & What Doesn’t (Marketing)';
+      } else if (templateName === 'ciim2026_drgh_invite') {
         label = 'CIIM 2026: Dr. Geetha Haripriya Video Invitation';
-      } else if (templateName === 'ciim2026_invite' || templateName === 'ciim2026_drgh_invite') {
+      } else if (templateName === 'ciim2026_invite') {
         label = 'CIIM 2026 Personal Invitation (Dr. Geetha Haripriya & Dr. Samhitha Moturi)';
       }
 
@@ -186,7 +215,7 @@ async function fetchWatiTemplates() {
         label,
         category: (t.category || 'MARKETING').toUpperCase(),
         status: 'APPROVED',
-        language: t.language?.text || t.language?.key || 'English (UK)',
+        language: t.language?.text || t.language?.key || 'English',
         body: t.body || '',
         hasHeaderMedia: hasHeaderImage,
         imageParam,
@@ -196,6 +225,7 @@ async function fetchWatiTemplates() {
     });
 
     const priorityOrder = [
+      'ciim2026_2what_works',
       'ciim2026_drgh_invite',
       'ciim2026_invite',
       'ciim2026_registration_thankyou_02',
@@ -246,7 +276,7 @@ function buildTemplateBodyParams(templateName, { name, extra, customParamsValues
     extraParamValue = `\u2028${extraParamValue.trim()}\u2028`;
   }
 
-  if (templateName === 'ciim2026_invite') {
+  if (templateName === 'ciim2026_2what_works' || templateName === 'ciim2026_drgh_invite' || templateName === 'ciim2026_invite') {
     return [
       { name: 'Name', value: cleanName },
       { name: '1', value: cleanName },
@@ -305,10 +335,15 @@ function buildTemplateBodyParams(templateName, { name, extra, customParamsValues
  */
 const getMarketingConfig = asyncHandler(async (req, res) => {
   const templates = await fetchWatiTemplates();
+  const primaryTemplate = templates.some((t) => t.name === 'ciim2026_2what_works')
+    ? 'ciim2026_2what_works'
+    : templates.some((t) => t.name === 'ciim2026_drgh_invite')
+    ? 'ciim2026_drgh_invite'
+    : 'ciim2026_invite';
 
   return sendSuccess(res, {
     templates,
-    primaryTemplate: templates.some((t) => t.name === 'ciim2026_drgh_invite') ? 'ciim2026_drgh_invite' : 'ciim2026_invite',
+    primaryTemplate,
     imagePresets: IMAGE_PRESETS,
     defaultChannel: '919940030935 (PRFC - Blast)',
     configured: Boolean(env.watiAccessToken || env.whatsappAccessToken),
@@ -826,21 +861,46 @@ const checkStatuses = asyncHandler(async (req, res) => {
 
 /**
  * GET /api/v1/admin/whatsapp-marketing/registrations-audience
- * Returns confirmed event registrations as a ready-to-broadcast audience list
+ * Returns confirmed event registrations as a ready-to-broadcast audience list,
+ * supporting filtering by event and status.
  */
 const getRegistrationsAudience = asyncHandler(async (req, res) => {
-  const registrations = await Registration.find({ status: { $ne: 'cancelled' } })
-    .select('name phone email delegateId')
+  const { event: eventId, status } = req.query;
+  const filter = {};
+  if (status && status !== 'all') {
+    filter.status = status;
+  } else if (!status) {
+    filter.status = { $ne: 'cancelled' };
+  }
+  if (eventId) {
+    filter.event = eventId;
+  }
+
+  const registrations = await Registration.find(filter)
+    .populate('event', 'title slug')
+    .populate('company', 'name')
+    .populate('coupon', 'code')
     .sort({ createdAt: -1 })
     .lean();
 
-  const contacts = registrations.map((r, idx) => ({
-    Name: r.name || 'Delegate',
-    Phone: r.phone || '',
-    Email: r.email || '',
-    DelegateId: r.delegateId || '',
-    Index: idx + 1,
-  }));
+  const contacts = registrations.map((r, idx) => {
+    const att = r.attendee || {};
+    return {
+      _id: String(r._id),
+      Name: att.name || r.name || 'Delegate',
+      Phone: att.phone || r.phone || '',
+      Email: att.email || r.email || '',
+      RegistrationCode: r.registrationCode || '',
+      DelegateId: r.registrationCode || '',
+      Company: r.company?.name || '',
+      Coupon: r.coupon?.code || r.couponCode || '',
+      Event: r.event?.title || '',
+      EventId: r.event?._id ? String(r.event._id) : (r.event ? String(r.event) : ''),
+      Status: r.status || '',
+      CreatedAt: r.createdAt,
+      Index: idx + 1,
+    };
+  });
 
   return sendSuccess(res, { contacts, total: contacts.length });
 });

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { whatsappMarketingApi } from '../../lib/whatsappMarketingApi';
+import { checkinApi } from '../../lib/checkinApi';
 import Button from '../../components/ui/Button';
 import './WhatsAppMarketing.css';
 
@@ -80,8 +81,11 @@ export default function WhatsAppMarketing() {
   // Template Search & Category Filter
   const [templateCategoryTab, setTemplateCategoryTab] = useState('ALL');
   const [templateSearch, setTemplateSearch] = useState('');
-  const [selectedTemplateId, setSelectedTemplateId] = useState('ciim2026_drgh_invite');
+  const [selectedTemplateId, setSelectedTemplateId] = useState('ciim2026_2what_works');
   const [templateParamValues, setTemplateParamValues] = useState({});
+
+  // Transferred Audience Alert
+  const [transferNotice, setTransferNotice] = useState(null);
 
   // Image Selection
   const [imageType, setImageType] = useState('poster');
@@ -103,6 +107,17 @@ export default function WhatsAppMarketing() {
   const [showCampaignPicker, setShowCampaignPicker] = useState(false);
   const [loadingCampaignAudience, setLoadingCampaignAudience] = useState(false);
   const [loadingRegistrations, setLoadingRegistrations] = useState(false);
+
+  // Event Registration Picker Modal State
+  const [showEventPickerModal, setShowEventPickerModal] = useState(false);
+  const [eventPickerEvents, setEventPickerEvents] = useState([]);
+  const [eventPickerSelectedEvent, setEventPickerSelectedEvent] = useState('');
+  const [eventPickerLoading, setEventPickerLoading] = useState(false);
+  const [eventPickerList, setEventPickerList] = useState([]);
+  const [eventPickerSearch, setEventPickerSearch] = useState('');
+  const [eventPickerStatus, setEventPickerStatus] = useState('confirmed');
+  const [eventPickerSelectedIds, setEventPickerSelectedIds] = useState(new Set());
+
   const [availableHeaders, setAvailableHeaders] = useState([]);
   const [columnMappings, setColumnMappings] = useState({});
 
@@ -246,7 +261,9 @@ export default function WhatsAppMarketing() {
       .then((res) => {
         if (res?.data) {
           setConfig(res.data);
-          if (res.data.primaryTemplate) {
+          // If no transferred template was set, use backend primaryTemplate or ciim2026_2what_works
+          const hasTransferred = sessionStorage.getItem('ciim_transfer_audience');
+          if (!hasTransferred && res.data.primaryTemplate) {
             setSelectedTemplateId(res.data.primaryTemplate);
           }
         }
@@ -256,15 +273,39 @@ export default function WhatsAppMarketing() {
       });
 
     loadCampaigns();
+
+    // Check for audience transferred directly from Registrations page
+    try {
+      const raw = sessionStorage.getItem('ciim_transfer_audience');
+      if (raw) {
+        sessionStorage.removeItem('ciim_transfer_audience');
+        const parsed = JSON.parse(raw);
+        if (parsed?.contacts?.length) {
+          setupRowsAndHeaders(parsed.contacts, parsed.title);
+          setUploadedFile({ name: parsed.title });
+          if (parsed.templateId) {
+            setSelectedTemplateId(parsed.templateId);
+          }
+          setTransferNotice({
+            title: parsed.title,
+            count: parsed.contacts.length,
+            templateId: parsed.templateId || 'ciim2026_2what_works',
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to parse transferred audience', err);
+    }
   }, []);
 
   const allTemplates = config?.templates || [];
   const activeTemplate =
     allTemplates.find((t) => t.id === selectedTemplateId) ||
+    allTemplates.find((t) => t.id === 'ciim2026_2what_works') ||
     allTemplates[0] || {
-      id: 'ciim2026_invite',
-      name: 'ciim2026_invite',
-      label: 'CIIM 2026 Personal Invitation',
+      id: 'ciim2026_2what_works',
+      name: 'ciim2026_2what_works',
+      label: 'CIIM 2026: What Works & What Doesn’t (Marketing)',
       category: 'MARKETING',
       params: ['Name'],
       hasHeaderMedia: false,
@@ -613,6 +654,7 @@ export default function WhatsAppMarketing() {
       const fileName = `Confirmed Event Registrations (${contacts.length} delegates)`;
       setUploadedFile({ name: fileName });
       setupRowsAndHeaders(contacts, fileName);
+      setSelectedTemplateId('ciim2026_2what_works');
       alert(`Successfully loaded ${contacts.length} confirmed delegates from event registrations!`);
     } catch (err) {
       alert('Failed to load registrations: ' + (err.message || 'Server error'));
@@ -620,6 +662,101 @@ export default function WhatsAppMarketing() {
       setLoadingRegistrations(false);
     }
   };
+
+  const openEventRegistrationPicker = async () => {
+    setShowEventPickerModal(true);
+    setEventPickerLoading(true);
+    try {
+      const res = await checkinApi.events();
+      const evs = res?.data || [];
+      setEventPickerEvents(evs);
+      const defaultEv = evs[0]?.id || evs[0]?._id || '';
+      setEventPickerSelectedEvent(defaultEv);
+      await loadPickerRegistrations(defaultEv, eventPickerStatus);
+    } catch (err) {
+      alert('Failed to load events: ' + (err.message || 'Error'));
+    } finally {
+      setEventPickerLoading(false);
+    }
+  };
+
+  const loadPickerRegistrations = async (evId, status) => {
+    setEventPickerLoading(true);
+    try {
+      const res = await whatsappMarketingApi.getRegistrationsAudience({
+        event: evId || undefined,
+        status: status === 'all' ? undefined : status,
+      });
+      const contacts = res?.data?.contacts || [];
+      setEventPickerList(contacts);
+      const allIds = new Set(contacts.map((c) => c._id || c.RegistrationCode || String(c.Index)));
+      setEventPickerSelectedIds(allIds);
+    } catch (err) {
+      alert('Failed to load event registrations: ' + (err.message || 'Error'));
+    } finally {
+      setEventPickerLoading(false);
+    }
+  };
+
+  const handleEventPickerChange = async (evId) => {
+    setEventPickerSelectedEvent(evId);
+    await loadPickerRegistrations(evId, eventPickerStatus);
+  };
+
+  const handleEventPickerStatusChange = async (status) => {
+    setEventPickerStatus(status);
+    await loadPickerRegistrations(eventPickerSelectedEvent, status);
+  };
+
+  const handleConfirmEventAudience = () => {
+    const selected = eventPickerList.filter((c) =>
+      eventPickerSelectedIds.has(c._id || c.RegistrationCode || String(c.Index))
+    );
+    if (!selected.length) {
+      alert('Please select at least one registered user to load into WhatsApp Marketing.');
+      return;
+    }
+    const evObj = eventPickerEvents.find(
+      (e) => (e.id || e._id) === eventPickerSelectedEvent
+    );
+    const fileName = `Event Registrations: ${evObj?.title || 'CIIM 2026'} (${selected.length} delegates)`;
+    setUploadedFile({ name: fileName });
+    setupRowsAndHeaders(selected, fileName);
+    setSelectedTemplateId('ciim2026_2what_works');
+    setShowEventPickerModal(false);
+    alert(`Successfully loaded ${selected.length} registered delegates into the campaign!`);
+  };
+
+  const handleQuickLoadAllConfirmed = () => {
+    if (!eventPickerList.length) return;
+    const confirmed = eventPickerList.filter((c) => c.Status === 'confirmed' || !c.Status);
+    const toLoad = confirmed.length ? confirmed : eventPickerList;
+    const evObj = eventPickerEvents.find(
+      (e) => (e.id || e._id) === eventPickerSelectedEvent
+    );
+    const fileName = `All Confirmed: ${evObj?.title || 'CIIM 2026'} (${toLoad.length} delegates)`;
+    setUploadedFile({ name: fileName });
+    setupRowsAndHeaders(toLoad, fileName);
+    setSelectedTemplateId('ciim2026_2what_works');
+    setShowEventPickerModal(false);
+    alert(`Successfully loaded ${toLoad.length} confirmed delegates into the campaign!`);
+  };
+
+  const filteredPickerRegistrations = useMemo(() => {
+    if (!eventPickerList || !eventPickerList.length) return [];
+    const q = eventPickerSearch.trim().toLowerCase();
+    if (!q) return eventPickerList;
+    return eventPickerList.filter((c) => {
+      return (
+        (c.Name || '').toLowerCase().includes(q) ||
+        (c.Phone || '').includes(q) ||
+        (c.Email || '').toLowerCase().includes(q) ||
+        (c.RegistrationCode || '').toLowerCase().includes(q) ||
+        (c.Company || '').toLowerCase().includes(q) ||
+        (c.Coupon || '').toLowerCase().includes(q)
+      );
+    });
+  }, [eventPickerList, eventPickerSearch]);
 
   const setupRowsAndHeaders = (rows, customName = null) => {
     if (!rows || !rows.length) return;
@@ -1109,6 +1246,53 @@ export default function WhatsAppMarketing() {
 
   return (
     <div className="wam">
+      {/* Transferred Audience Alert */}
+      {transferNotice && (
+        <div
+          style={{
+            background: 'linear-gradient(90deg, #ecfdf5 0%, #f0fdf4 100%)',
+            border: '1px solid #86efac',
+            borderRadius: '12px',
+            padding: '14px 18px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            boxShadow: '0 4px 12px rgba(34, 197, 94, 0.12)',
+            animation: 'wamModalIn 0.2s ease-out',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '1.4rem' }}>🎉</span>
+            <div>
+              <strong style={{ color: '#166534', fontSize: '0.975rem' }}>
+                Loaded {transferNotice.count} registered delegates from {transferNotice.title}!
+              </strong>
+              <p style={{ margin: '3px 0 0', fontSize: '0.825rem', color: '#15803d' }}>
+                Template <code>{transferNotice.templateId}</code> is selected and ready for broadcast. Review recipients below.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setTransferNotice(null)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#15803d',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              fontSize: '1.1rem',
+              padding: '4px 8px',
+            }}
+            title="Dismiss notice"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Top Header */}
       <header className="wam__header">
         <div className="wam__header-left">
@@ -1223,7 +1407,7 @@ export default function WhatsAppMarketing() {
                   key={tmpl.id}
                   className={`wam__template-card ${
                     selectedTemplateId === tmpl.id ? 'is-selected' : ''
-                  } ${(tmpl.id === 'ciim2026_invite' || tmpl.id === 'ciim2026_drgh_invite') ? 'wam__template-card--primary' : ''}`}
+                  } ${(tmpl.id === 'ciim2026_2what_works' || tmpl.id === 'ciim2026_invite' || tmpl.id === 'ciim2026_drgh_invite') ? 'wam__template-card--primary' : ''}`}
                 >
                   <input
                     type="radio"
@@ -1235,7 +1419,20 @@ export default function WhatsAppMarketing() {
                   <div className="wam__template-card-body">
                     <div className="wam__template-card-title-row">
                       <span className="wam__template-name">{tmpl.label || tmpl.name}</span>
-                      <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        {tmpl.id === 'ciim2026_2what_works' && (
+                          <span
+                            className="wam__tag"
+                            style={{
+                              background: '#ecfdf5',
+                              color: '#047857',
+                              border: '1px solid #a7f3d0',
+                              fontWeight: 700,
+                            }}
+                          >
+                            ⭐ Featured
+                          </span>
+                        )}
                         {(tmpl.hasVideoHeader || tmpl.id === 'ciim2026_drgh_invite' || tmpl.name === 'ciim2026_drgh_invite') && (
                           <span className="wam__tag wam__tag--video">🎬 Video Template</span>
                         )}
@@ -1521,13 +1718,13 @@ export default function WhatsAppMarketing() {
 
               <button
                 type="button"
-                className="wam__audience-tool-btn"
-                onClick={handleLoadEventRegistrations}
+                className="wam__audience-tool-btn wam__audience-tool-btn--event"
+                onClick={openEventRegistrationPicker}
                 disabled={loadingRegistrations}
-                title="Load all registered doctors from event registrations database"
+                title="Select registered users from any event page to broadcast WhatsApp marketing messages"
               >
                 <span>👥</span>
-                <span>{loadingRegistrations ? 'Loading...' : 'Load Confirmed Event Registrations'}</span>
+                <span>Select Registered Users from Event</span>
               </button>
             </div>
 
@@ -2708,6 +2905,282 @@ export default function WhatsAppMarketing() {
                   </Button>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Select Registered Users from Event */}
+      {showEventPickerModal && (
+        <div className="wam__campaign-picker-overlay" onClick={() => setShowEventPickerModal(false)}>
+          <div
+            className="wam__campaign-picker-modal"
+            style={{ maxWidth: '880px', width: '95%' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="wam__campaign-picker-header">
+              <h3 className="wam__campaign-picker-title">👥 Select Registered Users from Event for WhatsApp Marketing</h3>
+              <button
+                type="button"
+                className="wam__btn-icon-close"
+                onClick={() => setShowEventPickerModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="wam__campaign-picker-body" style={{ maxHeight: '70vh', padding: '16px 20px' }}>
+              {/* Event & Filter Toolbar */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '12px',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  background: '#f8fafc',
+                  padding: '12px 14px',
+                  borderRadius: '10px',
+                  border: '1px solid #e2e8f0',
+                }}
+              >
+                <div style={{ flex: '1 1 200px' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                    Select Event:
+                  </label>
+                  <select
+                    className="wam__input"
+                    style={{ padding: '6px 10px', fontSize: '0.875rem' }}
+                    value={eventPickerSelectedEvent}
+                    onChange={(e) => handleEventPickerChange(e.target.value)}
+                  >
+                    {eventPickerEvents.map((ev) => (
+                      <option key={ev.id || ev._id} value={ev.id || ev._id}>
+                        {ev.title || 'Event'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ flex: '1 1 200px' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                    Search Delegate:
+                  </label>
+                  <input
+                    type="text"
+                    className="wam__input"
+                    style={{ padding: '6px 10px', fontSize: '0.875rem' }}
+                    placeholder="Search name, phone, code..."
+                    value={eventPickerSearch}
+                    onChange={(e) => setEventPickerSearch(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ flex: '0 0 140px' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                    Status:
+                  </label>
+                  <select
+                    className="wam__input"
+                    style={{ padding: '6px 10px', fontSize: '0.875rem' }}
+                    value={eventPickerStatus}
+                    onChange={(e) => handleEventPickerStatusChange(e.target.value)}
+                  >
+                    <option value="confirmed">Confirmed</option>
+                    <option value="all">All Statuses</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Selection Counter & Quick Toggle */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '6px 4px',
+                  fontSize: '0.85rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontWeight: 600 }}>
+                    <input
+                      type="checkbox"
+                      checked={
+                        filteredPickerRegistrations.length > 0 &&
+                        filteredPickerRegistrations.every((c) =>
+                          eventPickerSelectedIds.has(c._id || c.RegistrationCode || String(c.Index))
+                        )
+                      }
+                      onChange={(e) => {
+                        const next = new Set(eventPickerSelectedIds);
+                        if (e.target.checked) {
+                          filteredPickerRegistrations.forEach((c) =>
+                            next.add(c._id || c.RegistrationCode || String(c.Index))
+                          );
+                        } else {
+                          filteredPickerRegistrations.forEach((c) =>
+                            next.delete(c._id || c.RegistrationCode || String(c.Index))
+                          );
+                        }
+                        setEventPickerSelectedIds(next);
+                      }}
+                      style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                    />
+                    <span>Select All Filtered ({filteredPickerRegistrations.length})</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setEventPickerSelectedIds(new Set())}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#64748b',
+                      fontSize: '0.8rem',
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Clear
+                  </button>
+                </div>
+
+                <div style={{ color: '#475569', fontWeight: 600 }}>
+                  Selected: <span style={{ color: '#047857', fontWeight: 700 }}>{eventPickerSelectedIds.size}</span> / {eventPickerList.length} registered delegates
+                </div>
+              </div>
+
+              {/* Registrations List Table */}
+              {eventPickerLoading ? (
+                <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                  ⏳ Loading registered delegates for selected event...
+                </div>
+              ) : filteredPickerRegistrations.length === 0 ? (
+                <div style={{ padding: '30px', textAlign: 'center', color: '#64748b', background: '#f8fafc', borderRadius: '8px' }}>
+                  No registered users match your search or filter.
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '8px', maxHeight: '340px' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.825rem' }}>
+                    <thead style={{ background: '#f1f5f9', position: 'sticky', top: 0, zIndex: 1 }}>
+                      <tr>
+                        <th style={{ width: '40px', padding: '8px 10px', textAlign: 'center' }}></th>
+                        <th style={{ textAlign: 'left', padding: '8px 10px', color: '#475569' }}>Doctor Name & Phone</th>
+                        <th style={{ textAlign: 'left', padding: '8px 10px', color: '#475569' }}>Email</th>
+                        <th style={{ textAlign: 'left', padding: '8px 10px', color: '#475569' }}>Registration ID</th>
+                        <th style={{ textAlign: 'left', padding: '8px 10px', color: '#475569' }}>Company / Coupon</th>
+                        <th style={{ textAlign: 'left', padding: '8px 10px', color: '#475569' }}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredPickerRegistrations.map((c) => {
+                        const idKey = c._id || c.RegistrationCode || String(c.Index);
+                        const isChecked = eventPickerSelectedIds.has(idKey);
+                        return (
+                          <tr
+                            key={idKey}
+                            style={{
+                              borderBottom: '1px solid #f1f5f9',
+                              background: isChecked ? '#f0fdf4' : 'transparent',
+                              cursor: 'pointer',
+                            }}
+                            onClick={() => {
+                              const next = new Set(eventPickerSelectedIds);
+                              if (next.has(idKey)) next.delete(idKey);
+                              else next.add(idKey);
+                              setEventPickerSelectedIds(next);
+                            }}
+                          >
+                            <td
+                              style={{ textAlign: 'center', padding: '8px 10px' }}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => {
+                                  const next = new Set(eventPickerSelectedIds);
+                                  if (next.has(idKey)) next.delete(idKey);
+                                  else next.add(idKey);
+                                  setEventPickerSelectedIds(next);
+                                }}
+                                style={{ cursor: 'pointer', width: '15px', height: '15px' }}
+                              />
+                            </td>
+                            <td style={{ padding: '8px 10px' }}>
+                              <strong style={{ color: '#0f172a' }}>{c.Name}</strong>
+                              <div style={{ color: '#64748b', fontSize: '0.75rem' }}>{c.Phone}</div>
+                            </td>
+                            <td style={{ padding: '8px 10px', color: '#334155' }}>{c.Email || '—'}</td>
+                            <td style={{ padding: '8px 10px' }}>
+                              <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem' }}>
+                                {c.RegistrationCode || c.DelegateId || '—'}
+                              </code>
+                            </td>
+                            <td style={{ padding: '8px 10px', color: '#475569' }}>
+                              {c.Company ? `${c.Company} ` : ''}
+                              {c.Coupon ? `(${c.Coupon})` : '—'}
+                            </td>
+                            <td style={{ padding: '8px 10px' }}>
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  padding: '2px 8px',
+                                  borderRadius: '9999px',
+                                  fontSize: '0.7rem',
+                                  fontWeight: 600,
+                                  background: c.Status === 'confirmed' ? '#dcfce7' : '#fee2e2',
+                                  color: c.Status === 'confirmed' ? '#15803d' : '#b91c1c',
+                                }}
+                              >
+                                {c.Status || 'confirmed'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Modal Footer Actions */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '12px',
+                  paddingTop: '14px',
+                  borderTop: '1px solid #e2e8f0',
+                  marginTop: '10px',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <Button variant="ghost" size="sm" onClick={() => setShowEventPickerModal(false)}>
+                  Cancel
+                </Button>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleQuickLoadAllConfirmed}
+                    disabled={eventPickerLoading || !eventPickerList.length}
+                    title="Load all confirmed registrations without picking individual rows"
+                  >
+                    Quick Load All Confirmed ({eventPickerList.filter((c) => c.Status === 'confirmed' || !c.Status).length})
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    style={{ background: '#16a34a', borderColor: '#15803d', fontWeight: 700 }}
+                    onClick={handleConfirmEventAudience}
+                    disabled={eventPickerLoading || eventPickerSelectedIds.size === 0}
+                  >
+                    Load Selected ({eventPickerSelectedIds.size}) into Broadcast &rarr;
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

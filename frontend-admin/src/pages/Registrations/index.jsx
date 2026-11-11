@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { registrationApi } from '../../lib/registrationApi';
+import { whatsappMarketingApi } from '../../lib/whatsappMarketingApi';
 import { companyApi } from '../../lib/companyApi';
 import { couponApi } from '../../lib/couponApi';
 import { useEvents, EventSelect } from '../../lib/useEvents';
@@ -38,9 +40,16 @@ export default function Registrations() {
   const [error, setError] = useState(null);
   const [companies, setCompanies] = useState([]);
   const [coupons, setCoupons] = useState([]);
+  const navigate = useNavigate();
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [transferring, setTransferring] = useState(false);
   const [openId, setOpenId] = useState(null);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState('');
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [eventId]);
 
   useEffect(() => {
     companyApi
@@ -110,6 +119,67 @@ export default function Registrations() {
     );
   }
 
+  const handleSendSelectedToWhatsApp = () => {
+    const selectedList = registrations.filter((r) => selectedIds.has(r.id));
+    if (!selectedList.length) return;
+
+    const contacts = selectedList.map((r, idx) => ({
+      Name: r.attendee?.name || 'Delegate',
+      Phone: r.attendee?.phone || '',
+      Email: r.attendee?.email || '',
+      RegistrationCode: r.registrationCode || '',
+      DelegateId: r.registrationCode || '',
+      Company: r.company?.name || '',
+      Coupon: r.coupon?.code || r.couponCode || '',
+      Status: r.status || '',
+      Index: idx + 1,
+    }));
+
+    const currentEvent = events?.find((e) => e.id === eventId || e._id === eventId);
+    const title = `Event Registrations: ${currentEvent?.title || 'Selected'} (${contacts.length} delegates)`;
+
+    sessionStorage.setItem(
+      'ciim_transfer_audience',
+      JSON.stringify({
+        title,
+        contacts,
+        templateId: 'ciim2026_2what_works',
+      })
+    );
+
+    navigate('/whatsapp-marketing');
+  };
+
+  const handleSendAllFilteredToWhatsApp = async () => {
+    try {
+      setTransferring(true);
+      const res = await whatsappMarketingApi.getRegistrationsAudience({
+        event: eventId,
+        status: filters.status || undefined,
+      });
+      const contacts = res?.data?.contacts || [];
+      if (!contacts.length) {
+        alert('No registrations found for the selected event/filters.');
+        return;
+      }
+      const currentEvent = events?.find((e) => e.id === eventId || e._id === eventId);
+      const title = `All Event Registrations: ${currentEvent?.title || 'CIIM 2026'} (${contacts.length} delegates)`;
+      sessionStorage.setItem(
+        'ciim_transfer_audience',
+        JSON.stringify({
+          title,
+          contacts,
+          templateId: 'ciim2026_2what_works',
+        })
+      );
+      navigate('/whatsapp-marketing');
+    } catch (err) {
+      alert('Failed to load registrations: ' + (err.message || 'Error'));
+    } finally {
+      setTransferring(false);
+    }
+  };
+
   if (eventsError) return <ErrorState message={eventsError} />;
   if (events === null) return <LoadingState label="Loading events…" />;
   if (events.length === 0)
@@ -151,6 +221,24 @@ export default function Registrations() {
             disabled={exporting || !meta?.total}
           >
             {exporting ? 'Exporting…' : 'Export CSV'}
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: '#15803d',
+              borderColor: '#86efac',
+              fontWeight: 600,
+            }}
+            onClick={handleSendAllFilteredToWhatsApp}
+            disabled={transferring || !meta?.total}
+            title="Transfer all matching registrations for this event directly into WhatsApp Marketing"
+          >
+            <span>💬</span>
+            <span>{transferring ? 'Loading...' : `WhatsApp Marketing (${meta?.total || 0})`}</span>
           </Button>
         </div>
       </div>
@@ -304,6 +392,24 @@ export default function Registrations() {
             <table className="data-table">
               <thead>
                 <tr>
+                  <th style={{ width: '40px', textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      checked={registrations.length > 0 && registrations.every((r) => selectedIds.has(r.id))}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds(new Set([...selectedIds, ...registrations.map((r) => r.id)]));
+                        } else {
+                          const next = new Set(selectedIds);
+                          registrations.forEach((r) => next.delete(r.id));
+                          setSelectedIds(next);
+                        }
+                      }}
+                      aria-label="Select all registrations on this page"
+                      title="Select / deselect all delegates on this page"
+                      style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                    />
+                  </th>
                   <SortTh
                     label="Registration ID"
                     field="registrationCode"
@@ -341,6 +447,25 @@ export default function Registrations() {
                       if (e.key === 'Enter') setOpenId(reg.id);
                     }}
                   >
+                    <td
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ width: '40px', textAlign: 'center' }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(reg.id)}
+                        onChange={() => {
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(reg.id)) next.delete(reg.id);
+                            else next.add(reg.id);
+                            return next;
+                          });
+                        }}
+                        aria-label={`Select ${reg.attendee?.name || 'delegate'}`}
+                        style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                      />
+                    </td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                         <strong className="mono">{reg.registrationCode}</strong>
@@ -432,6 +557,70 @@ export default function Registrations() {
                   disabled={meta.page >= meta.totalPages || loading}
                 >
                   Next →
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {selectedIds.size > 0 && (
+            <div
+              style={{
+                position: 'sticky',
+                bottom: '24px',
+                zIndex: 40,
+                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                color: '#ffffff',
+                padding: '14px 24px',
+                borderRadius: '12px',
+                boxShadow: '0 20px 30px -10px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '20px',
+                marginTop: '20px',
+                flexWrap: 'wrap',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <span style={{ fontSize: '1.2rem', color: '#4ade80' }}>✓</span>
+                <span style={{ fontWeight: 600, fontSize: '0.95rem' }}>
+                  <strong>{selectedIds.size}</strong> {selectedIds.size === 1 ? 'delegate' : 'delegates'} selected
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedIds(new Set())}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    color: '#e2e8f0',
+                    padding: '4px 12px',
+                    borderRadius: '6px',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Clear Selection
+                </button>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  style={{
+                    background: '#22c55e',
+                    borderColor: '#16a34a',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    padding: '8px 18px',
+                    boxShadow: '0 4px 12px rgba(34, 197, 94, 0.4)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                  onClick={handleSendSelectedToWhatsApp}
+                >
+                  <span>💬</span>
+                  <span>Send WhatsApp Marketing ({selectedIds.size})</span>
                 </Button>
               </div>
             </div>

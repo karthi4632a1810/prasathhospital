@@ -30,6 +30,15 @@ const IMAGE_PRESETS = [
 
 const TEMPLATES = [
   {
+    id: 'ciim2026_2what_works',
+    name: 'ciim2026_2what_works',
+    label: 'CIIM 2026: What Works & What Doesn\'t (Marketing)',
+    description: 'Personal invitation to CIIM 2026 session on What Works & What Doesn\'t in Infertility Management.',
+    defaultImageType: 'none',
+    defaultExtra: '',
+    params: ['Name'],
+  },
+  {
     id: 'ciim2026_drgh_invite',
     name: 'ciim2026_drgh_invite',
     label: 'CIIM 2026: Dr. Geetha Haripriya Video Invite (Marketing)',
@@ -129,12 +138,7 @@ const sendTestWhatsAppMessage = asyncHandler(async (req, res) => {
 
   // Format extra parameter
   let extraParamValue = extra || '';
-  if (templateName === 'ciim2026_drgh_invite') {
-    bodyParams = [
-      { name: '1', value: cleanName },
-      { name: 'Name', value: cleanName },
-    ];
-  } else if (templateName === 'ciim2026_registration_thankyou_02' || templateName === 'ciim2026_registration_thankyou') {
+  if (templateName === 'ciim2026_registration_thankyou_02' || templateName === 'ciim2026_registration_thankyou') {
     extraParamValue = extra ? extra.trim() : '...';
   } else if (extra && extra.startsWith('http')) {
     // Add Unicode line break above and below for clean paragraph isolation
@@ -143,7 +147,12 @@ const sendTestWhatsAppMessage = asyncHandler(async (req, res) => {
 
   // Construct clean parameter array matching exact WATI template bindings
   let bodyParams = [];
-  if (templateName === 'ciim2026_registration_thankyou_02' || templateName === 'ciim2026_registration_thankyou') {
+  if (templateName === 'ciim2026_2what_works' || templateName === 'ciim2026_drgh_invite' || templateName === 'ciim2026_invite') {
+    bodyParams = [
+      { name: '1', value: cleanName },
+      { name: 'Name', value: cleanName },
+    ];
+  } else if (templateName === 'ciim2026_registration_thankyou_02' || templateName === 'ciim2026_registration_thankyou') {
     bodyParams = [
       { name: '1', value: cleanName },
       { name: 'DrName', value: cleanName },
