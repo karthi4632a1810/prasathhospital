@@ -1340,7 +1340,9 @@ export default function WhatsAppMarketing() {
               onClick={() => setLiveMonitorOpen(true)}
             >
               <span className="wam__chip-dot"></span>
-              🔴 Live Monitor ({liveProgress.processedCount}/{liveProgress.total})
+              {liveProgress.title?.includes('Retry') || liveProgress.isRetryJob
+                ? `🔄 Retrying (${liveProgress.processedCount}/${liveProgress.total})`
+                : `🔴 Live Monitor (${liveProgress.processedCount}/${liveProgress.total})`}
             </button>
           )}
         </div>
@@ -2115,9 +2117,15 @@ export default function WhatsAppMarketing() {
                         {c.title || `${c.templateName} (${c.total} recipients)`}
                       </h4>
                       <div className="wam__campaign-stats-row">
-                        <span className="wam__c-stat wam__c-stat--total">
-                          Total: <strong>{c.total}</strong>
-                        </span>
+                        {(() => {
+                          const parsedTitleTotal = c.title ? c.title.match(/\((\d+)\s+recipients\)/i)?.[1] : null;
+                          const displayTotal = parsedTitleTotal && Number(parsedTitleTotal) > (c.total || 0) ? Number(parsedTitleTotal) : (c.total || 0);
+                          return (
+                            <span className="wam__c-stat wam__c-stat--total">
+                              Total: <strong>{displayTotal}</strong>
+                            </span>
+                          );
+                        })()}
                         <span className="wam__c-stat wam__c-stat--delivered">
                           Delivered: <strong>{c.deliveredCount || 0}</strong>
                         </span>

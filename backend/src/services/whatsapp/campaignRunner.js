@@ -134,6 +134,11 @@ function broadcastJobEvent(job, eventType, data) {
  */
 async function flushJobToDatabase(job, recipientsData) {
   try {
+    // If this is a retry job, NEVER overwrite the master campaign's total or full recipients list!
+    if (job.isRetryJob) {
+      return;
+    }
+
     const updatePayload = {
       status: job.status,
       total: job.total,
@@ -334,7 +339,8 @@ async function runCampaignLoop(job, recipients, templateObj) {
       }
       job.sseClients.clear();
     }
-  }, 3000);
+    activeJobs.delete(job.id);
+  }, 10000);
 }
 
 /**
@@ -521,7 +527,14 @@ async function stopCampaign(campaignId) {
     job.status = 'STOPPED';
     job.completedAt = new Date();
     broadcastJobEvent(job, 'STATUS_CHANGE', { status: 'STOPPED' });
-    await flushJobToDatabase(job, job.recipientsState);
+    if (!job.isRetryJob) {
+      await flushJobToDatabase(job, job.recipientsState);
+    } else {
+      await WhatsAppCampaign.findByIdAndUpdate(campaignId, { status: 'STOPPED', completedAt: new Date() });
+    }
+    setTimeout(() => {
+      activeJobs.delete(idStr);
+    }, 3000);
     return getJobProgressSnapshot(job);
   }
   await WhatsAppCampaign.findByIdAndUpdate(campaignId, { status: 'STOPPED', completedAt: new Date() });
@@ -871,6 +884,9 @@ async function runRetryLoop(job, failedRecipients, templateObj) {
   );
 
   broadcastJobEvent(job, 'COMPLETED', getJobProgressSnapshot(job));
+  setTimeout(() => {
+    activeJobs.delete(job.id);
+  }, 10000);
 }
 
 /**

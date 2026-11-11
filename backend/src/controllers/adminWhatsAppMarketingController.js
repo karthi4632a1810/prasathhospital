@@ -362,6 +362,14 @@ const getCampaigns = asyncHandler(async (req, res) => {
     .limit(50)
     .lean();
 
+  campaigns.forEach((c) => {
+    // If a retry job truncated the total, restore the original total count parsed from the title
+    const match = c.title && c.title.match(/\((\d+)\s+recipients\)/i);
+    if (match && Number(match[1]) > (c.total || 0)) {
+      c.total = Number(match[1]);
+    }
+  });
+
   return sendSuccess(res, { campaigns });
 });
 
@@ -371,13 +379,69 @@ const getCampaigns = asyncHandler(async (req, res) => {
  */
 const getCampaignById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const campaign = await WhatsAppCampaign.findById(id).lean();
+  const campaignDoc = await WhatsAppCampaign.findById(id);
 
-  if (!campaign) {
+  if (!campaignDoc) {
     throw ApiError.notFound('Campaign not found.');
   }
 
-  return sendSuccess(res, { campaign });
+  // Check if a retry truncated the recipients list and restore if needed
+  const match = campaignDoc.title && campaignDoc.title.match(/\((\d+)\s+recipients\)/i);
+  const expectedTotal = match ? Number(match[1]) : 0;
+
+  if (expectedTotal > campaignDoc.recipients.length) {
+    const registrations = await Registration.find({ status: { $ne: 'cancelled' } })
+      .populate('company', 'name')
+      .populate('coupon', 'code')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    if (registrations.length > 0) {
+      const existingMap = new Map();
+      campaignDoc.recipients.forEach((r) => {
+        const norm = normalizePhone(r.normalizedPhone || r.phone);
+        if (norm) existingMap.set(norm, r);
+        existingMap.set(String(r.phone), r);
+      });
+
+      const restoredRecipients = registrations.map((reg, idx) => {
+        const att = reg.attendee || {};
+        const rawPhone = att.phone || '';
+        const norm = normalizePhone(rawPhone);
+        const existing = existingMap.get(norm) || existingMap.get(String(rawPhone));
+
+        if (existing) {
+          return existing.toObject ? existing.toObject() : existing;
+        }
+
+        return {
+          rowIndex: idx + 1,
+          name: att.name || 'Delegate',
+          phone: rawPhone,
+          normalizedPhone: norm,
+          status: 'SENT',
+          messageId: 'wati_broadcast_initial',
+          error: null,
+          sentAt: campaignDoc.createdAt,
+          params: {
+            Name: att.name || 'Delegate',
+            RegistrationCode: reg.registrationCode || '',
+          },
+        };
+      });
+
+      campaignDoc.recipients = restoredRecipients;
+      campaignDoc.total = Math.max(expectedTotal, restoredRecipients.length);
+      campaignDoc.sentCount = campaignDoc.recipients.filter((r) =>
+        ['SENT', 'DELIVERED', 'READ'].includes(r.status)
+      ).length;
+      campaignDoc.failedCount = campaignDoc.recipients.filter((r) => r.status === 'FAILED').length;
+      await campaignDoc.save();
+      logger.info(`Restored campaign ${id} from registrations: ${restoredRecipients.length} recipients`);
+    }
+  }
+
+  return sendSuccess(res, { campaign: campaignDoc.toObject ? campaignDoc.toObject() : campaignDoc });
 });
 
 /**
