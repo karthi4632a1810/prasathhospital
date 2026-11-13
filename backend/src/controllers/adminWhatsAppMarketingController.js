@@ -36,6 +36,19 @@ const FALLBACK_CORE_TEMPLATES = [
     buttons: ['Register Here', 'Call Now (+91 96000 47646)'],
   },
   {
+    id: 'ciim2026_participant_qanda_v2',
+    name: 'ciim2026_participant_qanda_v2',
+    label: 'CIIM 2026: Participant Q&A (Utility)',
+    category: 'UTILITY',
+    status: 'APPROVED',
+    language: 'English',
+    body: 'CIIM 2026 – Controversies in Infertility Management\n\nDear Dr. {{Name}},\n\nDo you have questions for our expert faculty and keynote speakers? Participate in our interactive Q&A session and submit your clinical queries in advance!\n\n🔗 Submit your questions here: https://ciim.prashanthfertility.com/\n\nWarm regards,\nOrganising Committee, CIIM 2026',
+    hasHeaderMedia: false,
+    imageParam: null,
+    params: ['Name'],
+    buttons: ['Submit Question', 'Join Q&A'],
+  },
+  {
     id: 'ciim2026_drgh_invite',
     name: 'ciim2026_drgh_invite',
     label: 'CIIM 2026: Dr. Geetha Haripriya Video Invitation',
@@ -203,6 +216,8 @@ async function fetchWatiTemplates() {
         .replace(/\b\w/g, (c) => c.toUpperCase());
       if (templateName === 'ciim2026_2what_works') {
         label = 'CIIM 2026: What Works & What Doesn’t (Marketing)';
+      } else if (templateName === 'ciim2026_participant_qanda_v2') {
+        label = 'CIIM 2026: Participant Q&A (Utility)';
       } else if (templateName === 'ciim2026_drgh_invite') {
         label = 'CIIM 2026: Dr. Geetha Haripriya Video Invitation';
       } else if (templateName === 'ciim2026_invite') {
@@ -226,6 +241,7 @@ async function fetchWatiTemplates() {
 
     const priorityOrder = [
       'ciim2026_2what_works',
+      'ciim2026_participant_qanda_v2',
       'ciim2026_drgh_invite',
       'ciim2026_invite',
       'ciim2026_registration_thankyou_02',
@@ -276,7 +292,12 @@ function buildTemplateBodyParams(templateName, { name, extra, customParamsValues
     extraParamValue = `\u2028${extraParamValue.trim()}\u2028`;
   }
 
-  if (templateName === 'ciim2026_2what_works' || templateName === 'ciim2026_drgh_invite' || templateName === 'ciim2026_invite') {
+  if (
+    templateName === 'ciim2026_2what_works' ||
+    templateName === 'ciim2026_participant_qanda_v2' ||
+    templateName === 'ciim2026_drgh_invite' ||
+    templateName === 'ciim2026_invite'
+  ) {
     return [
       { name: 'Name', value: cleanName },
       { name: '1', value: cleanName },

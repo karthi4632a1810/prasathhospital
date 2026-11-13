@@ -26,6 +26,14 @@ const DEFAULT_IMAGE_PRESETS = [
 
 const DEFAULT_TEMPLATES = [
   {
+    id: 'ciim2026_participant_qanda_v2',
+    name: 'ciim2026_participant_qanda_v2',
+    label: 'Participant Q&A (Utility)',
+    description: 'Interactive Q&A template for participants and registered delegates.',
+    defaultImageType: 'none',
+    defaultExtraMode: 'none',
+  },
+  {
     id: 'ciim2026_registration_5',
     name: 'ciim2026_registration_5',
     label: 'Registration 5 (QR Header + Ticket Link - Utility)',

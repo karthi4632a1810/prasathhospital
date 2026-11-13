@@ -1409,7 +1409,7 @@ export default function WhatsAppMarketing() {
                   key={tmpl.id}
                   className={`wam__template-card ${
                     selectedTemplateId === tmpl.id ? 'is-selected' : ''
-                  } ${(tmpl.id === 'ciim2026_2what_works' || tmpl.id === 'ciim2026_invite' || tmpl.id === 'ciim2026_drgh_invite') ? 'wam__template-card--primary' : ''}`}
+                  } ${(tmpl.id === 'ciim2026_2what_works' || tmpl.id === 'ciim2026_participant_qanda_v2' || tmpl.id === 'ciim2026_invite' || tmpl.id === 'ciim2026_drgh_invite') ? 'wam__template-card--primary' : ''}`}
                 >
                   <input
                     type="radio"
@@ -1433,6 +1433,19 @@ export default function WhatsAppMarketing() {
                             }}
                           >
                             ⭐ Featured
+                          </span>
+                        )}
+                        {tmpl.id === 'ciim2026_participant_qanda_v2' && (
+                          <span
+                            className="wam__tag"
+                            style={{
+                              background: '#eff6ff',
+                              color: '#1d4ed8',
+                              border: '1px solid #bfdbfe',
+                              fontWeight: 700,
+                            }}
+                          >
+                            💬 Q&A Utility
                           </span>
                         )}
                         {(tmpl.hasVideoHeader || tmpl.id === 'ciim2026_drgh_invite' || tmpl.name === 'ciim2026_drgh_invite') && (

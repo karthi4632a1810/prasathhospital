@@ -22,7 +22,12 @@ function buildBodyParams(templateName, { name, extra, customParamsValues = {}, i
     extraParamValue = `\u2028${extraParamValue.trim()}\u2028`;
   }
 
-  if (templateName === 'ciim2026_2what_works' || templateName === 'ciim2026_drgh_invite' || templateName === 'ciim2026_invite') {
+  if (
+    templateName === 'ciim2026_2what_works' ||
+    templateName === 'ciim2026_participant_qanda_v2' ||
+    templateName === 'ciim2026_drgh_invite' ||
+    templateName === 'ciim2026_invite'
+  ) {
     return [
       { name: 'Name', value: cleanName },
       { name: '1', value: cleanName },

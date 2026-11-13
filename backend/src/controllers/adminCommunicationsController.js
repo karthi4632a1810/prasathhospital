@@ -39,6 +39,15 @@ const TEMPLATES = [
     params: ['Name'],
   },
   {
+    id: 'ciim2026_participant_qanda_v2',
+    name: 'ciim2026_participant_qanda_v2',
+    label: 'CIIM 2026: Participant Q&A (Utility)',
+    description: 'Participant Q&A session template for delegates and attendees.',
+    defaultImageType: 'none',
+    defaultExtra: '',
+    params: ['Name'],
+  },
+  {
     id: 'ciim2026_drgh_invite',
     name: 'ciim2026_drgh_invite',
     label: 'CIIM 2026: Dr. Geetha Haripriya Video Invite (Marketing)',
@@ -147,7 +156,12 @@ const sendTestWhatsAppMessage = asyncHandler(async (req, res) => {
 
   // Construct clean parameter array matching exact WATI template bindings
   let bodyParams = [];
-  if (templateName === 'ciim2026_2what_works' || templateName === 'ciim2026_drgh_invite' || templateName === 'ciim2026_invite') {
+  if (
+    templateName === 'ciim2026_2what_works' ||
+    templateName === 'ciim2026_participant_qanda_v2' ||
+    templateName === 'ciim2026_drgh_invite' ||
+    templateName === 'ciim2026_invite'
+  ) {
     bodyParams = [
       { name: '1', value: cleanName },
       { name: 'Name', value: cleanName },
