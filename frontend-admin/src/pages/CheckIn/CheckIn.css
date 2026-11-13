@@ -1,70 +1,63 @@
 /* ==========================================================================
-   CIIM 2026 Check-In Scanner & Admission Desk
+   CIIM 2026 Check-In Scanner & Admission Desk Console
    Executive HUD scanner, laser sweep animation, VIP attendee card, desk log,
-   and full responsiveness across mobile phones, tablets, and desktop.
+   checkpoint multi-location switcher, and responsive layouts for
+   mobile phones, tablets (portrait & landscape), and desktops.
    ========================================================================== */
 
-/* ---------- Grid Layout ---------- */
+/* ---------- Container Layout ---------- */
 
 .checkin-container {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
-  max-width: 1300px;
+  gap: var(--space-5);
+  max-width: 1320px;
   margin: 0 auto;
+  width: 100%;
 }
 
-.checkin-grid {
-  display: grid;
-  align-items: start;
-  gap: var(--space-6);
-  grid-template-columns: minmax(320px, 440px) 1fr;
+/* ==========================================================================
+   1. Unified Check-in Console Header (Title, Controls, Checkpoints, Metrics)
+   ========================================================================== */
+
+.checkin-console-header {
+  background: var(--white);
+  border: 1px solid var(--ink-200);
+  border-radius: var(--radius-xl, 16px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
-@media (width <= 960px) {
-  .checkin-grid {
-    grid-template-columns: 1fr;
-    gap: var(--space-5);
-  }
+/* Row 1: Header Top (Title, Badge, Actions) */
+.checkin-console-header__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
 }
 
-/* ---------- Header & Action Controls ---------- */
-
-.checkin-header-actions {
+.checkin-console-title-group {
   display: flex;
   align-items: center;
   gap: var(--space-3);
   flex-wrap: wrap;
 }
 
-.checkin-ctrl-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  color: var(--ink-700);
-  background: var(--white);
-  border: 1px solid var(--ink-200);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all var(--transition);
-  white-space: nowrap;
-}
-
-.checkin-ctrl-btn:hover {
-  background: var(--ink-50);
+.checkin-console-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 750;
   color: var(--ink-900);
-  border-color: var(--ink-300);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
-.checkin-ctrl-btn.is-active {
-  background: var(--brand-50);
-  color: var(--brand-700);
-  border-color: var(--brand-300);
-}
-
+/* Camera Live Status Badge */
 .checkin-status-badge {
   display: inline-flex;
   align-items: center;
@@ -72,7 +65,7 @@
   padding: 4px 10px;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   border-radius: var(--radius-full);
 }
@@ -116,123 +109,366 @@
   }
 }
 
-/* ---------- Stat Cards ---------- */
+/* Header Action Controls */
+.checkin-console-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
 
-.checkin-stat-card {
-  padding: var(--space-5);
+.checkin-event-select {
+  font-size: var(--text-xs);
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--ink-200);
+  background: var(--white);
+  color: var(--ink-800);
+  max-width: 200px;
+}
+
+.checkin-ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--ink-700);
   background: var(--white);
   border: 1px solid var(--ink-200);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xs);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+  touch-action: manipulation;
+  min-height: 34px;
+}
+
+.checkin-ctrl-btn:hover {
+  background: var(--ink-50);
+  color: var(--ink-900);
+  border-color: var(--ink-300);
+}
+
+.checkin-ctrl-btn.is-active {
+  background: var(--brand-50, #eff6ff);
+  color: var(--brand-700, #1d4ed8);
+  border-color: var(--brand-300, #93c5fd);
+}
+
+.checkin-manage-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--brand-700, #1d4ed8);
+  background: var(--brand-50, #eff6ff);
+  border: 1px solid var(--brand-200, #bfdbfe);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: all var(--transition);
+  white-space: nowrap;
+  min-height: 34px;
+}
+
+.checkin-manage-btn:hover {
+  background: var(--brand-100, #dbeafe);
+  border-color: var(--brand-400, #60a5fa);
+}
+
+/* Row 2: Checkpoint Location Switcher Bar */
+.checkin-checkpoints-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--ink-50);
+  border: 1px solid var(--ink-100);
+  border-radius: var(--radius-lg, 12px);
+  flex-wrap: wrap;
+}
+
+.checkin-checkpoints-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ink-600);
+  white-space: nowrap;
+}
+
+.checkin-checkpoints-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.checkin-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--ink-200);
+  background: var(--white);
+  color: var(--ink-800);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  touch-action: manipulation;
+  min-height: 36px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.checkin-tab-btn:hover {
+  background: var(--brand-50, #eff6ff);
+  border-color: var(--brand-300, #93c5fd);
+  color: var(--brand-800, #1e40af);
+}
+
+.checkin-tab-btn.is-active {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #1e40af;
+  font-weight: 700;
+  box-shadow: 0 0 0 1.5px #2563eb;
+}
+
+.checkin-tab-emoji {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.checkin-tab-name {
+  font-weight: 700;
+}
+
+.checkin-tab-default-tag {
+  font-size: 9px;
+  background: #fef3c7;
+  color: #92400e;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.checkin-tab-count {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Row 3: Compact Executive Metrics Ribbon */
+.checkin-metrics-ribbon {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.checkin-metric-tile {
+  background: var(--ink-50);
+  border: 1px solid var(--ink-200);
+  border-radius: var(--radius-lg, 12px);
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: var(--space-2);
+  gap: 4px;
 }
 
-.checkin-stat-card__head {
+.checkin-metric-tile--primary {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.checkin-metric-tile__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
 }
 
-.checkin-stat-card__label {
-  margin: 0;
-  color: var(--ink-500);
-  font-size: var(--text-xs);
-  font-weight: 600;
+.checkin-metric-tile__label {
+  font-size: 11px;
+  font-weight: 700;
   letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-600);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.checkin-metric-sublabel {
+  font-size: 10px;
+  color: var(--ink-400);
+  font-weight: 600;
   text-transform: uppercase;
 }
 
-.checkin-stat-card__badge {
+.checkin-metric-badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  font-size: 11px;
+  padding: 2px 7px;
+  font-size: 10px;
   font-weight: 700;
   border-radius: var(--radius-full);
 }
 
-.checkin-stat-card__badge--green {
+.checkin-metric-badge--green {
   background: #dcfce7;
   color: #15803d;
 }
 
-.checkin-stat-card__value {
-  margin: 0;
+.checkin-metric-tile__body {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.checkin-metric-tile__number {
   font-family: var(--font-display);
-  font-size: var(--text-3xl);
-  font-weight: 700;
+  font-size: var(--text-2xl);
+  font-weight: 800;
   color: var(--ink-900);
-  line-height: 1.1;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 
-.checkin-stat-card__value--green {
+.checkin-metric-tile__number--green {
   color: #15803d;
 }
 
-.checkin-stat-card__progress-wrap {
+.checkin-metric-tile__sub {
+  font-size: 11px;
+  color: var(--ink-500);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.checkin-metric-progress {
   width: 100%;
-  height: 6px;
-  background: var(--ink-100);
+  height: 5px;
+  background: var(--ink-200);
   border-radius: var(--radius-full);
   overflow: hidden;
   margin-top: 4px;
 }
 
-.checkin-stat-card__progress-bar {
+.checkin-metric-progress__fill {
   height: 100%;
   background: linear-gradient(90deg, #10b981 0%, #059669 100%);
   border-radius: inherit;
   transition: width 400ms ease;
 }
 
-/* ---------- Scanner Viewport & HUD ---------- */
+/* ==========================================================================
+   2. Main Balanced 2-Column Console Grid (Scanner + Verification)
+   ========================================================================== */
+
+.checkin-grid {
+  display: grid;
+  align-items: stretch;
+  gap: var(--space-5);
+  grid-template-columns: minmax(320px, 430px) minmax(340px, 1fr);
+}
+
+/* Shared Card Header for Twin Symmetry */
+.checkin-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--ink-100);
+  background: var(--white);
+  min-height: 54px;
+}
+
+.checkin-card-title {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 750;
+  color: var(--ink-900);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.01em;
+}
+
+.checkin-card-title svg {
+  color: var(--brand-600, #2563eb);
+  flex-shrink: 0;
+}
+
+.checkin-card-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Result Pill in Right Header */
+.checkin-result-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 750;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.02em;
+}
+
+.checkin-result-pill--idle {
+  background: var(--ink-100);
+  color: var(--ink-700);
+}
+
+.checkin-result-pill--success {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.checkin-result-pill--warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.checkin-result-pill--error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* ---------- Left Column: Scanner Card ---------- */
 
 .checkin-scanner-card {
   background: var(--white);
   border: 1px solid var(--ink-200);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xs);
+  border-radius: var(--radius-xl, 16px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-}
-
-.checkin-scanner-card__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-4) var(--space-5);
-  border-bottom: 1px solid var(--ink-100);
-  background: var(--white);
-}
-
-.checkin-scanner-card__title {
-  margin: 0;
-  font-size: var(--text-base);
-  font-weight: 700;
-  color: var(--ink-900);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.checkin-scanner-header-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
 }
 
 .checkin-flip-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
-  font-size: var(--text-xs);
+  padding: 5px 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--ink-800);
   background: var(--ink-50);
@@ -241,8 +477,7 @@
   cursor: pointer;
   transition: all var(--transition);
   touch-action: manipulation;
-  min-height: 36px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  min-height: 32px;
 }
 
 .checkin-flip-btn:hover:not(:disabled) {
@@ -251,31 +486,16 @@
   color: var(--ink-900);
 }
 
-.checkin-flip-btn:active:not(:disabled) {
-  transform: scale(0.97);
-}
-
 .checkin-flip-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.checkin-flip-icon {
-  font-size: 13px;
-  line-height: 1;
-}
-
-.checkin-flip-text {
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
 .checkin-flip-badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 7px;
-  font-size: 10px;
+  padding: 1px 6px;
+  font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -294,12 +514,13 @@
   border: 1px solid #fde68a;
 }
 
+/* Viewport Camera Box */
 .checkin-viewport {
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 3;
-  min-height: 280px;
-  max-height: 380px;
+  min-height: 250px;
+  max-height: 350px;
   background: #090b10;
   overflow: hidden;
   display: flex;
@@ -324,7 +545,6 @@
   display: block;
 }
 
-/* Html5Qrcode internal overrides */
 .checkin-camera img[alt="Info icon"],
 .checkin-camera div[style*="text-align: center; font-size: 12px;"] {
   display: none !important;
@@ -342,7 +562,6 @@
   justify-content: center;
 }
 
-/* Animated Scanning Laser Line */
 .checkin-hud__laser {
   position: absolute;
   left: 8%;
@@ -379,12 +598,11 @@
   }
 }
 
-/* Reticle Target Box with Glowing Corners */
 .checkin-hud__reticle {
   position: relative;
-  width: min(240px, 68%);
+  width: min(220px, 68%);
   aspect-ratio: 1;
-  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
@@ -396,8 +614,8 @@
 
 .checkin-hud__corner {
   position: absolute;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-color: #38bdf8;
   border-style: solid;
   pointer-events: none;
@@ -435,7 +653,7 @@
 .checkin-hud__guide {
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgb(255 255 255 / 85%);
   background: rgb(15 23 42 / 70%);
@@ -445,7 +663,7 @@
   border: 1px solid rgb(255 255 255 / 15%);
 }
 
-/* Offline / Error / Starting Fallbacks inside Viewport */
+/* Offline & Unavailable State Box */
 .checkin-viewport__state-box {
   position: relative;
   z-index: 20;
@@ -453,37 +671,36 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--space-6);
+  padding: var(--space-5);
   text-align: center;
   color: var(--white);
-  gap: var(--space-3);
-  max-width: 320px;
+  gap: var(--space-2);
+  max-width: 310px;
 }
 
 .checkin-viewport__icon {
-  font-size: 36px;
+  font-size: 32px;
   line-height: 1;
 }
 
 .checkin-viewport__state-title {
   margin: 0;
-  font-size: var(--text-base);
+  font-size: var(--text-sm);
   font-weight: 700;
 }
 
 .checkin-viewport__state-desc {
   margin: 0;
-  font-size: var(--text-xs);
-  color: rgb(255 255 255 / 70%);
+  font-size: 11px;
+  color: rgb(255 255 255 / 75%);
   line-height: 1.4;
 }
 
-/* Retry actions inside Camera Unavailable state */
 .checkin-viewport__retry-actions {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
+  gap: 8px;
   flex-wrap: wrap;
   margin-top: var(--space-2);
 }
@@ -491,28 +708,24 @@
 .checkin-retry-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  font-size: 12px;
+  gap: 5px;
+  padding: 7px 14px;
+  font-size: 11px;
   font-weight: 600;
   border-radius: var(--radius-full);
   cursor: pointer;
   transition: all var(--transition);
   color: var(--white);
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.14);
   border: 1px solid rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(4px);
-  min-height: 38px;
+  min-height: 36px;
   touch-action: manipulation;
 }
 
 .checkin-retry-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.24);
   border-color: rgba(255, 255, 255, 0.45);
-}
-
-.checkin-retry-btn:active:not(:disabled) {
-  transform: scale(0.97);
 }
 
 .checkin-retry-btn--primary {
@@ -524,51 +737,48 @@
 
 .checkin-retry-btn--primary:hover:not(:disabled) {
   background: #4338ca;
-  border-color: #4f46e5;
 }
 
-.checkin-retry-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Quick Floating Bar over/under camera */
+/* Quick Floating Bar Under Camera */
 .checkin-viewport-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-2) var(--space-4);
+  padding: 7px 14px;
   background: #11141d;
   color: rgb(255 255 255 / 85%);
   font-size: var(--text-xs);
   border-top: 1px solid rgb(255 255 255 / 10%);
 }
 
-.checkin-viewport-bar__left {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
+.checkin-viewport-bar__left,
 .checkin-viewport-bar__right {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 6px;
+}
+
+.checkin-viewport-status-text {
+  font-size: 11px;
+  opacity: 0.85;
+  font-weight: 500;
 }
 
 .checkin-quick-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
+  padding: 4px 9px;
   font-size: 11px;
   font-weight: 600;
   color: var(--white);
   background: rgb(255 255 255 / 12%);
-  border: 1px solid rgb(255 255 255 / 20%);
+  border: 1px solid rgb(255 255 255 / 18%);
   border-radius: var(--radius-full);
   cursor: pointer;
   transition: all var(--transition);
+  touch-action: manipulation;
+  min-height: 28px;
 }
 
 .checkin-quick-btn:hover {
@@ -576,32 +786,34 @@
   border-color: rgb(255 255 255 / 35%);
 }
 
-/* Manual Entry Dock */
+/* Manual Code Entry Dock */
 .checkin-manual-dock {
-  padding: var(--space-4) var(--space-5);
+  padding: 14px 18px;
   background: var(--white);
+  border-top: 1px solid var(--ink-100);
 }
 
 .checkin-manual-form {
   display: flex;
-  gap: var(--space-2);
+  gap: 8px;
   align-items: center;
 }
 
 .checkin-manual-input-wrap {
   position: relative;
   flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
 }
 
-.checkin-manual-input-wrap .field__input {
+.checkin-manual-input {
   width: 100%;
-  padding-left: 36px;
-  padding-right: 32px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: var(--text-sm);
-  letter-spacing: 0.02em;
+  padding-left: 34px !important;
+  padding-right: 28px !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: var(--text-xs) !important;
+  height: 38px;
 }
 
 .checkin-manual-input-icon {
@@ -619,19 +831,20 @@
   border: none;
   color: var(--ink-400);
   cursor: pointer;
-  padding: 4px;
+  padding: 3px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
 }
 
-.checkin-manual-clear:hover {
-  color: var(--ink-800);
+.checkin-manual-btn {
+  flex-shrink: 0;
+  min-width: 90px;
+  height: 38px;
 }
 
 .checkin-manual-hint {
-  margin: var(--space-2) 0 0;
+  margin: 6px 0 0;
   font-size: 11px;
   color: var(--ink-400);
   display: flex;
@@ -639,51 +852,54 @@
   gap: 4px;
 }
 
-/* ---------- Attendee Scan Result Showcase (Right Column) ---------- */
+/* ==========================================================================
+   3. Right Column: Delegate Verification Card (Twin Symmetry)
+   ========================================================================== */
 
 .checkin-display-card {
   min-height: 480px;
   background: var(--white);
-  border: 2px solid var(--ink-200);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--ink-200);
+  border-radius: var(--radius-xl, 16px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: all 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 200ms ease;
 }
 
-/* Idle State */
-.checkin-display--idle {
-  justify-content: center;
+/* Idle State Body */
+.checkin-display-idle-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: var(--space-8);
+  justify-content: center;
+  padding: var(--space-6);
   text-align: center;
-  border-style: dashed;
-  border-color: var(--ink-300);
-  background: linear-gradient(180deg, var(--white) 0%, var(--ink-50) 100%);
+  background: linear-gradient(180deg, var(--white) 0%, #f8fafc 100%);
 }
 
 .checkin-idle-radar {
   position: relative;
-  width: 110px;
-  height: 110px;
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
   border: 2px dashed var(--ink-300);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: var(--space-4);
-  color: var(--brand-600);
-  background: var(--brand-50);
+  color: var(--brand-600, #2563eb);
+  background: var(--brand-50, #eff6ff);
 }
 
 .checkin-idle-radar::after {
   content: '';
   position: absolute;
-  inset: -8px;
+  inset: -6px;
   border-radius: 50%;
-  border: 1px solid var(--brand-300);
+  border: 1px solid var(--brand-300, #93c5fd);
   opacity: 0.6;
   animation: radar-wave 2.4s ease-out infinite;
 }
@@ -694,57 +910,71 @@
     opacity: 0.8;
   }
   100% {
-    transform: scale(1.35);
+    transform: scale(1.3);
     opacity: 0;
   }
 }
 
 .checkin-idle-title {
-  margin: 0 0 var(--space-2);
-  font-size: var(--text-xl);
-  font-weight: 700;
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 750;
   color: var(--ink-900);
 }
 
 .checkin-idle-desc {
-  margin: 0 0 var(--space-6);
-  font-size: var(--text-sm);
+  margin: 0 0 var(--space-5);
+  font-size: var(--text-xs);
   color: var(--ink-500);
-  max-width: 380px;
+  max-width: 360px;
   line-height: 1.5;
 }
 
 .checkin-idle-stats {
   display: flex;
   align-items: center;
-  gap: var(--space-6);
-  padding: var(--space-3) var(--space-6);
+  gap: var(--space-4);
+  padding: 6px 16px;
   background: var(--white);
   border: 1px solid var(--ink-200);
   border-radius: var(--radius-full);
   font-size: var(--text-xs);
   color: var(--ink-600);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .checkin-idle-stat-item strong {
   color: var(--ink-900);
-  font-size: var(--text-sm);
-  margin-left: 4px;
+  font-weight: 750;
+  margin-left: 3px;
 }
 
-/* Success Result (VIP Admission Card) */
-.checkin-display--success {
-  border-color: #10b981;
-  box-shadow: 0 12px 36px rgba(16, 185, 129, 0.12);
+.checkin-idle-stat-divider {
+  color: var(--ink-300);
 }
 
+.checkin-idle-active-tag {
+  margin-top: var(--space-3);
+  font-size: 11px;
+  color: var(--ink-500);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.checkin-idle-active-tag strong {
+  color: var(--brand-700, #1d4ed8);
+}
+
+/* Success Result Banner */
 .checkin-result-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-4) var(--space-6);
+  padding: 10px 18px;
   color: var(--white);
-  gap: var(--space-4);
+  gap: var(--space-3);
   flex-wrap: wrap;
 }
 
@@ -763,71 +993,72 @@
 .checkin-banner-status {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  font-weight: 700;
-  font-size: var(--text-base);
-  letter-spacing: 0.02em;
+  gap: 8px;
+  font-weight: 800;
+  font-size: var(--text-sm);
+  letter-spacing: 0.03em;
 }
 
 .checkin-banner-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   background: rgb(255 255 255 / 25%);
   border-radius: 50%;
-  font-size: 18px;
+  font-size: 15px;
   line-height: 1;
 }
 
 .checkin-banner-time {
-  font-size: var(--text-xs);
+  font-size: 11px;
   opacity: 0.9;
-  font-weight: 500;
+  font-weight: 600;
 }
 
+/* Result Body */
 .checkin-result-body {
-  padding: var(--space-6);
+  padding: var(--space-5);
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: var(--space-6);
+  gap: var(--space-4);
 }
 
 .checkin-attendee-profile {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 .checkin-attendee-avatar {
-  width: 58px;
-  height: 58px;
+  width: 52px;
+  height: 52px;
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--text-2xl);
-  font-weight: 700;
+  font-size: var(--text-xl);
+  font-weight: 800;
   color: var(--white);
   flex-shrink: 0;
 }
 
 .checkin-attendee-avatar--success {
   background: linear-gradient(135deg, #10b981 0%, #047857 100%);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
 }
 
 .checkin-attendee-avatar--warning {
   background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
 }
 
 .checkin-attendee-avatar--error {
   background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
 }
 
 .checkin-attendee-info {
@@ -836,10 +1067,10 @@
 }
 
 .checkin-attendee-name {
-  margin: 0 0 4px;
+  margin: 0 0 3px;
   font-family: var(--font-display);
-  font-size: var(--text-2xl);
-  font-weight: 750;
+  font-size: var(--text-xl);
+  font-weight: 800;
   color: var(--ink-900);
   line-height: 1.2;
   word-break: break-word;
@@ -847,7 +1078,7 @@
 
 .checkin-attendee-meta {
   margin: 0;
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   color: var(--ink-500);
   display: flex;
   flex-wrap: wrap;
@@ -857,13 +1088,13 @@
 /* Detail Chips Grid */
 .checkin-meta-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: var(--space-3);
-  margin-top: var(--space-2);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+  margin-top: var(--space-3);
 }
 
 .checkin-meta-chip {
-  padding: var(--space-3) var(--space-4);
+  padding: 8px 12px;
   background: var(--ink-50);
   border: 1px solid var(--ink-200);
   border-radius: var(--radius-md);
@@ -875,13 +1106,13 @@
 .checkin-meta-chip__label {
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ink-400);
 }
 
 .checkin-meta-chip__value {
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--ink-900);
   display: flex;
@@ -906,11 +1137,41 @@
   color: var(--brand-600);
 }
 
-/* Duplicate / Warning Box */
-.checkin-alert-banner {
-  padding: var(--space-3) var(--space-4);
+/* Checkpoint History Chips */
+.checkin-history-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.checkin-loc-history-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
   border-radius: var(--radius-md);
-  font-size: var(--text-sm);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.checkin-loc-history-chip--done {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.checkin-loc-history-chip--pending {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px dashed #cbd5e1;
+}
+
+/* Alert Banners */
+.checkin-alert-banner {
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
   line-height: 1.45;
   display: flex;
   align-items: flex-start;
@@ -935,7 +1196,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding-top: var(--space-4);
+  padding-top: var(--space-3);
   border-top: 1px solid var(--ink-100);
   flex-wrap: wrap;
 }
@@ -947,13 +1208,15 @@
   gap: var(--space-2);
 }
 
-/* ---------- Recent Scans Activity Log ---------- */
+/* ==========================================================================
+   4. Desk Activity Log (History Card)
+   ========================================================================== */
 
 .checkin-history-card {
   background: var(--white);
   border: 1px solid var(--ink-200);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xs);
+  border-radius: var(--radius-xl, 16px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   overflow: hidden;
 }
 
@@ -961,25 +1224,25 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-4) var(--space-6);
+  padding: 12px 18px;
   border-bottom: 1px solid var(--ink-100);
   background: var(--white);
 }
 
 .checkin-history-title {
   margin: 0;
-  font-size: var(--text-base);
-  font-weight: 700;
+  font-size: var(--text-sm);
+  font-weight: 750;
   color: var(--ink-900);
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 8px;
 }
 
 .checkin-history-count {
   display: inline-flex;
-  padding: 2px 8px;
-  font-size: 11px;
+  padding: 1px 7px;
+  font-size: 10px;
   font-weight: 700;
   background: var(--ink-100);
   color: var(--ink-700);
@@ -993,12 +1256,12 @@
 
 .checkin-history-row {
   display: grid;
-  grid-template-columns: 80px 1.5fr 1fr 110px 40px;
+  grid-template-columns: 80px 1.4fr 1fr 120px 30px;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-6);
+  padding: 10px 18px;
   border-bottom: 1px solid var(--ink-100);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   transition: background var(--transition);
   cursor: pointer;
 }
@@ -1012,13 +1275,13 @@
 }
 
 .checkin-history-time {
-  font-size: var(--text-xs);
+  font-size: 11px;
   color: var(--ink-400);
   font-family: ui-monospace, monospace;
 }
 
 .checkin-history-name {
-  font-weight: 600;
+  font-weight: 650;
   color: var(--ink-900);
   white-space: nowrap;
   overflow: hidden;
@@ -1027,7 +1290,7 @@
 
 .checkin-history-meta {
   color: var(--ink-500);
-  font-size: var(--text-xs);
+  font-size: 11px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1037,10 +1300,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 3px 8px;
+  padding: 2px 8px;
   border-radius: var(--radius-full);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .checkin-history-badge--success {
@@ -1059,20 +1323,21 @@
 }
 
 .checkin-history-empty {
-  padding: var(--space-8);
+  padding: var(--space-6);
   text-align: center;
   color: var(--ink-400);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
 }
 
-/* ---------- Printable Badge Slip (@media print) ---------- */
+/* ==========================================================================
+   5. Printable Badge Slip (@media print)
+   ========================================================================== */
 
 .checkin-badge-print {
   display: none;
 }
 
 @media print {
-  /* Hide whole app shell on print */
   body * {
     visibility: hidden;
   }
@@ -1168,46 +1433,110 @@
   }
 }
 
-/* ---------- Mobile & Tablet Adaptations ---------- */
+/* ==========================================================================
+   6. Responsive Adaptations (Mobile Phones & Tablets)
+   ========================================================================== */
 
-@media (width <= 860px) {
+/* Tablets Landscape & Medium Screens */
+@media (max-width: 1100px) {
+  .checkin-grid {
+    grid-template-columns: minmax(300px, 390px) minmax(320px, 1fr);
+    gap: var(--space-4);
+  }
+
+  .checkin-viewport {
+    aspect-ratio: 16 / 11;
+    min-height: 230px;
+    max-height: 300px;
+  }
+
+  .checkin-metrics-ribbon {
+    gap: var(--space-2);
+  }
+
+  .checkin-metric-tile {
+    padding: 8px 12px;
+  }
+
+  .checkin-metric-tile__number {
+    font-size: var(--text-xl);
+  }
+}
+
+/* Tablets Portrait & Small Tablets (<= 860px) */
+@media (max-width: 860px) {
+  .checkin-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  .checkin-display-card {
+    min-height: auto;
+  }
+
   .checkin-viewport {
     aspect-ratio: 16 / 10;
     min-height: 240px;
-    max-height: 320px;
+    max-height: 310px;
   }
 
   .checkin-history-row {
-    grid-template-columns: 70px 1fr 90px;
-    gap: var(--space-2);
-    padding: var(--space-3) var(--space-4);
+    grid-template-columns: 75px 1.5fr 1fr 100px;
+    padding: 8px 14px;
   }
 
-  .checkin-history-meta,
   .checkin-history-row > div:last-child {
     display: none;
   }
 
-  .checkin-attendee-name {
-    font-size: var(--text-xl);
-  }
-
-  .checkin-meta-grid {
-    grid-template-columns: 1fr 1fr;
+  .checkin-metrics-ribbon {
+    grid-template-columns: 1fr 1fr 1fr;
   }
 }
 
-@media (width <= 560px) {
+/* Mobile Phones (<= 600px) */
+@media (max-width: 600px) {
   .checkin-container {
-    gap: var(--space-4);
+    gap: var(--space-3);
   }
 
-  .checkin-stat-card {
-    padding: var(--space-4);
+  .checkin-console-header {
+    padding: var(--space-3);
+    gap: var(--space-3);
   }
 
-  .checkin-stat-card__value {
-    font-size: var(--text-2xl);
+  .checkin-console-title {
+    font-size: var(--text-lg);
+  }
+
+  .checkin-console-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .checkin-checkpoints-bar {
+    padding: 8px;
+    gap: 6px;
+  }
+
+  .checkin-checkpoints-label {
+    width: 100%;
+    margin-bottom: 2px;
+  }
+
+  .checkin-tab-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+    min-height: 32px;
+  }
+
+  .checkin-metrics-ribbon {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .checkin-metric-tile {
+    padding: 8px 10px;
   }
 
   .checkin-viewport {
@@ -1217,7 +1546,7 @@
   }
 
   .checkin-hud__reticle {
-    width: 200px;
+    width: 190px;
   }
 
   .checkin-meta-grid {
@@ -1225,18 +1554,14 @@
   }
 
   .checkin-attendee-avatar {
-    width: 46px;
-    height: 46px;
+    width: 44px;
+    height: 44px;
     font-size: var(--text-lg);
-  }
-
-  .checkin-display-card {
-    min-height: auto;
   }
 
   .checkin-result-body {
     padding: var(--space-4);
-    gap: var(--space-4);
+    gap: var(--space-3);
   }
 
   .checkin-action-bar {
@@ -1253,146 +1578,12 @@
   .checkin-action-bar__right .btn {
     flex: 1;
   }
-}
 
-/* ---------- Checkpoint Location Switcher Bar ---------- */
-.checkin-location-bar {
-  background: var(--white);
-  border: 1px solid var(--ink-200);
-  border-radius: 12px;
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  flex-wrap: wrap;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
+  .checkin-history-row {
+    grid-template-columns: 65px 1fr 85px;
+  }
 
-.checkin-location-bar__left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.checkin-location-bar__label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--text-sm);
-  font-weight: 700;
-  color: var(--ink-800);
-  white-space: nowrap;
-}
-
-.checkin-location-pills {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.checkin-loc-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 9999px;
-  border: 1px solid var(--ink-200);
-  background: var(--ink-50);
-  color: var(--ink-700);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.checkin-loc-pill:hover {
-  background: var(--brand-50, #f0f4ff);
-  border-color: var(--brand-300);
-  color: var(--brand-800);
-}
-
-.checkin-loc-pill.is-selected {
-  background: var(--brand-50, #f0f4ff);
-  border-color: var(--brand-600);
-  color: var(--brand-800);
-  box-shadow: 0 0 0 1px var(--brand-600);
-  font-weight: 700;
-}
-
-.checkin-loc-pill__default-tag {
-  font-size: 10px;
-  background: #fef3c7;
-  color: #92400e;
-  padding: 1px 5px;
-  border-radius: 4px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.checkin-loc-pill__count {
-  font-size: 11px;
-  opacity: 0.75;
-}
-
-.checkin-manage-loc-link {
-  font-size: var(--text-xs);
-  color: var(--brand-700);
-  text-decoration: none;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: background 0.15s;
-}
-
-.checkin-manage-loc-link:hover {
-  background: var(--brand-50);
-  text-decoration: underline;
-}
-
-.checkin-locations-overview-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 14px;
-  background: var(--ink-50);
-  border-radius: 8px;
-  font-size: var(--text-xs);
-  color: var(--ink-600);
-  flex-wrap: wrap;
-  margin-top: 8px;
-}
-
-.checkin-history-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.checkin-loc-history-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: var(--text-xs);
-  font-weight: 600;
-}
-
-.checkin-loc-history-chip--done {
-  background: #dcfce7;
-  color: #166534;
-  border: 1px solid #bbf7d0;
-}
-
-.checkin-loc-history-chip--pending {
-  background: #f1f5f9;
-  color: #64748b;
-  border: 1px dashed #cbd5e1;
+  .checkin-history-meta {
+    display: none;
+  }
 }

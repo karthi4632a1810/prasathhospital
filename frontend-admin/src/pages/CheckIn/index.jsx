@@ -440,11 +440,14 @@ export default function CheckIn() {
 
   return (
     <div className="checkin-container">
-      {/* Page Header with Event Select and Sound Toggle */}
-      <div className="page-header">
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
-            <h2 className="page-header__title" style={{ margin: 0 }}>Check-in Desk</h2>
+      {/* ====================================================================
+          Unified Check-in Console Header (Title, Controls, Checkpoint Switcher, Metrics)
+          ==================================================================== */}
+      <div className="checkin-console-header">
+        {/* Row 1: Title, Status Badge, Quick Controls */}
+        <div className="checkin-console-header__top">
+          <div className="checkin-console-title-group">
+            <h2 className="checkin-console-title">Check-in Desk</h2>
             <span
               className={`checkin-status-badge checkin-status-badge--${
                 cameraStatus === 'active'
@@ -462,56 +465,57 @@ export default function CheckIn() {
                 : 'Camera Offline'}
             </span>
           </div>
-          <p className="page-header__subtitle" style={{ marginTop: '4px' }}>
-            Scan delegate QR passes or enter registration codes manually.
-          </p>
-        </div>
 
-        <div className="checkin-header-actions">
-          {events && events.length > 1 && (
-            <select
-              className="field__select"
-              value={eventId || ''}
-              onChange={(e) => setEventId(e.target.value)}
-              style={{ minWidth: '180px' }}
+          <div className="checkin-console-actions">
+            {events && events.length > 1 && (
+              <select
+                className="field__select checkin-event-select"
+                value={eventId || ''}
+                onChange={(e) => setEventId(e.target.value)}
+              >
+                {events.map((ev) => (
+                  <option key={ev.id} value={ev.id}>
+                    {ev.title}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            <button
+              type="button"
+              className={`checkin-ctrl-btn${soundEnabled ? ' is-active' : ''}`}
+              onClick={toggleSound}
+              title={soundEnabled ? 'Mute audio feedback' : 'Enable audio chimes'}
             >
-              {events.map((ev) => (
-                <option key={ev.id} value={ev.id}>
-                  {ev.title}
-                </option>
-              ))}
-            </select>
-          )}
+              {soundEnabled ? '🔊 Sound On' : '🔇 Muted'}
+            </button>
 
-          <button
-            type="button"
-            className={`checkin-ctrl-btn${soundEnabled ? ' is-active' : ''}`}
-            onClick={toggleSound}
-            title={soundEnabled ? 'Mute audio feedback' : 'Enable audio chimes'}
-          >
-            {soundEnabled ? '🔊 Sound On' : '🔇 Muted'}
-          </button>
+            <button
+              type="button"
+              className="checkin-ctrl-btn"
+              onClick={loadStats}
+              title="Refresh statistics"
+            >
+              ↻ Refresh
+            </button>
 
-          <button
-            type="button"
-            className="checkin-ctrl-btn"
-            onClick={loadStats}
-            title="Refresh statistics"
-          >
-            ↻ Refresh
-          </button>
+            <a href="/checkin-locations" className="checkin-manage-btn" title="Manage checkpoint gates">
+              ⚙️ Checkpoints
+            </a>
+          </div>
         </div>
-      </div>
 
-      {/* Checkpoint Location Switcher Bar */}
-      <div className="checkin-location-bar">
-        <div className="checkin-location-bar__left">
-          <div className="checkin-location-bar__label">
-            <span>📍</span>
+        {/* Row 2: Checkpoint Location Switcher Tabs */}
+        <div className="checkin-checkpoints-bar">
+          <div className="checkin-checkpoints-label">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
             <span>Active Checkpoint:</span>
           </div>
 
-          <div className="checkin-location-pills">
+          <div className="checkin-checkpoints-tabs">
             {locations.filter((l) => l.isActive).map((loc) => {
               const isSelected = activeLocation?.id === loc.id;
               const iconEmoji =
@@ -526,11 +530,15 @@ export default function CheckIn() {
                   : loc.icon === 'star'
                   ? '⭐'
                   : '🚪';
+
+              const locStat = stats?.locations?.find((sl) => sl.id === loc.id);
+              const locCount = locStat?.checkedIn !== undefined ? locStat.checkedIn : loc.checkedInCount ?? 0;
+
               return (
                 <button
                   key={loc.id}
                   type="button"
-                  className={`checkin-loc-pill${isSelected ? ' is-selected' : ''}`}
+                  className={`checkin-tab-btn${isSelected ? ' is-active' : ''}`}
                   onClick={() => {
                     setActiveLocationId(loc.id);
                     setScanResult(null);
@@ -539,100 +547,88 @@ export default function CheckIn() {
                     isSelected
                       ? {
                           borderColor: loc.color || '#2563eb',
-                          background: `${loc.color || '#2563eb'}18`,
-                          color: loc.color || '#2563eb',
+                          background: `${loc.color || '#2563eb'}14`,
+                          color: loc.color || '#1e40af',
                         }
                       : {}
                   }
                 >
-                  <span>{iconEmoji}</span>
-                  <span>{loc.name}</span>
-                  {loc.isDefault && <span className="checkin-loc-pill__default-tag">Default</span>}
-                  {loc.checkedInCount !== undefined && (
-                    <span className="checkin-loc-pill__count">({loc.checkedInCount})</span>
-                  )}
+                  <span className="checkin-tab-emoji">{iconEmoji}</span>
+                  <span className="checkin-tab-name">{loc.name}</span>
+                  {loc.isDefault && <span className="checkin-tab-default-tag">Default</span>}
+                  <span className="checkin-tab-count">
+                    ({locCount}/{totalCount})
+                  </span>
                 </button>
               );
             })}
           </div>
         </div>
 
-        <a href="/checkin-locations" className="checkin-manage-loc-link">
-          ⚙️ Manage Locations
-        </a>
+        {/* Row 3: Compact Executive Metrics Ribbon */}
+        <div className="checkin-metrics-ribbon">
+          <div className="checkin-metric-tile checkin-metric-tile--primary">
+            <div className="checkin-metric-tile__header">
+              <span className="checkin-metric-tile__label">
+                Checked in ({activeLocation?.name || 'Entry'})
+              </span>
+              <span className="checkin-metric-badge checkin-metric-badge--green">
+                {checkinRate}% Admitted
+              </span>
+            </div>
+            <div className="checkin-metric-tile__body">
+              <span className="checkin-metric-tile__number checkin-metric-tile__number--green">
+                {checkedInCount}
+              </span>
+              <span className="checkin-metric-tile__sub">of {totalCount} confirmed delegates</span>
+            </div>
+            <div className="checkin-metric-progress">
+              <div
+                className="checkin-metric-progress__fill"
+                style={{ width: `${Math.min(checkinRate, 100)}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="checkin-metric-tile">
+            <div className="checkin-metric-tile__header">
+              <span className="checkin-metric-tile__label">Remaining Here</span>
+              <span className="checkin-metric-sublabel">Pending Arrival</span>
+            </div>
+            <div className="checkin-metric-tile__body">
+              <span className="checkin-metric-tile__number">{remainingCount}</span>
+              <span className="checkin-metric-tile__sub">For {activeLocation?.name || 'this checkpoint'}</span>
+            </div>
+          </div>
+
+          <div className="checkin-metric-tile">
+            <div className="checkin-metric-tile__header">
+              <span className="checkin-metric-tile__label">Total Registered</span>
+              <span className="checkin-metric-sublabel">Event Capacity</span>
+            </div>
+            <div className="checkin-metric-tile__body">
+              <span className="checkin-metric-tile__number">{totalCount}</span>
+              <span className="checkin-metric-tile__sub">Confirmed delegate passes</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Top Metric Cards with Progress Bar */}
-      <div className="stat-grid">
-        <div className="checkin-stat-card">
-          <div className="checkin-stat-card__head">
-            <span className="checkin-stat-card__label">
-              Checked in ({activeLocation?.name || 'Entry'})
-            </span>
-            <span className="checkin-stat-card__badge checkin-stat-card__badge--green">
-              {checkinRate}% Completed
-            </span>
-          </div>
-          <p className="checkin-stat-card__value checkin-stat-card__value--green">
-            {checkedInCount}
-          </p>
-          <div className="checkin-stat-card__progress-wrap">
-            <div
-              className="checkin-stat-card__progress-bar"
-              style={{ width: `${Math.min(checkinRate, 100)}%` }}
-            />
-          </div>
-        </div>
-
-        <div className="checkin-stat-card">
-          <div className="checkin-stat-card__head">
-            <span className="checkin-stat-card__label">Remaining</span>
-            <span className="stat-tile__meta">For {activeLocation?.name || 'this checkpoint'}</span>
-          </div>
-          <p className="checkin-stat-card__value">{remainingCount}</p>
-          <span style={{ fontSize: '11px', color: 'var(--ink-400)' }}>
-            Pending scan at this checkpoint
-          </span>
-        </div>
-
-        <div className="checkin-stat-card">
-          <div className="checkin-stat-card__head">
-            <span className="checkin-stat-card__label">Total Confirmed</span>
-            <span className="stat-tile__meta">Event capacity</span>
-          </div>
-          <p className="checkin-stat-card__value">{totalCount}</p>
-          <span style={{ fontSize: '11px', color: 'var(--ink-400)' }}>
-            Confirmed delegate passes
-          </span>
-        </div>
-      </div>
-
-      {/* Multi-checkpoint mini tracker */}
-      {stats?.locations && stats.locations.length > 1 && (
-        <div className="checkin-locations-overview-bar">
-          <strong>Checkpoint Overview:</strong>
-          {stats.locations.map((sl) => (
-            <span key={sl.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <span>{sl.icon === 'utensils' ? '🍽️' : '🚪'}</span>
-              <strong>{sl.name}:</strong> {sl.checkedIn} / {stats.total}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* Main 2-Column Check-in Grid */}
+      {/* ====================================================================
+          Main 2-Column Balanced Console Grid (Scanner Card + Attendee Verification Card)
+          ==================================================================== */}
       <div className="checkin-grid">
-        {/* Left Column: Scanner Card */}
+        {/* Left Column: QR Scanner & Camera Card */}
         <div className="checkin-scanner-card">
-          <div className="checkin-scanner-card__header">
-            <h3 className="checkin-scanner-card__title">
+          <div className="checkin-card-header">
+            <h3 className="checkin-card-title">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" />
                 <rect x="7" y="7" width="10" height="10" rx="1" />
               </svg>
               QR Scanner
             </h3>
-            <div className="checkin-scanner-header-actions">
+            <div className="checkin-card-header-actions">
               <button
                 type="button"
                 className="checkin-flip-btn"
@@ -645,11 +641,11 @@ export default function CheckIn() {
                   {isSwitching
                     ? 'Switching…'
                     : activeFacing === 'environment'
-                    ? 'Flip to Front'
-                    : 'Flip to Back'}
+                    ? 'Flip Front'
+                    : 'Flip Back'}
                 </span>
                 <span className={`checkin-flip-badge checkin-flip-badge--${activeFacing}`}>
-                  {activeFacing === 'environment' ? 'Back' : 'Front'}
+                  {activeFacing === 'environment' ? 'Rear' : 'Front'}
                 </span>
               </button>
             </div>
@@ -673,13 +669,13 @@ export default function CheckIn() {
               </div>
             )}
 
-            {/* Offline Fallback */}
+            {/* Offline / Unavailable Fallback */}
             {cameraStatus === 'unavailable' && (
               <div className="checkin-viewport__state-box">
                 <div className="checkin-viewport__icon">📷</div>
                 <h4 className="checkin-viewport__state-title">Camera Unavailable</h4>
                 <p className="checkin-viewport__state-desc">
-                  Camera permission was not granted or device camera is busy. Tap below to retry or use manual code entry below.
+                  Camera permission not granted or device camera is busy. Tap below to retry or allow camera in browser bar (🔒).
                 </p>
                 <div className="checkin-viewport__retry-actions">
                   <button
@@ -696,7 +692,7 @@ export default function CheckIn() {
                     onClick={() => handleRetryCamera('user')}
                     disabled={isSwitching}
                   >
-                    ↻ Try Front Camera
+                    🔄 Try Front Camera
                   </button>
                 </div>
               </div>
@@ -716,9 +712,9 @@ export default function CheckIn() {
           {/* Quick Toolbar below camera */}
           <div className="checkin-viewport-bar">
             <div className="checkin-viewport-bar__left">
-              <span style={{ fontSize: '11px', opacity: 0.8 }}>
+              <span className="checkin-viewport-status-text">
                 {cameraStatus === 'active'
-                  ? `● Active (${activeFacing === 'environment' ? 'Rear' : 'Front'} Cam)`
+                  ? `● Active (${activeFacing === 'environment' ? 'Rear' : 'Front'})`
                   : cameraStatus === 'starting'
                   ? '◐ Starting…'
                   : '○ Standby'}
@@ -766,8 +762,8 @@ export default function CheckIn() {
                   </svg>
                 </span>
                 <input
-                  className="field__input"
-                  placeholder="Paste QR token, ticket URL, or code…"
+                  className="field__input checkin-manual-input"
+                  placeholder="Enter 6-digit code or ticket #…"
                   value={manualCode}
                   onChange={(e) => setManualCode(e.target.value)}
                   disabled={scanning}
@@ -787,26 +783,45 @@ export default function CheckIn() {
                 type="submit"
                 variant="primary"
                 disabled={!manualCode.trim() || scanning}
-                style={{ flexShrink: 0 }}
+                className="checkin-manual-btn"
               >
                 {scanning ? 'Checking…' : 'Check in'}
               </Button>
             </form>
             <p className="checkin-manual-hint">
-              <span>💡 Tip:</span> Type 6-digit code and press Enter ↵
+              <span>💡 Tip:</span> Type code or registration # and press Enter ↵
             </p>
           </div>
         </div>
 
-        {/* Right Column: VIP Attendee Admission Card */}
+        {/* Right Column: Delegate Admission Card */}
         <div
           className={`checkin-display-card checkin-display--${
             scanResult?.tone || 'idle'
           }`}
         >
+          {/* Card Header matching the Left Scanner Header */}
+          <div className="checkin-card-header">
+            <h3 className="checkin-card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              Delegate Verification
+            </h3>
+            <div className="checkin-card-header-actions">
+              <span className={`checkin-result-pill checkin-result-pill--${scanResult?.tone || 'idle'}`}>
+                {!scanResult && '⚪ Awaiting Scan'}
+                {scanResult?.tone === 'success' && '✓ Admitted'}
+                {scanResult?.tone === 'warning' && '⚠️ Duplicate'}
+                {scanResult?.tone === 'error' && '✕ Invalid'}
+              </span>
+            </div>
+          </div>
+
           {/* 1. Idle State */}
           {!scanResult && (
-            <div className="checkin-display--idle">
+            <div className="checkin-display-idle-body">
               <div className="checkin-idle-radar">
                 <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" />
@@ -816,16 +831,20 @@ export default function CheckIn() {
               </div>
               <h3 className="checkin-idle-title">Ready for Next Delegate</h3>
               <p className="checkin-idle-desc">
-                Align the attendee's digital QR pass or printed conference badge in front of the scanner lens.
+                Align the attendee's digital QR pass or printed conference badge in front of the scanner lens, or type the code manually.
               </p>
               <div className="checkin-idle-stats">
                 <div className="checkin-idle-stat-item">
                   Expected: <strong>{remainingCount}</strong>
                 </div>
-                <div style={{ color: 'var(--ink-200)' }}>|</div>
+                <div className="checkin-idle-stat-divider">|</div>
                 <div className="checkin-idle-stat-item">
                   Checked in: <strong>{checkedInCount}</strong>
                 </div>
+              </div>
+              <div className="checkin-idle-active-tag">
+                <span>Active Checkpoint:</span>
+                <strong>{activeLocation?.name || 'Main Entry'}</strong>
               </div>
             </div>
           )}
