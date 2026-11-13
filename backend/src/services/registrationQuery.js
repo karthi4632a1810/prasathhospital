@@ -52,6 +52,9 @@ function buildRegistrationFilter(query = {}) {
   if (query.whatsappStatus) filter['delivery.whatsapp.status'] = deliveryFilter(query.whatsappStatus);
   if (query.checkedIn === 'yes') filter.checkedInAt = { $ne: null };
   if (query.checkedIn === 'no') filter.checkedInAt = null;
+  if (query.lunchCheckedIn === 'yes') filter['checkins.locationCode'] = 'LUNCH';
+  if (query.lunchCheckedIn === 'no') filter['checkins.locationCode'] = { $ne: 'LUNCH' };
+  if (query.locationCheckedIn) filter['checkins.locationCode'] = String(query.locationCheckedIn).trim().toUpperCase();
 
   if (query.from || query.to) {
     filter.createdAt = {};

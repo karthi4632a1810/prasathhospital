@@ -24,6 +24,7 @@ const EMPTY_FILTERS = {
   emailStatus: '',
   whatsappStatus: '',
   checkedIn: '',
+  lunchCheckedIn: '',
   from: '',
   to: '',
 };
@@ -324,15 +325,27 @@ export default function Registrations() {
             </select>
           </label>
           <label className="field">
-            <span className="field__label">Check-in</span>
+            <span className="field__label">Entry Check-in</span>
             <select
               className="field__select"
               value={filters.checkedIn}
               onChange={setFilter('checkedIn')}
             >
               <option value="">Any</option>
-              <option value="yes">Checked in</option>
-              <option value="no">Not checked in</option>
+              <option value="yes">🚪 Entry: Scanned</option>
+              <option value="no">🚪 Entry: Pending</option>
+            </select>
+          </label>
+          <label className="field">
+            <span className="field__label">Lunch Pass</span>
+            <select
+              className="field__select"
+              value={filters.lunchCheckedIn}
+              onChange={setFilter('lunchCheckedIn')}
+            >
+              <option value="">Any</option>
+              <option value="yes">🍽️ Lunch: Scanned</option>
+              <option value="no">🍽️ Lunch: Pending</option>
             </select>
           </label>
           <label className="field">
@@ -517,14 +530,29 @@ export default function Registrations() {
                     <td>
                       <DeliveryBadge status={reg.delivery?.whatsapp?.status} />
                     </td>
-                    <td style={{ whiteSpace: 'nowrap' }}>
-                      {reg.checkedInAt ? (
-                        <Badge tone="success" size="sm">
-                          <span title={formatDateTime(reg.checkedInAt)}>Checked in</span>
-                        </Badge>
-                      ) : (
-                        <span className="muted">—</span>
-                      )}
+                    <td>
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        {reg.checkedInAt || reg.checkins?.some((c) => c.locationCode === 'ENTRY') ? (
+                          <Badge tone="success" size="sm">
+                            <span title={`Entry: ${reg.checkedInAt ? formatDateTime(reg.checkedInAt) : 'Checked in'}`}>
+                              🚪 Entry
+                            </span>
+                          </Badge>
+                        ) : null}
+                        {reg.checkins?.some((c) => c.locationCode === 'LUNCH') ? (
+                          <Badge tone="purple" size="sm">
+                            <span title="Lunch pass scanned">🍽️ Lunch</span>
+                          </Badge>
+                        ) : null}
+                        {reg.checkins?.filter((c) => !['ENTRY', 'LUNCH'].includes(c.locationCode)).map((c) => (
+                          <Badge key={c.locationCode} tone="neutral" size="sm">
+                            <span>{c.locationName || c.locationCode}</span>
+                          </Badge>
+                        ))}
+                        {!reg.checkedInAt && (!reg.checkins || reg.checkins.length === 0) && (
+                          <span className="muted">—</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

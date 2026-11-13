@@ -12,6 +12,7 @@ import Registrations from './pages/Registrations';
 import Communications from './pages/Communications';
 import WhatsAppMarketing from './pages/WhatsAppMarketing';
 import CheckIn from './pages/CheckIn';
+import CheckinLocations from './pages/CheckinLocations';
 import Users from './pages/Users';
 import Reports from './pages/Reports';
 import Feedback from './pages/Feedback';
@@ -106,6 +107,14 @@ export default function App() {
             element={
               <Shielded>
                 <CheckIn />
+              </Shielded>
+            }
+          />
+          <Route
+            path="/checkin-locations"
+            element={
+              <Shielded roles={OPS}>
+                <CheckinLocations />
               </Shielded>
             }
           />

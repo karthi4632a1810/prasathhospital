@@ -49,6 +49,8 @@ function playScanAudio(type, enabled = true) {
 export default function CheckIn() {
   const [events, setEvents] = useState(null);
   const [eventId, setEventId] = useState(null);
+  const [locations, setLocations] = useState([]);
+  const [activeLocationId, setActiveLocationId] = useState(null);
   const [stats, setStats] = useState(null);
   const [scanResult, setScanResult] = useState(null);
   const [manualCode, setManualCode] = useState('');
@@ -92,16 +94,43 @@ export default function CheckIn() {
       .catch(() => setEvents([]));
   }, []);
 
-  // Load check-in stats
+  // Load checkpoint locations for current event
+  useEffect(() => {
+    if (!eventId) return;
+    checkinApi
+      .locations(eventId)
+      .then((res) => {
+        const locs = res.data || [];
+        setLocations(locs);
+        const activeLocs = locs.filter((l) => l.isActive);
+        const defaultLoc = activeLocs.find((l) => l.isDefault) || activeLocs[0];
+        if (defaultLoc) {
+          setActiveLocationId((prev) => {
+            if (prev && activeLocs.some((l) => l.id === prev)) return prev;
+            return defaultLoc.id;
+          });
+        }
+      })
+      .catch(() => setLocations([]));
+  }, [eventId]);
+
+  // Load check-in stats for event & selected checkpoint
   const loadStats = useCallback(() => {
     if (!eventId) return;
     checkinApi
-      .stats(eventId)
+      .stats(eventId, activeLocationId)
       .then((res) => setStats(res.data))
       .catch(() => {});
-  }, [eventId]);
+  }, [eventId, activeLocationId]);
 
   useEffect(loadStats, [loadStats]);
+
+  // Active location object
+  const activeLocation =
+    locations.find((l) => l.id === activeLocationId) ||
+    locations.find((l) => l.isDefault && l.isActive) ||
+    locations.find((l) => l.isActive) ||
+    null;
 
   // Main submission handler
   const submitScan = useCallback(
@@ -109,13 +138,15 @@ export default function CheckIn() {
       if (!rawValue) return;
       setScanning(true);
       try {
-        const res = await checkinApi.scan(rawValue);
+        const res = await checkinApi.scan(rawValue, activeLocationId);
         const isSuccess = res.data.result === 'success';
         const tone = isSuccess ? 'success' : 'warning';
         const resultData = { tone, ...res.data };
 
         setScanResult(resultData);
         playScanAudio(tone, soundEnabled);
+
+        const locName = res.data.activeLocation?.name || activeLocation?.name || 'Checkpoint';
 
         // Append to recent scans session desk stream
         setRecentScans((prev) => [
@@ -130,8 +161,9 @@ export default function CheckIn() {
             ticketType: res.data.ticketType?.name || 'Attendee Pass',
             company: res.data.company?.name || '',
             code: res.data.registrationCode || '',
+            locationName: locName,
             tone,
-            statusText: isSuccess ? 'Checked in' : 'Duplicate',
+            statusText: isSuccess ? `Checked in (${locName})` : `Duplicate (${locName})`,
             data: resultData,
           },
           ...prev.slice(0, 9),
@@ -155,6 +187,7 @@ export default function CheckIn() {
             ticketType: 'Unknown',
             company: '',
             code: '',
+            locationName: activeLocation?.name || 'Checkpoint',
             tone: 'error',
             statusText: 'Rejected',
             data: errorData,
@@ -165,7 +198,7 @@ export default function CheckIn() {
         setScanning(false);
       }
     },
-    [loadStats, soundEnabled]
+    [activeLocationId, activeLocation, soundEnabled, loadStats]
   );
 
   // Camera frame detection callback
@@ -470,11 +503,72 @@ export default function CheckIn() {
         </div>
       </div>
 
+      {/* Checkpoint Location Switcher Bar */}
+      <div className="checkin-location-bar">
+        <div className="checkin-location-bar__left">
+          <div className="checkin-location-bar__label">
+            <span>📍</span>
+            <span>Active Checkpoint:</span>
+          </div>
+
+          <div className="checkin-location-pills">
+            {locations.filter((l) => l.isActive).map((loc) => {
+              const isSelected = activeLocation?.id === loc.id;
+              const iconEmoji =
+                loc.icon === 'utensils'
+                  ? '🍽️'
+                  : loc.icon === 'gift'
+                  ? '🎁'
+                  : loc.icon === 'coffee'
+                  ? '☕'
+                  : loc.icon === 'mic'
+                  ? '🎤'
+                  : loc.icon === 'star'
+                  ? '⭐'
+                  : '🚪';
+              return (
+                <button
+                  key={loc.id}
+                  type="button"
+                  className={`checkin-loc-pill${isSelected ? ' is-selected' : ''}`}
+                  onClick={() => {
+                    setActiveLocationId(loc.id);
+                    setScanResult(null);
+                  }}
+                  style={
+                    isSelected
+                      ? {
+                          borderColor: loc.color || '#2563eb',
+                          background: `${loc.color || '#2563eb'}18`,
+                          color: loc.color || '#2563eb',
+                        }
+                      : {}
+                  }
+                >
+                  <span>{iconEmoji}</span>
+                  <span>{loc.name}</span>
+                  {loc.isDefault && <span className="checkin-loc-pill__default-tag">Default</span>}
+                  {loc.checkedInCount !== undefined && (
+                    <span className="checkin-loc-pill__count">({loc.checkedInCount})</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <a href="/checkin-locations" className="checkin-manage-loc-link">
+          ⚙️ Manage Locations
+        </a>
+      </div>
+
       {/* Top Metric Cards with Progress Bar */}
       <div className="stat-grid">
         <div className="checkin-stat-card">
           <div className="checkin-stat-card__head">
-            <span className="checkin-stat-card__label">Checked in</span>
+            <span className="checkin-stat-card__label">
+              Checked in ({activeLocation?.name || 'Entry'})
+            </span>
             <span className="checkin-stat-card__badge checkin-stat-card__badge--green">
               {checkinRate}% Completed
             </span>
@@ -493,11 +587,11 @@ export default function CheckIn() {
         <div className="checkin-stat-card">
           <div className="checkin-stat-card__head">
             <span className="checkin-stat-card__label">Remaining</span>
-            <span className="stat-tile__meta">Expected today</span>
+            <span className="stat-tile__meta">For {activeLocation?.name || 'this checkpoint'}</span>
           </div>
           <p className="checkin-stat-card__value">{remainingCount}</p>
           <span style={{ fontSize: '11px', color: 'var(--ink-400)' }}>
-            Pending arrival at desk
+            Pending scan at this checkpoint
           </span>
         </div>
 
@@ -512,6 +606,19 @@ export default function CheckIn() {
           </span>
         </div>
       </div>
+
+      {/* Multi-checkpoint mini tracker */}
+      {stats?.locations && stats.locations.length > 1 && (
+        <div className="checkin-locations-overview-bar">
+          <strong>Checkpoint Overview:</strong>
+          {stats.locations.map((sl) => (
+            <span key={sl.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <span>{sl.icon === 'utensils' ? '🍽️' : '🚪'}</span>
+              <strong>{sl.name}:</strong> {sl.checkedIn} / {stats.total}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Main 2-Column Check-in Grid */}
       <div className="checkin-grid">
@@ -729,7 +836,11 @@ export default function CheckIn() {
               <div className="checkin-result-banner checkin-result-banner--success">
                 <div className="checkin-banner-status">
                   <span className="checkin-banner-icon">✓</span>
-                  <span>ADMISSION GRANTED</span>
+                  <span>
+                    {scanResult.activeLocation?.name
+                      ? `${scanResult.activeLocation.name.toUpperCase()} VERIFIED`
+                      : 'ADMISSION GRANTED'}
+                  </span>
                 </div>
                 <span className="checkin-banner-time">
                   {new Date(scanResult.checkedInAt).toLocaleTimeString('en-IN', {
@@ -792,10 +903,59 @@ export default function CheckIn() {
                     </div>
 
                     <div className="checkin-meta-chip">
-                      <span className="checkin-meta-chip__label">Check-in Timestamp</span>
+                      <span className="checkin-meta-chip__label">Verified Checkpoint</span>
                       <span className="checkin-meta-chip__value">
-                        ⏰ {new Date(scanResult.checkedInAt).toLocaleTimeString('en-IN')}
+                        📍 {scanResult.activeLocation?.name || 'Main Entry Desk'}
                       </span>
+                    </div>
+                  </div>
+
+                  {/* Multi-Location Checkpoint History */}
+                  <div style={{ marginTop: 'var(--space-4)' }}>
+                    <span className="checkin-meta-chip__label" style={{ display: 'block', marginBottom: '6px' }}>
+                      Checkpoint Verification Status
+                    </span>
+                    <div className="checkin-history-chips">
+                      {locations.filter((l) => l.isActive).map((loc) => {
+                        const match = (scanResult.checkins || []).find((c) => c.locationCode === loc.code);
+                        const isCurrent = scanResult.activeLocation?.code === loc.code;
+                        const iconEmoji =
+                          loc.icon === 'utensils'
+                            ? '🍽️'
+                            : loc.icon === 'gift'
+                            ? '🎁'
+                            : loc.icon === 'coffee'
+                            ? '☕'
+                            : loc.icon === 'mic'
+                            ? '🎤'
+                            : loc.icon === 'star'
+                            ? '⭐'
+                            : '🚪';
+
+                        return match ? (
+                          <span
+                            key={loc.id}
+                            className="checkin-loc-history-chip checkin-loc-history-chip--done"
+                            style={isCurrent ? { boxShadow: '0 0 0 2px var(--brand-600)' } : {}}
+                          >
+                            <span>✓</span>
+                            <span>{iconEmoji}</span>
+                            <span>{loc.name}:</span>
+                            <span style={{ fontWeight: 400 }}>
+                              {new Date(match.checkedInAt).toLocaleTimeString('en-IN', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </span>
+                        ) : (
+                          <span key={loc.id} className="checkin-loc-history-chip checkin-loc-history-chip--pending">
+                            <span>⏳</span>
+                            <span>{iconEmoji}</span>
+                            <span>{loc.name} (Pending)</span>
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -830,9 +990,15 @@ export default function CheckIn() {
               <div className="checkin-result-banner checkin-result-banner--warning">
                 <div className="checkin-banner-status">
                   <span className="checkin-banner-icon">⚠️</span>
-                  <span>ALREADY CHECKED IN</span>
+                  <span>
+                    ALREADY CHECKED IN (
+                    {scanResult.activeLocation?.name
+                      ? scanResult.activeLocation.name.toUpperCase()
+                      : 'CHECKPOINT'}
+                    )
+                  </span>
                 </div>
-                <span className="checkin-banner-time">DUPLICATE ENTRY</span>
+                <span className="checkin-banner-time">DUPLICATE SCAN</span>
               </div>
 
               <div className="checkin-result-body">
@@ -855,10 +1021,61 @@ export default function CheckIn() {
                   <div className="checkin-alert-banner checkin-alert-banner--warning" style={{ marginTop: 'var(--space-4)' }}>
                     <span>⚠️</span>
                     <div>
-                      <strong>Pass already used for admission today.</strong>
+                      <strong>
+                        Pass already scanned at {scanResult.activeLocation?.name || 'this checkpoint'} today.
+                      </strong>
                       <div style={{ marginTop: '2px', fontSize: '13px' }}>
-                        First scanned at {new Date(scanResult.checkedInAt).toLocaleTimeString('en-IN')} on {new Date(scanResult.checkedInAt).toLocaleDateString('en-IN')}. Please verify delegate identity before admitting.
+                        First scanned at {new Date(scanResult.checkedInAt).toLocaleTimeString('en-IN')} on {new Date(scanResult.checkedInAt).toLocaleDateString('en-IN')}. Please verify delegate identity.
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Multi-Location Checkpoint History */}
+                  <div style={{ marginTop: 'var(--space-4)' }}>
+                    <span className="checkin-meta-chip__label" style={{ display: 'block', marginBottom: '6px' }}>
+                      Checkpoint Verification Status
+                    </span>
+                    <div className="checkin-history-chips">
+                      {locations.filter((l) => l.isActive).map((loc) => {
+                        const match = (scanResult.checkins || []).find((c) => c.locationCode === loc.code);
+                        const isCurrent = scanResult.activeLocation?.code === loc.code;
+                        const iconEmoji =
+                          loc.icon === 'utensils'
+                            ? '🍽️'
+                            : loc.icon === 'gift'
+                            ? '🎁'
+                            : loc.icon === 'coffee'
+                            ? '☕'
+                            : loc.icon === 'mic'
+                            ? '🎤'
+                            : loc.icon === 'star'
+                            ? '⭐'
+                            : '🚪';
+
+                        return match ? (
+                          <span
+                            key={loc.id}
+                            className="checkin-loc-history-chip checkin-loc-history-chip--done"
+                            style={isCurrent ? { boxShadow: '0 0 0 2px var(--danger-500)' } : {}}
+                          >
+                            <span>✓</span>
+                            <span>{iconEmoji}</span>
+                            <span>{loc.name}:</span>
+                            <span style={{ fontWeight: 400 }}>
+                              {new Date(match.checkedInAt).toLocaleTimeString('en-IN', {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </span>
+                        ) : (
+                          <span key={loc.id} className="checkin-loc-history-chip checkin-loc-history-chip--pending">
+                            <span>⏳</span>
+                            <span>{iconEmoji}</span>
+                            <span>{loc.name} (Pending)</span>
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
 

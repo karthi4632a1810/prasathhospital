@@ -49,6 +49,19 @@ const PricingSchema = new Schema(
 
 const DELIVERY_STATUSES = ['pending', 'sent', 'failed', 'retryable', 'not_configured'];
 
+/** Record of check-in at a specific checkpoint (Entry, Lunch, Kit, etc.). */
+const LocationCheckinSchema = new Schema(
+  {
+    location: { type: Schema.Types.ObjectId, ref: 'CheckinLocation', default: null },
+    locationCode: { type: String, required: true, uppercase: true, trim: true },
+    locationName: { type: String, required: true, trim: true },
+    checkedInAt: { type: Date, default: Date.now },
+    checkedInBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    notes: { type: String, trim: true, default: '' },
+  },
+  { _id: true }
+);
+
 /** Current state of one delivery channel (email or WhatsApp). */
 const DeliveryChannelSchema = new Schema(
   {
@@ -128,6 +141,7 @@ const RegistrationSchema = new Schema(
 
     checkedInAt: { type: Date, default: null },
     checkedInBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+    checkins: { type: [LocationCheckinSchema], default: [] },
     certificateIssuedAt: { type: Date, default: null },
 
     cancelledAt: { type: Date, default: null },
@@ -147,6 +161,7 @@ RegistrationSchema.index({ 'attendee.email': 1 });
 RegistrationSchema.index({ 'attendee.phone': 1 });
 RegistrationSchema.index({ 'delivery.email.status': 1 });
 RegistrationSchema.index({ 'delivery.whatsapp.status': 1 });
+RegistrationSchema.index({ 'checkins.locationCode': 1 });
 
 RegistrationSchema.statics.DELIVERY_STATUSES = DELIVERY_STATUSES;
 

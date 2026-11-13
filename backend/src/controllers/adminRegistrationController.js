@@ -197,7 +197,9 @@ const CSV_COLUMNS = [
   { key: 'qrStatus', label: 'QR Status' },
   { key: 'emailStatus', label: 'Email Status' },
   { key: 'whatsappStatus', label: 'WhatsApp Status' },
-  { key: 'checkedInAtStr', label: 'Checked In At' },
+  { key: 'checkedInAtStr', label: 'Entry Checked In At' },
+  { key: 'lunchCheckedInAtStr', label: 'Lunch Checked In At' },
+  { key: 'checkinLocationsStr', label: 'All Check-in Checkpoints' },
   { key: 'cancelledAtStr', label: 'Cancelled At' },
   { key: 'cancellationReason', label: 'Cancellation Reason' },
   { key: 'pricing.totalAmount', label: 'Amount Paid' },
@@ -219,17 +221,26 @@ const exportRegistrationsCsv = asyncHandler(async (req, res) => {
     .limit(50000)
     .lean();
 
-  const rows = registrations.map((r) => ({
-    ...r,
-    companyName: r.company?.name || '',
-    passName: r.ticketType?.name || '',
-    registeredAt: r.createdAt ? new Date(r.createdAt).toISOString() : '',
-    qrStatus: qrStatusOf(r),
-    emailStatus: r.delivery?.email?.status || 'pending',
-    whatsappStatus: r.delivery?.whatsapp?.status || 'pending',
-    checkedInAtStr: r.checkedInAt ? new Date(r.checkedInAt).toISOString() : '',
-    cancelledAtStr: r.cancelledAt ? new Date(r.cancelledAt).toISOString() : '',
-  }));
+  const rows = registrations.map((r) => {
+    const lunchCheckin = (r.checkins || []).find((c) => c.locationCode === 'LUNCH');
+    const allLocationsStr = (r.checkins || [])
+      .map((c) => `${c.locationName} (${new Date(c.checkedInAt).toLocaleTimeString('en-IN')})`)
+      .join('; ');
+
+    return {
+      ...r,
+      companyName: r.company?.name || '',
+      passName: r.ticketType?.name || '',
+      registeredAt: r.createdAt ? new Date(r.createdAt).toISOString() : '',
+      qrStatus: qrStatusOf(r),
+      emailStatus: r.delivery?.email?.status || 'pending',
+      whatsappStatus: r.delivery?.whatsapp?.status || 'pending',
+      checkedInAtStr: r.checkedInAt ? new Date(r.checkedInAt).toISOString() : '',
+      lunchCheckedInAtStr: lunchCheckin ? new Date(lunchCheckin.checkedInAt).toISOString() : '',
+      checkinLocationsStr: allLocationsStr || (r.checkedInAt ? 'Main Entry Desk' : ''),
+      cancelledAtStr: r.cancelledAt ? new Date(r.cancelledAt).toISOString() : '',
+    };
+  });
 
   recordAudit(req, { action: 'registration.export', entityType: 'Registration', meta: { count: rows.length, filters: req.query } });
   res.set('Content-Type', 'text/csv; charset=utf-8');

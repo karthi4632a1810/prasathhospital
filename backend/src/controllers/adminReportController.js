@@ -171,9 +171,10 @@ const getOverview = asyncHandler(async (req, res) => {
   const eventId = requireEvent(req.query);
   const match = { event: eventId };
 
-  const [byStatus, checkedIn, emailRows, whatsappRows, breakdown] = await Promise.all([
+  const [byStatus, checkedIn, lunchCheckedIn, emailRows, whatsappRows, breakdown] = await Promise.all([
     Registration.aggregate([{ $match: match }, { $group: { _id: '$status', count: { $sum: 1 } } }]),
     Registration.countDocuments({ ...match, status: 'confirmed', checkedInAt: { $ne: null } }),
+    Registration.countDocuments({ ...match, status: 'confirmed', 'checkins.locationCode': 'LUNCH' }),
     Registration.aggregate([{ $match: { ...match, status: 'confirmed' } }, { $group: { _id: EMAIL_STATUS, count: { $sum: 1 } } }]),
     Registration.aggregate([{ $match: { ...match, status: 'confirmed' } }, { $group: { _id: WHATSAPP_STATUS, count: { $sum: 1 } } }]),
     buildBreakdown(eventId, {}),
@@ -200,6 +201,9 @@ const getOverview = asyncHandler(async (req, res) => {
       remaining: confirmed - checkedIn,
       total: confirmed,
       rate: confirmed > 0 ? Math.round((checkedIn / confirmed) * 100) : 0,
+      lunchCheckedIn,
+      lunchRemaining: Math.max(confirmed - lunchCheckedIn, 0),
+      lunchRate: confirmed > 0 ? Math.round((lunchCheckedIn / confirmed) * 100) : 0,
     },
     delivery: { email: deliveryCounts(emailRows), whatsapp: deliveryCounts(whatsappRows) },
     coupons: {
