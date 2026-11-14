@@ -177,7 +177,10 @@ RegistrationSchema.statics.activePhoneKeyFor = function activePhoneKeyFor(eventI
 
 RegistrationSchema.statics.activeCouncilKeyFor = function activeCouncilKeyFor(eventId, councilNo) {
   const clean = String(councilNo || '').trim().toUpperCase().replace(/[\s\/-]/g, '');
-  return clean ? `${String(eventId)}:${clean}` : undefined;
+  if (!clean || ['NA', 'N/A', 'NIL', 'NONE', 'NOTAPPLICABLE', 'NOTAVAILABLE', '-'].includes(clean)) {
+    return undefined;
+  }
+  return `${String(eventId)}:${clean}`;
 };
 
 RegistrationSchema.virtual('isFree').get(function isFree() {
