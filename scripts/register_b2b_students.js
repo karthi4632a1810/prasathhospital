@@ -345,3 +345,4 @@ run().catch((err) => {
   console.error('Registration failed:', err);
   process.exit(1);
 });
+

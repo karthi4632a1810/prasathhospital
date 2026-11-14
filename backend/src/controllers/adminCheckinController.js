@@ -287,9 +287,17 @@ const deleteLocation = asyncHandler(async (req, res) => {
 const scanTicket = asyncHandler(async (req, res) => {
   const token = extractToken(req.body.qrToken);
   if (!token) throw ApiError.badRequest('No QR token provided.');
-  if (!/^[a-f0-9]{16,64}$/i.test(token)) throw ApiError.notFound('No ticket found for this code.');
 
-  const reg = await Registration.findOne({ qrToken: token })
+  let query = null;
+  if (/^[a-f0-9]{16,64}$/i.test(token)) {
+    query = { qrToken: token.toLowerCase() };
+  } else if (/^REG-[A-Z0-9_-]+$/i.test(token)) {
+    query = { registrationCode: token.toUpperCase() };
+  } else {
+    throw ApiError.notFound('No ticket found for this code.');
+  }
+
+  const reg = await Registration.findOne(query)
     .populate('event', 'title slug')
     .populate('ticketType', 'name')
     .populate('company', 'name');

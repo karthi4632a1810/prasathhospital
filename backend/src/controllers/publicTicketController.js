@@ -9,13 +9,22 @@ const { streamCertificatePdf } = require('../utils/certificatePdf');
 const env = require('../config/env');
 
 /**
- * The qrToken is unguessable (48 hex chars of crypto randomness) and IS the
- * access control for all four routes below — no further auth. Only
- * confirmed registrations ever have one (see Registration.issueQrToken()).
+ * The ticket can be looked up either by:
+ * 1. Unguessable 48-char crypto hex qrToken (standard link sent via WhatsApp/email)
+ * 2. Registration Code (e.g. REG-FDD9528D) for direct lookup & admin desk access
  */
-async function findTicketOr404(qrToken) {
-  if (!/^[a-f0-9]{48}$/i.test(String(qrToken || ''))) throw ApiError.notFound('Ticket not found');
-  const reg = await Registration.findOne({ qrToken })
+async function findTicketOr404(identifier) {
+  const raw = String(identifier || '').trim();
+  let query = null;
+  if (/^[a-f0-9]{48}$/i.test(raw)) {
+    query = { qrToken: raw.toLowerCase() };
+  } else if (/^REG-[A-Z0-9_-]+$/i.test(raw)) {
+    query = { registrationCode: raw.toUpperCase() };
+  } else {
+    throw ApiError.notFound('Ticket not found');
+  }
+
+  const reg = await Registration.findOne(query)
     .populate('event', 'title slug startDate endDate venue mode timezone status')
     .populate('ticketType', 'name admitsCount')
     .populate('company', 'name');
