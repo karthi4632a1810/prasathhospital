@@ -188,7 +188,62 @@ async function generateIdCardPdfBuffer(registration) {
       font: fontRegular,
       color: rgb(0.48, 0.43, 0.47),
     });
+    currentY -= 16;
+  } else {
+    currentY -= 8;
   }
+
+  // 6. Both Locations Indicators (Main Entry Desk + Lunch Counter)
+  const loc1 = 'ENTRY PASS';
+  const loc2 = 'LUNCH PASS';
+  const badgeSize = 7.5;
+  const b1W = fontBold.widthOfTextAtSize(loc1, badgeSize);
+  const b2W = fontBold.widthOfTextAtSize(loc2, badgeSize);
+  const padX = 6;
+  const padY = 2.5;
+  const b1TotalW = b1W + padX * 2;
+  const b2TotalW = b2W + padX * 2;
+  const gap = 8;
+  const totalBarW = b1TotalW + gap + b2TotalW;
+  const startX = (width - totalBarW) / 2;
+  const locY = Math.max(currentY, 132);
+
+  // Draw Entry Badge
+  page.drawRectangle({
+    x: startX,
+    y: locY - padY,
+    width: b1TotalW,
+    height: badgeSize + padY * 2,
+    color: rgb(0.93, 0.96, 1.0), // soft ice blue
+    borderColor: rgb(0.15, 0.39, 0.92), // royal blue
+    borderWidth: 0.75,
+  });
+  page.drawText(loc1, {
+    x: startX + padX,
+    y: locY,
+    size: badgeSize,
+    font: fontBold,
+    color: rgb(0.12, 0.32, 0.76),
+  });
+
+  // Draw Lunch Badge
+  const b2X = startX + b1TotalW + gap;
+  page.drawRectangle({
+    x: b2X,
+    y: locY - padY,
+    width: b2TotalW,
+    height: badgeSize + padY * 2,
+    color: rgb(0.93, 0.98, 0.94), // soft mint green
+    borderColor: rgb(0.09, 0.64, 0.29), // emerald green
+    borderWidth: 0.75,
+  });
+  page.drawText(loc2, {
+    x: b2X + padX,
+    y: locY,
+    size: badgeSize,
+    font: fontBold,
+    color: rgb(0.07, 0.52, 0.23),
+  });
 
   const outputBytes = await doc.save();
   return Buffer.from(outputBytes);
