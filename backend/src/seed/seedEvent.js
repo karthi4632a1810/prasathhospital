@@ -42,8 +42,8 @@ const eventData = {
   registrationOpensAt: daysFromNow(-10, 0, 0),
   registrationClosesAt: new Date('2026-11-20T23:59:00+05:30'),
 
-  capacity: 800,
-  registeredCount: 182,
+  capacity: 2000,
+  registeredCount: 0,
 
   sections: {
     announcements: true,
@@ -954,6 +954,7 @@ const ticketTypesData = [
 
 async function seed() {
   await connectDatabase();
+  const Registration = require('../models/Registration');
 
   // Load-then-save (rather than findOneAndUpdate) so document middleware and
   // validators run: slug derivation, publishedAt, and the date-order checks.
@@ -961,7 +962,12 @@ async function seed() {
   if (!event) {
     event = new Event(eventData);
   } else {
-    event.set(eventData);
+    const confirmedCount = await Registration.countDocuments({ event: event._id, status: 'confirmed' });
+    event.set({
+      ...eventData,
+      capacity: Math.max(event.capacity || 2000, 2000),
+      registeredCount: confirmedCount,
+    });
   }
   await event.save();
 
@@ -972,7 +978,8 @@ async function seed() {
     if (!doc) {
       doc = new TicketType({ ...ticket, event: event._id });
     } else {
-      doc.set({ ...ticket, event: event._id });
+      const { quantitySold, ...rest } = ticket;
+      doc.set({ ...rest, event: event._id });
     }
     await doc.save();
   }
