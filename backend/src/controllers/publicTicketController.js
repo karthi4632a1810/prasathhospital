@@ -6,6 +6,7 @@ const { sendSuccess, asyncHandler } = require('../utils/response');
 const { generateQrPngBuffer } = require('../utils/qrcode');
 const { streamTicketPdf } = require('../utils/ticketPdf');
 const { streamCertificatePdf } = require('../utils/certificatePdf');
+const { generateIdCardPdfBuffer } = require('../utils/idCardPdf');
 const env = require('../config/env');
 
 /**
@@ -106,4 +107,17 @@ const getCertificatePdf = asyncHandler(async (req, res) => {
   streamCertificatePdf(res, { event: reg.event, registration: reg });
 });
 
-module.exports = { getTicket, getTicketQrImage, getTicketPdf, getCertificatePdf };
+/** GET /api/v1/tickets/:qrToken/badge.pdf — Official Delegate ID Card / Badge */
+const getBadgePdf = asyncHandler(async (req, res) => {
+  const reg = await findTicketOr404(req.params.qrToken);
+  if (reg.status !== 'confirmed') {
+    throw ApiError.conflict('ID cards are only available for confirmed registrations.');
+  }
+  const buffer = await generateIdCardPdfBuffer(reg);
+  res.set('Content-Type', 'application/pdf');
+  res.set('Content-Disposition', `inline; filename="${reg.registrationCode}-ID-CARD.pdf"`);
+  res.set('Cache-Control', 'public, max-age=300');
+  return res.send(buffer);
+});
+
+module.exports = { getTicket, getTicketQrImage, getTicketPdf, getCertificatePdf, getBadgePdf };

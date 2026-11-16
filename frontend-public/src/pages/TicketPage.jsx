@@ -42,6 +42,7 @@ export default function TicketPage() {
   const ticket = state.data;
   const qrImageUrl = `${BASE_URL}/api/v1/tickets/${qrToken}/qr.png`;
   const pdfUrl = `${BASE_URL}/api/v1/tickets/${qrToken}/pdf`;
+  const badgePdfUrl = `${BASE_URL}/api/v1/tickets/${qrToken}/badge.pdf`;
   const certificateUrl = `${BASE_URL}/api/v1/tickets/${qrToken}/certificate.pdf`;
   const eventCompleted = ticket.event?.status === 'completed';
   const isCancelled = ticket.status !== 'confirmed';
@@ -239,6 +240,23 @@ export default function TicketPage() {
                       <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     <span>Download PDF Ticket</span>
+                  </a>
+                )}
+
+                {!isCancelled && (
+                  <a
+                    href={badgePdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="vip-btn vip-btn--ghost"
+                    title="Download Official Conference Delegate ID Card"
+                  >
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2">
+                      <rect x="3" y="4" width="18" height="16" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <line x1="7" y1="8" x2="17" y2="8" strokeLinecap="round" strokeLinejoin="round" />
+                      <line x1="7" y1="12" x2="13" y2="12" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <span>Download ID Card</span>
                   </a>
                 )}
 

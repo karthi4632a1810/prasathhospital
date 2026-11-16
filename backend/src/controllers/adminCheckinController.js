@@ -363,6 +363,7 @@ const scanTicket = asyncHandler(async (req, res) => {
 
   const payload = {
     registrationCode: reg.registrationCode,
+    qrToken: reg.qrToken,
     attendee: { name: reg.attendee.name, email: reg.attendee.email, phone: reg.attendee.phone },
     event: reg.event,
     ticketType: reg.ticketType,

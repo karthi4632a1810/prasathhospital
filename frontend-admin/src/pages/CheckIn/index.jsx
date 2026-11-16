@@ -3,6 +3,8 @@ import { checkinApi } from '../../lib/checkinApi';
 import Button from '../../components/ui/Button';
 import './CheckIn.css';
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+
 /**
  * Web Audio API synthesized audio effects for check-in desks.
  * Zero external audio files required, works offline.
@@ -980,13 +982,21 @@ export default function CheckIn() {
                 </div>
 
                 <div className="checkin-action-bar">
-                  <div className="checkin-action-bar__left">
+                  <div className="checkin-action-bar__left" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <Button
                       variant="primary"
                       size="sm"
+                      href={`${API_BASE}/api/v1/tickets/${scanResult.qrToken || scanResult.registrationCode}/badge.pdf`}
+                      external
+                    >
+                      🪪 Download ID Card (PDF)
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => handlePrintBadge(scanResult)}
                     >
-                      🖨️ Print Badge Slip
+                      🖨️ Print Slip
                     </Button>
                   </div>
                   <div className="checkin-action-bar__right">
@@ -1115,7 +1125,15 @@ export default function CheckIn() {
                 </div>
 
                 <div className="checkin-action-bar">
-                  <div className="checkin-action-bar__left">
+                  <div className="checkin-action-bar__left" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      href={`${API_BASE}/api/v1/tickets/${scanResult.qrToken || scanResult.registrationCode}/badge.pdf`}
+                      external
+                    >
+                      🪪 Download ID Card (PDF)
+                    </Button>
                     <Button
                       variant="secondary"
                       size="sm"

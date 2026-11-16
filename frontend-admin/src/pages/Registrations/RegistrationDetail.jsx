@@ -141,6 +141,11 @@ function Body({
   const ticketUrl = reg.qrToken ? `${PUBLIC_SITE}/tickets/${reg.qrToken}` : null;
   const qrUrl = reg.qrToken ? `${API_BASE}/api/v1/tickets/${reg.qrToken}/qr.png` : null;
   const pdfUrl = reg.qrToken ? `${API_BASE}/api/v1/tickets/${reg.qrToken}/pdf` : null;
+  const badgePdfUrl = reg.qrToken
+    ? `${API_BASE}/api/v1/tickets/${reg.qrToken}/badge.pdf`
+    : reg.registrationCode
+    ? `${API_BASE}/api/v1/tickets/${reg.registrationCode}/badge.pdf`
+    : null;
 
   return (
     <>
@@ -235,6 +240,11 @@ function Body({
               <Button variant="secondary" size="sm" href={pdfUrl} external>
                 Download ticket
               </Button>
+              {badgePdfUrl && (
+                <Button variant="primary" size="sm" href={badgePdfUrl} external>
+                  🪪 Download ID Card
+                </Button>
+              )}
               {ticketUrl && (
                 <Button variant="ghost" size="sm" href={ticketUrl} external>
                   Open ticket page
