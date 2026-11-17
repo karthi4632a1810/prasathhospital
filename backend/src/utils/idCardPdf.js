@@ -35,9 +35,9 @@ function getCheckInUrl(registration) {
 
 /**
  * Generates an ID Card / Delegate Badge PDF buffer using the ID_CARD.pdf template.
- * Redesigned to showcase JUST ONLY:
- *   1. Name (prominent, bold, centered)
- *   2. Pass Name (e.g. "Delegate — Regular", "PG Student / Resident") centered below name
+ * Redesigned in order:
+ *   1. Pass Name (e.g. "Delegate — Regular", "PG Student / Resident") on top
+ *   2. Delegate Full Name (prominent, bold, centered) below pass name
  *   3. Scannable QR Code (valid for both Main Entry & Lunch Counter check-in)
  *
  * Preserves top logo and bottom footer 100% untouched.
@@ -56,30 +56,9 @@ async function generateIdCardPdfBuffer(registration) {
 
   const attendee = registration.attendee || {};
   const name = cleanDoctorName(attendee.name || `${attendee.firstName || ''} ${attendee.lastName || ''}`);
-  const regCode = (registration.registrationCode || '').trim();
-  const councilNo = (attendee.medicalCouncilRegNo || attendee.councilRegistrationNumber || '').trim();
-  const hasCouncil =
-    councilNo && !['NA', 'N/A', 'NIL', 'NONE', '-', 'NOT APPLICABLE', 'NOTAPPLICABLE'].includes(councilNo.toUpperCase());
-
-  // 1. Delegate Full Name (centered, prominent, auto-scaling)
-  let nameSize = 18;
-  let nameWidth = fontBold.widthOfTextAtSize(name, nameSize);
   const maxW = width - 36; // 216 pt safe inner width
-  while (nameWidth > maxW && nameSize > 12) {
-    nameSize -= 0.5;
-    nameWidth = fontBold.widthOfTextAtSize(name, nameSize);
-  }
 
-  const nameY = 295;
-  page.drawText(name, {
-    x: (width - nameWidth) / 2,
-    y: nameY,
-    size: nameSize,
-    font: fontBold,
-    color: rgb(0.14, 0.07, 0.22), // #231238 Deep Brand Plum
-  });
-
-  // 2. Pass Name (e.g. "Delegate — Regular", "PG Student / Resident") instead of registration no
+  // 1. Pass Name (e.g. "Delegate — Regular", "PG Student / Resident") on top
   let passName = '';
   if (registration.ticketType && typeof registration.ticketType === 'object' && registration.ticketType.name) {
     passName = registration.ticketType.name;
@@ -103,20 +82,37 @@ async function generateIdCardPdfBuffer(registration) {
 
   passName = String(passName).trim();
 
-  let passSize = 12;
+  let passSize = 11.5;
   let passWidth = fontBold.widthOfTextAtSize(passName, passSize);
   while (passWidth > maxW && passSize > 9) {
     passSize -= 0.5;
     passWidth = fontBold.widthOfTextAtSize(passName, passSize);
   }
 
-  const passY = 273;
+  const passY = 297;
   page.drawText(passName, {
     x: (width - passWidth) / 2,
     y: passY,
     size: passSize,
     font: fontBold,
-    color: rgb(0.76, 0.1, 0.36), // #c2185b Crimson / Rose
+    color: rgb(0.76, 0.1, 0.36), // #c2185b Crimson / Rose accent
+  });
+
+  // 2. Delegate Full Name (centered, prominent, auto-scaling) below pass name
+  let nameSize = 18;
+  let nameWidth = fontBold.widthOfTextAtSize(name, nameSize);
+  while (nameWidth > maxW && nameSize > 12) {
+    nameSize -= 0.5;
+    nameWidth = fontBold.widthOfTextAtSize(name, nameSize);
+  }
+
+  const nameY = 272;
+  page.drawText(name, {
+    x: (width - nameWidth) / 2,
+    y: nameY,
+    size: nameSize,
+    font: fontBold,
+    color: rgb(0.14, 0.07, 0.22), // #231238 Deep Brand Plum
   });
 
   // 3. QR Code (used for both Main Entry and Lunch Counter check-in)
@@ -126,9 +122,9 @@ async function generateIdCardPdfBuffer(registration) {
 
   const qrSize = 116;
   const framePad = 6;
-  const frameSize = qrSize + framePad * 2;
+  const frameSize = qrSize + framePad * 2; // 128 pt
   const frameX = (width - frameSize) / 2;
-  const frameY = 132;
+  const frameY = 126;
   const qrX = frameX + framePad;
   const qrY = frameY + framePad;
 
