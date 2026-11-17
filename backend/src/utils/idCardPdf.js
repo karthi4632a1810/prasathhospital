@@ -37,7 +37,7 @@ function getCheckInUrl(registration) {
  * Generates an ID Card / Delegate Badge PDF buffer using the ID_CARD.pdf template.
  * Redesigned to showcase JUST ONLY:
  *   1. Name (prominent, bold, centered)
- *   2. TNMC Reg No (or Delegate ID if not registered with TNMC)
+ *   2. Pass Name (e.g. "Delegate — Regular", "PG Student / Resident") centered below name
  *   3. Scannable QR Code (valid for both Main Entry & Lunch Counter check-in)
  *
  * Preserves top logo and bottom footer 100% untouched.
@@ -79,29 +79,45 @@ async function generateIdCardPdfBuffer(registration) {
     color: rgb(0.14, 0.07, 0.22), // #231238 Deep Brand Plum
   });
 
-  // 2. TNMC Reg No (or Delegate ID if no TNMC)
-  let tnmcText = '';
-  if (hasCouncil) {
-    tnmcText =
-      councilNo.toUpperCase().includes('TNMC') || councilNo.toUpperCase().includes('COUNCIL')
-        ? councilNo
-        : 'TNMC Reg No: ' + councilNo;
-  } else if (regCode) {
-    tnmcText = 'Delegate ID: ' + regCode;
+  // 2. Pass Name (e.g. "Delegate — Regular", "PG Student / Resident") instead of registration no
+  let passName = '';
+  if (registration.ticketType && typeof registration.ticketType === 'object' && registration.ticketType.name) {
+    passName = registration.ticketType.name;
+  } else if (registration.ticketTypeName) {
+    passName = registration.ticketTypeName;
   }
 
-  if (tnmcText) {
-    const tnmcSize = 11;
-    const tnmcWidth = fontBold.widthOfTextAtSize(tnmcText, tnmcSize);
-    const tnmcY = 273;
-    page.drawText(tnmcText, {
-      x: (width - tnmcWidth) / 2,
-      y: tnmcY,
-      size: tnmcSize,
-      font: fontBold,
-      color: rgb(0.76, 0.1, 0.36), // #c2185b Crimson / Rose
-    });
+  if (!passName && registration.ticketType) {
+    try {
+      const TicketType = require('../models/TicketType');
+      const tt = await TicketType.findById(registration.ticketType).select('name').lean();
+      if (tt?.name) passName = tt.name;
+    } catch {
+      // fallback
+    }
   }
+
+  if (!passName) {
+    passName = 'Delegate — Regular';
+  }
+
+  passName = String(passName).trim();
+
+  let passSize = 12;
+  let passWidth = fontBold.widthOfTextAtSize(passName, passSize);
+  while (passWidth > maxW && passSize > 9) {
+    passSize -= 0.5;
+    passWidth = fontBold.widthOfTextAtSize(passName, passSize);
+  }
+
+  const passY = 273;
+  page.drawText(passName, {
+    x: (width - passWidth) / 2,
+    y: passY,
+    size: passSize,
+    font: fontBold,
+    color: rgb(0.76, 0.1, 0.36), // #c2185b Crimson / Rose
+  });
 
   // 3. QR Code (used for both Main Entry and Lunch Counter check-in)
   const checkInUrl = getCheckInUrl(registration);
