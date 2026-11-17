@@ -113,7 +113,9 @@ const getBadgePdf = asyncHandler(async (req, res) => {
   if (reg.status !== 'confirmed') {
     throw ApiError.conflict('ID cards are only available for confirmed registrations.');
   }
-  const buffer = await generateIdCardPdfBuffer(reg);
+  const role = req.query.role || null;
+  const includeTemplate = req.query.template === 'true' || req.query.preview === 'true';
+  const buffer = await generateIdCardPdfBuffer(reg, { role, includeTemplate });
   res.set('Content-Type', 'application/pdf');
   res.set('Content-Disposition', `inline; filename="${reg.registrationCode}-ID-CARD.pdf"`);
   res.set('Cache-Control', 'public, max-age=300');
