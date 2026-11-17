@@ -101,7 +101,7 @@ The full microsite payload — everything the public page renders.
       "venue": { "name": "…", "city": "…", "mapEmbedUrl": "…", … },  // null for virtual events
       "virtualLink": "",                                              // "" for in-person events
 
-      "highlights": ["6 CME credit points (TNMC accredited)", …],
+      "highlights": ["4 CME credit points (TNMC accredited)", …],
       "speakers": [ { "id", "name", "credentials", "designation",
                       "organization", "photoUrl", "bio", "topic", "isKeynote" } ],
       "agenda":   [ { "id", "date", "label",

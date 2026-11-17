@@ -139,7 +139,7 @@ export default function TicketPage() {
                     <span>
                       Medical Council Reg: <strong>{ticket.attendee.medicalCouncilRegNo}</strong>
                     </span>
-                    <span className="vip-pass-card__cme-tag">6 CME Points</span>
+                    <span className="vip-pass-card__cme-tag">4 CME Points</span>
                   </div>
                 )}
 

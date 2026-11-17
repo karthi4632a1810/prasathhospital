@@ -331,7 +331,7 @@ export default function RegisterPage() {
                     placeholder="e.g. TNMC/104523/2018 or State Medical Council Reg. No."
                   />
                   <small className="register-field__hint">
-                    Required for accreditation &amp; Tamil Nadu Medical Council (TNMC) 6 CME Credit Points.
+                    Required for accreditation &amp; Tamil Nadu Medical Council (TNMC) 4 CME Credit Points.
                   </small>
                 </label>
               </div>
@@ -771,7 +771,7 @@ function RegistrationSuccess({ result, event, slug, formState }) {
                 <span>
                   Medical Council Reg: <strong>{councilRegNo}</strong>
                 </span>
-                <span className="delegate-pass-card__cme-pill">6 CME Points</span>
+                <span className="delegate-pass-card__cme-pill">4 CME Points</span>
               </div>
             )}
 
@@ -1083,7 +1083,7 @@ function RegistrationSuccess({ result, event, slug, formState }) {
           </div>
           <div className="conf-venue-card__tip">
             <span className="conf-venue-card__tip-num">3</span>
-            <span>6 TNMC CME credit points will be awarded to verified attending delegates.</span>
+            <span>4 TNMC CME credit points will be awarded to verified attending delegates.</span>
           </div>
         </div>
       </div>

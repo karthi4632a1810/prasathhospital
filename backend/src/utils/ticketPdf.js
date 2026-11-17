@@ -153,7 +153,7 @@ async function streamTicketPdf(res, { event, ticketType, registration, checkInUr
     .font('Helvetica-Bold')
     .fontSize(7)
     .fillColor('#34d399')
-    .text('✓ 6 TNMC CME Credit Points', padX, 360, { width: padW });
+    .text('✓ 4 TNMC CME Credit Points', padX, 360, { width: padW });
 
   // ---------------------------------------------------------------------------
   // 2. Right Body Section (Width: 415.28 pt)
@@ -205,7 +205,7 @@ async function streamTicketPdf(res, { event, ticketType, registration, checkInUr
     curY += 12;
 
     doc.font('Helvetica-Bold').fontSize(7.2).fillColor('#065f46');
-    doc.text('✓ 6 TNMC CME Credit Points Accredited', bodyX, curY, { width: contentWidth });
+    doc.text('✓ 4 TNMC CME Credit Points Accredited', bodyX, curY, { width: contentWidth });
     curY += 14;
   }
 
@@ -325,7 +325,7 @@ async function streamTicketPdf(res, { event, ticketType, registration, checkInUr
     .fontSize(6.5)
     .fillColor('#5c3c72')
     .text(
-      '• 6 TNMC CME credit points will be awarded to eligible registered delegates attending all scientific sessions.',
+      '• 4 TNMC CME credit points will be awarded to eligible registered delegates attending all scientific sessions.',
       bodyX,
       footerY + 28,
       { width: width - bodyX - 16 }

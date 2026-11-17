@@ -334,7 +334,7 @@ const EventSchema = new Schema(
     sponsors: [SponsorSchema],
     faqs: [FaqSchema],
     announcements: [AnnouncementSchema],
-    highlights: [{ type: String, trim: true }], // "6 CME credit points"
+    highlights: [{ type: String, trim: true }], // "4 CME credit points"
 
     contact: { type: ContactSchema, default: () => ({}) },
     seo: { type: SeoSchema, default: () => ({}) },

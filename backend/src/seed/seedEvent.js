@@ -777,7 +777,7 @@ const eventData = {
     {
       question: 'Will CME credit points be awarded?',
       answer:
-        'Yes. The summit is accredited for 6 CME credit points by the Tamil Nadu Medical Council. Credit requires check-in at the venue and attendance until the valedictory session.',
+        'Yes. The summit is accredited for 4 CME credit points by the Tamil Nadu Medical Council. Credit requires check-in at the venue and attendance until the valedictory session.',
       order: 2,
     },
     {
@@ -860,7 +860,7 @@ const ticketTypesData = [
       'Access to all main hall sessions',
       'Delegate kit and printed programme',
       'Lunch and high tea',
-      '6 CME credit points',
+      '4 CME credit points',
       'E-certificate of participation',
     ],
     isPubliclyVisible: true,
