@@ -1,10 +1,25 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const { generateQrPngBuffer } = require('./qrcode');
 const env = require('../config/env');
 
 const PT_PER_CM = 72 / 2.54; // 28.3464566929 pt/cm
+
+function getSimulationBgPath() {
+  const candidate1 = path.join(__dirname, '../assets/PRINT_CARD_BG.jpg');
+  if (fs.existsSync(candidate1)) return candidate1;
+
+  const candidate2 = path.resolve(process.cwd(), 'Print.jpg.jpeg');
+  if (fs.existsSync(candidate2)) return candidate2;
+
+  const candidate3 = path.resolve(__dirname, '../../../Print.jpg.jpeg');
+  if (fs.existsSync(candidate3)) return candidate3;
+
+  return null;
+}
 
 function cleanDoctorName(name) {
   if (!name) return 'Delegate';
@@ -129,72 +144,17 @@ async function generateIdCardPdfBuffer(registration, options = {}) {
   const fontRegular = await doc.embedFont(StandardFonts.Helvetica);
 
   if (options.includeTemplate) {
-    // 1. Draw simulated preprinted header (2.2 cm)
-    page.drawRectangle({
-      x: 0,
-      y: height - headerHeight,
-      width: width,
-      height: headerHeight,
-      color: rgb(0.97, 0.97, 0.98),
-    });
-    page.drawText('CIIM 2026', {
-      x: 85,
-      y: height - 28,
-      size: 15,
-      font: fontBold,
-      color: rgb(0.85, 0.1, 0.38),
-    });
-    page.drawText('9th Annual Conference on Controversies in Infertility Management', {
-      x: 35,
-      y: height - 42,
-      size: 6.2,
-      font: fontRegular,
-      color: rgb(0.35, 0.35, 0.4),
-    });
-
-    // 2. Draw simulated preprinted footer (5.2 cm)
-    page.drawRectangle({
-      x: 0,
-      y: 0,
-      width: width,
-      height: footerHeight,
-      color: rgb(0.07, 0.16, 0.28),
-    });
-    page.drawRectangle({
-      x: width * 0.55,
-      y: footerHeight - 10,
-      width: width * 0.45,
-      height: 10,
-      color: rgb(0.85, 0.1, 0.42),
-    });
-    page.drawText('PRASHANTH FERTILITY', {
-      x: 35,
-      y: 85,
-      size: 10,
-      font: fontBold,
-      color: rgb(1, 1, 1),
-    });
-    page.drawText('IN COLLABORATION WITH TAPISAR', {
-      x: 35,
-      y: 72,
-      size: 6.5,
-      font: fontRegular,
-      color: rgb(0.8, 0.85, 0.95),
-    });
-    page.drawText('21 & 22 NOVEMBER 2026', {
-      x: (width - fontBold.widthOfTextAtSize('21 & 22 NOVEMBER 2026', 9)) / 2,
-      y: 40,
-      size: 9,
-      font: fontBold,
-      color: rgb(1, 1, 1),
-    });
-    page.drawText('THE LEELA PALACE, CHENNAI', {
-      x: (width - fontBold.widthOfTextAtSize('THE LEELA PALACE, CHENNAI', 8)) / 2,
-      y: 26,
-      size: 8,
-      font: fontBold,
-      color: rgb(0.9, 0.9, 0.95),
-    });
+    const bgPath = getSimulationBgPath();
+    if (bgPath && fs.existsSync(bgPath)) {
+      const bgBytes = fs.readFileSync(bgPath);
+      const bgImage = await doc.embedJpg(bgBytes);
+      page.drawImage(bgImage, {
+        x: 0,
+        y: 0,
+        width,
+        height,
+      });
+    }
   }
 
   // 1. Role Header (DELEGATE / FACULTY / ORGANISING TEAM / Custom)
