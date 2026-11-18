@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { formatDate, formatClock } from '../lib/format';
 import './Agenda.css';
 
-const SHOW_FULL_SCHEDULE = false;
+const SHOW_FULL_SCHEDULE = true;
 
 const TYPE_META = {
   keynote: { label: 'Keynote', tone: 'accent' },
