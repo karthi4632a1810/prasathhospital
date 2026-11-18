@@ -52,19 +52,22 @@ export default function IdCardModal({ registration, onClose, onUpdated }) {
     setError('');
     setSuccessMsg('');
     try {
-      if (saveToDb && name.trim() && name.trim() !== originalName) {
-        await registrationApi.update(registration.id, {
-          attendee: { name: name.trim() },
-        });
-        if (onUpdated) {
-          onUpdated({
-            ...registration,
-            attendee: { ...registration.attendee, name: name.trim() },
+      if (saveToDb && name.trim()) {
+        const cleanDbName = name.replace(/\s+/g, ' ').trim();
+        if (cleanDbName !== originalName) {
+          await registrationApi.update(registration.id, {
+            attendee: { name: cleanDbName },
           });
+          if (onUpdated) {
+            onUpdated({
+              ...registration,
+              attendee: { ...registration.attendee, name: cleanDbName },
+            });
+          }
         }
       }
 
-      const safeName = (name.trim() || regCode).replace(/[^a-zA-Z0-9_-]/g, '_');
+      const safeName = (name.replace(/\s+/g, '_').trim() || regCode).replace(/[^a-zA-Z0-9_-]/g, '_');
       const filename = `${regCode}-${role}-${safeName}-ID-CARD.pdf`;
 
       await registrationApi.downloadBadgePdf(
@@ -305,24 +308,28 @@ export default function IdCardModal({ registration, onClose, onUpdated }) {
                 </button>
               )}
             </div>
-            <input
-              type="text"
+            <textarea
+              rows={2}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Dr S Archana"
+              placeholder={'e.g. Dr Esther Rani\nStella Bhakiyathai.E'}
               style={{
                 width: '100%',
-                padding: '9px 12px',
+                padding: '10px 12px',
                 borderRadius: '8px',
                 border: '1px solid #cbd5e1',
                 fontSize: '0.95rem',
                 fontWeight: 600,
                 color: '#0f172a',
                 outline: 'none',
+                resize: 'vertical',
+                minHeight: '62px',
+                lineHeight: 1.4,
+                fontFamily: 'inherit',
               }}
             />
-            <p style={{ margin: '5px 0 0', fontSize: '0.76rem', color: '#64748b' }}>
-              Long names automatically wrap into 2 balanced lines. You can also press Enter for manual lines.
+            <p style={{ margin: '5px 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+              Press <strong>Enter</strong> to split name across Line 1 and Line 2. Single-line long names will auto-balance.
             </p>
           </div>
 
