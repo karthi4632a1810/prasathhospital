@@ -52,7 +52,7 @@ function getGradientColor(x, y, width) {
  */
 async function generateQrPngBuffer(text, options = {}) {
   const width = options.width || 800;
-  const margin = 4;
+  const margin = options.margin !== undefined ? options.margin : (options.noBorder ? 2 : 4);
 
   const qrData = QRCode.create(text, { errorCorrectionLevel: 'H' });
   const modCount = qrData.modules.size;
@@ -171,29 +171,32 @@ async function generateQrPngBuffer(text, options = {}) {
   }
 
   // 5. Apply Border Radius to Card Canvas (smooth squircle card with hairline gradient border)
-  const cardRadius = Math.round(width * 0.06); // ~48px on 800px
-  const borderWidth = Math.max(2, Math.round(width * 0.004));
+  // Skipped when options.noBorder is true (e.g. for clean badge/ID card printing)
+  if (!options.noBorder) {
+    const cardRadius = Math.round(width * 0.06); // ~48px on 800px
+    const borderWidth = Math.max(2, Math.round(width * 0.004));
 
-  for (let y = 0; y < width; y++) {
-    for (let x = 0; x < width; x++) {
-      let distCorner = 0;
-      if (x < cardRadius && y < cardRadius) {
-        distCorner = Math.hypot(x - cardRadius, y - cardRadius);
-      } else if (x > width - cardRadius && y < cardRadius) {
-        distCorner = Math.hypot(x - (width - cardRadius), y - cardRadius);
-      } else if (x < cardRadius && y > width - cardRadius) {
-        distCorner = Math.hypot(x - cardRadius, y - (width - cardRadius));
-      } else if (x > width - cardRadius && y > width - cardRadius) {
-        distCorner = Math.hypot(x - (width - cardRadius), y - (width - cardRadius));
-      }
+    for (let y = 0; y < width; y++) {
+      for (let x = 0; x < width; x++) {
+        let distCorner = 0;
+        if (x < cardRadius && y < cardRadius) {
+          distCorner = Math.hypot(x - cardRadius, y - cardRadius);
+        } else if (x > width - cardRadius && y < cardRadius) {
+          distCorner = Math.hypot(x - (width - cardRadius), y - cardRadius);
+        } else if (x < cardRadius && y > width - cardRadius) {
+          distCorner = Math.hypot(x - cardRadius, y - (width - cardRadius));
+        } else if (x > width - cardRadius && y > width - cardRadius) {
+          distCorner = Math.hypot(x - (width - cardRadius), y - (width - cardRadius));
+        }
 
-      if (distCorner > cardRadius) {
-        // Outside the card: transparent
-        const idx = (width * y + x) << 2;
-        png.data[idx + 3] = 0;
-      } else if (distCorner > cardRadius - borderWidth) {
-        // Hairline card border in theme gradient
-        setPixel(x, y, getGradientColor(x, y, width));
+        if (distCorner > cardRadius) {
+          // Outside the card: transparent
+          const idx = (width * y + x) << 2;
+          png.data[idx + 3] = 0;
+        } else if (distCorner > cardRadius - borderWidth) {
+          // Hairline card border in theme gradient
+          setPixel(x, y, getGradientColor(x, y, width));
+        }
       }
     }
   }

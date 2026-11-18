@@ -1,30 +1,14 @@
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const { generateQrPngBuffer } = require('./qrcode');
 const env = require('../config/env');
 
+const PT_PER_CM = 72 / 2.54; // 28.3464566929 pt/cm
+
 function cleanDoctorName(name) {
   if (!name) return 'Delegate';
   return String(name).trim();
-}
-
-/**
- * Resolves the path to ID_CARD.pdf template.
- */
-function getTemplatePath() {
-  const candidate1 = path.join(__dirname, '../assets/ID_CARD.pdf');
-  if (fs.existsSync(candidate1)) return candidate1;
-
-  const candidate2 = path.resolve(__dirname, '../../../ID_CARD.pdf');
-  if (fs.existsSync(candidate2)) return candidate2;
-
-  const candidate3 = path.resolve(process.cwd(), 'ID_CARD.pdf');
-  if (fs.existsSync(candidate3)) return candidate3;
-
-  throw new Error('ID_CARD.pdf template file not found');
 }
 
 function getCheckInUrl(registration) {
@@ -70,105 +54,218 @@ function resolveBadgeRole(registration, overrideRole) {
 }
 
 /**
+ * Splits a long attendee name across 2 visually balanced lines.
+ * If name contains explicit '\n', splits on that.
+ */
+function splitNameToLines(name, font, maxW) {
+  const raw = String(name || '').trim().replace(/\r\n/g, '\n');
+  if (raw.includes('\n')) {
+    const manualLines = raw.split('\n').map((l) => l.trim()).filter(Boolean);
+    if (manualLines.length > 0) return manualLines.slice(0, 2);
+  }
+
+  const words = raw.replace(/\s+/g, ' ').split(' ').filter(Boolean);
+  if (words.length <= 1) return [raw];
+
+  const singleLineW = font.widthOfTextAtSize(raw, 18);
+  if (raw.length <= 22 && singleLineW <= maxW - 20) {
+    return [raw];
+  }
+
+  // Find balanced 2-line split
+  let bestSplit = 1;
+  let minDiff = Infinity;
+  for (let i = 1; i < words.length; i++) {
+    const l1 = words.slice(0, i).join(' ');
+    const l2 = words.slice(i).join(' ');
+    const w1 = font.widthOfTextAtSize(l1, 16.5);
+    const w2 = font.widthOfTextAtSize(l2, 16.5);
+    const diff = Math.abs(w1 - w2);
+    if (diff < minDiff) {
+      minDiff = diff;
+      bestSplit = i;
+    }
+  }
+
+  return [
+    words.slice(0, bestSplit).join(' '),
+    words.slice(bestSplit).join(' '),
+  ];
+}
+
+/**
  * Generates an ID Card / Delegate Badge PDF buffer for printing on pre-printed card stock.
  *
- * NOTE: The physical cards are already pre-printed with the top logo and bottom footer!
- * Therefore, by default (includeTemplate: false) this generates a blank card canvas with
- * NO header/logo and NO footer, containing ONLY:
- *   1. Role: DELEGATE / FACULTY / ORGANISING TEAM
- *   2. Delegate Full Name (prominent, bold, centered, auto-scaled to fit any length)
- *   3. QR Code (compact, small 72x72pt on 82x82pt card, valid for entry & lunch)
+ * Physical Dimensions:
+ *   - Width: 10.2 cm (289.13 pt)
+ *   - Height: 15.2 cm (430.87 pt)
+ *   - Header Height: 2.2 cm (62.36 pt) -> Pre-printed top logo
+ *   - Footer Height: 5.2 cm (147.40 pt) -> Pre-printed bottom details
+ *   - Center Space: ~7.5 - 7.8 cm (147.40 pt - 368.51 pt) -> Active printable area
+ *
+ * By default (includeTemplate: false), generates a blank card with NO header and NO footer,
+ * perfectly positioned to print directly into the 7.5 cm center window:
+ *   1. Role: DELEGATE / FACULTY / ORGANISING TEAM (y = 338 pt)
+ *   2. Delegate Full Name (centered, 1-line or 2-line for long names, y = 297 or 308/286 pt)
+ *   3. QR Code (76x76 pt clean themed QR, no box, no corner curves, centered medallion, y = 176 pt)
  *
  * @param {Object} registration - Mongoose Registration doc (populated)
  * @param {Object} [options] - Generation options
- * @param {string} [options.role] - Force specific badge role ("DELEGATE" | "FACULTY" | "ORGANISING TEAM")
+ * @param {string} [options.role] - Force specific badge role ("DELEGATE" | "FACULTY" | "ORGANISING TEAM" | custom)
+ * @param {string} [options.name] - Override attendee name on the spot
  * @param {boolean} [options.includeTemplate=false] - Whether to include background template (for digital preview)
  * @returns {Promise<Buffer>} - Generated PDF as binary Buffer
  */
 async function generateIdCardPdfBuffer(registration, options = {}) {
-  const width = 252;
-  const height = 396;
-  const includeTemplate = Boolean(options.includeTemplate);
+  const width = 10.2 * PT_PER_CM;   // 289.13 pt
+  const height = 15.2 * PT_PER_CM; // 430.87 pt
+  const headerHeight = 2.2 * PT_PER_CM; // 62.36 pt (y: 368.51 - 430.87)
+  const footerHeight = 5.2 * PT_PER_CM; // 147.40 pt (y: 0 - 147.40)
+  const maxW = width - 36; // 253.13 pt safe printable width
 
-  let doc;
-  let page;
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([width, height]);
+  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const fontRegular = await doc.embedFont(StandardFonts.Helvetica);
 
-  if (includeTemplate) {
-    const templatePath = getTemplatePath();
-    const templateBytes = fs.readFileSync(templatePath);
-    doc = await PDFDocument.load(templateBytes);
-    page = doc.getPages()[0];
-  } else {
-    // Blank card matching exact pre-printed badge dimensions (252 x 396 pt).
-    // NO header logo and NO footer — prints cleanly onto pre-printed card stock!
-    doc = await PDFDocument.create();
-    page = doc.addPage([width, height]);
+  if (options.includeTemplate) {
+    // 1. Draw simulated preprinted header (2.2 cm)
+    page.drawRectangle({
+      x: 0,
+      y: height - headerHeight,
+      width: width,
+      height: headerHeight,
+      color: rgb(0.97, 0.97, 0.98),
+    });
+    page.drawText('CIIM 2026', {
+      x: 85,
+      y: height - 28,
+      size: 15,
+      font: fontBold,
+      color: rgb(0.85, 0.1, 0.38),
+    });
+    page.drawText('9th Annual Conference on Controversies in Infertility Management', {
+      x: 35,
+      y: height - 42,
+      size: 6.2,
+      font: fontRegular,
+      color: rgb(0.35, 0.35, 0.4),
+    });
+
+    // 2. Draw simulated preprinted footer (5.2 cm)
+    page.drawRectangle({
+      x: 0,
+      y: 0,
+      width: width,
+      height: footerHeight,
+      color: rgb(0.07, 0.16, 0.28),
+    });
+    page.drawRectangle({
+      x: width * 0.55,
+      y: footerHeight - 10,
+      width: width * 0.45,
+      height: 10,
+      color: rgb(0.85, 0.1, 0.42),
+    });
+    page.drawText('PRASHANTH FERTILITY', {
+      x: 35,
+      y: 85,
+      size: 10,
+      font: fontBold,
+      color: rgb(1, 1, 1),
+    });
+    page.drawText('IN COLLABORATION WITH TAPISAR', {
+      x: 35,
+      y: 72,
+      size: 6.5,
+      font: fontRegular,
+      color: rgb(0.8, 0.85, 0.95),
+    });
+    page.drawText('21 & 22 NOVEMBER 2026', {
+      x: (width - fontBold.widthOfTextAtSize('21 & 22 NOVEMBER 2026', 9)) / 2,
+      y: 40,
+      size: 9,
+      font: fontBold,
+      color: rgb(1, 1, 1),
+    });
+    page.drawText('THE LEELA PALACE, CHENNAI', {
+      x: (width - fontBold.widthOfTextAtSize('THE LEELA PALACE, CHENNAI', 8)) / 2,
+      y: 26,
+      size: 8,
+      font: fontBold,
+      color: rgb(0.9, 0.9, 0.95),
+    });
   }
 
-  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
-
-  const attendee = registration.attendee || {};
-  const name = cleanDoctorName(attendee.name || `${attendee.firstName || ''} ${attendee.lastName || ''}`);
-  const maxW = width - 36; // 216 pt safe inner width
-
-  // 1. Role: DELEGATE / FACULTY / ORGANISING TEAM
+  // 1. Role Header (DELEGATE / FACULTY / ORGANISING TEAM / Custom)
   const roleText = resolveBadgeRole(registration, options.role);
-  let roleSize = 12.5;
+  let roleSize = roleText.length > 12 ? 12.5 : 13.5;
   let roleWidth = fontBold.widthOfTextAtSize(roleText, roleSize);
   while (roleWidth > maxW && roleSize > 9) {
     roleSize -= 0.5;
     roleWidth = fontBold.widthOfTextAtSize(roleText, roleSize);
   }
-
-  const roleY = 290;
+  const roleY = 338;
   page.drawText(roleText, {
     x: (width - roleWidth) / 2,
     y: roleY,
     size: roleSize,
     font: fontBold,
-    color: rgb(0.76, 0.1, 0.36), // #c2185b Crimson / Rose accent
+    color: rgb(0.761, 0.094, 0.357), // #c2185b
   });
 
-  // 2. Delegate Full Name (centered, prominent, auto-scaling to fit even 35+ char names)
-  let nameSize = 18;
-  let nameWidth = fontBold.widthOfTextAtSize(name, nameSize);
-  while (nameWidth > maxW && nameSize > 9.5) {
-    nameSize -= 0.5;
-    nameWidth = fontBold.widthOfTextAtSize(name, nameSize);
+  // 2. Delegate Name (supports options.name override, auto 1-line or 2-line)
+  const attendee = registration.attendee || {};
+  const rawName = options.name ? String(options.name).trim() : cleanDoctorName(attendee.name || `${attendee.firstName || ''} ${attendee.lastName || ''}`);
+  const lines = splitNameToLines(rawName, fontBold, maxW);
+
+  if (lines.length === 2) {
+    let nameSize = 16.5;
+    let l1W = fontBold.widthOfTextAtSize(lines[0], nameSize);
+    let l2W = fontBold.widthOfTextAtSize(lines[1], nameSize);
+    while ((l1W > maxW || l2W > maxW) && nameSize > 10) {
+      nameSize -= 0.5;
+      l1W = fontBold.widthOfTextAtSize(lines[0], nameSize);
+      l2W = fontBold.widthOfTextAtSize(lines[1], nameSize);
+    }
+    page.drawText(lines[0], {
+      x: (width - l1W) / 2,
+      y: 308,
+      size: nameSize,
+      font: fontBold,
+      color: rgb(0.137, 0.071, 0.220), // #231238
+    });
+    page.drawText(lines[1], {
+      x: (width - l2W) / 2,
+      y: 286,
+      size: nameSize,
+      font: fontBold,
+      color: rgb(0.137, 0.071, 0.220),
+    });
+  } else {
+    let nameSize = 19;
+    let nameWidth = fontBold.widthOfTextAtSize(lines[0], nameSize);
+    while (nameWidth > maxW && nameSize > 10) {
+      nameSize -= 0.5;
+      nameWidth = fontBold.widthOfTextAtSize(lines[0], nameSize);
+    }
+    page.drawText(lines[0], {
+      x: (width - nameWidth) / 2,
+      y: 297,
+      size: nameSize,
+      font: fontBold,
+      color: rgb(0.137, 0.071, 0.220),
+    });
   }
 
-  const nameY = 265;
-  page.drawText(name, {
-    x: (width - nameWidth) / 2,
-    y: nameY,
-    size: nameSize,
-    font: fontBold,
-    color: rgb(0.14, 0.07, 0.22), // #231238 Deep Brand Plum
-  });
-
-  // 3. QR Code (compact, small 72x72 pt on 82x82 pt card, valid for both Main Entry and Lunch Counter)
+  // 3. QR Code (76x76 pt clean themed QR, no box, no corner curves, centered medallion)
   const checkInUrl = getCheckInUrl(registration);
-  const qrPngBuffer = await generateQrPngBuffer(checkInUrl, { width: 350 });
+  const qrPngBuffer = await generateQrPngBuffer(checkInUrl, { width: 600, noBorder: true });
   const qrImage = await doc.embedPng(qrPngBuffer);
 
-  const qrSize = 72;
-  const framePad = 5;
-  const frameSize = qrSize + framePad * 2; // 82 pt
-  const frameX = (width - frameSize) / 2;
-  const frameY = 145;
-  const qrX = frameX + framePad;
-  const qrY = frameY + framePad;
-
-  // Crisp white rounded container card behind QR code to guarantee 100% scan reliability
-  page.drawRectangle({
-    x: frameX,
-    y: frameY,
-    width: frameSize,
-    height: frameSize,
-    color: rgb(1, 1, 1),
-    borderColor: rgb(0.90, 0.82, 0.88),
-    borderWidth: 1,
-  });
+  const qrSize = 76;
+  const qrX = (width - qrSize) / 2;
+  const qrY = 176;
 
   page.drawImage(qrImage, {
     x: qrX,
@@ -185,4 +282,6 @@ module.exports = {
   generateIdCardPdfBuffer,
   cleanDoctorName,
   getCheckInUrl,
+  resolveBadgeRole,
+  PT_PER_CM,
 };

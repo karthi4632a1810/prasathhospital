@@ -15,6 +15,7 @@ import {
   DELIVERY_OPTIONS,
 } from '../../components/StatusBadges';
 import RegistrationDetail from './RegistrationDetail';
+import IdCardModal from './IdCardModal';
 
 const EMPTY_FILTERS = {
   q: '',
@@ -45,6 +46,7 @@ export default function Registrations() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [transferring, setTransferring] = useState(false);
   const [openId, setOpenId] = useState(null);
+  const [idCardModalReg, setIdCardModalReg] = useState(null);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState('');
 
@@ -247,6 +249,93 @@ export default function Registrations() {
       {exportError && <div className="notice notice--error">{exportError}</div>}
 
       <div className="card" style={{ marginBottom: 'var(--space-5)' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '8px',
+            padding: '12px 16px 0',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+          }}
+        >
+          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b' }}>Quick Filter:</span>
+          <button
+            type="button"
+            onClick={() => {
+              setFilters((f) => ({ ...f, checkedIn: '', lunchCheckedIn: '', status: '' }));
+              setPage(1);
+            }}
+            style={{
+              padding: '4px 12px',
+              borderRadius: '9999px',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              border: !filters.checkedIn && !filters.lunchCheckedIn ? '2px solid #6366f1' : '1px solid #cbd5e1',
+              backgroundColor: !filters.checkedIn && !filters.lunchCheckedIn ? '#eef2ff' : '#ffffff',
+              color: !filters.checkedIn && !filters.lunchCheckedIn ? '#4338ca' : '#475569',
+            }}
+          >
+            All Registrations
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setFilters((f) => ({ ...f, checkedIn: 'yes', lunchCheckedIn: '' }));
+              setPage(1);
+            }}
+            style={{
+              padding: '4px 12px',
+              borderRadius: '9999px',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              border: filters.checkedIn === 'yes' ? '2px solid #16a34a' : '1px solid #cbd5e1',
+              backgroundColor: filters.checkedIn === 'yes' ? '#f0fdf4' : '#ffffff',
+              color: filters.checkedIn === 'yes' ? '#15803d' : '#475569',
+            }}
+          >
+            🚪 Checked-in Users Only
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setFilters((f) => ({ ...f, checkedIn: 'no', lunchCheckedIn: '' }));
+              setPage(1);
+            }}
+            style={{
+              padding: '4px 12px',
+              borderRadius: '9999px',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              border: filters.checkedIn === 'no' ? '2px solid #d97706' : '1px solid #cbd5e1',
+              backgroundColor: filters.checkedIn === 'no' ? '#fffbeb' : '#ffffff',
+              color: filters.checkedIn === 'no' ? '#b45309' : '#475569',
+            }}
+          >
+            ⏳ Pending Check-in
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setFilters((f) => ({ ...f, lunchCheckedIn: 'yes' }));
+              setPage(1);
+            }}
+            style={{
+              padding: '4px 12px',
+              borderRadius: '9999px',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              border: filters.lunchCheckedIn === 'yes' ? '2px solid #9333ea' : '1px solid #cbd5e1',
+              backgroundColor: filters.lunchCheckedIn === 'yes' ? '#faf5ff' : '#ffffff',
+              color: filters.lunchCheckedIn === 'yes' ? '#7e22ce' : '#475569',
+            }}
+          >
+            🍽️ Lunch Scanned
+          </button>
+        </div>
         <div className="toolbar">
           <label className="field field--grow">
             <span className="field__label">Search</span>
@@ -447,6 +536,7 @@ export default function Registrations() {
                   <th>Email</th>
                   <th>WhatsApp</th>
                   <SortTh label="Check-in" field="checkedInAt" sort={sort} onSort={toggleSort} />
+                  <th style={{ textAlign: 'center', width: '95px' }}>ID Card</th>
                 </tr>
               </thead>
               <tbody>
@@ -554,6 +644,30 @@ export default function Registrations() {
                         )}
                       </div>
                     </td>
+                    <td onClick={(e) => e.stopPropagation()} style={{ textAlign: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => setIdCardModalReg(reg)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          backgroundColor: '#fdf2f8',
+                          color: '#be185d',
+                          border: '1px solid #fbcfe8',
+                          transition: 'all 120ms',
+                        }}
+                        title="Edit title/name and print/download ID Card"
+                      >
+                        <span>🪪</span>
+                        <span>Print ID</span>
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -658,6 +772,14 @@ export default function Registrations() {
 
       {openId && (
         <RegistrationDetail id={openId} onClose={() => setOpenId(null)} onChanged={handleChanged} />
+      )}
+
+      {idCardModalReg && (
+        <IdCardModal
+          registration={idCardModalReg}
+          onClose={() => setIdCardModalReg(null)}
+          onUpdated={handleChanged}
+        />
       )}
     </div>
   );

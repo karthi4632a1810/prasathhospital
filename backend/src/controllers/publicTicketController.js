@@ -114,11 +114,13 @@ const getBadgePdf = asyncHandler(async (req, res) => {
     throw ApiError.conflict('ID cards are only available for confirmed registrations.');
   }
   const role = req.query.role || null;
+  const name = req.query.name || null;
   const includeTemplate = req.query.template === 'true' || req.query.preview === 'true';
-  const buffer = await generateIdCardPdfBuffer(reg, { role, includeTemplate });
+  const buffer = await generateIdCardPdfBuffer(reg, { role, name, includeTemplate });
   res.set('Content-Type', 'application/pdf');
-  res.set('Content-Disposition', `inline; filename="${reg.registrationCode}-ID-CARD.pdf"`);
-  res.set('Cache-Control', 'public, max-age=300');
+  const safeName = (name || reg.attendee?.name || reg.registrationCode).replace(/[^a-zA-Z0-9_-]/g, '_');
+  res.set('Content-Disposition', `inline; filename="${reg.registrationCode}-${safeName}-ID-CARD.pdf"`);
+  res.set('Cache-Control', 'public, max-age=60');
   return res.send(buffer);
 });
 

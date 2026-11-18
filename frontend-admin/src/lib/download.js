@@ -2,15 +2,15 @@ import { getToken } from './api';
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 
-/** Downloads a CSV export, attaching the bearer token a plain <a href> can't carry. */
-export async function downloadCsv(path, filename) {
+/** Downloads an authenticated file (CSV, PDF, etc.), attaching the bearer token. */
+export async function downloadFile(path, filename) {
   const token = getToken();
   const response = await fetch(`${BASE_URL}/api/v1${path}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new Error(body?.error?.message || 'Export failed.');
+    throw new Error(body?.error?.message || 'Download failed.');
   }
   const blob = await response.blob();
   const url = URL.createObjectURL(blob);
@@ -20,5 +20,10 @@ export async function downloadCsv(path, filename) {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** Downloads a CSV export. */
+export async function downloadCsv(path, filename) {
+  return downloadFile(path, filename);
 }

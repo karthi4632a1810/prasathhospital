@@ -8,6 +8,7 @@ const {
   cancelRegistration,
   retryDelivery,
   exportRegistrationsCsv,
+  getRegistrationBadgePdf,
 } = require('../controllers/adminRegistrationController');
 const { requireAuth, requireRole } = require('../middleware/auth');
 
@@ -18,6 +19,7 @@ router.use(requireAuth, requireRole('superadmin', 'manager'));
 router.get('/', listRegistrations);
 router.get('/export.csv', exportRegistrationsCsv);
 router.get('/:id', getRegistration);
+router.get('/:id/badge.pdf', getRegistrationBadgePdf);
 router.patch('/:id', updateRegistration);
 router.post('/:id/cancel', cancelRegistration);
 router.post('/:id/deliveries/:channel', retryDelivery);

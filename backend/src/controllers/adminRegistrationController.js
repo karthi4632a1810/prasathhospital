@@ -11,6 +11,7 @@ const { deliverTicket, CHANNELS } = require('../services/delivery');
 const { cleanAttendee } = require('./publicRegistrationController');
 const { recordAudit } = require('../services/auditLog');
 const { toCsv } = require('../utils/csv');
+const { generateIdCardPdfBuffer } = require('../utils/idCardPdf');
 
 function withRefs(query) {
   return query
@@ -248,6 +249,22 @@ const exportRegistrationsCsv = asyncHandler(async (req, res) => {
   res.send(toCsv(rows, CSV_COLUMNS));
 });
 
+/** GET /api/v1/admin/registrations/:id/badge.pdf — staff download/print ID card with custom role/name */
+const getRegistrationBadgePdf = asyncHandler(async (req, res) => {
+  const reg = await findOr404(req.params.id);
+  if (reg.status !== 'confirmed') {
+    throw ApiError.conflict('ID cards are only available for confirmed registrations.');
+  }
+  const role = req.query.role || null;
+  const name = req.query.name || null;
+  const includeTemplate = req.query.template === 'true' || req.query.preview === 'true';
+  const buffer = await generateIdCardPdfBuffer(reg, { role, name, includeTemplate });
+  res.set('Content-Type', 'application/pdf');
+  const safeName = (name || reg.attendee?.name || reg.registrationCode).replace(/[^a-zA-Z0-9_-]/g, '_');
+  res.set('Content-Disposition', `inline; filename="${reg.registrationCode}-${safeName}-ID-CARD.pdf"`);
+  return res.send(buffer);
+});
+
 module.exports = {
   listRegistrations,
   getRegistration,
@@ -255,6 +272,7 @@ module.exports = {
   cancelRegistration,
   retryDelivery,
   exportRegistrationsCsv,
+  getRegistrationBadgePdf,
   qrStatusOf,
   CSV_COLUMNS,
 };

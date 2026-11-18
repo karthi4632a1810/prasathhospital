@@ -1,5 +1,5 @@
 import { request } from './api';
-import { downloadCsv } from './download';
+import { downloadCsv, downloadFile } from './download';
 
 /** Drops empty filters so the URL (and the CSV export) only carry what's set. */
 export function toQuery(params) {
@@ -19,4 +19,11 @@ export const registrationApi = {
     request(`/admin/registrations/${id}/deliveries/${channel}`, { method: 'POST' }),
   exportCsv: (params) =>
     downloadCsv(`/admin/registrations/export.csv?${toQuery(params)}`, 'registrations.csv'),
+  downloadBadgePdf: (id, { role, name, template } = {}, filename) => {
+    const q = toQuery({ role, name, template: template ? 'true' : undefined });
+    return downloadFile(
+      `/admin/registrations/${id}/badge.pdf${q ? `?${q}` : ''}`,
+      filename || `ID-CARD-${id}.pdf`
+    );
+  },
 };
