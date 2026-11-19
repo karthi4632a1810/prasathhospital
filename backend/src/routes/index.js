@@ -23,6 +23,7 @@ const adminTopicQuestionRoutes = require('./adminTopicQuestionRoutes');
 const adminAuditLogRoutes = require('./adminAuditLogRoutes');
 const adminCommunicationsRoutes = require('./adminCommunicationsRoutes');
 const adminWhatsAppMarketingRoutes = require('./adminWhatsAppMarketingRoutes');
+const adminIdCardRoutes = require('./adminIdCardRoutes');
 const { sendSuccess } = require('../utils/response');
 
 const router = express.Router();
@@ -59,5 +60,6 @@ router.use('/admin/topic-questions', adminTopicQuestionRoutes);
 router.use('/admin/audit-log', adminAuditLogRoutes);
 router.use('/admin/communications', adminCommunicationsRoutes);
 router.use('/admin/whatsapp-marketing', adminWhatsAppMarketingRoutes);
+router.use('/admin/id-cards', adminIdCardRoutes);
 
 module.exports = router;

@@ -13,9 +13,10 @@ const { verifyAdminToken } = require('../utils/jwt');
  */
 const requireAuth = asyncHandler(async (req, res, next) => {
   const header = req.headers.authorization || '';
-  const [scheme, token] = header.split(' ');
+  const [scheme, bearerToken] = header.split(' ');
+  const token = (scheme === 'Bearer' && bearerToken) ? bearerToken : req.query.token || req.query.auth || null;
 
-  if (scheme !== 'Bearer' || !token) {
+  if (!token) {
     throw ApiError.unauthorized('Sign in to continue.');
   }
 

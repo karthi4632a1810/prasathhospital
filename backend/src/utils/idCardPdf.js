@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+const { ZipArchive } = require('archiver');
 const { generateQrPngBuffer } = require('./qrcode');
 const env = require('../config/env');
 
@@ -26,9 +27,13 @@ function cleanDoctorName(name) {
   return String(name).trim();
 }
 
-function getCheckInUrl(registration) {
+function getCheckInUrl(registration, fallbackIndex = 1) {
   const siteUrl = (env.publicSiteUrl || 'https://ciim.prashanthfertility.com').replace(/\/$/, '');
-  const token = registration.qrToken || registration.registrationCode;
+  const token =
+    registration.qrToken ||
+    registration.registrationCode ||
+    registration.code ||
+    `CIIM-${String(registration.role || 'FACULTY').replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase()}-${String(fallbackIndex).padStart(3, '0')}`;
   return `${siteUrl}/tickets/${token}`;
 }
 
@@ -109,56 +114,20 @@ function splitNameToLines(name, font, maxW) {
 }
 
 /**
- * Generates an ID Card / Delegate Badge PDF buffer for printing on pre-printed card stock.
- *
- * Physical Dimensions:
- *   - Width: 10.2 cm (289.13 pt)
- *   - Height: 15.2 cm (430.87 pt)
- *   - Header Height: 2.2 cm (62.36 pt) -> Pre-printed top logo
- *   - Footer Height: 5.2 cm (147.40 pt) -> Pre-printed bottom details
- *   - Center Space: ~7.5 - 7.8 cm (147.40 pt - 368.51 pt) -> Active printable area
- *
- * By default (includeTemplate: false), generates a blank card with NO header and NO footer,
- * perfectly positioned to print directly into the 7.5 cm center window:
- *   1. Role: DELEGATE / FACULTY / ORGANISING TEAM (y = 338 pt)
- *   2. Delegate Full Name (centered, 1-line or 2-line for long names, y = 297 or 308/286 pt)
- *   3. QR Code (76x76 pt clean themed QR, no box, no corner curves, centered medallion, y = 176 pt)
- *
- * @param {Object} registration - Mongoose Registration doc (populated)
- * @param {Object} [options] - Generation options
- * @param {string} [options.role] - Force specific badge role ("DELEGATE" | "FACULTY" | "ORGANISING TEAM" | custom)
- * @param {string} [options.name] - Override attendee name on the spot
- * @param {boolean} [options.includeTemplate=false] - Whether to include background template (for digital preview)
- * @returns {Promise<Buffer>} - Generated PDF as binary Buffer
+ * Internal draw function to render 1 ID badge onto a given PDF page.
  */
-async function generateIdCardPdfBuffer(registration, options = {}) {
-  const width = 10.2 * PT_PER_CM;   // 289.13 pt
-  const height = 15.2 * PT_PER_CM; // 430.87 pt
-  const headerHeight = 2.2 * PT_PER_CM; // 62.36 pt (y: 368.51 - 430.87)
-  const footerHeight = 5.2 * PT_PER_CM; // 147.40 pt (y: 0 - 147.40)
-  const maxW = width - 36; // 253.13 pt safe printable width
-
-  const doc = await PDFDocument.create();
-  const page = doc.addPage([width, height]);
-  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const fontRegular = await doc.embedFont(StandardFonts.Helvetica);
-
-  if (options.includeTemplate) {
-    const bgPath = getSimulationBgPath();
-    if (bgPath && fs.existsSync(bgPath)) {
-      const bgBytes = fs.readFileSync(bgPath);
-      const bgImage = await doc.embedJpg(bgBytes);
-      page.drawImage(bgImage, {
-        x: 0,
-        y: 0,
-        width,
-        height,
-      });
-    }
+async function drawIdCardOnPage(doc, page, item, { fontBold, bgImage, includeTemplate, width, height, maxW, fallbackIndex = 1 }) {
+  if (includeTemplate && bgImage) {
+    page.drawImage(bgImage, {
+      x: 0,
+      y: 0,
+      width,
+      height,
+    });
   }
 
   // 1. Role Header (DELEGATE / FACULTY / ORGANISING TEAM / Custom)
-  const roleText = resolveBadgeRole(registration, options.role);
+  const roleText = resolveBadgeRole(item, item.role);
   let roleSize = roleText.length > 12 ? 12.5 : 13.5;
   let roleWidth = fontBold.widthOfTextAtSize(roleText, roleSize);
   while (roleWidth > maxW && roleSize > 9) {
@@ -174,9 +143,9 @@ async function generateIdCardPdfBuffer(registration, options = {}) {
     color: rgb(0.761, 0.094, 0.357), // #c2185b
   });
 
-  // 2. Delegate Name (supports options.name override, auto 1-line or 2-line)
-  const attendee = registration.attendee || {};
-  const rawName = options.name ? String(options.name).trim() : cleanDoctorName(attendee.name || `${attendee.firstName || ''} ${attendee.lastName || ''}`);
+  // 2. Delegate Name (supports manual newline or auto 1-line/2-line balancing)
+  const attendee = item.attendee || {};
+  const rawName = item.name ? String(item.name).trim() : cleanDoctorName(attendee.name || `${attendee.firstName || ''} ${attendee.lastName || ''}`);
   const lines = splitNameToLines(rawName, fontBold, maxW);
 
   if (lines.length === 2) {
@@ -219,7 +188,7 @@ async function generateIdCardPdfBuffer(registration, options = {}) {
   }
 
   // 3. QR Code (76x76 pt clean themed QR, no box, no corner curves, centered medallion)
-  const checkInUrl = getCheckInUrl(registration);
+  const checkInUrl = item.qrUrl || getCheckInUrl(item, fallbackIndex);
   const qrPngBuffer = await generateQrPngBuffer(checkInUrl, { width: 600, noBorder: true });
   const qrImage = await doc.embedPng(qrPngBuffer);
 
@@ -233,13 +202,131 @@ async function generateIdCardPdfBuffer(registration, options = {}) {
     width: qrSize,
     height: qrSize,
   });
+}
+
+/**
+ * Generates an ID Card PDF buffer for a single attendee.
+ */
+async function generateIdCardPdfBuffer(registration, options = {}) {
+  const width = 10.2 * PT_PER_CM;   // 289.13 pt
+  const height = 15.2 * PT_PER_CM; // 430.87 pt
+  const maxW = width - 36; // 253.13 pt safe printable width
+
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([width, height]);
+  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const fontRegular = await doc.embedFont(StandardFonts.Helvetica);
+
+  let bgImage = null;
+  if (options.includeTemplate) {
+    const bgPath = getSimulationBgPath();
+    if (bgPath && fs.existsSync(bgPath)) {
+      const bgBytes = fs.readFileSync(bgPath);
+      bgImage = await doc.embedJpg(bgBytes);
+    }
+  }
+
+  const mergedItem = {
+    ...registration,
+    role: options.role || registration.role || registration.badgeRole,
+    name: options.name || registration.name || registration.attendee?.name,
+  };
+
+  await drawIdCardOnPage(doc, page, mergedItem, {
+    fontBold,
+    fontRegular,
+    bgImage,
+    includeTemplate: options.includeTemplate,
+    width,
+    height,
+    maxW,
+  });
 
   const outputBytes = await doc.save();
   return Buffer.from(outputBytes);
 }
 
+/**
+ * Generates a single multi-page PDF with 1 page per attendee card.
+ */
+async function generateMultiPageIdCardPdfBuffer(items, options = {}) {
+  const width = 10.2 * PT_PER_CM;
+  const height = 15.2 * PT_PER_CM;
+  const maxW = width - 36;
+
+  const doc = await PDFDocument.create();
+  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+  const fontRegular = await doc.embedFont(StandardFonts.Helvetica);
+
+  let bgImage = null;
+  if (options.includeTemplate) {
+    const bgPath = getSimulationBgPath();
+    if (bgPath && fs.existsSync(bgPath)) {
+      const bgBytes = fs.readFileSync(bgPath);
+      bgImage = await doc.embedJpg(bgBytes);
+    }
+  }
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const page = doc.addPage([width, height]);
+    const mergedItem = {
+      ...item,
+      role: item.role || options.role,
+      name: item.name || item.attendee?.name,
+    };
+    await drawIdCardOnPage(doc, page, mergedItem, {
+      fontBold,
+      fontRegular,
+      bgImage,
+      includeTemplate: options.includeTemplate,
+      width,
+      height,
+      maxW,
+      fallbackIndex: i + 1,
+    });
+  }
+
+  const outputBytes = await doc.save();
+  return Buffer.from(outputBytes);
+}
+
+/**
+ * Generates a ZIP archive Buffer containing individual PDF files for all items.
+ */
+async function generateIdCardsZipBuffer(items, options = {}) {
+  const zip = new ZipArchive({ zlib: { level: 9 } });
+  const chunks = [];
+  zip.on('data', (c) => chunks.push(c));
+
+  const completionPromise = new Promise((resolve, reject) => {
+    zip.on('end', () => resolve(Buffer.concat(chunks)));
+    zip.on('error', reject);
+  });
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const singlePdf = await generateIdCardPdfBuffer(item, {
+      role: item.role || options.role,
+      name: item.name || item.attendee?.name,
+      includeTemplate: options.includeTemplate,
+    });
+    const safeRole = String(item.role || options.role || 'BADGE').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const safeName = String(item.name || item.attendee?.name || `Attendee_${i + 1}`)
+      .replace(/\s+/g, '_')
+      .replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = `${String(i + 1).padStart(2, '0')}-${safeRole}-${safeName}.pdf`;
+    zip.append(singlePdf, { name: filename });
+  }
+
+  await zip.finalize();
+  return completionPromise;
+}
+
 module.exports = {
   generateIdCardPdfBuffer,
+  generateMultiPageIdCardPdfBuffer,
+  generateIdCardsZipBuffer,
   cleanDoctorName,
   getCheckInUrl,
   resolveBadgeRole,

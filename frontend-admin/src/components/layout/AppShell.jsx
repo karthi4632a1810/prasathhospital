@@ -23,6 +23,7 @@ const NAV_GROUPS = [
     label: 'Registrations',
     items: [
       { to: '/registrations', label: 'Registrations', icon: IconUsers, roles: OPS_ROLES },
+      { to: '/id-cards', label: 'ID Card Studio', icon: IconBadge, roles: OPS_ROLES },
       { to: '/companies', label: 'Companies', icon: IconBuilding, roles: OPS_ROLES },
       { to: '/coupons', label: 'Coupons', icon: IconTag, roles: OPS_ROLES },
     ],
@@ -446,6 +447,26 @@ function IconClose() {
       strokeLinecap="round"
     >
       <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
+function IconBadge() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="12" cy="10" r="3" />
+      <path d="M7 17c0-2 2-3 5-3s5 1 5 3" />
+      <path d="M9 2h6" />
     </svg>
   );
 }

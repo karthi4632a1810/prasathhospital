@@ -1,0 +1,447 @@
+/* ==========================================================================
+   CIIM 2026 ID Card Studio & Bulk Badges
+   Pre-printed badge stock (10.2 cm x 15.2 cm), Clean Print Overlay vs Simulation,
+   Excel import, bulk single-PDF compilation, ZIP export, and row-level print.
+   ========================================================================== */
+
+.idcard-studio-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 1360px;
+  margin: 0 auto;
+  width: 100%;
+  padding-bottom: 60px;
+}
+
+/* Header Card */
+.idcard-header-card {
+  background: var(--white);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px 28px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.idcard-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.idcard-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.idcard-title-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fdf2f8, #fce7f3);
+  color: #be185d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  border: 1px solid #fbcfe8;
+}
+
+.idcard-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.idcard-subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 3px 0 0;
+}
+
+/* Mode Switcher */
+.idcard-mode-switcher {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.idcard-mode-btn {
+  border: none;
+  background: transparent;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 120ms ease;
+}
+
+.idcard-mode-btn.is-active {
+  background: var(--white);
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-weight: 700;
+}
+
+.idcard-mode-btn--clean.is-active {
+  color: #be185d;
+}
+
+.idcard-mode-btn--sim.is-active {
+  color: #4f46e5;
+}
+
+/* Quick Info Banner */
+.idcard-info-banner {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.84rem;
+  color: #334155;
+}
+
+.idcard-spec-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+/* Action Toolbar (Upload / Add / Preset / Download) */
+.idcard-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.idcard-toolbar__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.idcard-toolbar__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Selection / Search Bar */
+.idcard-filter-card {
+  background: var(--white);
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.idcard-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 260px;
+  max-width: 440px;
+}
+
+.idcard-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 15px;
+  pointer-events: none;
+}
+
+.idcard-search-input {
+  width: 100%;
+  padding: 9px 12px 9px 36px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.87rem;
+  background: #f8fafc;
+  outline: none;
+  transition: all 120ms ease;
+}
+
+.idcard-search-input:focus {
+  background: #ffffff;
+  border-color: #be185d;
+  box-shadow: 0 0 0 3px rgba(190, 24, 93, 0.12);
+}
+
+.idcard-role-filters {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.idcard-role-pill {
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 100ms ease;
+}
+
+.idcard-role-pill:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.idcard-role-pill.is-active {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+/* Bulk Selection Sticky Banner */
+.idcard-bulk-banner {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  color: #ffffff;
+  border-radius: 12px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.35);
+  animation: slideDown 150ms ease-out;
+}
+
+.idcard-bulk-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.idcard-bulk-count {
+  background: #be185d;
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.idcard-bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Badges Table */
+.idcard-table-card {
+  background: var(--white);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.idcard-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.87rem;
+}
+
+.idcard-table th {
+  background: #f8fafc;
+  padding: 12px 16px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.idcard-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+.idcard-table tr:hover td {
+  background: #fdfdfd;
+}
+
+.idcard-table tr.is-selected td {
+  background: #fdf2f8;
+}
+
+/* Name and Role styling */
+.idcard-name-input {
+  width: 100%;
+  max-width: 320px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 0.95rem;
+  padding: 5px 8px;
+  border-radius: 6px;
+  outline: none;
+  transition: all 120ms ease;
+}
+
+.idcard-name-input:hover {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.idcard-name-input:focus {
+  background: #ffffff;
+  border-color: #be185d;
+  box-shadow: 0 0 0 3px rgba(190, 24, 93, 0.12);
+}
+
+.idcard-two-line-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.idcard-role-select {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: #ffffff;
+  outline: none;
+  cursor: pointer;
+}
+
+.idcard-role-select--faculty {
+  background: #fdf2f8;
+  color: #9d174d;
+  border-color: #fbcfe8;
+}
+
+.idcard-role-select--organising {
+  background: #fefce8;
+  color: #854d0e;
+  border-color: #fef08a;
+}
+
+.idcard-role-select--delegate {
+  background: #f0fdf4;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+/* Row Action Buttons */
+.idcard-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.idcard-action-btn {
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #334155;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 100ms ease;
+}
+
+.idcard-action-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.idcard-action-btn--primary {
+  background: #be185d;
+  color: #ffffff;
+  border-color: #be185d;
+}
+
+.idcard-action-btn--primary:hover:not(:disabled) {
+  background: #9d174d;
+  border-color: #9d174d;
+}
+
+.idcard-action-btn--danger {
+  color: #ef4444;
+}
+
+.idcard-action-btn--danger:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

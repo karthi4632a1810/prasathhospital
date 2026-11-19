@@ -9,6 +9,7 @@ import TicketTypes from './pages/TicketTypes';
 import Companies from './pages/Companies';
 import Coupons from './pages/Coupons';
 import Registrations from './pages/Registrations';
+import IdCardStudio from './pages/IdCardStudio';
 import Communications from './pages/Communications';
 import WhatsAppMarketing from './pages/WhatsAppMarketing';
 import CheckIn from './pages/CheckIn';
@@ -83,6 +84,14 @@ export default function App() {
             element={
               <Shielded roles={OPS}>
                 <Registrations />
+              </Shielded>
+            }
+          />
+          <Route
+            path="/id-cards"
+            element={
+              <Shielded roles={OPS}>
+                <IdCardStudio />
               </Shielded>
             }
           />
