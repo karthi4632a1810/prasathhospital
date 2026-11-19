@@ -1,5 +1,8 @@
 'use strict';
 
+const path = require('path');
+const fs = require('fs');
+const XLSX = require('xlsx');
 const mongoose = require('mongoose');
 const Registration = require('../models/Registration');
 const ApiError = require('../utils/ApiError');
@@ -251,6 +254,230 @@ const exportRegistrationsCsv = asyncHandler(async (req, res) => {
   res.send(toCsv(rows, CSV_COLUMNS));
 });
 
+function cleanNameForTnmc(name) {
+  if (!name) return '';
+  return String(name)
+    .replace(/^(Dr\.?|Prof\.?|Mr\.?|Ms\.?|Mrs\.?)\s+/i, '')
+    .replace(/[^\w\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function resolveCouncilAndNumber(rawCouncilNo, state) {
+  const raw = String(rawCouncilNo || '').trim();
+  if (!raw || ['NA', 'N/A', 'NIL', 'NONE', 'NOT APPLICABLE', '-'].includes(raw.toUpperCase())) {
+    return {
+      isTnmc: true,
+      councilName: 'Tamil Nadu Medical Council',
+      regNumber: '',
+    };
+  }
+
+  if (/^APMC/i.test(raw)) {
+    return {
+      isTnmc: false,
+      councilName: 'Andhra Pradesh Medical Council',
+      regNumber: raw.replace(/^APMC[\s\/\-FMR]*/i, '').trim(),
+    };
+  }
+  if (/^TSMC/i.test(raw)) {
+    return {
+      isTnmc: false,
+      councilName: 'Telangana State Medical Council',
+      regNumber: raw.replace(/^TSMC[\s\/\-FMR]*/i, '').trim(),
+    };
+  }
+  if (/^KMC/i.test(raw)) {
+    return {
+      isTnmc: false,
+      councilName: 'Karnataka Medical Council',
+      regNumber: raw.replace(/^KMC[\s\/\-]*/i, '').trim(),
+    };
+  }
+  if (/^JKMC/i.test(raw)) {
+    return {
+      isTnmc: false,
+      councilName: 'Jammu and Kashmir Medical Council',
+      regNumber: raw.replace(/^JKMC[\s\/\-]*/i, '').trim(),
+    };
+  }
+  if (/^MMC/i.test(raw)) {
+    return {
+      isTnmc: false,
+      councilName: 'Maharashtra Medical Council',
+      regNumber: raw.replace(/^MMC[\s\/\-]*/i, '').trim(),
+    };
+  }
+  if (/^DMC/i.test(raw)) {
+    return {
+      isTnmc: false,
+      councilName: 'Delhi Medical Council',
+      regNumber: raw.replace(/^DMC[\s\/\-]*/i, '').trim(),
+    };
+  }
+  if (/^SLMC/i.test(raw)) {
+    return {
+      isTnmc: false,
+      councilName: 'Sri Lanka Medical Council',
+      regNumber: raw.replace(/^SLMC[\s\/\-]*/i, '').trim(),
+    };
+  }
+
+  if (state && !/tamil\s*nadu/i.test(state) && !/tnmc|tn/i.test(raw)) {
+    return {
+      isTnmc: false,
+      councilName: `${state} Medical Council`,
+      regNumber: raw,
+    };
+  }
+
+  const cleanTnmcNo = raw.replace(/^(TNMC Reg No|TNMC|Tnmc|TN)[\s\/\-]*/i, '').trim();
+  return {
+    isTnmc: true,
+    councilName: 'Tamil Nadu Medical Council',
+    regNumber: cleanTnmcNo || raw,
+  };
+}
+
+function getAttendanceTemplateWorkbook() {
+  const possiblePaths = [
+    path.resolve(__dirname, '../assets/tnmc_attendance_template.xlsx'),
+    path.resolve(process.cwd(), 'Bulk Upload Attendance Template(1).xlsx'),
+    path.resolve(process.cwd(), 'backend/src/assets/tnmc_attendance_template.xlsx'),
+  ];
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      return XLSX.readFile(p);
+    }
+  }
+  const wb = XLSX.utils.book_new();
+  wb.SheetNames = [
+    'Sessions Details (Read only)',
+    'TNMC Speakers',
+    'Other than TNMC speakers',
+    'TNMC Participants',
+    'Other than TNMC participants',
+  ];
+  wb.Sheets['Sessions Details (Read only)'] = XLSX.utils.aoa_to_sheet([
+    ['Session Number', 'Session Name', 'Topic Details', 'Date (DD/MM/YYYY)', 'Start to End Time'],
+  ]);
+  wb.Sheets['TNMC Speakers'] = XLSX.utils.aoa_to_sheet([
+    ['Serial Number', 'Name of the council (in which they have registered)', 'TNMC Register Number', 'Full Name\nPlease do not include inital or symbols or dots as part of the name', 'Email Id', 'Mobile Number (Optional)', 'Session Name'],
+  ]);
+  wb.Sheets['Other than TNMC speakers'] = XLSX.utils.aoa_to_sheet([
+    ['Serial Number', 'Name of the council (in which they have registered)', 'State Medical Council', 'State Medical Register Number (Optional)', 'Full Name\n(Please do not include inital or symbols or dots as part of the name)', 'Email Id', 'Mobile Number (Optional)', 'Session Name'],
+  ]);
+  return wb;
+}
+
+const TNMC_PARTICIPANT_HEADERS = [
+  'Serial Number',
+  'Name of the council',
+  'TNMC Register Number',
+  'Full Name\n(Please do not include inital or symbols or dots as part of the name)',
+  'Email Id\n',
+  'Mobile Number (Optional)',
+];
+
+const OTHER_PARTICIPANT_HEADERS = [
+  'Serial Number',
+  'Name of the council (in which they have registered)',
+  'Council Register Number (Optional)',
+  'Full Name\n(Please do not include inital or symbols or dots as part of the name)',
+  'Email Id\n',
+  'Mobile Number (Optional)',
+];
+
+/** GET /api/v1/admin/registrations/export-attendance.xlsx — TNMC bulk upload format for scanned attendees */
+const exportScannedAttendanceXlsx = asyncHandler(async (req, res) => {
+  const filter = buildRegistrationFilter(req.query);
+  filter.status = 'confirmed';
+  filter.$or = [
+    { checkedInAt: { $ne: null } },
+    { 'checkins.0': { $exists: true } },
+  ];
+
+  const registrations = await Registration.find(filter)
+    .sort({ checkedInAt: 1, createdAt: 1 })
+    .lean();
+
+  const wb = getAttendanceTemplateWorkbook();
+  const tnmcRows = [];
+  const otherRows = [];
+
+  for (const reg of registrations) {
+    const attendee = reg.attendee || {};
+    const { isTnmc, councilName, regNumber } = resolveCouncilAndNumber(attendee.medicalCouncilRegNo, attendee.state);
+    const cleanedName = cleanNameForTnmc(attendee.name);
+    const email = attendee.email || '';
+    const mobile = String(attendee.phone || '').replace(/[^\d]/g, '').slice(-10);
+
+    if (isTnmc) {
+      tnmcRows.push([
+        tnmcRows.length + 1,
+        councilName,
+        regNumber,
+        cleanedName,
+        email,
+        mobile,
+      ]);
+    } else {
+      otherRows.push([
+        otherRows.length + 1,
+        councilName,
+        regNumber,
+        cleanedName,
+        email,
+        mobile,
+      ]);
+    }
+  }
+
+  wb.Sheets['TNMC Participants'] = XLSX.utils.aoa_to_sheet([
+    TNMC_PARTICIPANT_HEADERS,
+    ...tnmcRows,
+  ]);
+  wb.Sheets['TNMC Participants']['!cols'] = [
+    { wch: 15 },
+    { wch: 30 },
+    { wch: 25 },
+    { wch: 40 },
+    { wch: 35 },
+    { wch: 25 },
+  ];
+
+  wb.Sheets['Other than TNMC participants'] = XLSX.utils.aoa_to_sheet([
+    OTHER_PARTICIPANT_HEADERS,
+    ...otherRows,
+  ]);
+  wb.Sheets['Other than TNMC participants']['!cols'] = [
+    { wch: 15 },
+    { wch: 35 },
+    { wch: 25 },
+    { wch: 40 },
+    { wch: 35 },
+    { wch: 25 },
+  ];
+
+  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+  recordAudit(req, {
+    action: 'registration.export_attendance_xlsx',
+    entityType: 'Registration',
+    meta: {
+      totalScanned: registrations.length,
+      tnmcCount: tnmcRows.length,
+      otherCount: otherRows.length,
+      filters: req.query,
+    },
+  });
+
+  const dateStr = new Date().toISOString().slice(0, 10);
+  res.set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.set('Content-Disposition', `attachment; filename="TNMC_Attendance_Scanned_${dateStr}.xlsx"`);
+  res.send(buffer);
+});
+
 /** GET /api/v1/admin/registrations/:id/badge.pdf — staff download/print ID card with custom role/name */
 const getRegistrationBadgePdf = asyncHandler(async (req, res) => {
   const reg = await findOr404(req.params.id);
@@ -274,6 +501,7 @@ module.exports = {
   cancelRegistration,
   retryDelivery,
   exportRegistrationsCsv,
+  exportScannedAttendanceXlsx,
   getRegistrationBadgePdf,
   qrStatusOf,
   CSV_COLUMNS,

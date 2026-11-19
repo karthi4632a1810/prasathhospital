@@ -48,6 +48,7 @@ export default function Registrations() {
   const [openId, setOpenId] = useState(null);
   const [idCardModalReg, setIdCardModalReg] = useState(null);
   const [exporting, setExporting] = useState(false);
+  const [exportingAttendance, setExportingAttendance] = useState(false);
   const [exportError, setExportError] = useState('');
 
   useEffect(() => {
@@ -108,6 +109,18 @@ export default function Registrations() {
       setExportError(err.message);
     } finally {
       setExporting(false);
+    }
+  }
+
+  async function handleExportAttendance() {
+    setExportingAttendance(true);
+    setExportError('');
+    try {
+      await registrationApi.exportScannedAttendanceXlsx(query);
+    } catch (err) {
+      setExportError(err.message || 'Failed to export scanned attendance.');
+    } finally {
+      setExportingAttendance(false);
     }
   }
 
@@ -224,6 +237,24 @@ export default function Registrations() {
             disabled={exporting || !meta?.total}
           >
             {exporting ? 'Exporting…' : 'Export CSV'}
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: '#0284c7',
+              borderColor: '#7dd3fc',
+              fontWeight: 600,
+            }}
+            onClick={handleExportAttendance}
+            disabled={exportingAttendance}
+            title="Export scanned attendee attendance in official TNMC bulk upload Excel format (.xlsx)"
+          >
+            <span>📋</span>
+            <span>{exportingAttendance ? 'Exporting…' : 'Export Scanned Attendance (.xlsx)'}</span>
           </Button>
           <Button
             variant="secondary"

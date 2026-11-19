@@ -19,6 +19,13 @@ export const registrationApi = {
     request(`/admin/registrations/${id}/deliveries/${channel}`, { method: 'POST' }),
   exportCsv: (params) =>
     downloadCsv(`/admin/registrations/export.csv?${toQuery(params)}`, 'registrations.csv'),
+  exportScannedAttendanceXlsx: (params) => {
+    const dateStr = new Date().toISOString().slice(0, 10);
+    return downloadFile(
+      `/admin/registrations/export-attendance.xlsx?${toQuery(params)}`,
+      `TNMC_Bulk_Upload_Attendance_${dateStr}.xlsx`
+    );
+  },
   downloadBadgePdf: (id, { role, name, template } = {}, filename) => {
     const q = toQuery({ role, name, template: template ? 'true' : undefined });
     return downloadFile(

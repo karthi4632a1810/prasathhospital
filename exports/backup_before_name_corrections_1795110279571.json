@@ -1,0 +1,3079 @@
+[
+  {
+    "_id": "6adca8e47696e5718f7e2630",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr Niranjanadevi S.g",
+      "title": "Dr",
+      "firstName": "Niranjanadevi",
+      "lastName": "S.g",
+      "gender": "Female",
+      "email": "sgniranjanadevi@gmail.com",
+      "phone": "9840680896",
+      "medicalCouncilRegNo": "31295",
+      "institution": "",
+      "designation": "",
+      "address": "Jai Nagar arumbakkam",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "600106",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593b95",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM101B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "266273d5-7718-485f-ad61-c91f89dd794e",
+    "activeKey": "6ad722a245b70e8621211756:sgniranjanadevi@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9840680896",
+    "activeCouncilKey": "6ad722a245b70e8621211756:31295",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-24T12:47:37.595Z",
+        "sentAt": "2026-10-24T12:47:37.595Z",
+        "error": "",
+        "providerMessageId": "<000bf502-fb49-1cd8-8719-7761b3003ab8@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-24T12:47:37.595Z",
+        "sentAt": "2026-10-24T12:47:37.595Z",
+        "error": "",
+        "providerMessageId": "c1728f69-cae4-499a-bba2-2046180dd643"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-10-24T12:47:37.595Z",
+        "error": "",
+        "providerMessageId": "c1728f69-cae4-499a-bba2-2046180dd643",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-10-24T12:47:37.595Z",
+        "error": "",
+        "providerMessageId": "<000bf502-fb49-1cd8-8719-7761b3003ab8@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "1e12acc8c505f9c93a67fa64dd533471819364748b311219",
+    "registrationCode": "REG-074AC210",
+    "createdAt": "2026-10-24T12:47:33.024Z",
+    "updatedAt": "2026-10-24T12:47:37.596Z",
+    "__v": 0
+  },
+  {
+    "_id": "6afa8748e10baf9e7a60b7ac",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr Dr.Prashaanth M K",
+      "title": "Dr",
+      "firstName": "Dr.Prashaanth M K",
+      "lastName": "",
+      "gender": "Male",
+      "email": "drprashaanth@yahoo.com",
+      "phone": "9884559883",
+      "medicalCouncilRegNo": "TNMC98874",
+      "institution": "",
+      "designation": "",
+      "address": "Chennai",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "603103",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6af4435e3b3123abbcb2c1f3",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM442B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "135abf55-3c33-44eb-a8fd-c00d2e9fff20",
+    "activeKey": "6ad722a245b70e8621211756:drprashaanth@yahoo.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9884559883",
+    "activeCouncilKey": "6ad722a245b70e8621211756:TNMC98874",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-16T04:32:13.383Z",
+        "sentAt": "2026-11-16T04:32:13.383Z",
+        "error": "",
+        "providerMessageId": "<10f21707-d35b-f021-f398-dc51cdba1ee3@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-16T04:32:13.384Z",
+        "sentAt": "2026-11-16T04:32:13.384Z",
+        "error": "",
+        "providerMessageId": "e5a1c585-dd42-4985-9f3f-28155f40e5c0"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-11-16T04:32:13.383Z",
+        "error": "",
+        "providerMessageId": "<10f21707-d35b-f021-f398-dc51cdba1ee3@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-11-16T04:32:13.384Z",
+        "error": "",
+        "providerMessageId": "e5a1c585-dd42-4985-9f3f-28155f40e5c0",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "checkins": [],
+    "qrToken": "95c5a09e7e75dc137a55566cb03360049bd7d059db80cb4f",
+    "registrationCode": "REG-0E07AD40",
+    "createdAt": "2026-11-16T04:32:08.859Z",
+    "updatedAt": "2026-11-16T04:32:13.384Z",
+    "__v": 0
+  },
+  {
+    "_id": "6ae866e674c3c0dd0eb4da3e",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr Shweta",
+      "title": "Dr",
+      "firstName": "Shweta",
+      "lastName": "",
+      "gender": "Female",
+      "email": "drshwetadhariwal76@gmail.com",
+      "phone": "9444081630",
+      "medicalCouncilRegNo": "TNMC/69160",
+      "institution": "",
+      "designation": "",
+      "address": "Sampat Nursing Home \nMylapore",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "600004",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593bd2",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM162B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "21f082b2-8be0-4bbe-8b51-c4cdefcd3361",
+    "activeKey": "6ad722a245b70e8621211756:drshwetadhariwal76@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9444081630",
+    "activeCouncilKey": "6ad722a245b70e8621211756:TNMC69160",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-02T10:33:15.212Z",
+        "sentAt": "2026-11-02T10:33:15.212Z",
+        "error": "",
+        "providerMessageId": "<e0deac95-4af1-94ed-1028-f8e9e404d15a@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-02T10:33:15.212Z",
+        "sentAt": "2026-11-02T10:33:15.212Z",
+        "error": "",
+        "providerMessageId": "7f5fa0fa-7cb3-4123-9293-ce42120d3eeb"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-11-02T10:33:15.212Z",
+        "error": "",
+        "providerMessageId": "7f5fa0fa-7cb3-4123-9293-ce42120d3eeb",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-11-02T10:33:15.212Z",
+        "error": "",
+        "providerMessageId": "<e0deac95-4af1-94ed-1028-f8e9e404d15a@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "d6c5d61c67d59858b32b5ce1380884cb6d3b53a01f3c0a7c",
+    "registrationCode": "REG-109EEAC9",
+    "createdAt": "2026-11-02T10:33:10.163Z",
+    "updatedAt": "2026-11-02T10:33:15.212Z",
+    "__v": 0
+  },
+  {
+    "_id": "6aeed540a112d57c5b90908c",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr Shwetha Shwetha",
+      "title": "Dr",
+      "firstName": "Shwetha",
+      "lastName": "Shwetha",
+      "gender": "Female",
+      "email": "shwessk7@gmail.com",
+      "phone": "6374687942",
+      "medicalCouncilRegNo": "TNMC 112630",
+      "institution": "",
+      "designation": "",
+      "address": "Sri Thaila clinic , RP road , chrompet",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "600064",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad74f5794f3ed78aef12d4e",
+    "company": "6ad74f5794f3ed78aef12d4d",
+    "couponCode": "PFRCCIIM001SLV19",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "4074e5c9-ed1e-4e0b-b590-683a8b3c72d3",
+    "activeKey": "6ad722a245b70e8621211756:shwessk7@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:6374687942",
+    "activeCouncilKey": "6ad722a245b70e8621211756:TNMC112630",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-07T07:37:41.106Z",
+        "sentAt": "2026-11-07T07:37:41.106Z",
+        "error": "",
+        "providerMessageId": "<fcee4ecb-f411-10ac-3f5d-f9d2d2656ef4@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-07T07:37:41.107Z",
+        "sentAt": "2026-11-07T07:37:41.107Z",
+        "error": "",
+        "providerMessageId": "125756bb-2dcd-4405-a339-4f46b0cbbfaf"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-11-07T07:37:41.107Z",
+        "error": "",
+        "providerMessageId": "125756bb-2dcd-4405-a339-4f46b0cbbfaf",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-11-07T07:37:41.106Z",
+        "error": "",
+        "providerMessageId": "<fcee4ecb-f411-10ac-3f5d-f9d2d2656ef4@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "8a3bb4a244e5195a511ce9151a225f56e5473947fd59ab3d",
+    "registrationCode": "REG-141229CB",
+    "createdAt": "2026-11-07T07:37:36.325Z",
+    "updatedAt": "2026-11-07T07:37:41.107Z",
+    "__v": 0
+  },
+  {
+    "_id": "6afbc0f1436a706f90bfabf8",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117cd",
+    "attendee": {
+      "name": "Dr SU RYA",
+      "title": "Dr",
+      "firstName": "SU",
+      "lastName": "RYA",
+      "gender": "Female",
+      "email": "suryasathya2108@gmail.com",
+      "phone": "8978831586",
+      "medicalCouncilRegNo": "172622",
+      "institution": "",
+      "designation": "",
+      "address": "Public health centre",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "600033",
+      "category": "PG Student / Resident",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6af4435e3b3123abbcb2c17d",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM324B2B",
+    "pricing": {
+      "basePrice": 6500,
+      "discountAmount": 6500,
+      "taxAmount": 0,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "7cecc4d1-ea9c-48c1-bd7b-02fb8a6c3354",
+    "activeKey": "6ad722a245b70e8621211756:suryasathya2108@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:8978831586",
+    "activeCouncilKey": "6ad722a245b70e8621211756:172622",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-17T02:50:30.390Z",
+        "sentAt": "2026-11-17T02:50:30.390Z",
+        "error": "",
+        "providerMessageId": "<25ced545-e6dc-c5de-8c54-cde08c87d09f@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-17T02:50:30.390Z",
+        "sentAt": "2026-11-17T02:50:30.390Z",
+        "error": "",
+        "providerMessageId": "db29495d-e75f-437e-9388-c30725cf8449"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-11-17T02:50:30.390Z",
+        "error": "",
+        "providerMessageId": "<25ced545-e6dc-c5de-8c54-cde08c87d09f@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-11-17T02:50:30.390Z",
+        "error": "",
+        "providerMessageId": "db29495d-e75f-437e-9388-c30725cf8449",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "checkins": [],
+    "qrToken": "d69d20ee62d3511409279902c8062ca979f64ed82efa3c11",
+    "registrationCode": "REG-15858008",
+    "createdAt": "2026-11-17T02:50:25.573Z",
+    "updatedAt": "2026-11-17T02:50:30.393Z",
+    "__v": 0
+  },
+  {
+    "_id": "6adf1dac2d5fd2042aac9913",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr Tamilarasi Tamilarasi",
+      "title": "Dr",
+      "firstName": "Tamilarasi",
+      "lastName": "Tamilarasi",
+      "gender": "Female",
+      "email": "sentam1991@gmail.com",
+      "phone": "9444058938",
+      "medicalCouncilRegNo": "46881",
+      "institution": "",
+      "designation": "",
+      "address": "padi",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "600050",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593b60",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM048B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "53ff034d-1ebb-4aed-b0e8-39aedae6d59d",
+    "activeKey": "6ad722a245b70e8621211756:sentam1991@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9444058938",
+    "activeCouncilKey": "6ad722a245b70e8621211756:46881",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-26T09:30:25.071Z",
+        "sentAt": "2026-10-26T09:30:25.071Z",
+        "error": "",
+        "providerMessageId": "<abb53c8f-f13a-c8a3-d8e3-4f788e077e78@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-26T09:30:25.071Z",
+        "sentAt": "2026-10-26T09:30:25.071Z",
+        "error": "",
+        "providerMessageId": "97f18173-d6ca-4c5d-9f5e-6fd4af7f256e"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-10-26T09:30:25.071Z",
+        "error": "",
+        "providerMessageId": "<abb53c8f-f13a-c8a3-d8e3-4f788e077e78@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-10-26T09:30:25.071Z",
+        "error": "",
+        "providerMessageId": "97f18173-d6ca-4c5d-9f5e-6fd4af7f256e",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "a6b3997d6e66d9112bc87f6ceca97cc08d2d0e49b34498ad",
+    "registrationCode": "REG-1D1226AF",
+    "createdAt": "2026-10-26T09:30:20.550Z",
+    "updatedAt": "2026-10-26T09:30:25.074Z",
+    "__v": 0
+  },
+  {
+    "_id": "6ae5d06074c3c0dd0eb473d4",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr .NIRAN JANA",
+      "title": "Dr",
+      "firstName": ".NIRAN",
+      "lastName": "JANA",
+      "gender": "Female",
+      "email": "niranjanaradha.nr@gmail.com",
+      "phone": "9894444715",
+      "medicalCouncilRegNo": "100514",
+      "institution": "",
+      "designation": "",
+      "address": "Vadapalani",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "600026",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593c49",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM281B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "a34d6885-b186-408b-8add-363d0780893c",
+    "activeKey": "6ad722a245b70e8621211756:niranjanaradha.nr@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9894444715",
+    "activeCouncilKey": "6ad722a245b70e8621211756:100514",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-31T11:26:29.515Z",
+        "sentAt": "2026-10-31T11:26:29.515Z",
+        "error": "",
+        "providerMessageId": "<7e926b4c-fd34-3865-2027-517042745a57@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-31T11:26:29.515Z",
+        "sentAt": "2026-10-31T11:26:29.515Z",
+        "error": "",
+        "providerMessageId": "a25eac62-c812-4555-8454-f7f7d6b5338d"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-10-31T11:26:29.515Z",
+        "error": "",
+        "providerMessageId": "<7e926b4c-fd34-3865-2027-517042745a57@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-10-31T11:26:29.515Z",
+        "error": "",
+        "providerMessageId": "a25eac62-c812-4555-8454-f7f7d6b5338d",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "a10dd8cd4d4e4b852bea376ae533439c84ec493a387c5176",
+    "registrationCode": "REG-281B6C72",
+    "createdAt": "2026-10-31T11:26:24.525Z",
+    "updatedAt": "2026-10-31T11:26:29.515Z",
+    "__v": 0
+  },
+  {
+    "_id": "6aea0acdb5fd52013f0873ef",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr Anuradaa P",
+      "title": "Dr",
+      "firstName": "Anuradaa",
+      "lastName": "P",
+      "gender": "Female",
+      "email": "dr.ann2904@yahoo.com",
+      "phone": "9171141559",
+      "medicalCouncilRegNo": "88930",
+      "institution": "",
+      "designation": "",
+      "address": "Saravanas Clinic,  Thiruverkadu",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "600077",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593c5a",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM298B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "577973a6-a661-4766-8b17-c93a19434d50",
+    "activeKey": "6ad722a245b70e8621211756:dr.ann2904@yahoo.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9171141559",
+    "activeCouncilKey": "6ad722a245b70e8621211756:88930",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-03T16:24:50.387Z",
+        "sentAt": "2026-11-03T16:24:50.387Z",
+        "error": "",
+        "providerMessageId": "<a8b5d333-27b8-2c58-aa74-286efac10b64@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-03T16:24:50.388Z",
+        "sentAt": "2026-11-03T16:24:50.388Z",
+        "error": "",
+        "providerMessageId": "8fb26355-dacb-4109-9eca-93dc05dbe647"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-11-03T16:24:50.388Z",
+        "error": "",
+        "providerMessageId": "8fb26355-dacb-4109-9eca-93dc05dbe647",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-11-03T16:24:50.387Z",
+        "error": "",
+        "providerMessageId": "<a8b5d333-27b8-2c58-aa74-286efac10b64@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "d7796ac54fe1ec4074c1cc8761acf65cb7ac50c7bbf01690",
+    "registrationCode": "REG-2D1C2EA4",
+    "createdAt": "2026-11-03T16:24:45.244Z",
+    "updatedAt": "2026-11-03T16:24:50.388Z",
+    "__v": 0
+  },
+  {
+    "_id": "6adcc6de2d5fd2042aab43ce",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Prof Manju Gnanasekaran",
+      "title": "Prof",
+      "firstName": "Manju",
+      "lastName": "Gnanasekaran",
+      "gender": "Female",
+      "email": "manju.gnanasekaran@gmail.com",
+      "phone": "9840116387",
+      "medicalCouncilRegNo": "TNMC  44591",
+      "institution": "",
+      "designation": "",
+      "address": "Janani nursing home Pvt ltd,  No. 22,23,24, Ranganathan Nagar,  Selaiyur,  Chennai  - 600073",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "600073",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593bdf",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM175B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "2c321207-7953-40db-956e-92526b8d238b",
+    "activeKey": "6ad722a245b70e8621211756:manju.gnanasekaran@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9840116387",
+    "activeCouncilKey": "6ad722a245b70e8621211756:TNMC44591",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-24T14:55:31.233Z",
+        "sentAt": "2026-10-24T14:55:31.233Z",
+        "error": "",
+        "providerMessageId": "<6548db48-8fb3-7b3b-8f26-cc8144b1be40@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-24T14:55:31.233Z",
+        "sentAt": "2026-10-24T14:55:31.233Z",
+        "error": "",
+        "providerMessageId": "a64df166-4285-4931-8810-0e8778ea20b3"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-10-24T14:55:31.233Z",
+        "error": "",
+        "providerMessageId": "<6548db48-8fb3-7b3b-8f26-cc8144b1be40@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-10-24T14:55:31.233Z",
+        "error": "",
+        "providerMessageId": "a64df166-4285-4931-8810-0e8778ea20b3",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "dbe127cc4f3ba0666042e77d87bcefed7c992fe0d05e6589",
+    "registrationCode": "REG-3707A0C1",
+    "createdAt": "2026-10-24T14:55:26.703Z",
+    "updatedAt": "2026-10-24T14:55:31.234Z",
+    "__v": 0
+  },
+  {
+    "_id": "6adf3f322d5fd2042aacb94d",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr REGINA Leo",
+      "title": "Dr",
+      "firstName": "REGINA",
+      "lastName": "Leo",
+      "gender": "Female",
+      "email": "regi.leo12@gmail.com",
+      "phone": "9840345145",
+      "medicalCouncilRegNo": "033202",
+      "institution": "",
+      "designation": "",
+      "address": "Regina nursing home",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "600010",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593ba1",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM113B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "c77f4419-7da0-48cf-879e-d4bf2dcec9cc",
+    "activeKey": "6ad722a245b70e8621211756:regi.leo12@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9840345145",
+    "activeCouncilKey": "6ad722a245b70e8621211756:033202",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-26T11:53:26.897Z",
+        "sentAt": "2026-10-26T11:53:26.897Z",
+        "error": "",
+        "providerMessageId": "<77e45b1a-5c51-0a0d-d021-51efe991c915@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-26T11:53:26.898Z",
+        "sentAt": "2026-10-26T11:53:26.898Z",
+        "error": "",
+        "providerMessageId": "e815f41b-c6eb-4c63-a156-1ce1f0d60f89"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-10-26T11:53:26.897Z",
+        "error": "",
+        "providerMessageId": "<77e45b1a-5c51-0a0d-d021-51efe991c915@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-10-26T11:53:26.898Z",
+        "error": "",
+        "providerMessageId": "e815f41b-c6eb-4c63-a156-1ce1f0d60f89",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "3f2eaee69937866c47a664a9c17b02fa1bd665249f778f1a",
+    "registrationCode": "REG-3C7173E3",
+    "createdAt": "2026-10-26T11:53:22.254Z",
+    "updatedAt": "2026-10-26T11:53:26.898Z",
+    "__v": 0
+  },
+  {
+    "_id": "6aec618e7c7078c810613957",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr ANURADHA",
+      "title": "Dr",
+      "firstName": "ANURADHA",
+      "lastName": "",
+      "gender": "Female",
+      "email": "anuradhadr64@gmail.com",
+      "phone": "9840783951",
+      "medicalCouncilRegNo": "43015",
+      "institution": "",
+      "designation": "",
+      "address": "SASI REKHA CLINIC, WASHERMENPET",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "CHENNAI",
+      "pincode": "600021",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593c50",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM288B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "63ec1b6f-b8f7-4d0b-b58f-a357f0e7d6d1",
+    "activeKey": "6ad722a245b70e8621211756:anuradhadr64@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9840783951",
+    "activeCouncilKey": "6ad722a245b70e8621211756:43015",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-05T10:59:30.499Z",
+        "sentAt": "2026-11-05T10:59:30.499Z",
+        "error": "",
+        "providerMessageId": "<c4802c84-fec1-8119-37f5-60bf82929ebc@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-05T10:59:30.499Z",
+        "sentAt": "2026-11-05T10:59:30.499Z",
+        "error": "",
+        "providerMessageId": "84c14b33-0cc4-46f3-b92d-6b9387429f56"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-11-05T10:59:30.499Z",
+        "error": "",
+        "providerMessageId": "<c4802c84-fec1-8119-37f5-60bf82929ebc@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-11-05T10:59:30.499Z",
+        "error": "",
+        "providerMessageId": "84c14b33-0cc4-46f3-b92d-6b9387429f56",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "1a919d26135f3fa478edd0e7cb6eced875abfafb2d3654ea",
+    "registrationCode": "REG-467862BD",
+    "createdAt": "2026-11-05T10:59:26.234Z",
+    "updatedAt": "2026-11-05T10:59:30.500Z",
+    "__v": 0
+  },
+  {
+    "_id": "6ae964a474c3c0dd0eb530b5",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr BANUMATHI",
+      "title": "Dr",
+      "firstName": "BANUMATHI",
+      "lastName": "",
+      "gender": "Female",
+      "email": "banulokiah@gmail.com",
+      "phone": "9444079194",
+      "medicalCouncilRegNo": "80690",
+      "institution": "",
+      "designation": "",
+      "address": "KTK MADHU HOSPITAL, WASHERMENPET",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "CHENNAI",
+      "pincode": "600021",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593c56",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM294B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "b24e4fbd-06d4-45ce-821a-dc1043e54fd1",
+    "activeKey": "6ad722a245b70e8621211756:banulokiah@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9444079194",
+    "activeCouncilKey": "6ad722a245b70e8621211756:80690",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-03T04:35:53.310Z",
+        "sentAt": "2026-11-03T04:35:53.310Z",
+        "error": "",
+        "providerMessageId": "<1ee94578-069d-ae14-5ac0-175ccac298ee@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-03T04:35:53.310Z",
+        "sentAt": "2026-11-03T04:35:53.310Z",
+        "error": "",
+        "providerMessageId": "992d4063-0bfb-4a02-8ff7-c1a73f181890"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-11-03T04:35:53.310Z",
+        "error": "",
+        "providerMessageId": "<1ee94578-069d-ae14-5ac0-175ccac298ee@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-11-03T04:35:53.310Z",
+        "error": "",
+        "providerMessageId": "992d4063-0bfb-4a02-8ff7-c1a73f181890",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "0c153ba845351d8521e98a89a27b91ab5b741bcdbb13759f",
+    "registrationCode": "REG-469309A7",
+    "createdAt": "2026-11-03T04:35:48.456Z",
+    "updatedAt": "2026-11-03T04:35:53.311Z",
+    "__v": 0
+  },
+  {
+    "_id": "6aec4f6e7c7078c810611b6a",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr HEMALATA",
+      "title": "Dr",
+      "firstName": "HEMALATA",
+      "lastName": "",
+      "gender": "Female",
+      "email": "directorsgh@gmail.com",
+      "phone": "9840746192",
+      "medicalCouncilRegNo": "42142",
+      "institution": "",
+      "designation": "",
+      "address": "13 vellala street aynavaram",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "600023",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593c3d",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM269B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "032bfa5d-c374-4b15-9c41-960a1899cfea",
+    "activeKey": "6ad722a245b70e8621211756:directorsgh@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9840746192",
+    "activeCouncilKey": "6ad722a245b70e8621211756:42142",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-05T09:42:11.068Z",
+        "sentAt": "2026-11-05T09:42:11.068Z",
+        "error": "",
+        "providerMessageId": "<6826a5da-9109-8927-4933-72057abf0e36@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-05T09:42:11.068Z",
+        "sentAt": "2026-11-05T09:42:11.068Z",
+        "error": "",
+        "providerMessageId": "ffd8a868-ca63-46a1-8d64-44f1a5646f16"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "referral",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-11-05T09:42:11.068Z",
+        "error": "",
+        "providerMessageId": "ffd8a868-ca63-46a1-8d64-44f1a5646f16",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-11-05T09:42:11.068Z",
+        "error": "",
+        "providerMessageId": "<6826a5da-9109-8927-4933-72057abf0e36@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "03030fd727e34e2957a0d0ba7fbbc3251ed33bdfae9e7a45",
+    "registrationCode": "REG-5688BD30",
+    "createdAt": "2026-11-05T09:42:06.342Z",
+    "updatedAt": "2026-11-05T09:42:11.069Z",
+    "__v": 0
+  },
+  {
+    "_id": "6afd68c4f526fff070e37229",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr JAMUNA RANI Dr.D.Jamuna Rani ,",
+      "title": "Dr",
+      "firstName": "JAMUNA RANI",
+      "lastName": "Dr.D.Jamuna Rani ,",
+      "gender": "Female",
+      "email": "drjamunerani60@gmail.com",
+      "phone": "9444326760",
+      "medicalCouncilRegNo": "38041",
+      "institution": "",
+      "designation": "",
+      "address": "4 the street CHROMPET Chennai 44",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "600044",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6af4435e3b3123abbcb2c224",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM491B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 13000,
+      "taxAmount": 0,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "14ee8f52-46bf-4ad3-95c2-b811a757f0cb",
+    "activeKey": "6ad722a245b70e8621211756:drjamunerani60@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9444326760",
+    "activeCouncilKey": "6ad722a245b70e8621211756:38041",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-18T08:58:48.795Z",
+        "sentAt": "2026-11-18T08:58:48.795Z",
+        "error": "",
+        "providerMessageId": "<e5956796-8cc5-d203-fe1f-bd7b703b5030@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-18T08:58:48.795Z",
+        "sentAt": "2026-11-18T08:58:48.795Z",
+        "error": "",
+        "providerMessageId": "f6a2434e-73bc-4389-9e5b-bb0fc42aa3d3"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-11-18T08:58:48.795Z",
+        "error": "",
+        "providerMessageId": "f6a2434e-73bc-4389-9e5b-bb0fc42aa3d3",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-11-18T08:58:48.795Z",
+        "error": "",
+        "providerMessageId": "<e5956796-8cc5-d203-fe1f-bd7b703b5030@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "checkins": [],
+    "qrToken": "0253edc74ebe3e2f3d3b0500dd42405dc533cf2ef7a42b21",
+    "registrationCode": "REG-6BC62160",
+    "createdAt": "2026-11-18T08:58:44.217Z",
+    "updatedAt": "2026-11-18T08:58:48.796Z",
+    "__v": 0
+  },
+  {
+    "_id": "6adef5e32d5fd2042aac6793",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr Dr Chandrika Palani",
+      "title": "Dr",
+      "firstName": "Dr Chandrika   Palani",
+      "lastName": "",
+      "gender": "Female",
+      "email": "dr.chandrikapalani@gmail.com",
+      "phone": "7358657592",
+      "medicalCouncilRegNo": "35916",
+      "institution": "",
+      "designation": "",
+      "address": "East  Tambaram",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "600059",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593be3",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM179B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "308f7018-3e15-4ce4-be8c-6cc187bae1d3",
+    "activeKey": "6ad722a245b70e8621211756:dr.chandrikapalani@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:7358657592",
+    "activeCouncilKey": "6ad722a245b70e8621211756:35916",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-26T06:40:40.098Z",
+        "sentAt": "2026-10-26T06:40:40.098Z",
+        "error": "",
+        "providerMessageId": "<888ebe2f-93db-e256-44c5-56a4212a7a1b@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-26T06:40:40.099Z",
+        "sentAt": "2026-10-26T06:40:40.099Z",
+        "error": "",
+        "providerMessageId": "445531f1-c949-4fe6-a845-45c435ec935d"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-10-26T06:40:40.098Z",
+        "error": "",
+        "providerMessageId": "<888ebe2f-93db-e256-44c5-56a4212a7a1b@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-10-26T06:40:40.099Z",
+        "error": "",
+        "providerMessageId": "445531f1-c949-4fe6-a845-45c435ec935d",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "28dd9eed9f1f556743740f043b953512360a581bf72ceef8",
+    "registrationCode": "REG-7F77CAD9",
+    "createdAt": "2026-10-26T06:40:35.369Z",
+    "updatedAt": "2026-10-26T06:40:40.099Z",
+    "__v": 0
+  },
+  {
+    "_id": "6afd65acf526fff070e353f5",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr M.Manoorakash",
+      "title": "Dr",
+      "firstName": "M.Manoorakash",
+      "lastName": "",
+      "gender": "Male",
+      "email": "mpmbbs91@gmail.com",
+      "phone": "9789214620",
+      "medicalCouncilRegNo": "TNMC-126141",
+      "institution": "",
+      "designation": "",
+      "address": "Chennai",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "603103",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6af4435e3b3123abbcb2c1ff",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM454B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 13000,
+      "taxAmount": 0,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "a29b2b3b-2d5d-40b6-97cb-25a4c406e740",
+    "activeKey": "6ad722a245b70e8621211756:mpmbbs91@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9789214620",
+    "activeCouncilKey": "6ad722a245b70e8621211756:TNMC126141",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-18T08:45:36.985Z",
+        "sentAt": "2026-11-18T08:45:36.985Z",
+        "error": "",
+        "providerMessageId": "<529d6791-69d0-6cad-6b2c-279dac840cf4@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-18T08:45:36.986Z",
+        "sentAt": "2026-11-18T08:45:36.986Z",
+        "error": "",
+        "providerMessageId": "021aea2d-0573-4ebf-a651-a12050277fcc"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-11-18T08:45:36.986Z",
+        "error": "",
+        "providerMessageId": "021aea2d-0573-4ebf-a651-a12050277fcc",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-11-18T08:45:36.985Z",
+        "error": "",
+        "providerMessageId": "<529d6791-69d0-6cad-6b2c-279dac840cf4@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "checkins": [],
+    "qrToken": "95387ef2bd05a17336bfa4f67862d51e8163c4cb9b07e2dd",
+    "registrationCode": "REG-8A82CC77",
+    "createdAt": "2026-11-18T08:45:32.208Z",
+    "updatedAt": "2026-11-18T08:45:36.986Z",
+    "__v": 0
+  },
+  {
+    "_id": "6aeb114d58c46d633fbf562d",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr V.Raghavi",
+      "title": "Dr",
+      "firstName": "V.Raghavi",
+      "lastName": "",
+      "gender": "Female",
+      "email": "rags2317@gmail.com",
+      "phone": "8946021496",
+      "medicalCouncilRegNo": "196752",
+      "institution": "",
+      "designation": "",
+      "address": "Arakonam",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Arakonam",
+      "pincode": "631001",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593c5c",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM300B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "65a5317e-87da-42a9-a52c-65f62a910312",
+    "activeKey": "6ad722a245b70e8621211756:rags2317@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:8946021496",
+    "activeCouncilKey": "6ad722a245b70e8621211756:196752",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-04T11:04:50.646Z",
+        "sentAt": "2026-11-04T11:04:50.646Z",
+        "error": "",
+        "providerMessageId": "<7f767daa-ff44-41e3-5001-62cc920820cc@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-04T11:04:50.646Z",
+        "sentAt": "2026-11-04T11:04:50.646Z",
+        "error": "",
+        "providerMessageId": "1cefbddf-4d47-4d9c-90e5-436692ce4f82"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-11-04T11:04:50.646Z",
+        "error": "",
+        "providerMessageId": "<7f767daa-ff44-41e3-5001-62cc920820cc@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-11-04T11:04:50.646Z",
+        "error": "",
+        "providerMessageId": "1cefbddf-4d47-4d9c-90e5-436692ce4f82",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "19c4b264b6d6a56197166db7481a19df44a83d85de2b3ede",
+    "registrationCode": "REG-91866E10",
+    "createdAt": "2026-11-04T11:04:45.993Z",
+    "updatedAt": "2026-11-04T11:04:50.647Z",
+    "__v": 0
+  },
+  {
+    "_id": "6addb6362d5fd2042aac016c",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr HEMA.R.R Neps81",
+      "title": "Dr",
+      "firstName": "HEMA.R.R",
+      "lastName": "Neps81",
+      "gender": "Female",
+      "email": "hemaneps81@gmail.com",
+      "phone": "7299003189",
+      "medicalCouncilRegNo": "79229",
+      "institution": "",
+      "designation": "",
+      "address": "No 62 Phase 1 Chettinad Enclave S Kolathur Main Road Pallikaranai",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "600100",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593b72",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM066B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "eb0ea353-7064-4f3f-9701-bc6a8bf1b0a0",
+    "activeKey": "6ad722a245b70e8621211756:hemaneps81@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:7299003189",
+    "activeCouncilKey": "6ad722a245b70e8621211756:79229",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-25T07:56:42.633Z",
+        "sentAt": "2026-10-25T07:56:42.633Z",
+        "error": "",
+        "providerMessageId": "<bf94ce69-4925-a59e-1311-7d465f0eb0e1@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-25T07:56:42.633Z",
+        "sentAt": "2026-10-25T07:56:42.633Z",
+        "error": "",
+        "providerMessageId": "881f0e1c-078b-4f53-8ec9-dbf35e1a6bd5"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-10-25T07:56:42.633Z",
+        "error": "",
+        "providerMessageId": "<bf94ce69-4925-a59e-1311-7d465f0eb0e1@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-10-25T07:56:42.633Z",
+        "error": "",
+        "providerMessageId": "881f0e1c-078b-4f53-8ec9-dbf35e1a6bd5",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "eb0dd95f51e63b7880e4a92b62ef5fd76e9a5884d9c0f48f",
+    "registrationCode": "REG-9D820582",
+    "createdAt": "2026-10-25T07:56:38.373Z",
+    "updatedAt": "2026-10-25T07:56:42.634Z",
+    "__v": 0
+  },
+  {
+    "_id": "6afac51b436a706f90bdb53e",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr C. JAHNAVU",
+      "title": "Dr",
+      "firstName": "C. JAHNAVU",
+      "lastName": "",
+      "gender": "Female",
+      "email": "drjahnaviobgyn@gmail.com",
+      "phone": "9884044179",
+      "medicalCouncilRegNo": "123442",
+      "institution": "",
+      "designation": "",
+      "address": "Balaji Medical college and Hospital \n7, Worksroad, Chromepet, Tambaram, Tamil Nadu 600044",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "600044",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6af4435e3b3123abbcb2c1eb",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM434B2B",
+    "pricing": {
+      "basePrice": 12954,
+      "discountAmount": 15285.72,
+      "taxAmount": 2331.72,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "ac70283a-3018-4524-8cf0-d01ff6280b1c",
+    "activeKey": "6ad722a245b70e8621211756:drjahnaviobgyn@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9884044179",
+    "activeCouncilKey": "6ad722a245b70e8621211756:123442",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-16T08:56:00.470Z",
+        "sentAt": "2026-11-16T08:56:00.470Z",
+        "error": "",
+        "providerMessageId": "<2f6ec67c-e397-a6a4-b27e-60de24559fef@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-16T08:56:00.470Z",
+        "sentAt": "2026-11-16T08:56:00.470Z",
+        "error": "",
+        "providerMessageId": "93c2dd70-b491-4651-b2ad-89b495679f98"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-11-16T08:56:00.470Z",
+        "error": "",
+        "providerMessageId": "93c2dd70-b491-4651-b2ad-89b495679f98",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-11-16T08:56:00.470Z",
+        "error": "",
+        "providerMessageId": "<2f6ec67c-e397-a6a4-b27e-60de24559fef@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "checkins": [],
+    "qrToken": "ff0e692886b3a10ec32b881e6dc9fb16378475cb1ac7f2db",
+    "registrationCode": "REG-9DD1D87D",
+    "createdAt": "2026-11-16T08:55:55.482Z",
+    "updatedAt": "2026-11-16T08:56:00.472Z",
+    "__v": 0
+  },
+  {
+    "_id": "6ae0848774c3c0dd0eb31b70",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr MENISRI",
+      "title": "Dr",
+      "firstName": "MENISRI",
+      "lastName": "",
+      "gender": "Female",
+      "email": "menisri7692@gmail.com",
+      "phone": "8072898870",
+      "medicalCouncilRegNo": "111948",
+      "institution": "",
+      "designation": "",
+      "address": "Nila clinic tirukazhukundram",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "603103",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593b92",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM098B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "13d66822-39e3-4490-bee2-d2da7840f498",
+    "activeKey": "6ad722a245b70e8621211756:menisri7692@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:8072898870",
+    "activeCouncilKey": "6ad722a245b70e8621211756:111948",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-27T11:01:46.920Z",
+        "sentAt": "2026-10-27T11:01:46.920Z",
+        "error": "",
+        "providerMessageId": "<536c650c-6048-3deb-520c-1e2bc52eeb62@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-27T11:01:46.920Z",
+        "sentAt": "2026-10-27T11:01:46.920Z",
+        "error": "",
+        "providerMessageId": "7af1f973-216b-4ee5-a9fb-e5417348d044"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-10-27T11:01:46.920Z",
+        "error": "",
+        "providerMessageId": "<536c650c-6048-3deb-520c-1e2bc52eeb62@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-10-27T11:01:46.920Z",
+        "error": "",
+        "providerMessageId": "7af1f973-216b-4ee5-a9fb-e5417348d044",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "10e8dc5605b949f6be069cfafa88ad7dc90a88f8335821aa",
+    "registrationCode": "REG-A2E2CA48",
+    "createdAt": "2026-10-27T11:01:27.812Z",
+    "updatedAt": "2026-10-27T11:01:46.921Z",
+    "__v": 0
+  },
+  {
+    "_id": "6adf4abb2d5fd2042aacccd6",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr Sandhya Sandhya",
+      "title": "Dr",
+      "firstName": "Sandhya",
+      "lastName": "Sandhya",
+      "gender": "Female",
+      "email": "ksandh75@gmail.com",
+      "phone": "9381418603",
+      "medicalCouncilRegNo": "62405",
+      "institution": "",
+      "designation": "",
+      "address": "Annanagar",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "600040",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593b62",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM050B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "1d7d5700-0175-4c1c-8621-89f97c32cd4d",
+    "activeKey": "6ad722a245b70e8621211756:ksandh75@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9381418603",
+    "activeCouncilKey": "6ad722a245b70e8621211756:62405",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-26T12:42:40.026Z",
+        "sentAt": "2026-10-26T12:42:40.026Z",
+        "error": "",
+        "providerMessageId": "<7ffc0f1c-0571-cfc8-f0f9-686beb87e4f2@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-26T12:42:40.027Z",
+        "sentAt": "2026-10-26T12:42:40.027Z",
+        "error": "",
+        "providerMessageId": "c115bb25-c6dd-4495-851f-fb595aa5f9d8"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-10-26T12:42:40.027Z",
+        "error": "",
+        "providerMessageId": "c115bb25-c6dd-4495-851f-fb595aa5f9d8",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-10-26T12:42:40.026Z",
+        "error": "",
+        "providerMessageId": "<7ffc0f1c-0571-cfc8-f0f9-686beb87e4f2@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "888754e1117993e1abae938f0cc87a28c5d8b66f0218e00c",
+    "registrationCode": "REG-B027BA6D",
+    "createdAt": "2026-10-26T12:42:35.634Z",
+    "updatedAt": "2026-10-26T12:42:40.027Z",
+    "__v": 0
+  },
+  {
+    "_id": "6adf08782d5fd2042aac8953",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr CHITRA T.S",
+      "title": "Dr",
+      "firstName": "CHITRA",
+      "lastName": "T.S",
+      "gender": "Female",
+      "email": "tschitra040572@gmail.com",
+      "phone": "9840598028",
+      "medicalCouncilRegNo": "053919",
+      "institution": "",
+      "designation": "",
+      "address": "Chitra meternity centre",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "600015",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593b9f",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM111B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "ea6a682a-d3f8-428f-8a64-acbc6c6f9e05",
+    "activeKey": "6ad722a245b70e8621211756:tschitra040572@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9840598028",
+    "activeCouncilKey": "6ad722a245b70e8621211756:053919",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-26T07:59:56.949Z",
+        "sentAt": "2026-10-26T07:59:56.949Z",
+        "error": "",
+        "providerMessageId": "<4ce42b7e-09ee-2fda-5a8c-5c2b2dd4e7e5@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-26T07:59:56.949Z",
+        "sentAt": "2026-10-26T07:59:56.949Z",
+        "error": "",
+        "providerMessageId": "b4769214-7968-46b9-95b8-3f00fe6203ca"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-10-26T07:59:56.949Z",
+        "error": "",
+        "providerMessageId": "<4ce42b7e-09ee-2fda-5a8c-5c2b2dd4e7e5@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-10-26T07:59:56.949Z",
+        "error": "",
+        "providerMessageId": "b4769214-7968-46b9-95b8-3f00fe6203ca",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "732a32ca4259828c3175bdf5b6e517d04caead063c24be83",
+    "registrationCode": "REG-B1270EDB",
+    "createdAt": "2026-10-26T07:59:52.408Z",
+    "updatedAt": "2026-10-26T07:59:56.950Z",
+    "__v": 0
+  },
+  {
+    "_id": "6aefece3a112d57c5b91274e",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr C.KEERTHANA",
+      "title": "Dr",
+      "firstName": "C.KEERTHANA",
+      "lastName": "",
+      "gender": "Female",
+      "email": "drcharleselderscommunity@gmail.com",
+      "phone": "9176948197",
+      "medicalCouncilRegNo": "94646",
+      "institution": "",
+      "designation": "",
+      "address": "56 Venugopal swamy koil Street perambur",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "600011",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad74f5794f3ed78aef12d54",
+    "company": "6ad74f5794f3ed78aef12d4d",
+    "couponCode": "PFRCCIIM007SLV19",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "1f8f78c5-c318-4688-a88f-329425eaac60",
+    "activeKey": "6ad722a245b70e8621211756:drcharleselderscommunity@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9176948197",
+    "activeCouncilKey": "6ad722a245b70e8621211756:94646",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-08T03:30:48.792Z",
+        "sentAt": "2026-11-08T03:30:48.792Z",
+        "error": "",
+        "providerMessageId": "<f0a95d0f-60f8-a65e-f29e-7080848878ef@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-08T03:30:48.793Z",
+        "sentAt": "2026-11-08T03:30:48.793Z",
+        "error": "",
+        "providerMessageId": "e2ea0cad-8abb-450a-864c-388ec6c1de00"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "referral",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-11-08T03:30:48.793Z",
+        "error": "",
+        "providerMessageId": "e2ea0cad-8abb-450a-864c-388ec6c1de00",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-11-08T03:30:48.792Z",
+        "error": "",
+        "providerMessageId": "<f0a95d0f-60f8-a65e-f29e-7080848878ef@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "025a67d8a0e422c07ebc169b3df57854c29f286c044a2f3c",
+    "registrationCode": "REG-BDF6B611",
+    "createdAt": "2026-11-08T03:30:43.312Z",
+    "updatedAt": "2026-11-08T03:30:48.793Z",
+    "__v": 0
+  },
+  {
+    "_id": "6af9a6abe10baf9e7a4b9881",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117cd",
+    "attendee": {
+      "name": "Dr DEVISHRI",
+      "title": "Dr",
+      "firstName": "DEVISHRI",
+      "lastName": "",
+      "gender": "Female",
+      "email": "devisrimiraclin@gmail.com",
+      "phone": "9884167717",
+      "medicalCouncilRegNo": "131242",
+      "institution": "",
+      "designation": "",
+      "address": "IOG EGMORE",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "CHENNAI",
+      "pincode": "600008",
+      "category": "PG Student / Resident",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6af4435e3b3123abbcb2c1ab",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM370B2B",
+    "pricing": {
+      "basePrice": 6500,
+      "discountAmount": 7670,
+      "taxAmount": 1170,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "baee3da6-28f9-46e7-84ef-d455a850a871",
+    "activeKey": "6ad722a245b70e8621211756:devisrimiraclin@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9884167717",
+    "activeCouncilKey": "6ad722a245b70e8621211756:131242",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-15T12:33:52.504Z",
+        "sentAt": "2026-11-15T12:33:52.504Z",
+        "error": "",
+        "providerMessageId": "<722875bb-ff0b-5e79-d923-6db3d46f9d38@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-15T12:33:52.504Z",
+        "sentAt": "2026-11-15T12:33:52.504Z",
+        "error": "",
+        "providerMessageId": "103986cd-e146-4aae-8db8-f45429aa74af"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-11-15T12:33:52.504Z",
+        "error": "",
+        "providerMessageId": "<722875bb-ff0b-5e79-d923-6db3d46f9d38@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-11-15T12:33:52.504Z",
+        "error": "",
+        "providerMessageId": "103986cd-e146-4aae-8db8-f45429aa74af",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "checkins": [],
+    "qrToken": "5874b75585b4d74ab7f25e33df73e4abcf3be772e0426d3d",
+    "registrationCode": "REG-CB542D7D",
+    "createdAt": "2026-11-15T12:33:47.414Z",
+    "updatedAt": "2026-11-15T12:33:52.505Z",
+    "__v": 0
+  },
+  {
+    "_id": "6af831f4e10baf9e7a496c6a",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr T SIVAGAMI",
+      "title": "Dr",
+      "firstName": "T SIVAGAMI",
+      "lastName": "",
+      "gender": "Female",
+      "email": "sivakamithyagarajan@yahoo.co.in",
+      "phone": "9382691635",
+      "medicalCouncilRegNo": "32051",
+      "institution": "",
+      "designation": "",
+      "address": "Besant nagar",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "600090",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6af4435e3b3123abbcb2c20b",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM466B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "bcf3c3bb-0797-41ee-94fd-6689f388437e",
+    "activeKey": "6ad722a245b70e8621211756:sivakamithyagarajan@yahoo.co.in",
+    "activePhoneKey": "6ad722a245b70e8621211756:9382691635",
+    "activeCouncilKey": "6ad722a245b70e8621211756:32051",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-14T10:03:38.031Z",
+        "sentAt": "2026-11-14T10:03:38.031Z",
+        "error": "",
+        "providerMessageId": "<8c83631e-ad56-336a-5d00-f9e155634611@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-14T10:03:38.031Z",
+        "sentAt": "2026-11-14T10:03:38.031Z",
+        "error": "",
+        "providerMessageId": "884e9b24-4113-4841-968d-96332f8f0f16"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-11-14T10:03:38.031Z",
+        "error": "",
+        "providerMessageId": "<8c83631e-ad56-336a-5d00-f9e155634611@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-11-14T10:03:38.031Z",
+        "error": "",
+        "providerMessageId": "884e9b24-4113-4841-968d-96332f8f0f16",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "checkins": [],
+    "qrToken": "0ff78a6f37bf930a11ca7aafb44a7be4f62890f31005f30b",
+    "registrationCode": "REG-D0110B7B",
+    "createdAt": "2026-11-14T10:03:32.380Z",
+    "updatedAt": "2026-11-14T10:03:38.032Z",
+    "__v": 0
+  },
+  {
+    "_id": "6ae35db774c3c0dd0eb4164f",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr PRINCE MICHAELRAJ",
+      "title": "Dr",
+      "firstName": "PRINCE MICHAELRAJ",
+      "lastName": "",
+      "gender": "Female",
+      "email": "princymichelraj@gmail.com",
+      "phone": "9444818168",
+      "medicalCouncilRegNo": "58434",
+      "institution": "",
+      "designation": "",
+      "address": "M.C CLINIC, TONDIARPET",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "CHENNAI",
+      "pincode": "600081",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593c30",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM256B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "de88b577-b16a-4c61-bd0a-a5bcd7a91b9e",
+    "activeKey": "6ad722a245b70e8621211756:princymichelraj@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9444818168",
+    "activeCouncilKey": "6ad722a245b70e8621211756:58434",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-29T14:52:43.996Z",
+        "sentAt": "2026-10-29T14:52:43.996Z",
+        "error": "",
+        "providerMessageId": "<76e118e0-507a-dcf1-9fbe-cc1a7b369ac1@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-29T14:52:43.996Z",
+        "sentAt": "2026-10-29T14:52:43.996Z",
+        "error": "",
+        "providerMessageId": "79312eda-80f3-42cd-b293-54e4414d5471"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-10-29T14:52:43.996Z",
+        "error": "",
+        "providerMessageId": "<76e118e0-507a-dcf1-9fbe-cc1a7b369ac1@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-10-29T14:52:43.996Z",
+        "error": "",
+        "providerMessageId": "79312eda-80f3-42cd-b293-54e4414d5471",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "e68ba5591c6f188eb2eefbf38884179d9c9e3440ed0e5a1e",
+    "registrationCode": "REG-D522CA2E",
+    "createdAt": "2026-10-29T14:52:39.167Z",
+    "updatedAt": "2026-10-29T14:52:43.996Z",
+    "__v": 0
+  },
+  {
+    "_id": "6addc0122d5fd2042aac11e6",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr JEGATEESHWARI",
+      "title": "Dr",
+      "firstName": "JEGATEESHWARI",
+      "lastName": "",
+      "gender": "Female",
+      "email": "jeggi57@gmail.com",
+      "phone": "7401331316",
+      "medicalCouncilRegNo": "35898",
+      "institution": "",
+      "designation": "",
+      "address": "JANAKI CLINIC",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "CHENNAI",
+      "pincode": "600021",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593b40",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM016B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "03497be3-2414-48bf-8e8e-d0ce9e7ea37d",
+    "activeKey": "6ad722a245b70e8621211756:jeggi57@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:7401331316",
+    "activeCouncilKey": "6ad722a245b70e8621211756:35898",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-25T08:38:46.671Z",
+        "sentAt": "2026-10-25T08:38:46.671Z",
+        "error": "",
+        "providerMessageId": "<f5cc66af-160c-032e-bc0c-5d2d3d8be306@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-25T08:38:46.672Z",
+        "sentAt": "2026-10-25T08:38:46.672Z",
+        "error": "",
+        "providerMessageId": "7877eb18-9fe5-49b8-8c7f-6797ede39df9"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-10-25T08:38:46.672Z",
+        "error": "",
+        "providerMessageId": "7877eb18-9fe5-49b8-8c7f-6797ede39df9",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-10-25T08:38:46.671Z",
+        "error": "",
+        "providerMessageId": "<f5cc66af-160c-032e-bc0c-5d2d3d8be306@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "499f9b6b928ff582d71ad2af3f051664a89bbb5db947f888",
+    "registrationCode": "REG-E34FD15F",
+    "createdAt": "2026-10-25T08:38:42.357Z",
+    "updatedAt": "2026-10-25T08:38:46.672Z",
+    "__v": 0
+  },
+  {
+    "_id": "6af92fe7e10baf9e7a4ae51e",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117cd",
+    "attendee": {
+      "name": "Dr DEVISHRI",
+      "title": "Dr",
+      "firstName": "DEVISHRI",
+      "lastName": "",
+      "gender": "Female",
+      "email": "shrinitu13@gmail.com",
+      "phone": "6385558587",
+      "medicalCouncilRegNo": "129012",
+      "institution": "",
+      "designation": "",
+      "address": "IOG, EGMORE",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "CHENNAI",
+      "pincode": "600008",
+      "category": "PG Student / Resident",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6af4435e3b3123abbcb2c1aa",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM369B2B",
+    "pricing": {
+      "basePrice": 6500,
+      "discountAmount": 7670,
+      "taxAmount": 1170,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "8917b684-8429-42f2-8693-055e601493f7",
+    "activeKey": "6ad722a245b70e8621211756:shrinitu13@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:6385558587",
+    "activeCouncilKey": "6ad722a245b70e8621211756:129012",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-15T04:07:08.674Z",
+        "sentAt": "2026-11-15T04:07:08.674Z",
+        "error": "",
+        "providerMessageId": "<95e236ab-0e90-0d01-9ec6-b5f28350de5a@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-11-15T04:07:08.674Z",
+        "sentAt": "2026-11-15T04:07:08.674Z",
+        "error": "",
+        "providerMessageId": "538e6b2c-f293-44f2-bfbb-3806f7756dab"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-11-15T04:07:08.674Z",
+        "error": "",
+        "providerMessageId": "<95e236ab-0e90-0d01-9ec6-b5f28350de5a@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-11-15T04:07:08.674Z",
+        "error": "",
+        "providerMessageId": "538e6b2c-f293-44f2-bfbb-3806f7756dab",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "checkins": [],
+    "qrToken": "cd7d5d9a65fc18e15ac024dd580b155cf3cd4ad134378a6c",
+    "registrationCode": "REG-E94AB1FC",
+    "createdAt": "2026-11-15T04:07:03.288Z",
+    "updatedAt": "2026-11-15T04:07:08.674Z",
+    "__v": 0
+  },
+  {
+    "_id": "6ae047ea74c3c0dd0ea7a769",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr VAI SHNAVI",
+      "title": "Dr",
+      "firstName": "VAI",
+      "lastName": "SHNAVI",
+      "gender": "Female",
+      "email": "letowomen@gmail.com",
+      "phone": "9840533616",
+      "medicalCouncilRegNo": "107095",
+      "institution": "",
+      "designation": "",
+      "address": "Leto clinic",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "600083",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593ba5",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM117B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "97a0a66c-890c-4daa-91fd-a60c307fee63",
+    "activeKey": "6ad722a245b70e8621211756:letowomen@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9840533616",
+    "activeCouncilKey": "6ad722a245b70e8621211756:107095",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-27T06:42:55.647Z",
+        "sentAt": "2026-10-27T06:42:55.647Z",
+        "error": "",
+        "providerMessageId": "<5cd2f88b-820b-53cb-7e0f-5de6dbdd7190@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-27T06:42:55.648Z",
+        "sentAt": "2026-10-27T06:42:55.648Z",
+        "error": "",
+        "providerMessageId": "c42504ae-8d50-4bc5-a386-7d802fb89ea1"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-10-27T06:42:55.647Z",
+        "error": "",
+        "providerMessageId": "<5cd2f88b-820b-53cb-7e0f-5de6dbdd7190@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-10-27T06:42:55.648Z",
+        "error": "",
+        "providerMessageId": "c42504ae-8d50-4bc5-a386-7d802fb89ea1",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "da6c34dee7c40e89085d5b813c52562d14e604fd558a25eb",
+    "registrationCode": "REG-F47E4911",
+    "createdAt": "2026-10-27T06:42:50.620Z",
+    "updatedAt": "2026-10-27T06:42:55.649Z",
+    "__v": 0
+  },
+  {
+    "_id": "6adc8b24e454b144ebc711f4",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr MUBEEN KUMAR",
+      "title": "Dr",
+      "firstName": "MUBEEN",
+      "lastName": "KUMAR",
+      "gender": "Female",
+      "email": "shafaathaariz@gmail.com",
+      "phone": "9894176167",
+      "medicalCouncilRegNo": "78291",
+      "institution": "",
+      "designation": "",
+      "address": "MEHAKABEEN CLINIC",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "CHENNAI",
+      "pincode": "600021",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593b34",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM004B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "1ac7f686-ae3c-4194-bad3-9ebf97f78bcf",
+    "activeKey": "6ad722a245b70e8621211756:shafaathaariz@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9894176167",
+    "activeCouncilKey": "6ad722a245b70e8621211756:78291",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-24T10:41:57.021Z",
+        "sentAt": "2026-10-24T10:41:57.021Z",
+        "error": "",
+        "providerMessageId": "<4a7dfc56-0d3e-271a-5b23-08db8bb34b9e@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-24T10:41:57.022Z",
+        "sentAt": "2026-10-24T10:41:57.022Z",
+        "error": "",
+        "providerMessageId": "f5642dcd-8443-44d7-ad58-30b5aa63f76f"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-10-24T10:41:57.021Z",
+        "error": "",
+        "providerMessageId": "<4a7dfc56-0d3e-271a-5b23-08db8bb34b9e@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-10-24T10:41:57.022Z",
+        "error": "",
+        "providerMessageId": "f5642dcd-8443-44d7-ad58-30b5aa63f76f",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "1cda63dd91b7d4c200b7e0dbc9b1f5ff0eb236b76966ce5d",
+    "registrationCode": "REG-FBC434CC",
+    "createdAt": "2026-10-24T10:40:36.163Z",
+    "updatedAt": "2026-10-24T10:41:57.023Z",
+    "__v": 0
+  },
+  {
+    "_id": "6ae17a5974c3c0dd0eb37058",
+    "event": "6ad722a245b70e8621211756",
+    "ticketType": "6ad722a245b70e86212117c9",
+    "attendee": {
+      "name": "Dr NTAMILSELVI KALAICHELVAN",
+      "title": "Dr",
+      "firstName": "NTAMILSELVI KALAICHELVAN",
+      "lastName": "",
+      "gender": "Female",
+      "email": "tamilselvidr25@gmail.com",
+      "phone": "9894461171",
+      "medicalCouncilRegNo": "TNMC/75043",
+      "institution": "",
+      "designation": "",
+      "address": "Mogapair East chennai",
+      "country": "India",
+      "state": "Tamil Nadu",
+      "city": "Chennai",
+      "pincode": "600037",
+      "category": "Delegate — Regular",
+      "registrationCategory": "",
+      "workshop": "",
+      "accompanyingPerson": {
+        "hasAccompanyingPerson": false,
+        "name": ""
+      },
+      "participantType": ""
+    },
+    "coupon": "6ad722b364854cf691593bc1",
+    "company": "6ad722b364854cf691593b2c",
+    "couponCode": "PFRCCIIM145B2B",
+    "pricing": {
+      "basePrice": 13000,
+      "discountAmount": 15340,
+      "taxAmount": 2340,
+      "totalAmount": 0,
+      "currency": "INR"
+    },
+    "status": "confirmed",
+    "promoCode": null,
+    "payment": null,
+    "idempotencyKey": "bd7ed975-f825-4204-9b02-e3251caf8a2e",
+    "activeKey": "6ad722a245b70e8621211756:tamilselvidr25@gmail.com",
+    "activePhoneKey": "6ad722a245b70e8621211756:9894461171",
+    "activeCouncilKey": "6ad722a245b70e8621211756:TNMC75043",
+    "delivery": {
+      "email": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-28T04:30:21.413Z",
+        "sentAt": "2026-10-28T04:30:21.413Z",
+        "error": "",
+        "providerMessageId": "<706d1bc4-f4bc-f9da-e00c-7b2f7bbda567@pfrcivf.com>"
+      },
+      "whatsapp": {
+        "status": "sent",
+        "attempts": 1,
+        "lastAttemptAt": "2026-10-28T04:30:21.414Z",
+        "sentAt": "2026-10-28T04:30:21.414Z",
+        "error": "",
+        "providerMessageId": "12b833e3-9a2a-453a-a67d-dcf95c2d6db9"
+      }
+    },
+    "checkedInAt": null,
+    "checkedInBy": null,
+    "certificateIssuedAt": null,
+    "cancelledAt": null,
+    "cancelledBy": null,
+    "cancellationReason": "",
+    "campaignSource": "direct",
+    "notes": "",
+    "isTest": false,
+    "deliveryLog": [
+      {
+        "channel": "whatsapp",
+        "status": "sent",
+        "at": "2026-10-28T04:30:21.414Z",
+        "error": "",
+        "providerMessageId": "12b833e3-9a2a-453a-a67d-dcf95c2d6db9",
+        "trigger": "auto",
+        "actorName": ""
+      },
+      {
+        "channel": "email",
+        "status": "sent",
+        "at": "2026-10-28T04:30:21.413Z",
+        "error": "",
+        "providerMessageId": "<706d1bc4-f4bc-f9da-e00c-7b2f7bbda567@pfrcivf.com>",
+        "trigger": "auto",
+        "actorName": ""
+      }
+    ],
+    "qrToken": "a159d0ad1c5e802cd5c2b51714be8339d02ac3d52adeddd8",
+    "registrationCode": "REG-FF859B1E",
+    "createdAt": "2026-10-28T04:30:17.106Z",
+    "updatedAt": "2026-10-28T04:30:21.414Z",
+    "__v": 0
+  }
+]
