@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { checkinApi } from '../../lib/checkinApi';
 import Button from '../../components/ui/Button';
+import IdCardModal from '../Registrations/IdCardModal';
 import './CheckIn.css';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
@@ -70,6 +71,7 @@ export default function CheckIn() {
   const [recentScans, setRecentScans] = useState([]);
   const [copiedCode, setCopiedCode] = useState(false);
   const [printAttendee, setPrintAttendee] = useState(null);
+  const [idCardModalReg, setIdCardModalReg] = useState(null);
 
   const scannerRef = useRef(null);
   const scannerDivId = 'checkin-camera';
@@ -986,8 +988,7 @@ export default function CheckIn() {
                     <Button
                       variant="primary"
                       size="sm"
-                      href={`${API_BASE}/api/v1/tickets/${scanResult.qrToken || scanResult.registrationCode}/badge.pdf`}
-                      external
+                      onClick={() => setIdCardModalReg(scanResult)}
                     >
                       🪪 Download ID Card (PDF)
                     </Button>
@@ -1129,8 +1130,7 @@ export default function CheckIn() {
                     <Button
                       variant="secondary"
                       size="sm"
-                      href={`${API_BASE}/api/v1/tickets/${scanResult.qrToken || scanResult.registrationCode}/badge.pdf`}
-                      external
+                      onClick={() => setIdCardModalReg(scanResult)}
                     >
                       🪪 Download ID Card (PDF)
                     </Button>
@@ -1294,6 +1294,34 @@ export default function CheckIn() {
             </span>
           </div>
         </div>
+      )}
+
+      {idCardModalReg && (
+        <IdCardModal
+          registration={idCardModalReg}
+          onClose={() => setIdCardModalReg(null)}
+          onUpdated={(updated) => {
+            if (updated?.attendee?.name) {
+              setScanResult((prev) =>
+                prev ? { ...prev, attendee: { ...prev.attendee, name: updated.attendee.name } } : prev
+              );
+              setRecentScans((prev) =>
+                prev.map((item) =>
+                  item.data?.registrationCode === (updated.registrationCode || idCardModalReg.registrationCode)
+                    ? {
+                        ...item,
+                        name: updated.attendee.name,
+                        data: {
+                          ...item.data,
+                          attendee: { ...item.data?.attendee, name: updated.attendee.name },
+                        },
+                      }
+                    : item
+                )
+              );
+            }
+          }}
+        />
       )}
     </div>
   );

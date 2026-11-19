@@ -32,6 +32,7 @@ export default function IdCardModal({ registration, onClose, onUpdated }) {
   const [successMsg, setSuccessMsg] = useState('');
 
   const regCode = registration.registrationCode || registration.id;
+  const regId = registration.id || registration._id || regCode;
   const identifier = registration.qrToken || regCode;
 
   const getPdfUrl = (forTemplate = template) => {
@@ -55,7 +56,7 @@ export default function IdCardModal({ registration, onClose, onUpdated }) {
       if (saveToDb && name.trim()) {
         const cleanDbName = name.replace(/\s+/g, ' ').trim();
         if (cleanDbName !== originalName) {
-          await registrationApi.update(registration.id, {
+          await registrationApi.update(regId, {
             attendee: { name: cleanDbName },
           });
           if (onUpdated) {
@@ -71,7 +72,7 @@ export default function IdCardModal({ registration, onClose, onUpdated }) {
       const filename = `${regCode}-${role}-${safeName}-ID-CARD.pdf`;
 
       await registrationApi.downloadBadgePdf(
-        registration.id,
+        regId,
         { role: role.trim(), name: name.trim(), template },
         filename
       );
@@ -222,7 +223,7 @@ export default function IdCardModal({ registration, onClose, onUpdated }) {
             <div>
               <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>CHECK-IN STATUS</div>
               <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                {registration.checkedInAt ? (
+                {registration.checkedInAt || (registration.checkins && registration.checkins.length > 0) ? (
                   <span style={{ color: '#16a34a' }}>🚪 Entry Checked-in</span>
                 ) : (
                   <span style={{ color: '#d97706' }}>⏳ Pending Check-in</span>
@@ -232,7 +233,7 @@ export default function IdCardModal({ registration, onClose, onUpdated }) {
             <div>
               <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>COMPANY / PASS</div>
               <div style={{ fontSize: '0.85rem', color: '#334155' }}>
-                {registration.company?.name || 'Delegate Pass'}
+                {registration.company?.name || registration.ticketType?.name || 'Delegate Pass'}
               </div>
             </div>
           </div>

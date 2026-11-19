@@ -1,5 +1,6 @@
 'use strict';
 
+const mongoose = require('mongoose');
 const Registration = require('../models/Registration');
 const ApiError = require('../utils/ApiError');
 const { sendSuccess, asyncHandler } = require('../utils/response');
@@ -24,7 +25,8 @@ function withRefs(query) {
 }
 
 async function findOr404(id) {
-  const reg = await withRefs(Registration.findById(id));
+  const query = mongoose.isValidObjectId(id) ? { _id: id } : { registrationCode: id };
+  const reg = await withRefs(Registration.findOne(query));
   if (!reg) throw ApiError.notFound('Registration not found');
   return reg;
 }

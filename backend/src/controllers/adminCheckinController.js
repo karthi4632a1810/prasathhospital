@@ -362,13 +362,22 @@ const scanTicket = asyncHandler(async (req, res) => {
   }
 
   const payload = {
+    id: String(reg._id),
+    _id: reg._id,
     registrationCode: reg.registrationCode,
     qrToken: reg.qrToken,
-    attendee: { name: reg.attendee.name, email: reg.attendee.email, phone: reg.attendee.phone },
+    attendee: {
+      name: reg.attendee.name,
+      email: reg.attendee.email,
+      phone: reg.attendee.phone,
+      category: reg.attendee?.category || '',
+    },
     event: reg.event,
     ticketType: reg.ticketType,
     company: reg.company ? { name: reg.company.name } : null,
     couponCode: reg.couponCode || '',
+    badgeRole: reg.badgeRole || reg.role || '',
+    checkedInAt: reg.checkedInAt,
     activeLocation: {
       id: locationDoc._id,
       name: locName,
