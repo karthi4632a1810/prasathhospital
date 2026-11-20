@@ -195,6 +195,40 @@
   color: #b45309;
 }
 
+.idcard-spec-tag--badge-on {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #4338ca;
+}
+
+.idcard-spec-tag--badge-off {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #64748b;
+}
+
+/* 4-digit badge number input */
+.idcard-badge-num-input {
+  width: 76px;
+  padding: 5px 8px;
+  font-family: monospace;
+  font-size: 0.95rem;
+  font-weight: 800;
+  text-align: center;
+  color: #312e81;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  outline: none;
+  transition: all 120ms ease;
+}
+
+.idcard-badge-num-input:focus {
+  background: #ffffff;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
 /* Action Toolbar (Upload / Add / Preset / Download) */
 .idcard-toolbar {
   display: flex;

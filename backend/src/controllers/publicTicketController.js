@@ -117,11 +117,21 @@ const getBadgePdf = asyncHandler(async (req, res) => {
   const name = req.query.name || null;
   const includeTemplate = req.query.template === 'true' || req.query.preview === 'true';
   const showQr = req.query.showQr !== 'false' && req.query.noQr !== 'true';
-  const buffer = await generateIdCardPdfBuffer(reg, { role, name, includeTemplate, showQr });
+  const showBadgeNo = req.query.showBadgeNo !== 'false' && req.query.noBadgeNo !== 'true';
+  const badgeNo = req.query.badgeNo || req.query.badgeNumber || null;
+  const buffer = await generateIdCardPdfBuffer(reg, {
+    role,
+    name,
+    includeTemplate,
+    showQr,
+    showBadgeNo,
+    badgeNo,
+  });
   res.set('Content-Type', 'application/pdf');
   const safeName = (name || reg.attendee?.name || reg.registrationCode).replace(/[^a-zA-Z0-9_-]/g, '_');
   const qrSuffix = !showQr ? '-NO-QR' : '';
-  res.set('Content-Disposition', `inline; filename="${reg.registrationCode}-${safeName}-ID-CARD${qrSuffix}.pdf"`);
+  const numPrefix = showBadgeNo && badgeNo ? `${badgeNo}-` : '';
+  res.set('Content-Disposition', `inline; filename="${numPrefix}${reg.registrationCode}-${safeName}-ID-CARD${qrSuffix}.pdf"`);
   res.set('Cache-Control', 'public, max-age=60');
   return res.send(buffer);
 });

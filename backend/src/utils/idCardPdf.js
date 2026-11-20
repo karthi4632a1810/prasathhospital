@@ -130,6 +130,8 @@ async function drawIdCardOnPage(
     maxW,
     fallbackIndex = 1,
     showQr = true,
+    showBadgeNo = true,
+    badgeNo = null,
   }
 ) {
   if (includeTemplate && bgImage) {
@@ -142,6 +144,25 @@ async function drawIdCardOnPage(
   }
 
   const shouldDrawQr = showQr !== false && item.showQr !== false && !item.noQr;
+
+  // Resolve 4-digit badge number (between name and QR code)
+  const shouldDrawBadgeNo =
+    showBadgeNo !== false &&
+    item.showBadgeNo !== false &&
+    !item.noBadgeNo &&
+    item.showBadgeNumber !== false &&
+    !item.noBadgeNumber;
+
+  let rawBadgeNo = item.badgeNo || item.badgeNumber || badgeNo;
+  let formattedBadgeNo = '';
+  if (shouldDrawBadgeNo) {
+    if (rawBadgeNo !== undefined && rawBadgeNo !== null && String(rawBadgeNo).trim() !== '') {
+      const s = String(rawBadgeNo).trim();
+      formattedBadgeNo = /^\d+$/.test(s) ? s.padStart(4, '0') : s;
+    } else if (fallbackIndex) {
+      formattedBadgeNo = String(fallbackIndex).padStart(4, '0');
+    }
+  }
 
   // 1. Role Header (DELEGATE / FACULTY / ORGANISING TEAM / Custom)
   const roleText = resolveBadgeRole(item, item.role);
@@ -160,7 +181,7 @@ async function drawIdCardOnPage(
   const lines = splitNameToLines(rawName, fontBold, maxW);
 
   if (shouldDrawQr) {
-    // Standard layout with QR Code positioned at y = 176
+    // Standard layout with QR Code positioned at y = 172-176
     const roleY = 338;
     page.drawText(roleText, {
       x: (width - roleWidth) / 2,
@@ -171,7 +192,7 @@ async function drawIdCardOnPage(
     });
 
     if (lines.length === 2) {
-      let nameSize = 16.5;
+      let nameSize = formattedBadgeNo ? 15.5 : 16.5;
       let l1W = fontBold.widthOfTextAtSize(lines[0], nameSize);
       let l2W = fontBold.widthOfTextAtSize(lines[1], nameSize);
       while ((l1W > maxW || l2W > maxW) && nameSize > 10) {
@@ -188,13 +209,13 @@ async function drawIdCardOnPage(
       });
       page.drawText(lines[1], {
         x: (width - l2W) / 2,
-        y: 286,
+        y: formattedBadgeNo ? 288 : 286,
         size: nameSize,
         font: fontBold,
         color: rgb(0.137, 0.071, 0.220),
       });
     } else {
-      let nameSize = 19;
+      let nameSize = formattedBadgeNo ? 18.5 : 19;
       let nameWidth = fontBold.widthOfTextAtSize(lines[0], nameSize);
       while (nameWidth > maxW && nameSize > 10) {
         nameSize -= 0.5;
@@ -209,6 +230,20 @@ async function drawIdCardOnPage(
       });
     }
 
+    // 2.5 4-Digit Badge Number (centered between Name and QR Code)
+    if (formattedBadgeNo) {
+      const numSize = 13.5;
+      const numW = fontBold.widthOfTextAtSize(formattedBadgeNo, numSize);
+      const numY = lines.length === 2 ? 266 : 267;
+      page.drawText(formattedBadgeNo, {
+        x: (width - numW) / 2,
+        y: numY,
+        size: numSize,
+        font: fontBold,
+        color: rgb(0.137, 0.071, 0.220),
+      });
+    }
+
     // 3. QR Code (76x76 pt clean themed QR, no box, no corner curves, centered medallion)
     const checkInUrl = item.qrUrl || getCheckInUrl(item, fallbackIndex);
     const qrPngBuffer = await generateQrPngBuffer(checkInUrl, { width: 600, noBorder: true });
@@ -216,7 +251,7 @@ async function drawIdCardOnPage(
 
     const qrSize = 76;
     const qrX = (width - qrSize) / 2;
-    const qrY = 176;
+    const qrY = formattedBadgeNo ? 172 : 176;
 
     page.drawImage(qrImage, {
       x: qrX,
@@ -226,7 +261,7 @@ async function drawIdCardOnPage(
     });
   } else {
     // Clean layout WITHOUT QR Code (Role & Doctor Name optically centered in 7.5 cm white zone)
-    const roleY = lines.length === 2 ? 305 : 295;
+    const roleY = formattedBadgeNo ? (lines.length === 2 ? 310 : 300) : (lines.length === 2 ? 305 : 295);
     page.drawText(roleText, {
       x: (width - roleWidth) / 2,
       y: roleY,
@@ -236,7 +271,7 @@ async function drawIdCardOnPage(
     });
 
     if (lines.length === 2) {
-      let nameSize = 18;
+      let nameSize = formattedBadgeNo ? 17.5 : 18;
       let l1W = fontBold.widthOfTextAtSize(lines[0], nameSize);
       let l2W = fontBold.widthOfTextAtSize(lines[1], nameSize);
       while ((l1W > maxW || l2W > maxW) && nameSize > 10) {
@@ -246,20 +281,20 @@ async function drawIdCardOnPage(
       }
       page.drawText(lines[0], {
         x: (width - l1W) / 2,
-        y: 262,
+        y: formattedBadgeNo ? 268 : 262,
         size: nameSize,
         font: fontBold,
         color: rgb(0.137, 0.071, 0.220),
       });
       page.drawText(lines[1], {
         x: (width - l2W) / 2,
-        y: 236,
+        y: formattedBadgeNo ? 244 : 236,
         size: nameSize,
         font: fontBold,
         color: rgb(0.137, 0.071, 0.220),
       });
     } else {
-      let nameSize = 22;
+      let nameSize = formattedBadgeNo ? 21 : 22;
       let nameWidth = fontBold.widthOfTextAtSize(lines[0], nameSize);
       while (nameWidth > maxW && nameSize > 10) {
         nameSize -= 0.5;
@@ -267,8 +302,22 @@ async function drawIdCardOnPage(
       }
       page.drawText(lines[0], {
         x: (width - nameWidth) / 2,
-        y: 248,
+        y: formattedBadgeNo ? 256 : 248,
         size: nameSize,
+        font: fontBold,
+        color: rgb(0.137, 0.071, 0.220),
+      });
+    }
+
+    // 4-Digit Badge Number without QR (optically balanced below name)
+    if (formattedBadgeNo) {
+      const numSize = 15;
+      const numW = fontBold.widthOfTextAtSize(formattedBadgeNo, numSize);
+      const numY = lines.length === 2 ? 214 : 222;
+      page.drawText(formattedBadgeNo, {
+        x: (width - numW) / 2,
+        y: numY,
+        size: numSize,
         font: fontBold,
         color: rgb(0.137, 0.071, 0.220),
       });
@@ -303,9 +352,12 @@ async function generateIdCardPdfBuffer(registration, options = {}) {
     role: options.role || registration.role || registration.badgeRole,
     name: options.name || registration.name || registration.attendee?.name,
     showQr: options.showQr !== undefined ? options.showQr : registration.showQr,
+    showBadgeNo: options.showBadgeNo !== undefined ? options.showBadgeNo : (options.showBadgeNumber !== undefined ? options.showBadgeNumber : registration.showBadgeNo),
+    badgeNo: options.badgeNo || options.badgeNumber || registration.badgeNo || registration.badgeNumber,
   };
 
   const showQr = options.showQr !== false && !options.noQr && mergedItem.showQr !== false;
+  const showBadgeNo = options.showBadgeNo !== false && !options.noBadgeNo && mergedItem.showBadgeNo !== false;
 
   await drawIdCardOnPage(doc, page, mergedItem, {
     fontBold,
@@ -316,6 +368,8 @@ async function generateIdCardPdfBuffer(registration, options = {}) {
     height,
     maxW,
     showQr,
+    showBadgeNo,
+    badgeNo: mergedItem.badgeNo,
   });
 
   const outputBytes = await doc.save();
@@ -344,6 +398,7 @@ async function generateMultiPageIdCardPdfBuffer(items, options = {}) {
   }
 
   const globalShowQr = options.showQr !== false && !options.noQr;
+  const globalShowBadgeNo = options.showBadgeNo !== false && !options.noBadgeNo;
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
@@ -352,8 +407,11 @@ async function generateMultiPageIdCardPdfBuffer(items, options = {}) {
       ...item,
       role: item.role || options.role,
       name: item.name || item.attendee?.name,
+      badgeNo: item.badgeNo || item.badgeNumber || String(i + 1).padStart(4, '0'),
     };
     const itemShowQr = item.showQr !== undefined ? (item.showQr !== false && !item.noQr) : globalShowQr;
+    const itemShowBadgeNo = item.showBadgeNo !== undefined ? (item.showBadgeNo !== false && !item.noBadgeNo) : globalShowBadgeNo;
+
     await drawIdCardOnPage(doc, page, mergedItem, {
       fontBold,
       fontRegular,
@@ -364,6 +422,8 @@ async function generateMultiPageIdCardPdfBuffer(items, options = {}) {
       maxW,
       fallbackIndex: i + 1,
       showQr: itemShowQr,
+      showBadgeNo: itemShowBadgeNo,
+      badgeNo: mergedItem.badgeNo,
     });
   }
 
@@ -385,22 +445,29 @@ async function generateIdCardsZipBuffer(items, options = {}) {
   });
 
   const globalShowQr = options.showQr !== false && !options.noQr;
+  const globalShowBadgeNo = options.showBadgeNo !== false && !options.noBadgeNo;
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
     const itemShowQr = item.showQr !== undefined ? (item.showQr !== false && !item.noQr) : globalShowQr;
+    const itemShowBadgeNo = item.showBadgeNo !== undefined ? (item.showBadgeNo !== false && !item.noBadgeNo) : globalShowBadgeNo;
+    const itemBadgeNo = item.badgeNo || item.badgeNumber || String(i + 1).padStart(4, '0');
+
     const singlePdf = await generateIdCardPdfBuffer(item, {
       role: item.role || options.role,
       name: item.name || item.attendee?.name,
       includeTemplate: options.includeTemplate,
       showQr: itemShowQr,
+      showBadgeNo: itemShowBadgeNo,
+      badgeNo: itemBadgeNo,
     });
     const safeRole = String(item.role || options.role || 'BADGE').replace(/[^a-zA-Z0-9_-]/g, '_');
     const safeName = String(item.name || item.attendee?.name || `Attendee_${i + 1}`)
       .replace(/\s+/g, '_')
       .replace(/[^a-zA-Z0-9_-]/g, '_');
     const qrSuffix = !itemShowQr ? '-NO-QR' : '';
-    const filename = `${String(i + 1).padStart(2, '0')}-${safeRole}-${safeName}${qrSuffix}.pdf`;
+    const numPrefix = itemShowBadgeNo ? `${itemBadgeNo}-` : `${String(i + 1).padStart(2, '0')}-`;
+    const filename = `${numPrefix}${safeRole}-${safeName}${qrSuffix}.pdf`;
     zip.append(singlePdf, { name: filename });
   }
 

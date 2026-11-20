@@ -15,6 +15,7 @@ export default function IdCardStudio() {
   const [defaultRole, setDefaultRole] = useState('FACULTY');
   const [isSimulation, setIsSimulation] = useState(false);
   const [showQr, setShowQr] = useState(true);
+  const [showBadgeNo, setShowBadgeNo] = useState(true);
   const [loading, setLoading] = useState(false);
   const [busyAction, setBusyAction] = useState(null); // 'pdf' | 'zip' | 'print' | rowId
   const [error, setError] = useState('');
@@ -94,11 +95,19 @@ export default function IdCardStudio() {
               else assignedRole = r;
             }
 
+            // Optional badge number detection or auto-sequence
+            const numKey = keys.find((k) => /badge.*no|badge.*num|number|sl\.?\s*no|s\.?\s*no/i.test(k));
+            let rawNum = numKey && row[numKey] !== undefined ? String(row[numKey]).trim() : '';
+            const assignedBadgeNo = /^\d+$/.test(rawNum)
+              ? rawNum.padStart(4, '0')
+              : String(idx + 1).padStart(4, '0');
+
             return {
               id: `IMP-${Date.now()}-${idx + 1}`,
               name: rawName,
               role: assignedRole,
               code: `IMP-${String(idx + 1).padStart(3, '0')}`,
+              badgeNo: assignedBadgeNo,
             };
           })
           .filter(Boolean);
@@ -133,6 +142,7 @@ export default function IdCardStudio() {
         !search.trim() ||
         item.name.toLowerCase().includes(search.toLowerCase()) ||
         item.role.toLowerCase().includes(search.toLowerCase()) ||
+        (item.badgeNo && item.badgeNo.toLowerCase().includes(search.toLowerCase())) ||
         (item.code && item.code.toLowerCase().includes(search.toLowerCase()));
 
       const matchesRole =
@@ -210,6 +220,7 @@ export default function IdCardStudio() {
       name: newName.trim(),
       role: newRole,
       code: `MAN-${String(items.length + 1).padStart(3, '0')}`,
+      badgeNo: String(items.length + 1).padStart(4, '0'),
     };
     setItems((prev) => [newItem, ...prev]);
     setSelectedIds((prev) => new Set([...prev, newItem.id]));
@@ -231,6 +242,7 @@ export default function IdCardStudio() {
       name,
       role: pasteRole,
       code: `PST-${String(items.length + i + 1).padStart(3, '0')}`,
+      badgeNo: String(items.length + i + 1).padStart(4, '0'),
     }));
 
     setItems((prev) => [...newRows, ...prev]);
@@ -249,9 +261,16 @@ export default function IdCardStudio() {
     try {
       const modeName = isSimulation ? 'SIMULATION' : 'PRINT-OVERLAY';
       const qrTag = showQr ? 'WITH-QR' : 'NO-QR';
-      const filename = `CIIM2026-ID-CARDS-${modeName}-${qrTag}-(${selectedItemsList.length}).pdf`;
-      await idCardStudioApi.downloadBulkPdf(selectedItemsList, { template: isSimulation, showQr }, filename);
-      setSuccess(`Combined PDF downloaded with ${selectedItemsList.length} pages (${showQr ? 'with QR codes' : 'name & role only, without QR'}).`);
+      const numTag = showBadgeNo ? 'WITH-NUM' : 'NO-NUM';
+      const filename = `CIIM2026-ID-CARDS-${modeName}-${numTag}-${qrTag}-(${selectedItemsList.length}).pdf`;
+      await idCardStudioApi.downloadBulkPdf(
+        selectedItemsList,
+        { template: isSimulation, showQr, showBadgeNo },
+        filename
+      );
+      setSuccess(
+        `Combined PDF downloaded with ${selectedItemsList.length} pages (${showQr ? 'with QR' : 'no QR'}, ${showBadgeNo ? 'with 4-digit badge numbers' : 'no numbers'}).`
+      );
       setTimeout(() => setSuccess(''), 4000);
     } catch (err) {
       setError(err.message || 'Failed to generate bulk PDF.');
@@ -266,7 +285,11 @@ export default function IdCardStudio() {
     setBusyAction('print');
     setError('');
     try {
-      await idCardStudioApi.openBulkPdfTab(selectedItemsList, { template: isSimulation, showQr });
+      await idCardStudioApi.openBulkPdfTab(selectedItemsList, {
+        template: isSimulation,
+        showQr,
+        showBadgeNo,
+      });
     } catch (err) {
       setError(err.message || 'Failed to open print tab.');
     } finally {
@@ -282,8 +305,13 @@ export default function IdCardStudio() {
     try {
       const modeName = isSimulation ? 'SIMULATION' : 'PRINT-OVERLAY';
       const qrTag = showQr ? 'WITH-QR' : 'NO-QR';
-      const filename = `CIIM2026-ID-CARDS-${modeName}-${qrTag}-(${selectedItemsList.length}-FILES).zip`;
-      await idCardStudioApi.downloadBulkZip(selectedItemsList, { template: isSimulation, showQr }, filename);
+      const numTag = showBadgeNo ? 'WITH-NUM' : 'NO-NUM';
+      const filename = `CIIM2026-ID-CARDS-${modeName}-${numTag}-${qrTag}-(${selectedItemsList.length}-FILES).zip`;
+      await idCardStudioApi.downloadBulkZip(
+        selectedItemsList,
+        { template: isSimulation, showQr, showBadgeNo },
+        filename
+      );
       setSuccess(`ZIP archive downloaded containing ${selectedItemsList.length} PDF badge files.`);
       setTimeout(() => setSuccess(''), 4000);
     } catch (err) {
@@ -294,15 +322,25 @@ export default function IdCardStudio() {
   };
 
   // Single Item Actions
-  const handleDownloadSingle = async (item) => {
+  const handleDownloadSingle = async (item, idx) => {
     setBusyAction(item.id);
     setError('');
     try {
       const safeName = item.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '_');
       const qrSuffix = showQr ? '' : '-NO-QR';
-      const filename = `${item.code || 'ID'}-${item.role}-${safeName}${qrSuffix}.pdf`;
+      const badgeNo = item.badgeNo || String((idx !== undefined ? idx : 0) + 1).padStart(4, '0');
+      const numPrefix = showBadgeNo && badgeNo ? `${badgeNo}-` : '';
+      const filename = `${numPrefix}${item.code || 'ID'}-${item.role}-${safeName}${qrSuffix}.pdf`;
       await idCardStudioApi.downloadSinglePdf(
-        { name: item.name, role: item.role, code: item.code, template: isSimulation, showQr },
+        {
+          name: item.name,
+          role: item.role,
+          code: item.code,
+          badgeNo,
+          template: isSimulation,
+          showQr,
+          showBadgeNo,
+        },
         filename
       );
     } catch (err) {
@@ -312,14 +350,17 @@ export default function IdCardStudio() {
     }
   };
 
-  const handleOpenSinglePrint = async (item) => {
+  const handleOpenSinglePrint = async (item, idx) => {
     try {
+      const badgeNo = item.badgeNo || String((idx !== undefined ? idx : 0) + 1).padStart(4, '0');
       await idCardStudioApi.openSinglePdfTab({
         name: item.name,
         role: item.role,
         code: item.code,
+        badgeNo,
         template: isSimulation,
         showQr,
+        showBadgeNo,
       });
     } catch (err) {
       setError(err.message || 'Failed to open print preview.');
@@ -343,6 +384,26 @@ export default function IdCardStudio() {
 
           {/* Header Controls (QR Code Toggle + Print Mode Switcher) */}
           <div className="idcard-header-controls">
+            {/* 4-Digit Badge Number Switcher */}
+            <div className="idcard-qr-switcher" role="group" aria-label="Badge number toggle">
+              <button
+                type="button"
+                className={`idcard-qr-btn ${showBadgeNo ? 'is-active' : ''}`}
+                onClick={() => setShowBadgeNo(true)}
+                title="Include 4-digit badge number between name & QR code"
+              >
+                <span>🔢</span> Badge #: ON
+              </button>
+              <button
+                type="button"
+                className={`idcard-qr-btn idcard-qr-btn--off ${!showBadgeNo ? 'is-active' : ''}`}
+                onClick={() => setShowBadgeNo(false)}
+                title="Hide 4-digit badge number"
+              >
+                <span>🚫</span> Badge #: OFF
+              </button>
+            </div>
+
             {/* QR Code Toggle Switcher */}
             <div className="idcard-qr-switcher" role="group" aria-label="QR Code toggle">
               <button
@@ -391,6 +452,11 @@ export default function IdCardStudio() {
             <span style={{ fontWeight: 700, color: '#0f172a' }}>Badge Specifications:</span>
             <span className="idcard-spec-tag">📏 10.2 cm × 15.2 cm</span>
             <span className="idcard-spec-tag">🎯 7.5 cm Center Printable Zone</span>
+            {showBadgeNo ? (
+              <span className="idcard-spec-tag idcard-spec-tag--badge-on">🔢 Badge # Active (0001+)</span>
+            ) : (
+              <span className="idcard-spec-tag idcard-spec-tag--badge-off">🚫 Badge # OFF</span>
+            )}
             {showQr ? (
               <span className="idcard-spec-tag idcard-spec-tag--qr-on">📱 QR Code Active (76×76 pt)</span>
             ) : (
@@ -412,6 +478,11 @@ export default function IdCardStudio() {
             {!showQr && (
               <span style={{ color: '#b45309', fontWeight: 700 }}>
                 ● Name &amp; Role will be vertically centered without QR code.
+              </span>
+            )}
+            {showBadgeNo && (
+              <span style={{ color: '#4338ca', fontWeight: 600 }}>
+                ● 4-digit badge number sits centered between name and QR code.
               </span>
             )}
           </div>
@@ -639,11 +710,12 @@ export default function IdCardStudio() {
                     title="Select/Deselect all filtered"
                   />
                 </th>
-                <th style={{ width: '50px' }}>#</th>
+                <th style={{ width: '45px' }}>#</th>
+                <th style={{ width: '95px' }}>Badge #</th>
                 <th>Attendee Doctor Name</th>
-                <th style={{ width: '190px' }}>Role / Badge Header</th>
-                <th style={{ width: '120px' }}>Badge Code</th>
-                <th style={{ width: '280px', textAlign: 'right' }}>Actions</th>
+                <th style={{ width: '180px' }}>Role / Badge Header</th>
+                <th style={{ width: '110px' }}>Badge Code</th>
+                <th style={{ width: '270px', textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -662,6 +734,23 @@ export default function IdCardStudio() {
                     </td>
                     <td style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600 }}>
                       {idx + 1}
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        className="idcard-badge-num-input"
+                        value={item.badgeNo !== undefined ? item.badgeNo : String(idx + 1).padStart(4, '0')}
+                        onChange={(e) => updateItem(item.id, { badgeNo: e.target.value })}
+                        onBlur={(e) => {
+                          const v = e.target.value.trim();
+                          if (/^\d+$/.test(v)) {
+                            updateItem(item.id, { badgeNo: v.padStart(4, '0') });
+                          }
+                        }}
+                        placeholder="0001"
+                        maxLength={10}
+                        title="4-digit badge number (between name & QR code)"
+                      />
                     </td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -707,7 +796,7 @@ export default function IdCardStudio() {
                         <button
                           type="button"
                           className="idcard-action-btn"
-                          onClick={() => handleOpenSinglePrint(item)}
+                          onClick={() => handleOpenSinglePrint(item, idx)}
                           title="Open PDF in new tab for direct Ctrl+P print"
                         >
                           🖨️ Print
@@ -715,7 +804,7 @@ export default function IdCardStudio() {
                         <button
                           type="button"
                           className="idcard-action-btn idcard-action-btn--primary"
-                          onClick={() => handleDownloadSingle(item)}
+                          onClick={() => handleDownloadSingle(item, idx)}
                           disabled={busyAction === item.id}
                         >
                           {busyAction === item.id ? '…' : '⬇️ PDF'}
@@ -754,9 +843,11 @@ export default function IdCardStudio() {
             registrationCode: customizeItem.code,
             attendee: { name: customizeItem.name },
             badgeRole: customizeItem.role,
+            badgeNo: customizeItem.badgeNo,
             company: { name: 'Faculty & Organising Team' },
             checkedInAt: null,
             showQr,
+            showBadgeNo,
           }}
           initialShowQr={showQr}
           onClose={() => setCustomizeItem(null)}

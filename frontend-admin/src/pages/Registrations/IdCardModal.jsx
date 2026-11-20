@@ -23,12 +23,26 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
 
   const originalName = registration.attendee?.name || '';
 
+  const defaultBadgeNo = (() => {
+    if (registration.badgeNo) return String(registration.badgeNo);
+    if (registration.badgeNumber) return String(registration.badgeNumber);
+    if (registration.index) return String(registration.index).padStart(4, '0');
+    const code = registration.code || registration.registrationCode || '';
+    const match = String(code).match(/(\d+)$/);
+    if (match) return match[1].padStart(4, '0');
+    return '0001';
+  })();
+
   const [role, setRole] = useState(defaultRole);
   const [name, setName] = useState(originalName);
   const [template, setTemplate] = useState(false); // false = clean print overlay, true = simulation
   const [showQr, setShowQr] = useState(
     registration.showQr !== undefined ? registration.showQr : initialShowQr !== false
   );
+  const [showBadgeNo, setShowBadgeNo] = useState(
+    registration.showBadgeNo !== undefined ? registration.showBadgeNo : true
+  );
+  const [badgeNo, setBadgeNo] = useState(defaultBadgeNo);
   const [saveToDb, setSaveToDb] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -38,12 +52,21 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
   const regId = registration.id || registration._id || regCode;
   const identifier = registration.qrToken || regCode;
 
+  const handleBadgeNoBlur = () => {
+    const trimmed = String(badgeNo || '').trim();
+    if (/^\d+$/.test(trimmed)) {
+      setBadgeNo(trimmed.padStart(4, '0'));
+    }
+  };
+
   const getPdfUrl = (forTemplate = template) => {
     const params = new URLSearchParams();
     if (role) params.set('role', role);
     if (name) params.set('name', name);
     if (forTemplate) params.set('template', 'true');
     if (!showQr) params.set('showQr', 'false');
+    if (!showBadgeNo) params.set('showBadgeNo', 'false');
+    if (showBadgeNo && badgeNo) params.set('badgeNo', badgeNo);
     return `${API_BASE}/api/v1/tickets/${identifier}/badge.pdf?${params.toString()}`;
   };
 
@@ -74,11 +97,12 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
 
       const safeName = (name.replace(/\s+/g, '_').trim() || regCode).replace(/[^a-zA-Z0-9_-]/g, '_');
       const qrSuffix = !showQr ? '-NO-QR' : '';
-      const filename = `${regCode}-${role}-${safeName}-ID-CARD${qrSuffix}.pdf`;
+      const numPrefix = showBadgeNo && badgeNo ? `${badgeNo}-` : '';
+      const filename = `${numPrefix}${regCode}-${role}-${safeName}-ID-CARD${qrSuffix}.pdf`;
 
       await registrationApi.downloadBadgePdf(
         regId,
-        { role: role.trim(), name: name.trim(), template, showQr },
+        { role: role.trim(), name: name.trim(), template, showQr, showBadgeNo, badgeNo },
         filename
       );
 
@@ -337,6 +361,106 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
             <p style={{ margin: '5px 0 0', fontSize: '0.78rem', color: '#64748b' }}>
               Press <strong>Enter</strong> to split name across Line 1 and Line 2. Single-line long names will auto-balance.
             </p>
+          </div>
+
+          {/* Field 3: 4-Digit Badge Number (Between Name & QR) */}
+          <div
+            style={{
+              backgroundColor: '#fbfbfe',
+              border: '1px solid #e0e7ff',
+              borderRadius: '10px',
+              padding: '12px 16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '8px',
+              }}
+            >
+              <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>🔢</span> 4-Digit Badge Number (Between Name &amp; QR)
+              </label>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowBadgeNo(true)}
+                  style={{
+                    padding: '4px 12px',
+                    borderRadius: '6px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    border: showBadgeNo ? '2px solid #4338ca' : '1px solid #cbd5e1',
+                    backgroundColor: showBadgeNo ? '#eef2ff' : '#ffffff',
+                    color: showBadgeNo ? '#3730a3' : '#64748b',
+                    transition: 'all 120ms',
+                  }}
+                >
+                  🔢 Show: ON
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowBadgeNo(false)}
+                  style={{
+                    padding: '4px 12px',
+                    borderRadius: '6px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    border: !showBadgeNo ? '2px solid #d97706' : '1px solid #cbd5e1',
+                    backgroundColor: !showBadgeNo ? '#fffbeb' : '#ffffff',
+                    color: !showBadgeNo ? '#b45309' : '#64748b',
+                    transition: 'all 120ms',
+                  }}
+                >
+                  🚫 Hide: OFF
+                </button>
+              </div>
+            </div>
+
+            {showBadgeNo ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#475569' }}>Number:</span>
+                  <input
+                    type="text"
+                    value={badgeNo}
+                    onChange={(e) => setBadgeNo(e.target.value)}
+                    onBlur={handleBadgeNoBlur}
+                    placeholder="0001"
+                    maxLength={10}
+                    style={{
+                      width: '120px',
+                      padding: '7px 12px',
+                      borderRadius: '8px',
+                      border: '1.5px solid #6366f1',
+                      fontSize: '1.05rem',
+                      fontFamily: 'monospace',
+                      fontWeight: 800,
+                      color: '#312e81',
+                      backgroundColor: '#ffffff',
+                      textAlign: 'center',
+                      letterSpacing: '0.12em',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+                <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b', flex: 1, minWidth: '200px' }}>
+                  Printed centered between attendee name and QR code. Padded to 4 digits (e.g. <code>0001</code> to <code>9999</code>).
+                </p>
+              </div>
+            ) : (
+              <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                4-Digit badge number is hidden. Badge will print without number.
+              </div>
+            )}
           </div>
 
           {/* Field 3: Print Mode */}

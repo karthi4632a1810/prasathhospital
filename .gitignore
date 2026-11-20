@@ -24,6 +24,7 @@ pm2.log
 Thumbs.db
 .vscode/
 .idea/
+.~lock.*#
 
 # Uploads (Module 2)
 uploads/
