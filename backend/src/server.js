@@ -11,6 +11,7 @@ if (process.env.DEMO_MODE === 'true') {
 const app = require('./app');
 const env = require('./config/env');
 const { connectDatabase, ensureIndexes } = require('./config/database');
+const { startMarketingScheduler } = require('./services/marketingCampaignRunner');
 const logger = require('./utils/logger');
 
 let server;
@@ -19,6 +20,7 @@ async function start() {
   try {
     await connectDatabase();
     await ensureIndexes();
+    startMarketingScheduler();
 
     server = app.listen(env.port, () => {
       logger.info(`API listening on port ${env.port} [${env.nodeEnv}]`);

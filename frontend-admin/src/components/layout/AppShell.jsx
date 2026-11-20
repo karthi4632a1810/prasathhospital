@@ -34,6 +34,7 @@ const NAV_GROUPS = [
     items: [
       { to: '/communications', label: 'WATI & Email', icon: IconSend, roles: COUNTER_ROLES },
       { to: '/whatsapp-marketing', label: 'WhatsApp Marketing', icon: IconWhatsApp, roles: COUNTER_ROLES },
+      { to: '/whatsapp-email-marketing', label: 'WhatsApp & Email Marketing', icon: IconBroadcast, roles: COUNTER_ROLES },
     ],
   },
   {
@@ -414,6 +415,25 @@ function IconWhatsApp() {
       strokeLinejoin="round"
     >
       <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+    </svg>
+  );
+}
+
+function IconBroadcast() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4.9 19.1A10 10 0 0 1 2 12a10 10 0 0 1 18 0 10 10 0 0 1-2.9 7.1" />
+      <path d="M7.8 16.2A6 6 0 0 1 6 12a6 6 0 0 1 12 0 6 6 0 0 1-1.8 4.2" />
+      <circle cx="12" cy="12" r="2" />
     </svg>
   );
 }

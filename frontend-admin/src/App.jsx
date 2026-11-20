@@ -12,6 +12,7 @@ import Registrations from './pages/Registrations';
 import IdCardStudio from './pages/IdCardStudio';
 import Communications from './pages/Communications';
 import WhatsAppMarketing from './pages/WhatsAppMarketing';
+import WhatsAppEmailMarketing from './pages/WhatsAppEmailMarketing';
 import CheckIn from './pages/CheckIn';
 import CheckinLocations from './pages/CheckinLocations';
 import Users from './pages/Users';
@@ -109,6 +110,14 @@ export default function App() {
             element={
               <Shielded roles={COUNTER_ROLES}>
                 <WhatsAppMarketing />
+              </Shielded>
+            }
+          />
+          <Route
+            path="/whatsapp-email-marketing"
+            element={
+              <Shielded roles={COUNTER_ROLES}>
+                <WhatsAppEmailMarketing />
               </Shielded>
             }
           />
