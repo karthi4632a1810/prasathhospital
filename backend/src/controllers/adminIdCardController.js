@@ -55,7 +55,7 @@ const getFacultySeed = asyncHandler(async (req, res) => {
 /**
  * POST /api/v1/admin/id-cards/bulk-pdf
  * Generates a single combined multi-page PDF containing all requested badges.
- * Body: { items: Array<{ id?, name, role?, code? }>, template: boolean }
+ * Body: { items: Array<{ id?, name, role?, code?, showQr? }>, template: boolean, showQr: boolean }
  */
 const generateBulkPdf = asyncHandler(async (req, res) => {
   const items = Array.isArray(req.body.items) ? req.body.items : [];
@@ -64,17 +64,19 @@ const generateBulkPdf = asyncHandler(async (req, res) => {
   }
 
   const includeTemplate = req.body.template === true || req.body.template === 'true';
-  const buffer = await generateMultiPageIdCardPdfBuffer(items, { includeTemplate });
+  const showQr = req.body.showQr !== false && req.body.noQr !== true && req.query.showQr !== 'false';
+  const buffer = await generateMultiPageIdCardPdfBuffer(items, { includeTemplate, showQr });
 
+  const qrSuffix = !showQr ? '-NO-QR' : '';
   res.set('Content-Type', 'application/pdf');
-  res.set('Content-Disposition', 'inline; filename="CIIM2026-ID-CARDS-COMBINED.pdf"');
+  res.set('Content-Disposition', `inline; filename="CIIM2026-ID-CARDS-COMBINED${qrSuffix}.pdf"`);
   return res.send(buffer);
 });
 
 /**
  * POST /api/v1/admin/id-cards/bulk-zip
  * Generates and streams a ZIP file containing individual PDF cards.
- * Body: { items: Array<{ id?, name, role?, code? }>, template: boolean }
+ * Body: { items: Array<{ id?, name, role?, code?, showQr? }>, template: boolean, showQr: boolean }
  */
 const generateBulkZip = asyncHandler(async (req, res) => {
   const items = Array.isArray(req.body.items) ? req.body.items : [];
@@ -83,10 +85,12 @@ const generateBulkZip = asyncHandler(async (req, res) => {
   }
 
   const includeTemplate = req.body.template === true || req.body.template === 'true';
-  const buffer = await generateIdCardsZipBuffer(items, { includeTemplate });
+  const showQr = req.body.showQr !== false && req.body.noQr !== true && req.query.showQr !== 'false';
+  const buffer = await generateIdCardsZipBuffer(items, { includeTemplate, showQr });
 
+  const qrSuffix = !showQr ? '-NO-QR' : '';
   res.set('Content-Type', 'application/zip');
-  res.set('Content-Disposition', 'attachment; filename="CIIM2026-ID-CARDS.zip"');
+  res.set('Content-Disposition', `attachment; filename="CIIM2026-ID-CARDS${qrSuffix}.zip"`);
   return res.send(buffer);
 });
 
@@ -103,15 +107,21 @@ const generateSinglePdf = asyncHandler(async (req, res) => {
     req.body?.template === 'true' ||
     req.query?.template === 'true' ||
     req.query?.preview === 'true';
+  const showQr =
+    req.body?.showQr !== false &&
+    req.body?.noQr !== true &&
+    req.query?.showQr !== 'false' &&
+    req.query?.noQr !== 'true';
 
   const buffer = await generateIdCardPdfBuffer(
     { name, role, code, registrationCode: code },
-    { role, name, includeTemplate }
+    { role, name, includeTemplate, showQr }
   );
 
   const safeName = String(name).replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const qrSuffix = !showQr ? '-NO-QR' : '';
   res.set('Content-Type', 'application/pdf');
-  res.set('Content-Disposition', `inline; filename="${code}-${safeName}-ID-CARD.pdf"`);
+  res.set('Content-Disposition', `inline; filename="${code}-${safeName}-ID-CARD${qrSuffix}.pdf"`);
   return res.send(buffer);
 });
 

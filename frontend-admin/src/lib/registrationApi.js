@@ -26,8 +26,13 @@ export const registrationApi = {
       `TNMC_Bulk_Upload_Attendance_${dateStr}.xlsx`
     );
   },
-  downloadBadgePdf: (id, { role, name, template } = {}, filename) => {
-    const q = toQuery({ role, name, template: template ? 'true' : undefined });
+  downloadBadgePdf: (id, { role, name, template, showQr } = {}, filename) => {
+    const q = toQuery({
+      role,
+      name,
+      template: template ? 'true' : undefined,
+      showQr: showQr === false ? 'false' : undefined,
+    });
     return downloadFile(
       `/admin/registrations/${id}/badge.pdf${q ? `?${q}` : ''}`,
       filename || `ID-CARD-${id}.pdf`

@@ -14,6 +14,7 @@ export default function IdCardStudio() {
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [defaultRole, setDefaultRole] = useState('FACULTY');
   const [isSimulation, setIsSimulation] = useState(false);
+  const [showQr, setShowQr] = useState(true);
   const [loading, setLoading] = useState(false);
   const [busyAction, setBusyAction] = useState(null); // 'pdf' | 'zip' | 'print' | rowId
   const [error, setError] = useState('');
@@ -247,9 +248,10 @@ export default function IdCardStudio() {
     setError('');
     try {
       const modeName = isSimulation ? 'SIMULATION' : 'PRINT-OVERLAY';
-      const filename = `CIIM2026-ID-CARDS-${modeName}-(${selectedItemsList.length}).pdf`;
-      await idCardStudioApi.downloadBulkPdf(selectedItemsList, { template: isSimulation }, filename);
-      setSuccess(`Combined PDF downloaded with ${selectedItemsList.length} pages.`);
+      const qrTag = showQr ? 'WITH-QR' : 'NO-QR';
+      const filename = `CIIM2026-ID-CARDS-${modeName}-${qrTag}-(${selectedItemsList.length}).pdf`;
+      await idCardStudioApi.downloadBulkPdf(selectedItemsList, { template: isSimulation, showQr }, filename);
+      setSuccess(`Combined PDF downloaded with ${selectedItemsList.length} pages (${showQr ? 'with QR codes' : 'name & role only, without QR'}).`);
       setTimeout(() => setSuccess(''), 4000);
     } catch (err) {
       setError(err.message || 'Failed to generate bulk PDF.');
@@ -264,7 +266,7 @@ export default function IdCardStudio() {
     setBusyAction('print');
     setError('');
     try {
-      await idCardStudioApi.openBulkPdfTab(selectedItemsList, { template: isSimulation });
+      await idCardStudioApi.openBulkPdfTab(selectedItemsList, { template: isSimulation, showQr });
     } catch (err) {
       setError(err.message || 'Failed to open print tab.');
     } finally {
@@ -279,8 +281,9 @@ export default function IdCardStudio() {
     setError('');
     try {
       const modeName = isSimulation ? 'SIMULATION' : 'PRINT-OVERLAY';
-      const filename = `CIIM2026-ID-CARDS-${modeName}-(${selectedItemsList.length}-FILES).zip`;
-      await idCardStudioApi.downloadBulkZip(selectedItemsList, { template: isSimulation }, filename);
+      const qrTag = showQr ? 'WITH-QR' : 'NO-QR';
+      const filename = `CIIM2026-ID-CARDS-${modeName}-${qrTag}-(${selectedItemsList.length}-FILES).zip`;
+      await idCardStudioApi.downloadBulkZip(selectedItemsList, { template: isSimulation, showQr }, filename);
       setSuccess(`ZIP archive downloaded containing ${selectedItemsList.length} PDF badge files.`);
       setTimeout(() => setSuccess(''), 4000);
     } catch (err) {
@@ -296,9 +299,10 @@ export default function IdCardStudio() {
     setError('');
     try {
       const safeName = item.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '_');
-      const filename = `${item.code || 'ID'}-${item.role}-${safeName}.pdf`;
+      const qrSuffix = showQr ? '' : '-NO-QR';
+      const filename = `${item.code || 'ID'}-${item.role}-${safeName}${qrSuffix}.pdf`;
       await idCardStudioApi.downloadSinglePdf(
-        { name: item.name, role: item.role, code: item.code, template: isSimulation },
+        { name: item.name, role: item.role, code: item.code, template: isSimulation, showQr },
         filename
       );
     } catch (err) {
@@ -315,6 +319,7 @@ export default function IdCardStudio() {
         role: item.role,
         code: item.code,
         template: isSimulation,
+        showQr,
       });
     } catch (err) {
       setError(err.message || 'Failed to open print preview.');
@@ -336,22 +341,47 @@ export default function IdCardStudio() {
             </div>
           </div>
 
-          {/* Mode Switcher */}
-          <div className="idcard-mode-switcher" role="group" aria-label="Print output mode">
-            <button
-              type="button"
-              className={`idcard-mode-btn idcard-mode-btn--clean ${!isSimulation ? 'is-active' : ''}`}
-              onClick={() => setIsSimulation(false)}
-            >
-              <span>🖨️</span> Clean Print Overlay
-            </button>
-            <button
-              type="button"
-              className={`idcard-mode-btn idcard-mode-btn--sim ${isSimulation ? 'is-active' : ''}`}
-              onClick={() => setIsSimulation(true)}
-            >
-              <span>🖥️</span> Simulation Preview
-            </button>
+          {/* Header Controls (QR Code Toggle + Print Mode Switcher) */}
+          <div className="idcard-header-controls">
+            {/* QR Code Toggle Switcher */}
+            <div className="idcard-qr-switcher" role="group" aria-label="QR Code toggle">
+              <button
+                type="button"
+                className={`idcard-qr-btn ${showQr ? 'is-active' : ''}`}
+                onClick={() => setShowQr(true)}
+                title="Include check-in QR code on badges"
+              >
+                <span>📱</span> QR Code: ON
+              </button>
+              <button
+                type="button"
+                className={`idcard-qr-btn idcard-qr-btn--off ${!showQr ? 'is-active' : ''}`}
+                onClick={() => setShowQr(false)}
+                title="Print badge without QR code (Faculty Name & Role Only)"
+              >
+                <span>🚫</span> QR Code: OFF
+              </button>
+            </div>
+
+            {/* Mode Switcher */}
+            <div className="idcard-mode-switcher" role="group" aria-label="Print output mode">
+              <button
+                type="button"
+                className={`idcard-mode-btn idcard-mode-btn--clean ${!isSimulation ? 'is-active' : ''}`}
+                onClick={() => setIsSimulation(false)}
+                title="Leaves top 2.2 cm and bottom 5.2 cm blank for pre-printed stock"
+              >
+                <span>🖨️</span> Clean Print Overlay
+              </button>
+              <button
+                type="button"
+                className={`idcard-mode-btn idcard-mode-btn--sim ${isSimulation ? 'is-active' : ''}`}
+                onClick={() => setIsSimulation(true)}
+                title="Simulates CIIM 2026 header & footer template for on-screen preview"
+              >
+                <span>🖥️</span> Simulation Preview
+              </button>
+            </div>
           </div>
         </div>
 
@@ -361,10 +391,15 @@ export default function IdCardStudio() {
             <span style={{ fontWeight: 700, color: '#0f172a' }}>Badge Specifications:</span>
             <span className="idcard-spec-tag">📏 10.2 cm × 15.2 cm</span>
             <span className="idcard-spec-tag">🎯 7.5 cm Center Printable Zone</span>
+            {showQr ? (
+              <span className="idcard-spec-tag idcard-spec-tag--qr-on">📱 QR Code Active (76×76 pt)</span>
+            ) : (
+              <span className="idcard-spec-tag idcard-spec-tag--qr-off">🚫 QR Code OFF (Name &amp; Role Only)</span>
+            )}
             <span className="idcard-spec-tag">🔒 Top 2.2 cm Logo Blank</span>
             <span className="idcard-spec-tag">🔒 Bottom 5.2 cm Footer Blank</span>
           </div>
-          <div style={{ fontSize: '0.82rem', color: '#64748b' }}>
+          <div style={{ fontSize: '0.82rem', color: '#64748b', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {isSimulation ? (
               <span style={{ color: '#4f46e5', fontWeight: 600 }}>
                 ● Simulation Mode: Renders official CIIM 2026 header &amp; footer graphic for visual alignment.
@@ -372,6 +407,11 @@ export default function IdCardStudio() {
             ) : (
               <span style={{ color: '#be185d', fontWeight: 600 }}>
                 ● Clean Print Mode: Perfect for physical card printers feeding pre-printed badge stock.
+              </span>
+            )}
+            {!showQr && (
+              <span style={{ color: '#b45309', fontWeight: 700 }}>
+                ● Name &amp; Role will be vertically centered without QR code.
               </span>
             )}
           </div>
@@ -716,7 +756,9 @@ export default function IdCardStudio() {
             badgeRole: customizeItem.role,
             company: { name: 'Faculty & Organising Team' },
             checkedInAt: null,
+            showQr,
           }}
+          initialShowQr={showQr}
           onClose={() => setCustomizeItem(null)}
           onUpdated={(updated) => {
             if (updated?.attendee?.name) {

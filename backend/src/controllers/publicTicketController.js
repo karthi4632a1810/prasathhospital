@@ -116,10 +116,12 @@ const getBadgePdf = asyncHandler(async (req, res) => {
   const role = req.query.role || null;
   const name = req.query.name || null;
   const includeTemplate = req.query.template === 'true' || req.query.preview === 'true';
-  const buffer = await generateIdCardPdfBuffer(reg, { role, name, includeTemplate });
+  const showQr = req.query.showQr !== 'false' && req.query.noQr !== 'true';
+  const buffer = await generateIdCardPdfBuffer(reg, { role, name, includeTemplate, showQr });
   res.set('Content-Type', 'application/pdf');
   const safeName = (name || reg.attendee?.name || reg.registrationCode).replace(/[^a-zA-Z0-9_-]/g, '_');
-  res.set('Content-Disposition', `inline; filename="${reg.registrationCode}-${safeName}-ID-CARD.pdf"`);
+  const qrSuffix = !showQr ? '-NO-QR' : '';
+  res.set('Content-Disposition', `inline; filename="${reg.registrationCode}-${safeName}-ID-CARD${qrSuffix}.pdf"`);
   res.set('Cache-Control', 'public, max-age=60');
   return res.send(buffer);
 });

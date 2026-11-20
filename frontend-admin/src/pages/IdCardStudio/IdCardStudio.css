@@ -67,6 +67,54 @@
   margin: 3px 0 0;
 }
 
+/* Controls Group in Header */
+.idcard-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* QR Code Switcher */
+.idcard-qr-switcher {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+.idcard-qr-btn {
+  border: none;
+  background: transparent;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 120ms ease;
+}
+
+.idcard-qr-btn:hover {
+  color: #0f172a;
+}
+
+.idcard-qr-btn.is-active {
+  background: var(--white);
+  color: #047857;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-weight: 700;
+}
+
+.idcard-qr-btn--off.is-active {
+  color: #b45309;
+}
+
 /* Mode Switcher */
 .idcard-mode-switcher {
   display: flex;
@@ -74,6 +122,7 @@
   border-radius: 10px;
   padding: 4px;
   gap: 4px;
+  border: 1px solid #e2e8f0;
 }
 
 .idcard-mode-btn {
@@ -132,6 +181,18 @@
   font-size: 0.78rem;
   font-weight: 600;
   color: #64748b;
+}
+
+.idcard-spec-tag--qr-on {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+
+.idcard-spec-tag--qr-off {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #b45309;
 }
 
 /* Action Toolbar (Upload / Add / Preset / Download) */

@@ -6,7 +6,7 @@ const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 
 const PRESET_ROLES = ['DELEGATE', 'FACULTY', 'ORGANISING TEAM'];
 
-export default function IdCardModal({ registration, onClose, onUpdated }) {
+export default function IdCardModal({ registration, onClose, onUpdated, initialShowQr = true }) {
   if (!registration) return null;
 
   const defaultRole = (() => {
@@ -26,6 +26,9 @@ export default function IdCardModal({ registration, onClose, onUpdated }) {
   const [role, setRole] = useState(defaultRole);
   const [name, setName] = useState(originalName);
   const [template, setTemplate] = useState(false); // false = clean print overlay, true = simulation
+  const [showQr, setShowQr] = useState(
+    registration.showQr !== undefined ? registration.showQr : initialShowQr !== false
+  );
   const [saveToDb, setSaveToDb] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -40,6 +43,7 @@ export default function IdCardModal({ registration, onClose, onUpdated }) {
     if (role) params.set('role', role);
     if (name) params.set('name', name);
     if (forTemplate) params.set('template', 'true');
+    if (!showQr) params.set('showQr', 'false');
     return `${API_BASE}/api/v1/tickets/${identifier}/badge.pdf?${params.toString()}`;
   };
 
@@ -69,11 +73,12 @@ export default function IdCardModal({ registration, onClose, onUpdated }) {
       }
 
       const safeName = (name.replace(/\s+/g, '_').trim() || regCode).replace(/[^a-zA-Z0-9_-]/g, '_');
-      const filename = `${regCode}-${role}-${safeName}-ID-CARD.pdf`;
+      const qrSuffix = !showQr ? '-NO-QR' : '';
+      const filename = `${regCode}-${role}-${safeName}-ID-CARD${qrSuffix}.pdf`;
 
       await registrationApi.downloadBadgePdf(
         regId,
-        { role: role.trim(), name: name.trim(), template },
+        { role: role.trim(), name: name.trim(), template, showQr },
         filename
       );
 
@@ -396,6 +401,63 @@ export default function IdCardModal({ registration, onClose, onUpdated }) {
                     Includes simulated header & footer for checking visual alignment
                   </div>
                 </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Field 4: QR Code Inclusion Toggle */}
+          <div>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>
+              Check-in QR Code
+            </label>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <label
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  border: showQr ? '2px solid #059669' : '1px solid #cbd5e1',
+                  backgroundColor: showQr ? '#ecfdf5' : '#ffffff',
+                  cursor: 'pointer',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  color: showQr ? '#065f46' : '#475569',
+                }}
+              >
+                <input
+                  type="radio"
+                  name="modalShowQr"
+                  checked={showQr}
+                  onChange={() => setShowQr(true)}
+                />
+                <span>📱 Include QR Code</span>
+              </label>
+              <label
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  border: !showQr ? '2px solid #d97706' : '1px solid #cbd5e1',
+                  backgroundColor: !showQr ? '#fffbeb' : '#ffffff',
+                  cursor: 'pointer',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  color: !showQr ? '#92400e' : '#475569',
+                }}
+              >
+                <input
+                  type="radio"
+                  name="modalShowQr"
+                  checked={!showQr}
+                  onChange={() => setShowQr(false)}
+                />
+                <span>🚫 Hide QR (Name &amp; Role Only)</span>
               </label>
             </div>
           </div>

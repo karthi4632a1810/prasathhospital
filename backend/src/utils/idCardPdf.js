@@ -116,7 +116,22 @@ function splitNameToLines(name, font, maxW) {
 /**
  * Internal draw function to render 1 ID badge onto a given PDF page.
  */
-async function drawIdCardOnPage(doc, page, item, { fontBold, bgImage, includeTemplate, width, height, maxW, fallbackIndex = 1 }) {
+async function drawIdCardOnPage(
+  doc,
+  page,
+  item,
+  {
+    fontBold,
+    fontRegular,
+    bgImage,
+    includeTemplate,
+    width,
+    height,
+    maxW,
+    fallbackIndex = 1,
+    showQr = true,
+  }
+) {
   if (includeTemplate && bgImage) {
     page.drawImage(bgImage, {
       x: 0,
@@ -126,82 +141,139 @@ async function drawIdCardOnPage(doc, page, item, { fontBold, bgImage, includeTem
     });
   }
 
+  const shouldDrawQr = showQr !== false && item.showQr !== false && !item.noQr;
+
   // 1. Role Header (DELEGATE / FACULTY / ORGANISING TEAM / Custom)
   const roleText = resolveBadgeRole(item, item.role);
-  let roleSize = roleText.length > 12 ? 12.5 : 13.5;
+  let roleSize = shouldDrawQr
+    ? (roleText.length > 12 ? 12.5 : 13.5)
+    : (roleText.length > 12 ? 13.5 : 14.5);
   let roleWidth = fontBold.widthOfTextAtSize(roleText, roleSize);
   while (roleWidth > maxW && roleSize > 9) {
     roleSize -= 0.5;
     roleWidth = fontBold.widthOfTextAtSize(roleText, roleSize);
   }
-  const roleY = 338;
-  page.drawText(roleText, {
-    x: (width - roleWidth) / 2,
-    y: roleY,
-    size: roleSize,
-    font: fontBold,
-    color: rgb(0.761, 0.094, 0.357), // #c2185b
-  });
 
   // 2. Delegate Name (supports manual newline or auto 1-line/2-line balancing)
   const attendee = item.attendee || {};
   const rawName = item.name ? String(item.name).trim() : cleanDoctorName(attendee.name || `${attendee.firstName || ''} ${attendee.lastName || ''}`);
   const lines = splitNameToLines(rawName, fontBold, maxW);
 
-  if (lines.length === 2) {
-    let nameSize = 16.5;
-    let l1W = fontBold.widthOfTextAtSize(lines[0], nameSize);
-    let l2W = fontBold.widthOfTextAtSize(lines[1], nameSize);
-    while ((l1W > maxW || l2W > maxW) && nameSize > 10) {
-      nameSize -= 0.5;
-      l1W = fontBold.widthOfTextAtSize(lines[0], nameSize);
-      l2W = fontBold.widthOfTextAtSize(lines[1], nameSize);
-    }
-    page.drawText(lines[0], {
-      x: (width - l1W) / 2,
-      y: 308,
-      size: nameSize,
+  if (shouldDrawQr) {
+    // Standard layout with QR Code positioned at y = 176
+    const roleY = 338;
+    page.drawText(roleText, {
+      x: (width - roleWidth) / 2,
+      y: roleY,
+      size: roleSize,
       font: fontBold,
-      color: rgb(0.137, 0.071, 0.220), // #231238
+      color: rgb(0.761, 0.094, 0.357), // #c2185b
     });
-    page.drawText(lines[1], {
-      x: (width - l2W) / 2,
-      y: 286,
-      size: nameSize,
-      font: fontBold,
-      color: rgb(0.137, 0.071, 0.220),
+
+    if (lines.length === 2) {
+      let nameSize = 16.5;
+      let l1W = fontBold.widthOfTextAtSize(lines[0], nameSize);
+      let l2W = fontBold.widthOfTextAtSize(lines[1], nameSize);
+      while ((l1W > maxW || l2W > maxW) && nameSize > 10) {
+        nameSize -= 0.5;
+        l1W = fontBold.widthOfTextAtSize(lines[0], nameSize);
+        l2W = fontBold.widthOfTextAtSize(lines[1], nameSize);
+      }
+      page.drawText(lines[0], {
+        x: (width - l1W) / 2,
+        y: 308,
+        size: nameSize,
+        font: fontBold,
+        color: rgb(0.137, 0.071, 0.220), // #231238
+      });
+      page.drawText(lines[1], {
+        x: (width - l2W) / 2,
+        y: 286,
+        size: nameSize,
+        font: fontBold,
+        color: rgb(0.137, 0.071, 0.220),
+      });
+    } else {
+      let nameSize = 19;
+      let nameWidth = fontBold.widthOfTextAtSize(lines[0], nameSize);
+      while (nameWidth > maxW && nameSize > 10) {
+        nameSize -= 0.5;
+        nameWidth = fontBold.widthOfTextAtSize(lines[0], nameSize);
+      }
+      page.drawText(lines[0], {
+        x: (width - nameWidth) / 2,
+        y: 297,
+        size: nameSize,
+        font: fontBold,
+        color: rgb(0.137, 0.071, 0.220),
+      });
+    }
+
+    // 3. QR Code (76x76 pt clean themed QR, no box, no corner curves, centered medallion)
+    const checkInUrl = item.qrUrl || getCheckInUrl(item, fallbackIndex);
+    const qrPngBuffer = await generateQrPngBuffer(checkInUrl, { width: 600, noBorder: true });
+    const qrImage = await doc.embedPng(qrPngBuffer);
+
+    const qrSize = 76;
+    const qrX = (width - qrSize) / 2;
+    const qrY = 176;
+
+    page.drawImage(qrImage, {
+      x: qrX,
+      y: qrY,
+      width: qrSize,
+      height: qrSize,
     });
   } else {
-    let nameSize = 19;
-    let nameWidth = fontBold.widthOfTextAtSize(lines[0], nameSize);
-    while (nameWidth > maxW && nameSize > 10) {
-      nameSize -= 0.5;
-      nameWidth = fontBold.widthOfTextAtSize(lines[0], nameSize);
-    }
-    page.drawText(lines[0], {
-      x: (width - nameWidth) / 2,
-      y: 297,
-      size: nameSize,
+    // Clean layout WITHOUT QR Code (Role & Doctor Name optically centered in 7.5 cm white zone)
+    const roleY = lines.length === 2 ? 305 : 295;
+    page.drawText(roleText, {
+      x: (width - roleWidth) / 2,
+      y: roleY,
+      size: roleSize,
       font: fontBold,
-      color: rgb(0.137, 0.071, 0.220),
+      color: rgb(0.761, 0.094, 0.357), // #c2185b
     });
+
+    if (lines.length === 2) {
+      let nameSize = 18;
+      let l1W = fontBold.widthOfTextAtSize(lines[0], nameSize);
+      let l2W = fontBold.widthOfTextAtSize(lines[1], nameSize);
+      while ((l1W > maxW || l2W > maxW) && nameSize > 10) {
+        nameSize -= 0.5;
+        l1W = fontBold.widthOfTextAtSize(lines[0], nameSize);
+        l2W = fontBold.widthOfTextAtSize(lines[1], nameSize);
+      }
+      page.drawText(lines[0], {
+        x: (width - l1W) / 2,
+        y: 262,
+        size: nameSize,
+        font: fontBold,
+        color: rgb(0.137, 0.071, 0.220),
+      });
+      page.drawText(lines[1], {
+        x: (width - l2W) / 2,
+        y: 236,
+        size: nameSize,
+        font: fontBold,
+        color: rgb(0.137, 0.071, 0.220),
+      });
+    } else {
+      let nameSize = 22;
+      let nameWidth = fontBold.widthOfTextAtSize(lines[0], nameSize);
+      while (nameWidth > maxW && nameSize > 10) {
+        nameSize -= 0.5;
+        nameWidth = fontBold.widthOfTextAtSize(lines[0], nameSize);
+      }
+      page.drawText(lines[0], {
+        x: (width - nameWidth) / 2,
+        y: 248,
+        size: nameSize,
+        font: fontBold,
+        color: rgb(0.137, 0.071, 0.220),
+      });
+    }
   }
-
-  // 3. QR Code (76x76 pt clean themed QR, no box, no corner curves, centered medallion)
-  const checkInUrl = item.qrUrl || getCheckInUrl(item, fallbackIndex);
-  const qrPngBuffer = await generateQrPngBuffer(checkInUrl, { width: 600, noBorder: true });
-  const qrImage = await doc.embedPng(qrPngBuffer);
-
-  const qrSize = 76;
-  const qrX = (width - qrSize) / 2;
-  const qrY = 176;
-
-  page.drawImage(qrImage, {
-    x: qrX,
-    y: qrY,
-    width: qrSize,
-    height: qrSize,
-  });
 }
 
 /**
@@ -230,7 +302,10 @@ async function generateIdCardPdfBuffer(registration, options = {}) {
     ...registration,
     role: options.role || registration.role || registration.badgeRole,
     name: options.name || registration.name || registration.attendee?.name,
+    showQr: options.showQr !== undefined ? options.showQr : registration.showQr,
   };
+
+  const showQr = options.showQr !== false && !options.noQr && mergedItem.showQr !== false;
 
   await drawIdCardOnPage(doc, page, mergedItem, {
     fontBold,
@@ -240,6 +315,7 @@ async function generateIdCardPdfBuffer(registration, options = {}) {
     width,
     height,
     maxW,
+    showQr,
   });
 
   const outputBytes = await doc.save();
@@ -267,6 +343,8 @@ async function generateMultiPageIdCardPdfBuffer(items, options = {}) {
     }
   }
 
+  const globalShowQr = options.showQr !== false && !options.noQr;
+
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
     const page = doc.addPage([width, height]);
@@ -275,6 +353,7 @@ async function generateMultiPageIdCardPdfBuffer(items, options = {}) {
       role: item.role || options.role,
       name: item.name || item.attendee?.name,
     };
+    const itemShowQr = item.showQr !== undefined ? (item.showQr !== false && !item.noQr) : globalShowQr;
     await drawIdCardOnPage(doc, page, mergedItem, {
       fontBold,
       fontRegular,
@@ -284,6 +363,7 @@ async function generateMultiPageIdCardPdfBuffer(items, options = {}) {
       height,
       maxW,
       fallbackIndex: i + 1,
+      showQr: itemShowQr,
     });
   }
 
@@ -304,18 +384,23 @@ async function generateIdCardsZipBuffer(items, options = {}) {
     zip.on('error', reject);
   });
 
+  const globalShowQr = options.showQr !== false && !options.noQr;
+
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
+    const itemShowQr = item.showQr !== undefined ? (item.showQr !== false && !item.noQr) : globalShowQr;
     const singlePdf = await generateIdCardPdfBuffer(item, {
       role: item.role || options.role,
       name: item.name || item.attendee?.name,
       includeTemplate: options.includeTemplate,
+      showQr: itemShowQr,
     });
     const safeRole = String(item.role || options.role || 'BADGE').replace(/[^a-zA-Z0-9_-]/g, '_');
     const safeName = String(item.name || item.attendee?.name || `Attendee_${i + 1}`)
       .replace(/\s+/g, '_')
       .replace(/[^a-zA-Z0-9_-]/g, '_');
-    const filename = `${String(i + 1).padStart(2, '0')}-${safeRole}-${safeName}.pdf`;
+    const qrSuffix = !itemShowQr ? '-NO-QR' : '';
+    const filename = `${String(i + 1).padStart(2, '0')}-${safeRole}-${safeName}${qrSuffix}.pdf`;
     zip.append(singlePdf, { name: filename });
   }
 
