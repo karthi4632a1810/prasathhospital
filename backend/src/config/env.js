@@ -56,7 +56,7 @@ const env = {
   geminiAiApi: read('GEMINI_AI_API', read('GEMINI_API_KEY', '')),
   rateLimit: {
     windowMs: readInt('RATE_LIMIT_WINDOW_MINUTES', 15) * 60 * 1000,
-    max: readInt('RATE_LIMIT_MAX', 300),
+    max: readInt('RATE_LIMIT_MAX', 3000), // High threshold for event day check-in desks and live monitor
   },
 
   // --- Auth (Foundation) ---

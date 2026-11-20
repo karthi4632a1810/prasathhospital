@@ -61,7 +61,12 @@ app.use(
     skip: (req) =>
       Boolean(
         req.originalUrl?.includes('/admin/whatsapp-marketing') ||
-        req.path?.includes('/admin/whatsapp-marketing')
+        req.path?.includes('/admin/whatsapp-marketing') ||
+        req.originalUrl?.includes('/admin/marketing-campaigns') ||
+        req.path?.includes('/admin/marketing-campaigns') ||
+        req.originalUrl?.includes('/admin/ai') ||
+        req.path?.includes('/admin/ai') ||
+        req.originalUrl?.includes('/live-monitor')
       ),
     message: { success: false, error: { message: 'Too many requests. Please try again shortly.' } },
   })
