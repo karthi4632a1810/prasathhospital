@@ -206,6 +206,64 @@ function Body({
           <dd>{reg.attendee?.phone}</dd>
           <dt>Email</dt>
           <dd>{reg.attendee?.email}</dd>
+          <dt>TNMC / Council</dt>
+          <dd>
+            {(() => {
+              const raw = String(reg.attendee?.medicalCouncilRegNo || '').trim();
+              const hasTnmc =
+                raw &&
+                !['NA', 'N/A', 'NIL', 'NONE', 'NOT APPLICABLE', 'NOTAPPLICABLE', '-'].includes(
+                  raw.toUpperCase()
+                );
+              return hasTnmc ? (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    backgroundColor: '#eff6ff',
+                    color: '#1d4ed8',
+                    border: '1px solid #bfdbfe',
+                  }}
+                >
+                  🩺 TNMC: {raw}
+                </span>
+              ) : (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    backgroundColor: '#fef3c7',
+                    color: '#b45309',
+                    border: '1px solid #fde68a',
+                  }}
+                >
+                  ⚡ Non-TNMC (No TNMC Number)
+                </span>
+              );
+            })()}
+          </dd>
+          {reg.attendee?.designation && (
+            <>
+              <dt>Designation</dt>
+              <dd>{reg.attendee.designation}</dd>
+            </>
+          )}
+          {reg.attendee?.institution && (
+            <>
+              <dt>Institution</dt>
+              <dd>{reg.attendee.institution}</dd>
+            </>
+          )}
           <dt>Company</dt>
           <dd>{reg.company?.name || '—'}</dd>
           <dt>Coupon</dt>

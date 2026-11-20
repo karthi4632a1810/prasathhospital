@@ -62,19 +62,46 @@ function buildRegistrationFilter(query = {}) {
     if (query.to) filter.createdAt.$lt = new Date(dayStart(query.to, '"To" date').getTime() + 24 * 60 * 60 * 1000);
   }
 
+  const andClauses = [];
+
+  if (query.tnmc === 'yes') {
+    filter['attendee.medicalCouncilRegNo'] = {
+      $exists: true,
+      $nin: ['', null, 'NA', 'N/A', 'NIL', 'NONE', 'Not Applicable', 'NOT APPLICABLE', '-'],
+      $regex: /\S/,
+    };
+  } else if (query.tnmc === 'no') {
+    andClauses.push({
+      $or: [
+        { 'attendee.medicalCouncilRegNo': { $in: ['', null, 'NA', 'N/A', 'NIL', 'NONE', 'Not Applicable', 'NOT APPLICABLE', '-'] } },
+        { 'attendee.medicalCouncilRegNo': { $exists: false } },
+        { 'attendee.medicalCouncilRegNo': { $regex: /^\s*$/ } },
+      ],
+    });
+  }
+
   if (query.q) {
     const q = String(query.q).trim().slice(0, 100);
     if (q) {
       const re = new RegExp(escapeRegex(q), 'i');
-      filter.$or = [
-        { 'attendee.name': re },
-        { 'attendee.email': re },
-        { 'attendee.phone': re },
-        { registrationCode: re },
-        { couponCode: re },
-      ];
+      andClauses.push({
+        $or: [
+          { 'attendee.name': re },
+          { 'attendee.email': re },
+          { 'attendee.phone': re },
+          { registrationCode: re },
+          { couponCode: re },
+        ],
+      });
     }
   }
+
+  if (andClauses.length === 1) {
+    Object.assign(filter, andClauses[0]);
+  } else if (andClauses.length > 1) {
+    filter.$and = andClauses;
+  }
+
   return filter;
 }
 

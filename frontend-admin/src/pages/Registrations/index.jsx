@@ -27,6 +27,7 @@ const EMPTY_FILTERS = {
   whatsappStatus: '',
   checkedIn: '',
   lunchCheckedIn: '',
+  tnmc: '',
   from: '',
   to: '',
 };
@@ -368,6 +369,44 @@ export default function Registrations() {
           >
             🍽️ Lunch Scanned
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              setFilters((f) => ({ ...f, tnmc: f.tnmc === 'yes' ? '' : 'yes' }));
+              setPage(1);
+            }}
+            style={{
+              padding: '4px 12px',
+              borderRadius: '9999px',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              border: filters.tnmc === 'yes' ? '2px solid #2563eb' : '1px solid #cbd5e1',
+              backgroundColor: filters.tnmc === 'yes' ? '#eff6ff' : '#ffffff',
+              color: filters.tnmc === 'yes' ? '#1d4ed8' : '#475569',
+            }}
+          >
+            🩺 TNMC Only
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setFilters((f) => ({ ...f, tnmc: f.tnmc === 'no' ? '' : 'no' }));
+              setPage(1);
+            }}
+            style={{
+              padding: '4px 12px',
+              borderRadius: '9999px',
+              fontSize: '0.78rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              border: filters.tnmc === 'no' ? '2px solid #d97706' : '1px solid #fde68a',
+              backgroundColor: filters.tnmc === 'no' ? '#fef3c7' : '#fffbeb',
+              color: filters.tnmc === 'no' ? '#b45309' : '#92400e',
+            }}
+          >
+            ⚡ Non-TNMC (No TNMC)
+          </button>
         </div>
         <div className="toolbar">
           <label className="field field--grow">
@@ -468,6 +507,18 @@ export default function Registrations() {
               <option value="">Any</option>
               <option value="yes">🍽️ Lunch: Scanned</option>
               <option value="no">🍽️ Lunch: Pending</option>
+            </select>
+          </label>
+          <label className="field">
+            <span className="field__label">TNMC Council</span>
+            <select
+              className="field__select"
+              value={filters.tnmc}
+              onChange={setFilter('tnmc')}
+            >
+              <option value="">All (TNMC &amp; Non-TNMC)</option>
+              <option value="yes">🩺 With TNMC Number</option>
+              <option value="no">⚡ Non-TNMC (No TNMC Number)</option>
             </select>
           </label>
           <label className="field">
@@ -573,80 +624,159 @@ export default function Registrations() {
                 </tr>
               </thead>
               <tbody>
-                {registrations.map((reg) => (
-                  <tr
-                    key={reg.id}
-                    className="is-clickable"
-                    tabIndex={0}
-                    onClick={() => setOpenId(reg.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') setOpenId(reg.id);
-                    }}
-                  >
-                    <td
-                      onClick={(e) => e.stopPropagation()}
-                      style={{ width: '40px', textAlign: 'center' }}
+                {registrations.map((reg) => {
+                  const tnmcRaw = String(reg.attendee?.medicalCouncilRegNo || '').trim();
+                  const isNoTnmc =
+                    !tnmcRaw ||
+                    ['NA', 'N/A', 'NIL', 'NONE', 'NOT APPLICABLE', 'NOTAPPLICABLE', '-'].includes(
+                      tnmcRaw.toUpperCase()
+                    );
+                  const hasTnmc = !isNoTnmc;
+
+                  return (
+                    <tr
+                      key={reg.id}
+                      className="is-clickable"
+                      tabIndex={0}
+                      onClick={() => setOpenId(reg.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') setOpenId(reg.id);
+                      }}
+                      style={{
+                        backgroundColor: !hasTnmc ? '#fffdf7' : undefined,
+                        boxShadow: !hasTnmc ? 'inset 3.5px 0 0 #f59e0b' : undefined,
+                      }}
                     >
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(reg.id)}
-                        onChange={() => {
-                          setSelectedIds((prev) => {
-                            const next = new Set(prev);
-                            if (next.has(reg.id)) next.delete(reg.id);
-                            else next.add(reg.id);
-                            return next;
-                          });
-                        }}
-                        aria-label={`Select ${reg.attendee?.name || 'delegate'}`}
-                        style={{ cursor: 'pointer', width: '16px', height: '16px' }}
-                      />
-                    </td>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                        <strong className="mono">{reg.registrationCode}</strong>
-                        {reg.badgeNo && (
-                          <span
-                            style={{
-                              fontSize: '11px',
-                              fontWeight: 800,
-                              fontFamily: 'monospace',
-                              padding: '1px 6px',
-                              borderRadius: '4px',
-                              background: '#eef2ff',
-                              color: '#4338ca',
-                              border: '1px solid #c7d2fe',
-                            }}
-                            title={`Registration order badge #${reg.badgeNo}`}
-                          >
-                            #{reg.badgeNo}
-                          </span>
-                        )}
-                        {reg.isTest && (
-                          <span
-                            style={{
-                              fontSize: '10px',
-                              fontWeight: 700,
-                              padding: '1px 6px',
-                              borderRadius: '9999px',
-                              background: 'rgba(124, 58, 237, 0.1)',
-                              color: '#7c3aed',
-                              border: '1px solid rgba(124, 58, 237, 0.25)',
-                            }}
-                            title="Test registration made with a test mode coupon"
-                          >
-                            🧪 TEST
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      <strong>{reg.attendee?.name}</strong>
-                      <span className="sub">{reg.attendee?.phone}</span>
-                      <span className="sub" style={{ overflowWrap: 'anywhere' }}>
-                        {reg.attendee?.email}
-                      </span>
-                    </td>
+                      <td
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ width: '40px', textAlign: 'center' }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(reg.id)}
+                          onChange={() => {
+                            setSelectedIds((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(reg.id)) next.delete(reg.id);
+                              else next.add(reg.id);
+                              return next;
+                            });
+                          }}
+                          aria-label={`Select ${reg.attendee?.name || 'delegate'}`}
+                          style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                        />
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <strong className="mono">{reg.registrationCode}</strong>
+                          {reg.badgeNo && (
+                            <span
+                              style={{
+                                fontSize: '11px',
+                                fontWeight: 800,
+                                fontFamily: 'monospace',
+                                padding: '1px 6px',
+                                borderRadius: '4px',
+                                background: '#eef2ff',
+                                color: '#4338ca',
+                                border: '1px solid #c7d2fe',
+                              }}
+                              title={`Registration order badge #${reg.badgeNo}`}
+                            >
+                              #{reg.badgeNo}
+                            </span>
+                          )}
+                          {reg.isTest && (
+                            <span
+                              style={{
+                                fontSize: '10px',
+                                fontWeight: 700,
+                                padding: '1px 6px',
+                                borderRadius: '9999px',
+                                background: 'rgba(124, 58, 237, 0.1)',
+                                color: '#7c3aed',
+                                border: '1px solid rgba(124, 58, 237, 0.25)',
+                              }}
+                              title="Test registration made with a test mode coupon"
+                            >
+                              🧪 TEST
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <strong>{reg.attendee?.name}</strong>
+                        </div>
+                        <div
+                          style={{
+                            margin: '3px 0 4px',
+                            display: 'flex',
+                            gap: '4px',
+                            flexWrap: 'wrap',
+                            alignItems: 'center',
+                          }}
+                        >
+                          {hasTnmc ? (
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                fontSize: '10.5px',
+                                fontWeight: 700,
+                                padding: '1px 7px',
+                                borderRadius: '4px',
+                                backgroundColor: '#eff6ff',
+                                color: '#1d4ed8',
+                                border: '1px solid #bfdbfe',
+                              }}
+                              title={`Medical Council Registration Number: ${tnmcRaw}`}
+                            >
+                              <span>🩺</span>
+                              <span>TNMC: {tnmcRaw}</span>
+                            </span>
+                          ) : (
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                fontSize: '10.5px',
+                                fontWeight: 800,
+                                padding: '1px 7px',
+                                borderRadius: '4px',
+                                backgroundColor: '#fef3c7',
+                                color: '#b45309',
+                                border: '1.5px solid #fde68a',
+                              }}
+                              title="Attendee has NO Medical Council / TNMC registration number (e.g. Embryologist or Non-Clinical Delegate)"
+                            >
+                              <span>⚡</span>
+                              <span>Non-TNMC</span>
+                            </span>
+                          )}
+                          {reg.attendee?.designation && (
+                            <span
+                              style={{
+                                fontSize: '10px',
+                                fontWeight: 700,
+                                color: '#475569',
+                                backgroundColor: '#f1f5f9',
+                                padding: '1px 6px',
+                                borderRadius: '4px',
+                                border: '1px solid #e2e8f0',
+                              }}
+                            >
+                              {reg.attendee.designation}
+                            </span>
+                          )}
+                        </div>
+                        <span className="sub">{reg.attendee?.phone}</span>
+                        <span className="sub" style={{ overflowWrap: 'anywhere' }}>
+                          {reg.attendee?.email}
+                        </span>
+                      </td>
                     <td>
                       {reg.company?.name || <span className="muted">No company</span>}
                       <span className="sub mono">{reg.couponCode || reg.coupon?.code || '—'}</span>
@@ -743,7 +873,8 @@ export default function Registrations() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                );
+              })}
               </tbody>
             </table>
           </div>
