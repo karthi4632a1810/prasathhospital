@@ -6,23 +6,172 @@ import Button from '../../components/ui/Button';
 import './AiChat.css';
 
 const QUICK_PROMPTS = [
-  { label: '🎓 Certificate for Karthikeyan', prompt: 'I want certificate for this name Karthikeyan' },
-  { label: '🪪 Instant ID Card', prompt: 'Create instant ID card for Dr. Karthikeyan' },
   {
-    label: '📊 TNMC Scanned-in Excel (Name, Email, Phone)',
+    icon: '🎓',
+    label: 'Certificate for Karthikeyan',
+    prompt: 'I want certificate for this name Karthikeyan',
+  },
+  {
+    icon: '🪪',
+    label: 'Instant ID Card',
+    prompt: 'Create instant ID card for Dr. Karthikeyan',
+  },
+  {
+    icon: '📊',
+    label: 'TNMC Scanned-in Excel',
     prompt:
       'I want only TNMC registor user who have the scaned in and i waant only detail od name , email and phone in excel',
   },
-  { label: '📈 Overall Registration Stats', prompt: 'How many delegates registered and checked in?' },
-  { label: '🔍 Non-TNMC Delegates', prompt: 'Show attendees without TNMC' },
+  {
+    icon: '📈',
+    label: 'Overall Stats',
+    prompt: 'How many delegates registered and checked in?',
+  },
+  {
+    icon: '🔍',
+    label: 'Non-TNMC Delegates',
+    prompt: 'Show attendees without TNMC',
+  },
 ];
+
+function renderInline(str) {
+  if (!str) return '';
+  const parts = [];
+  const tokenRegex = /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g;
+  let lastIndex = 0;
+  let match;
+  let keyIdx = 0;
+
+  while ((match = tokenRegex.exec(str)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(str.substring(lastIndex, match.index));
+    }
+    const token = match[0];
+    if (token.startsWith('`') && token.endsWith('`')) {
+      parts.push(
+        <code key={keyIdx++} className="aichat-md-code">
+          {token.slice(1, -1)}
+        </code>
+      );
+    } else if (token.startsWith('**') && token.endsWith('**')) {
+      parts.push(<strong key={keyIdx++}>{token.slice(2, -2)}</strong>);
+    } else if (token.startsWith('*') && token.endsWith('*')) {
+      parts.push(<em key={keyIdx++}>{token.slice(1, -1)}</em>);
+    } else {
+      parts.push(token);
+    }
+    lastIndex = match.index + token.length;
+  }
+  if (lastIndex < str.length) {
+    parts.push(str.substring(lastIndex));
+  }
+  return parts.length ? parts : str;
+}
+
+function renderMarkdown(text) {
+  if (!text) return null;
+  const lines = text.split('\n');
+  const elements = [];
+  let currentList = null;
+
+  lines.forEach((line, lineIdx) => {
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith('### ')) {
+      if (currentList) {
+        elements.push(currentList);
+        currentList = null;
+      }
+      elements.push(
+        <h4 key={lineIdx} className="aichat-md-h4">
+          {renderInline(trimmed.slice(4))}
+        </h4>
+      );
+      return;
+    }
+    if (trimmed.startsWith('## ')) {
+      if (currentList) {
+        elements.push(currentList);
+        currentList = null;
+      }
+      elements.push(
+        <h3 key={lineIdx} className="aichat-md-h3">
+          {renderInline(trimmed.slice(3))}
+        </h3>
+      );
+      return;
+    }
+
+    if (/^[-*•]\s+/.test(trimmed)) {
+      const content = trimmed.replace(/^[-*•]\s+/, '');
+      if (!currentList || currentList.type !== 'ul') {
+        if (currentList) elements.push(currentList);
+        currentList = { type: 'ul', key: `ul_${lineIdx}`, items: [] };
+      }
+      currentList.items.push(<li key={`li_${lineIdx}`}>{renderInline(content)}</li>);
+      return;
+    }
+
+    if (/^\d+\.\s+/.test(trimmed)) {
+      const content = trimmed.replace(/^\d+\.\s+/, '');
+      if (!currentList || currentList.type !== 'ol') {
+        if (currentList) elements.push(currentList);
+        currentList = { type: 'ol', key: `ol_${lineIdx}`, items: [] };
+      }
+      currentList.items.push(<li key={`li_${lineIdx}`}>{renderInline(content)}</li>);
+      return;
+    }
+
+    if (currentList) {
+      elements.push(
+        currentList.type === 'ul' ? (
+          <ul key={currentList.key} className="aichat-md-ul">
+            {currentList.items}
+          </ul>
+        ) : (
+          <ol key={currentList.key} className="aichat-md-ol">
+            {currentList.items}
+          </ol>
+        )
+      );
+      currentList = null;
+    }
+
+    if (!trimmed) {
+      elements.push(<div key={`sp_${lineIdx}`} className="aichat-md-space" />);
+      return;
+    }
+
+    elements.push(
+      <p key={lineIdx} className="aichat-md-p">
+        {renderInline(line)}
+      </p>
+    );
+  });
+
+  if (currentList) {
+    elements.push(
+      currentList.type === 'ul' ? (
+        <ul key={currentList.key} className="aichat-md-ul">
+          {currentList.items}
+        </ul>
+      ) : (
+        <ol key={currentList.key} className="aichat-md-ol">
+          {currentList.items}
+        </ol>
+      )
+    );
+  }
+
+  return elements;
+}
 
 export default function AiChat() {
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
       role: 'ai',
-      text: `Hello! I am your **CIIM 2026 AI Assistant** powered by Groq & Gemini.\n\nYou can ask me anything about the event or request instant actions:\n\n- 🎓 **Instant Certificates**: *"I want certificate for this name Karthikeyan"* → Get PNG, JPG, and PDF download links!\n- 🪪 **Instant ID Cards**: *"Create instant ID card for Dr. Karthikeyan"* → Download ready in PNG, JPG, and PDF!\n- 📊 **Custom Excel Reports**: *"I want only TNMC registor user who have the scaned in and i waant only detail od name , email and phone in excel"* → Generates Excel with only those 3 columns!\n- 🔍 **Database Queries & Stats**: Ask to check totals, find attendees, update details, or cancel registrations.`,
+      text: `Hello! I am your **CIIM 2026 Admin AI Assistant** powered by Groq & Gemini.\n\nAsk me anything in plain language or try these instant actions:\n\n- 🎓 **Instant Certificates**: *"I want certificate for this name Karthikeyan"* → Get PNG, JPG, and PDF download links!\n- 🪪 **Instant ID Cards**: *"Create instant ID card for Dr. Karthikeyan"* → Download ready in PNG, JPG, and PDF!\n- 📊 **Custom Excel Reports**: *"I want only TNMC registor user who have the scaned in and i waant only detail od name , email and phone in excel"* → Generates custom Excel with only those 3 columns!\n- 🔍 **Database Queries & Stats**: Total registrations, check-in stats, find attendees, or cancel registrations.`,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -35,6 +184,13 @@ export default function AiChat() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
+
+  function handleInputChange(e) {
+    setInput(e.target.value);
+    const target = e.target;
+    target.style.height = 'auto';
+    target.style.height = `${Math.min(target.scrollHeight, 160)}px`;
+  }
 
   async function handleSend(textToSend) {
     const prompt = (textToSend || input).trim();
@@ -50,6 +206,9 @@ export default function AiChat() {
 
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+    }
     setLoading(true);
 
     try {
@@ -115,7 +274,7 @@ export default function AiChat() {
       {
         id: 'welcome_reset',
         role: 'ai',
-        text: 'Chat history cleared. How can I assist you with CIIM 2026 admin today?',
+        text: 'Chat history cleared. How can I assist you with CIIM 2026 operations today?',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ]);
@@ -127,7 +286,14 @@ export default function AiChat() {
       <div className="aichat-header">
         <div className="aichat-header__left">
           <div className="aichat-avatar-brand">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3z" />
             </svg>
           </div>
@@ -137,6 +303,7 @@ export default function AiChat() {
               <span className="aichat-badge-status">
                 <span></span> Active
               </span>
+              <span className="aichat-badge-model">Groq + Gemini</span>
             </h2>
             <p className="aichat-header__subtitle">
               Instant Certificates, ID Cards, Custom Excel Reports &amp; Database Controls
@@ -145,7 +312,7 @@ export default function AiChat() {
         </div>
 
         <Button variant="secondary" size="sm" onClick={clearHistory}>
-          Clear Chat
+          <span>🗑️</span> Clear Chat
         </Button>
       </div>
 
@@ -157,14 +324,23 @@ export default function AiChat() {
               {m.role === 'user' ? (
                 'You'
               ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3z" />
                 </svg>
               )}
             </div>
 
             <div className="aichat-msg__content">
-              <div className="aichat-msg__bubble">{m.text}</div>
+              <div className="aichat-msg__bubble">
+                {m.role === 'ai' ? renderMarkdown(m.text) : m.text}
+              </div>
 
               {/* Render Instant Certificate / ID Card Downloads */}
               {m.downloads && m.downloads.length > 0 && (
@@ -194,7 +370,7 @@ export default function AiChat() {
                 <div className="aichat-card-actions">
                   <div className="aichat-card-actions__header">
                     <h4 className="aichat-card-actions__title">
-                      <span>📊</span> Excel File Ready ({m.excelDownload.rowCount} Rows)
+                      <span>📊</span> Custom Excel Ready ({m.excelDownload.rowCount} Rows)
                     </h4>
                     <span style={{ fontSize: '0.8rem', color: 'var(--ink-500)' }}>
                       Columns: {m.excelDownload.columns?.join(', ')}
@@ -222,12 +398,24 @@ export default function AiChat() {
         {loading && (
           <div className="aichat-msg is-ai">
             <div className="aichat-msg__avatar">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3z" />
               </svg>
             </div>
-            <div className="aichat-msg__bubble" style={{ fontStyle: 'italic', color: 'var(--ink-500)' }}>
-              Thinking &amp; executing request…
+            <div className="aichat-msg__bubble aichat-msg__bubble--loading">
+              <span className="aichat-typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
+              <span>Thinking &amp; executing request…</span>
             </div>
           </div>
         )}
@@ -235,43 +423,93 @@ export default function AiChat() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Quick Prompts Bar */}
-      <div className="aichat-prompts-bar">
-        {QUICK_PROMPTS.map((qp, idx) => (
-          <button
-            key={idx}
-            type="button"
-            className="aichat-prompt-pill"
-            onClick={() => handleSend(qp.prompt)}
-          >
-            {qp.label}
-          </button>
-        ))}
-      </div>
+      {/* Floating Bottom Section: Quick Prompts & Modern Input Box */}
+      <div className="aichat-bottom-panel">
+        {/* Quick Prompts Bar */}
+        <div className="aichat-prompts-bar">
+          <span className="aichat-prompts-label">✨ Quick:</span>
+          <div className="aichat-prompts-scroll">
+            {QUICK_PROMPTS.map((qp, idx) => (
+              <button
+                key={idx}
+                type="button"
+                className="aichat-prompt-pill"
+                onClick={() => handleSend(qp.prompt)}
+              >
+                <span>{qp.icon}</span>
+                <span>{qp.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
-      {/* Input Form Bar */}
-      <div className="aichat-input-bar">
-        <textarea
-          ref={inputRef}
-          rows="1"
-          placeholder="Ask anything (e.g. 'I want certificate for Karthikeyan', 'Give only TNMC users in excel with name, email and phone', 'Total registrations')..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={loading}
-        />
-        <button
-          type="button"
-          className="aichat-btn-send"
-          onClick={() => handleSend()}
-          disabled={!input.trim() || loading}
-        >
-          <span>Send</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="22" y1="2" x2="11" y2="13"></line>
-            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-          </svg>
-        </button>
+        {/* Input Card Container with aligned layout */}
+        <div className="aichat-input-wrapper">
+          <div className="aichat-input-box">
+            <textarea
+              ref={inputRef}
+              rows={1}
+              placeholder="Ask anything (e.g. 'I want certificate for Karthikeyan', 'Give only TNMC users in excel with name, email and phone', 'Total registrations')..."
+              value={input}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              disabled={loading}
+            />
+
+            <div className="aichat-input-actions">
+              <div className="aichat-input-hints">
+                <span className="aichat-key-hint">
+                  <kbd>Enter ↵</kbd> send &bull; <kbd>Shift+Enter</kbd> new line
+                </span>
+              </div>
+
+              <div className="aichat-input-btns">
+                {input.trim() && (
+                  <button
+                    type="button"
+                    className="aichat-btn-clear-input"
+                    onClick={() => {
+                      setInput('');
+                      if (inputRef.current) {
+                        inputRef.current.style.height = 'auto';
+                        inputRef.current.focus();
+                      }
+                    }}
+                    title="Clear text"
+                  >
+                    ✕
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  className="aichat-btn-send"
+                  onClick={() => handleSend()}
+                  disabled={!input.trim() || loading}
+                  title={loading ? 'Thinking…' : 'Send message (Enter)'}
+                >
+                  {loading ? (
+                    <span className="aichat-spinner" />
+                  ) : (
+                    <>
+                      <span>Send</span>
+                      <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
