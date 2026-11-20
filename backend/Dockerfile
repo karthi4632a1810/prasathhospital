@@ -4,7 +4,7 @@ WORKDIR /app
 
 # su-exec lets the entrypoint drop from root to "node" after fixing the
 # ownership of a mounted uploads disk.
-RUN apk add --no-cache su-exec
+RUN apk add --no-cache su-exec fontconfig ttf-dejavu
 
 # Install dependencies first so Docker caches this layer between code changes.
 COPY package*.json ./

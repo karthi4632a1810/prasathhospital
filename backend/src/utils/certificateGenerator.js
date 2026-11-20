@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
+const opentype = require('opentype.js');
 const { PDFDocument } = require('pdf-lib');
 
 function getCertificateTemplatePath() {
@@ -18,6 +19,34 @@ function getCertificateTemplatePath() {
   return candidates.find((p) => fs.existsSync(p)) || null;
 }
 
+function getCertificateFontPath() {
+  const candidates = [
+    path.resolve(__dirname, '../assets/LiberationSans-Bold.ttf'),
+    path.resolve(__dirname, '../../assets/LiberationSans-Bold.ttf'),
+    path.resolve(process.cwd(), 'backend/src/assets/LiberationSans-Bold.ttf'),
+    '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
+    '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+  ];
+  return candidates.find((p) => fs.existsSync(p)) || null;
+}
+
+let cachedFont = null;
+function getLoadedFont() {
+  if (cachedFont) return cachedFont;
+  const fontPath = getCertificateFontPath();
+  if (!fontPath) return null;
+  try {
+    const fontBuffer = fs.readFileSync(fontPath);
+    cachedFont = opentype.parse(
+      fontBuffer.buffer.slice(fontBuffer.byteOffset, fontBuffer.byteOffset + fontBuffer.byteLength)
+    );
+    return cachedFont;
+  } catch (err) {
+    console.error('Failed to parse certificate font:', err);
+    return null;
+  }
+}
+
 function escapeXml(unsafe) {
   return String(unsafe || '')
     .replace(/&/g, '&amp;')
@@ -27,17 +56,32 @@ function escapeXml(unsafe) {
     .replace(/'/g, '&apos;');
 }
 
-function getFontSize(name) {
-  const len = (name || '').trim().length;
-  if (len <= 18) return 38;
-  if (len <= 24) return 34;
-  if (len <= 30) return 30;
-  if (len <= 38) return 26;
-  return 22;
+/**
+ * Calculates optimal font size so attendee name fits neatly within max allowed width (760px).
+ */
+function getScaledFontSize(font, name, maxWidth = 760, maxFontSize = 36, minFontSize = 20) {
+  if (!font) {
+    const len = (name || '').trim().length;
+    if (len <= 18) return 38;
+    if (len <= 24) return 34;
+    if (len <= 30) return 30;
+    if (len <= 38) return 26;
+    return 22;
+  }
+
+  let size = maxFontSize;
+  while (size > minFontSize) {
+    const width = font.getAdvanceWidth(name, size);
+    if (width <= maxWidth) break;
+    size -= 1;
+  }
+  return size;
 }
 
 /**
- * Generates a PNG buffer of the CIIM 2026 Certificate with attendee name
+ * Generates a PNG buffer of the CIIM 2026 Certificate with attendee name.
+ * Converts text into pure vector SVG path using opentype.js to ensure 100% font fidelity
+ * on all systems (including headless Alpine Linux / Docker without system fonts).
  */
 async function generateCertificatePngBuffer({ name, registrationCode }) {
   const templatePath = getCertificateTemplatePath();
@@ -46,12 +90,22 @@ async function generateCertificatePngBuffer({ name, registrationCode }) {
   }
 
   const cleanName = (name || 'Delegate').replace(/\s+/g, ' ').trim();
-  const fontSize = getFontSize(cleanName);
+  const font = getLoadedFont();
 
-  // SVG overlay: wipes placeholder Dr xxxxxxxx and prints attendee name centered above underline
-  const svg = `
-    <svg width="1600" height="1131">
-      <rect x="400" y="435" width="800" height="53" fill="rgb(253, 236, 244)" />
+  let nameElementSvg = '';
+  if (font) {
+    const fontSize = getScaledFontSize(font, cleanName, 760, 36, 20);
+    const textWidth = font.getAdvanceWidth(cleanName, fontSize);
+    const x = 800 - (textWidth / 2);
+    const y = 478; // baseline 14px above the purple underline at y=492
+
+    const pathObj = font.getPath(cleanName, x, y, fontSize);
+    pathObj.fill = '#1e1b18';
+    nameElementSvg = pathObj.toSVG(2);
+  } else {
+    // Fallback if font is missing
+    const fontSize = getScaledFontSize(null, cleanName);
+    nameElementSvg = `
       <text
         x="800"
         y="478"
@@ -61,6 +115,14 @@ async function generateCertificatePngBuffer({ name, registrationCode }) {
         font-weight="bold"
         fill="#1e1b18"
       >${escapeXml(cleanName)}</text>
+    `;
+  }
+
+  // Seamless blush cover rectangle over the placeholder + vector text path
+  const svg = `
+    <svg width="1600" height="1131" xmlns="http://www.w3.org/2000/svg">
+      <rect x="400" y="435" width="800" height="53" fill="rgb(253, 236, 244)" />
+      ${nameElementSvg}
     </svg>
   `;
 
@@ -131,6 +193,7 @@ async function generateCertificateBuffer({ name, registrationCode, format = 'pdf
 
 module.exports = {
   getCertificateTemplatePath,
+  getCertificateFontPath,
   generateCertificatePngBuffer,
   generateCertificateJpgBuffer,
   generateCertificatePdfBuffer,
