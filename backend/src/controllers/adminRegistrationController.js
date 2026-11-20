@@ -2,8 +2,11 @@
 
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const XLSX = require('xlsx');
 const mongoose = require('mongoose');
+const Event = require('../models/Event');
+const TicketType = require('../models/TicketType');
 const Registration = require('../models/Registration');
 const ApiError = require('../utils/ApiError');
 const { sendSuccess, asyncHandler } = require('../utils/response');
@@ -16,7 +19,7 @@ const { deliverTicket, CHANNELS } = require('../services/delivery');
 const { cleanAttendee } = require('./publicRegistrationController');
 const { recordAudit } = require('../services/auditLog');
 const { toCsv } = require('../utils/csv');
-const { generateIdCardPdfBuffer } = require('../utils/idCardPdf');
+const { generateIdCardPdfBuffer, generateIdCardImageBuffer } = require('../utils/idCardPdf');
 const { generateCertificateBuffer } = require('../utils/certificateGenerator');
 
 function withRefs(query) {
@@ -493,14 +496,169 @@ const exportScannedAttendanceXlsx = asyncHandler(async (req, res) => {
   res.send(buffer);
 });
 
-/** GET /api/v1/admin/registrations/:id/badge.pdf — staff download/print ID card with custom role/name */
-const getRegistrationBadgePdf = asyncHandler(async (req, res) => {
+/**
+ * POST /api/v1/admin/registrations
+ * Instant registration created by admin desk (supports TMNC or no TMNC).
+ */
+const createRegistration = asyncHandler(async (req, res) => {
+  const {
+    eventId,
+    name,
+    phone,
+    email,
+    title = 'Dr.',
+    medicalCouncilRegNo,
+    hasTnmc,
+    category,
+    role,
+    institution,
+    city = 'Chennai',
+    state = 'Tamil Nadu',
+    country = 'India',
+    autoCheckIn = true,
+    sendNotifications = false,
+  } = req.body;
+
+  if (!name || !String(name).trim()) {
+    throw ApiError.badRequest('Attendee name is required.');
+  }
+  if (!phone || !String(phone).trim()) {
+    throw ApiError.badRequest('Attendee phone number is required.');
+  }
+
+  const cleanPhone = String(phone).replace(/[\s()-]/g, '');
+  const cleanName = String(name).trim();
+
+  // Find event
+  let event = null;
+  if (eventId && mongoose.isValidObjectId(eventId)) {
+    event = await Event.findById(eventId);
+  }
+  if (!event) {
+    event = await Event.findOne({ status: { $in: ['published', 'active'] } }).sort({ startDate: -1 });
+  }
+  if (!event) {
+    event = await Event.findOne().sort({ createdAt: -1 });
+  }
+  if (!event) {
+    throw ApiError.badRequest('No active event found to register attendee.');
+  }
+
+  // Find ticket type
+  let ticketType = null;
+  const requestedCat = String(role || category || 'Delegate').trim();
+  if (requestedCat.toLowerCase().includes('faculty')) {
+    ticketType = await TicketType.findOne({ event: event._id, name: /faculty/i });
+  } else if (requestedCat.toLowerCase().includes('pg') || requestedCat.toLowerCase().includes('resident')) {
+    ticketType = await TicketType.findOne({ event: event._id, name: /pg|resident|student/i });
+  }
+  if (!ticketType) {
+    ticketType = await TicketType.findOne({ event: event._id }).sort({ price: 1 });
+  }
+  if (!ticketType) {
+    ticketType = await TicketType.findOne().sort({ createdAt: -1 });
+  }
+
+  // Generate unique codes
+  const qrToken = crypto.randomBytes(24).toString('hex');
+  const codeSuffix = crypto.randomBytes(4).toString('hex').toUpperCase();
+  const registrationCode = `REG-${codeSuffix}`;
+
+  // Clean email - fallback to desk email if omitted
+  const cleanEmail = email && String(email).trim().includes('@')
+    ? String(email).trim().toLowerCase()
+    : `desk-${cleanPhone.slice(-6)}@ciim.prashanthfertility.com`;
+
+  // TMNC handling
+  const isTnmc = hasTnmc !== false && medicalCouncilRegNo && String(medicalCouncilRegNo).trim() !== '' && String(medicalCouncilRegNo).toUpperCase() !== 'NONE';
+  const cleanTnmc = isTnmc ? String(medicalCouncilRegNo).trim() : '';
+
+  const assignedRole = requestedCat.toLowerCase().includes('faculty')
+    ? 'FACULTY'
+    : (requestedCat.toLowerCase().includes('organis') ? 'ORGANISING TEAM' : 'DELEGATE');
+
+  const registration = new Registration({
+    event: event._id,
+    ticketType: ticketType?._id,
+    registrationCode,
+    qrToken,
+    status: 'confirmed',
+    attendee: {
+      name: cleanName,
+      title: title || 'Dr.',
+      email: cleanEmail,
+      phone: cleanPhone,
+      medicalCouncilRegNo: cleanTnmc,
+      category: assignedRole,
+      institution: institution ? String(institution).trim() : '',
+      city: String(city).trim(),
+      state: String(state).trim(),
+      country: String(country).trim(),
+    },
+    badgeRole: assignedRole,
+    payment: {
+      method: 'cash',
+      status: 'completed',
+      paidAt: new Date(),
+    },
+  });
+
+  // Assign badge number
+  registration.badgeNo = await resolveRegistrationBadgeNo(registration);
+
+  // Auto check-in if requested
+  if (autoCheckIn) {
+    registration.checkedInAt = new Date();
+    registration.checkedInBy = req.user?._id || null;
+    registration.checkins = [
+      {
+        locationId: 'registration_desk',
+        locationCode: 'DESK',
+        locationName: 'Registration Desk',
+        timestamp: new Date(),
+        scannedBy: req.user?._id || null,
+        method: 'instant_registration',
+      },
+    ];
+  }
+
+  await registration.save();
+
+  // Audit log
+  recordAudit(req, {
+    action: 'registration.create_instant',
+    entityType: 'Registration',
+    entityId: registration._id,
+    meta: {
+      registrationCode: registration.registrationCode,
+      name: cleanName,
+      phone: cleanPhone,
+      hasTnmc: isTnmc,
+      tnmc: cleanTnmc,
+      badgeNo: registration.badgeNo,
+      role: assignedRole,
+      autoCheckIn,
+    },
+  });
+
+  // Notifications if requested
+  if (sendNotifications) {
+    deliverTicket(registration, 'whatsapp').catch(() => {});
+  }
+
+  const populated = await withRefs(Registration.findById(registration._id));
+  return sendSuccess(res, serializeRegistrationForAdmin(populated), { status: 201 });
+});
+
+/** GET /api/v1/admin/registrations/:id/badge — staff download/print ID card in PDF, PNG, or JPG */
+const getRegistrationBadge = asyncHandler(async (req, res) => {
   const reg = await findOr404(req.params.id);
   if (reg.status !== 'confirmed') {
     throw ApiError.conflict('ID cards are only available for confirmed registrations.');
   }
   const role = req.query.role || null;
   const name = req.query.name || null;
+  const format = String(req.params.ext || req.query.format || 'pdf').toLowerCase().replace(/^\./, '');
   const includeTemplate = req.query.template === 'true' || req.query.preview === 'true';
   const showQr = req.query.showQr !== 'false' && req.query.noQr !== 'true';
   const showBadgeNo = req.query.showBadgeNo !== 'false' && req.query.noBadgeNo !== 'true';
@@ -510,6 +668,42 @@ const getRegistrationBadgePdf = asyncHandler(async (req, res) => {
   } else if (/^\d+$/.test(String(badgeNo).trim())) {
     badgeNo = String(badgeNo).trim().padStart(4, '0');
   }
+
+  const safeName = (name || reg.attendee?.name || reg.registrationCode).replace(/[^a-zA-Z0-9_-]/g, '_');
+  const qrSuffix = !showQr ? '-NO-QR' : '';
+  const numPrefix = showBadgeNo && badgeNo ? `${badgeNo}-` : '';
+
+  if (format === 'png') {
+    const buffer = await generateIdCardImageBuffer(reg, {
+      role,
+      name,
+      includeTemplate,
+      showQr,
+      showBadgeNo,
+      badgeNo,
+      format: 'png',
+    });
+    res.set('Content-Type', 'image/png');
+    res.set('Content-Disposition', `inline; filename="${numPrefix}${reg.registrationCode}-${safeName}-ID-CARD${qrSuffix}.png"`);
+    return res.send(buffer);
+  }
+
+  if (format === 'jpg' || format === 'jpeg') {
+    const buffer = await generateIdCardImageBuffer(reg, {
+      role,
+      name,
+      includeTemplate,
+      showQr,
+      showBadgeNo,
+      badgeNo,
+      format: 'jpg',
+    });
+    res.set('Content-Type', 'image/jpeg');
+    res.set('Content-Disposition', `inline; filename="${numPrefix}${reg.registrationCode}-${safeName}-ID-CARD${qrSuffix}.jpg"`);
+    return res.send(buffer);
+  }
+
+  // Default PDF
   const buffer = await generateIdCardPdfBuffer(reg, {
     role,
     name,
@@ -519,12 +713,11 @@ const getRegistrationBadgePdf = asyncHandler(async (req, res) => {
     badgeNo,
   });
   res.set('Content-Type', 'application/pdf');
-  const safeName = (name || reg.attendee?.name || reg.registrationCode).replace(/[^a-zA-Z0-9_-]/g, '_');
-  const qrSuffix = !showQr ? '-NO-QR' : '';
-  const numPrefix = showBadgeNo && badgeNo ? `${badgeNo}-` : '';
   res.set('Content-Disposition', `inline; filename="${numPrefix}${reg.registrationCode}-${safeName}-ID-CARD${qrSuffix}.pdf"`);
   return res.send(buffer);
 });
+
+const getRegistrationBadgePdf = getRegistrationBadge;
 
 /**
  * GET /api/v1/admin/registrations/:id/certificate
@@ -559,11 +752,13 @@ const getRegistrationCertificate = asyncHandler(async (req, res) => {
 module.exports = {
   listRegistrations,
   getRegistration,
+  createRegistration,
   updateRegistration,
   cancelRegistration,
   retryDelivery,
   exportRegistrationsCsv,
   exportScannedAttendanceXlsx,
+  getRegistrationBadge,
   getRegistrationBadgePdf,
   getRegistrationCertificate,
   qrStatusOf,

@@ -25,6 +25,7 @@ const adminCommunicationsRoutes = require('./adminCommunicationsRoutes');
 const adminWhatsAppMarketingRoutes = require('./adminWhatsAppMarketingRoutes');
 const adminMarketingCampaignRoutes = require('./adminMarketingCampaignRoutes');
 const adminIdCardRoutes = require('./adminIdCardRoutes');
+const adminAiRoutes = require('./adminAiRoutes');
 const { sendSuccess } = require('../utils/response');
 
 const router = express.Router();
@@ -63,5 +64,6 @@ router.use('/admin/communications', adminCommunicationsRoutes);
 router.use('/admin/whatsapp-marketing', adminWhatsAppMarketingRoutes);
 router.use('/admin/marketing-campaigns', adminMarketingCampaignRoutes);
 router.use('/admin/id-cards', adminIdCardRoutes);
+router.use('/admin/ai', adminAiRoutes);
 
 module.exports = router;

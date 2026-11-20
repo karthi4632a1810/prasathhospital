@@ -12,6 +12,7 @@ export function toQuery(params) {
 export const registrationApi = {
   list: (params) => request(`/admin/registrations?${toQuery(params)}`),
   get: (id) => request(`/admin/registrations/${id}`),
+  create: (body) => request('/admin/registrations', { method: 'POST', body }),
   update: (id, body) => request(`/admin/registrations/${id}`, { method: 'PATCH', body }),
   cancel: (id, reason) =>
     request(`/admin/registrations/${id}/cancel`, { method: 'POST', body: { reason } }),
@@ -26,7 +27,8 @@ export const registrationApi = {
       `TNMC_Bulk_Upload_Attendance_${dateStr}.xlsx`
     );
   },
-  downloadBadgePdf: (id, { role, name, template, showQr, showBadgeNo, badgeNo } = {}, filename) => {
+  downloadBadge: (id, { role, name, template, showQr, showBadgeNo, badgeNo, format = 'pdf' } = {}, filename) => {
+    const fmt = (format || 'pdf').toLowerCase().replace(/^\./, '');
     const q = toQuery({
       role,
       name,
@@ -34,12 +36,15 @@ export const registrationApi = {
       showQr: showQr === false ? 'false' : undefined,
       showBadgeNo: showBadgeNo === false ? 'false' : undefined,
       badgeNo: badgeNo || undefined,
+      format: fmt,
     });
     return downloadFile(
-      `/admin/registrations/${id}/badge.pdf${q ? `?${q}` : ''}`,
-      filename || `ID-CARD-${id}.pdf`
+      `/admin/registrations/${id}/badge${q ? `?${q}` : ''}`,
+      filename || `ID-CARD-${id}.${fmt}`
     );
   },
+  downloadBadgePdf: (id, opts = {}, filename) =>
+    registrationApi.downloadBadge(id, { ...opts, format: 'pdf' }, filename),
   downloadCertificate: (id, { name, format = 'pdf' } = {}, filename) => {
     const fmt = (format || 'pdf').toLowerCase().replace(/^\./, '');
     const q = toQuery({ name, format: fmt });

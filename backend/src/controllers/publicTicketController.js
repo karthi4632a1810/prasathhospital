@@ -6,7 +6,7 @@ const { sendSuccess, asyncHandler } = require('../utils/response');
 const { generateQrPngBuffer } = require('../utils/qrcode');
 const { streamTicketPdf } = require('../utils/ticketPdf');
 const { streamCertificatePdf } = require('../utils/certificatePdf');
-const { generateIdCardPdfBuffer } = require('../utils/idCardPdf');
+const { generateIdCardPdfBuffer, generateIdCardImageBuffer } = require('../utils/idCardPdf');
 const { generateCertificateBuffer } = require('../utils/certificateGenerator');
 const { resolveRegistrationBadgeNo } = require('../services/badgeService');
 const env = require('../config/env');
@@ -122,7 +122,7 @@ const getCertificatePdf = asyncHandler(async (req, res) => {
   return res.send(buffer);
 });
 
-/** GET /api/v1/tickets/:qrToken/badge.pdf — Official Delegate ID Card / Badge */
+/** GET /api/v1/tickets/:qrToken/badge.pdf — Official Delegate ID Card / Badge in PDF, PNG, or JPG */
 const getBadgePdf = asyncHandler(async (req, res) => {
   const reg = await findTicketOr404(req.params.qrToken);
   if (reg.status !== 'confirmed') {
@@ -130,6 +130,7 @@ const getBadgePdf = asyncHandler(async (req, res) => {
   }
   const role = req.query.role || null;
   const name = req.query.name || null;
+  const format = String(req.params.ext || req.query.format || 'pdf').toLowerCase().replace(/^\./, '');
   const includeTemplate = req.query.template === 'true' || req.query.preview === 'true';
   const showQr = req.query.showQr !== 'false' && req.query.noQr !== 'true';
   const showBadgeNo = req.query.showBadgeNo !== 'false' && req.query.noBadgeNo !== 'true';
@@ -139,6 +140,43 @@ const getBadgePdf = asyncHandler(async (req, res) => {
   } else if (/^\d+$/.test(String(badgeNo).trim())) {
     badgeNo = String(badgeNo).trim().padStart(4, '0');
   }
+
+  const safeName = (name || reg.attendee?.name || reg.registrationCode).replace(/[^a-zA-Z0-9_-]/g, '_');
+  const qrSuffix = !showQr ? '-NO-QR' : '';
+  const numPrefix = showBadgeNo && badgeNo ? `${badgeNo}-` : '';
+
+  if (format === 'png') {
+    const buffer = await generateIdCardImageBuffer(reg, {
+      role,
+      name,
+      includeTemplate,
+      showQr,
+      showBadgeNo,
+      badgeNo,
+      format: 'png',
+    });
+    res.set('Content-Type', 'image/png');
+    res.set('Content-Disposition', `inline; filename="${numPrefix}${reg.registrationCode}-${safeName}-ID-CARD${qrSuffix}.png"`);
+    res.set('Cache-Control', 'public, max-age=60');
+    return res.send(buffer);
+  }
+
+  if (format === 'jpg' || format === 'jpeg') {
+    const buffer = await generateIdCardImageBuffer(reg, {
+      role,
+      name,
+      includeTemplate,
+      showQr,
+      showBadgeNo,
+      badgeNo,
+      format: 'jpg',
+    });
+    res.set('Content-Type', 'image/jpeg');
+    res.set('Content-Disposition', `inline; filename="${numPrefix}${reg.registrationCode}-${safeName}-ID-CARD${qrSuffix}.jpg"`);
+    res.set('Cache-Control', 'public, max-age=60');
+    return res.send(buffer);
+  }
+
   const buffer = await generateIdCardPdfBuffer(reg, {
     role,
     name,
@@ -148,9 +186,6 @@ const getBadgePdf = asyncHandler(async (req, res) => {
     badgeNo,
   });
   res.set('Content-Type', 'application/pdf');
-  const safeName = (name || reg.attendee?.name || reg.registrationCode).replace(/[^a-zA-Z0-9_-]/g, '_');
-  const qrSuffix = !showQr ? '-NO-QR' : '';
-  const numPrefix = showBadgeNo && badgeNo ? `${badgeNo}-` : '';
   res.set('Content-Disposition', `inline; filename="${numPrefix}${reg.registrationCode}-${safeName}-ID-CARD${qrSuffix}.pdf"`);
   res.set('Cache-Control', 'public, max-age=60');
   return res.send(buffer);

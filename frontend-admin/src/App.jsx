@@ -13,6 +13,7 @@ import IdCardStudio from './pages/IdCardStudio';
 import Communications from './pages/Communications';
 import WhatsAppMarketing from './pages/WhatsAppMarketing';
 import WhatsAppEmailMarketing from './pages/WhatsAppEmailMarketing';
+import AiChat from './pages/AiChat';
 import CheckIn from './pages/CheckIn';
 import CheckinLocations from './pages/CheckinLocations';
 import Users from './pages/Users';
@@ -46,6 +47,14 @@ export default function App() {
             element={
               <Shielded>
                 <DashboardOverview />
+              </Shielded>
+            }
+          />
+          <Route
+            path="/ai-chat"
+            element={
+              <Shielded roles={COUNTER_ROLES}>
+                <AiChat />
               </Shielded>
             }
           />

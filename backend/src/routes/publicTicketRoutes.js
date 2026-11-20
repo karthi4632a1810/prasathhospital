@@ -12,7 +12,9 @@ router.get('/:qrToken/certificate', getCertificatePdf);
 router.get('/:qrToken/certificate.:ext', getCertificatePdf);
 router.get('/:qrToken/certificate.pdf', getCertificatePdf);
 router.get('/:qrToken/badge.pdf', getBadgePdf);
+router.get('/:qrToken/badge.:ext', getBadgePdf);
 router.get('/:qrToken/id-card.pdf', getBadgePdf);
+router.get('/:qrToken/id-card.:ext', getBadgePdf);
 router.get('/:qrToken/badge', getBadgePdf);
 
 module.exports = router;

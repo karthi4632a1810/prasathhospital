@@ -9,6 +9,7 @@ const {
   generateIdCardPdfBuffer,
   generateMultiPageIdCardPdfBuffer,
   generateIdCardsZipBuffer,
+  generateIdCardImageBuffer,
 } = require('../utils/idCardPdf');
 
 function getFacultyExcelPath() {
@@ -100,12 +101,16 @@ const generateBulkZip = asyncHandler(async (req, res) => {
 
 /**
  * GET or POST /api/v1/admin/id-cards/single-pdf
- * Generates an ID card PDF for a single custom attendee.
+ * GET or POST /api/v1/admin/id-cards/single
+ * Generates an ID card in PDF, PNG, or JPG for a single custom attendee.
  */
 const generateSinglePdf = asyncHandler(async (req, res) => {
   const name = req.body?.name || req.query?.name || 'Delegate';
   const role = req.body?.role || req.query?.role || 'FACULTY';
   const code = req.body?.code || req.query?.code || 'BADGE-01';
+  const format = String(req.body?.format || req.query?.format || req.params?.ext || 'pdf')
+    .toLowerCase()
+    .replace(/^\./, '');
   const includeTemplate =
     req.body?.template === true ||
     req.body?.template === 'true' ||
@@ -128,14 +133,36 @@ const generateSinglePdf = asyncHandler(async (req, res) => {
     req.query?.badgeNumber ||
     '0001';
 
+  const safeName = String(name).replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const qrSuffix = !showQr ? '-NO-QR' : '';
+  const numPrefix = showBadgeNo && badgeNo ? `${badgeNo}-` : '';
+
+  if (format === 'png') {
+    const buffer = await generateIdCardImageBuffer(
+      { name, role, code, registrationCode: code, badgeNo },
+      { role, name, includeTemplate, showQr, showBadgeNo, badgeNo, format: 'png' }
+    );
+    res.set('Content-Type', 'image/png');
+    res.set('Content-Disposition', `inline; filename="${numPrefix}${code}-${safeName}-ID-CARD${qrSuffix}.png"`);
+    return res.send(buffer);
+  }
+
+  if (format === 'jpg' || format === 'jpeg') {
+    const buffer = await generateIdCardImageBuffer(
+      { name, role, code, registrationCode: code, badgeNo },
+      { role, name, includeTemplate, showQr, showBadgeNo, badgeNo, format: 'jpg' }
+    );
+    res.set('Content-Type', 'image/jpeg');
+    res.set('Content-Disposition', `inline; filename="${numPrefix}${code}-${safeName}-ID-CARD${qrSuffix}.jpg"`);
+    return res.send(buffer);
+  }
+
+  // Default PDF
   const buffer = await generateIdCardPdfBuffer(
     { name, role, code, registrationCode: code, badgeNo },
     { role, name, includeTemplate, showQr, showBadgeNo, badgeNo }
   );
 
-  const safeName = String(name).replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '_');
-  const qrSuffix = !showQr ? '-NO-QR' : '';
-  const numPrefix = showBadgeNo && badgeNo ? `${badgeNo}-` : '';
   res.set('Content-Type', 'application/pdf');
   res.set('Content-Disposition', `inline; filename="${numPrefix}${code}-${safeName}-ID-CARD${qrSuffix}.pdf"`);
   return res.send(buffer);
@@ -146,4 +173,5 @@ module.exports = {
   generateBulkPdf,
   generateBulkZip,
   generateSinglePdf,
+  generateSingleFile: generateSinglePdf,
 };

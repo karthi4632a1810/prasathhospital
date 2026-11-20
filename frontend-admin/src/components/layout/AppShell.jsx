@@ -14,6 +14,10 @@ const NAV_GROUPS = [
     items: [{ to: '/', label: 'Dashboard', icon: IconGrid, end: true }],
   },
   {
+    label: 'AI Chat',
+    items: [{ to: '/ai-chat', label: 'AI Chatbot', icon: IconSparkles, roles: COUNTER_ROLES }],
+  },
+  {
     label: 'Content',
     items: [
       { to: '/event', label: 'Event CMS', icon: IconEdit, roles: OPS_ROLES },
@@ -181,6 +185,23 @@ export default function AppShell({ children }) {
 }
 
 /* ---------- Inline icon set (no icon-library dependency) ---------- */
+
+function IconSparkles() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3z" />
+    </svg>
+  );
+}
 
 function IconGrid() {
   return (

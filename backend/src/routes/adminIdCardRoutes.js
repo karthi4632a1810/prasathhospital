@@ -18,5 +18,8 @@ router.post('/bulk-pdf', generateBulkPdf);
 router.post('/bulk-zip', generateBulkZip);
 router.post('/single-pdf', generateSinglePdf);
 router.get('/single-pdf', generateSinglePdf);
+router.post('/single', generateSinglePdf);
+router.get('/single', generateSinglePdf);
+router.get('/single.:ext', generateSinglePdf);
 
 module.exports = router;

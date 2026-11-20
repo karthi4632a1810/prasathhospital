@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const sharp = require('sharp');
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const { ZipArchive } = require('archiver');
 const { generateQrPngBuffer } = require('./qrcode');
@@ -475,10 +476,152 @@ async function generateIdCardsZipBuffer(items, options = {}) {
   return completionPromise;
 }
 
+function escapeXml(unsafe) {
+  return String(unsafe || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+/**
+ * Generates an ID Card raster image (PNG or JPG) using sharp and SVG text overlay.
+ */
+async function generateIdCardImageBuffer(registration, options = {}) {
+  const widthPx = 1050;
+  const heightPx = 1500;
+  const format = String(options.format || 'png').toLowerCase().replace(/^\./, '');
+
+  const mergedItem = {
+    ...registration,
+    role: options.role || registration.role || registration.badgeRole,
+    name: options.name || registration.name || registration.attendee?.name,
+    showQr: options.showQr !== undefined ? options.showQr : registration.showQr,
+    showBadgeNo: options.showBadgeNo !== undefined ? options.showBadgeNo : (options.showBadgeNumber !== undefined ? options.showBadgeNumber : registration.showBadgeNo),
+    badgeNo: options.badgeNo || options.badgeNumber || registration.badgeNo || registration.badgeNumber,
+  };
+
+  const shouldDrawQr = options.showQr !== false && !options.noQr && mergedItem.showQr !== false;
+  const shouldDrawBadgeNo = options.showBadgeNo !== false && !options.noBadgeNo && mergedItem.showBadgeNo !== false;
+
+  let rawBadgeNo = mergedItem.badgeNo;
+  let formattedBadgeNo = '';
+  if (shouldDrawBadgeNo) {
+    if (rawBadgeNo !== undefined && rawBadgeNo !== null && String(rawBadgeNo).trim() !== '') {
+      const s = String(rawBadgeNo).trim();
+      formattedBadgeNo = /^\d+$/.test(s) ? s.padStart(4, '0') : s;
+    } else {
+      formattedBadgeNo = '0001';
+    }
+  }
+
+  const roleText = resolveBadgeRole(mergedItem, mergedItem.role);
+  const rawName = mergedItem.name ? String(mergedItem.name).trim() : cleanDoctorName(mergedItem.attendee?.name);
+
+  // Split name lines
+  let lines = [rawName];
+  if (rawName.includes('\n')) {
+    lines = rawName.split('\n').map((l) => l.trim()).filter(Boolean).slice(0, 2);
+  } else if (rawName.length > 22 && rawName.includes(' ')) {
+    const words = rawName.split(' ');
+    const mid = Math.ceil(words.length / 2);
+    lines = [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
+  }
+
+  let textSvg = '';
+  if (shouldDrawQr) {
+    const roleY = 325;
+    textSvg += `<text x="525" y="${roleY}" font-family="'Liberation Sans', Arial, sans-serif" font-weight="bold" font-size="46" fill="#c2185b" text-anchor="middle" letter-spacing="2">${escapeXml(roleText)}</text>`;
+
+    if (lines.length === 2) {
+      textSvg += `<text x="525" y="440" font-family="'Liberation Sans', Arial, sans-serif" font-weight="bold" font-size="52" fill="#231238" text-anchor="middle">${escapeXml(lines[0])}</text>`;
+      textSvg += `<text x="525" y="505" font-family="'Liberation Sans', Arial, sans-serif" font-weight="bold" font-size="52" fill="#231238" text-anchor="middle">${escapeXml(lines[1])}</text>`;
+    } else {
+      textSvg += `<text x="525" y="470" font-family="'Liberation Sans', Arial, sans-serif" font-weight="bold" font-size="62" fill="#231238" text-anchor="middle">${escapeXml(lines[0])}</text>`;
+    }
+
+    if (formattedBadgeNo) {
+      const badgeY = lines.length === 2 ? 570 : 565;
+      textSvg += `<text x="525" y="${badgeY}" font-family="'Liberation Sans', Arial, monospace" font-weight="bold" font-size="46" fill="#231238" text-anchor="middle" letter-spacing="4">${escapeXml(formattedBadgeNo)}</text>`;
+    }
+  } else {
+    // No QR Code layout: vertically balanced
+    const roleY = formattedBadgeNo ? (lines.length === 2 ? 430 : 460) : (lines.length === 2 ? 450 : 480);
+    textSvg += `<text x="525" y="${roleY}" font-family="'Liberation Sans', Arial, sans-serif" font-weight="bold" font-size="48" fill="#c2185b" text-anchor="middle" letter-spacing="2">${escapeXml(roleText)}</text>`;
+
+    if (lines.length === 2) {
+      textSvg += `<text x="525" y="${roleY + 130}" font-family="'Liberation Sans', Arial, sans-serif" font-weight="bold" font-size="58" fill="#231238" text-anchor="middle">${escapeXml(lines[0])}</text>`;
+      textSvg += `<text x="525" y="${roleY + 210}" font-family="'Liberation Sans', Arial, sans-serif" font-weight="bold" font-size="58" fill="#231238" text-anchor="middle">${escapeXml(lines[1])}</text>`;
+    } else {
+      textSvg += `<text x="525" y="${roleY + 160}" font-family="'Liberation Sans', Arial, sans-serif" font-weight="bold" font-size="70" fill="#231238" text-anchor="middle">${escapeXml(lines[0])}</text>`;
+    }
+
+    if (formattedBadgeNo) {
+      const badgeY = lines.length === 2 ? roleY + 310 : roleY + 270;
+      textSvg += `<text x="525" y="${badgeY}" font-family="'Liberation Sans', Arial, monospace" font-weight="bold" font-size="52" fill="#231238" text-anchor="middle" letter-spacing="4">${escapeXml(formattedBadgeNo)}</text>`;
+    }
+  }
+
+  const svgBuffer = Buffer.from(`
+    <svg width="${widthPx}" height="${heightPx}" xmlns="http://www.w3.org/2000/svg">
+      ${textSvg}
+    </svg>
+  `);
+
+  const composites = [{ input: svgBuffer, top: 0, left: 0 }];
+
+  if (shouldDrawQr) {
+    const checkInUrl = mergedItem.qrUrl || getCheckInUrl(mergedItem);
+    const qrPngBuffer = await generateQrPngBuffer(checkInUrl, { width: 600, noBorder: true });
+    const qrSizePx = 265;
+    const qrResized = await sharp(qrPngBuffer).resize(qrSizePx, qrSizePx).toBuffer();
+    const qrTop = formattedBadgeNo ? 625 : 610;
+    composites.push({
+      input: qrResized,
+      top: qrTop,
+      left: Math.round((widthPx - qrSizePx) / 2),
+    });
+  }
+
+  let basePipeline;
+  if (options.includeTemplate) {
+    const bgPath = getSimulationBgPath();
+    if (bgPath && fs.existsSync(bgPath)) {
+      basePipeline = sharp(bgPath).resize(widthPx, heightPx);
+    } else {
+      basePipeline = sharp({
+        create: { width: widthPx, height: heightPx, channels: 4, background: { r: 255, g: 255, b: 255, alpha: 1 } },
+      });
+    }
+  } else {
+    // Clean overlay for pre-printed card stock
+    const isJpg = format === 'jpg' || format === 'jpeg';
+    basePipeline = sharp({
+      create: {
+        width: widthPx,
+        height: heightPx,
+        channels: 4,
+        background: isJpg
+          ? { r: 255, g: 255, b: 255, alpha: 1 }
+          : { r: 255, g: 255, b: 255, alpha: 0 },
+      },
+    });
+  }
+
+  basePipeline.composite(composites);
+
+  if (format === 'jpg' || format === 'jpeg') {
+    return await basePipeline.jpeg({ quality: 95, chromaSubsampling: '4:4:4' }).toBuffer();
+  }
+  return await basePipeline.png().toBuffer();
+}
+
 module.exports = {
   generateIdCardPdfBuffer,
   generateMultiPageIdCardPdfBuffer,
   generateIdCardsZipBuffer,
+  generateIdCardImageBuffer,
   cleanDoctorName,
   getCheckInUrl,
   resolveBadgeRole,

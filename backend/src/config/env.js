@@ -4,6 +4,7 @@ const path = require('path');
 const dotenv = require('dotenv');
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 /**
  * Reads an env var, falling back to a default. Throws in production when a
@@ -51,6 +52,8 @@ const env = {
     'http://localhost:4173',
     'http://localhost:8082',
   ]),
+  groqAiApi: read('GROQ_AI_API', read('GROQ_API_KEY', '')),
+  geminiAiApi: read('GEMINI_AI_API', read('GEMINI_API_KEY', '')),
   rateLimit: {
     windowMs: readInt('RATE_LIMIT_WINDOW_MINUTES', 15) * 60 * 1000,
     max: readInt('RATE_LIMIT_MAX', 300),
