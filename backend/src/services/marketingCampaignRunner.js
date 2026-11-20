@@ -266,21 +266,29 @@ async function runMarketingCampaign(campaignId) {
       job.recentLogs.shift();
     }
 
-    // Periodic flush to MongoDB every 10 recipients
-    if (i % 10 === 0 || i === campaign.recipients.length - 1) {
-      campaign.sentCount = sentCount;
-      campaign.failedCount = failedCount;
-      await campaign.save().catch(() => { });
+    // Lightweight atomic count update to MongoDB every 25 recipients (avoids sending 420KB recipients payload repeatedly)
+    if (i % 25 === 0 || i === campaign.recipients.length - 1) {
+      MarketingCampaign.updateOne(
+        { _id: campaign._id },
+        { $set: { sentCount, failedCount } }
+      ).catch(() => { });
     }
 
     await sleep(40);
   }
 
-  campaign.status = 'COMPLETED';
-  campaign.completedAt = new Date();
-  campaign.sentCount = sentCount;
-  campaign.failedCount = failedCount;
-  await campaign.save();
+  await MarketingCampaign.updateOne(
+    { _id: campaign._id },
+    {
+      $set: {
+        status: 'COMPLETED',
+        completedAt: new Date(),
+        sentCount,
+        failedCount,
+        recipients: campaign.recipients,
+      },
+    }
+  );
 
   job.status = 'COMPLETED';
 

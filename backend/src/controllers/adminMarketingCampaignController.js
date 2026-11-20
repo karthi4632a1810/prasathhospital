@@ -108,25 +108,54 @@ const getSessions = asyncHandler(async (req, res) => {
   });
 });
 
+// In-memory cache for live monitor DB queries (prevents bombarding MongoDB on fast polling)
+let cachedMonitorDbData = null;
+let lastMonitorDbFetch = 0;
+const MONITOR_DB_CACHE_TTL_MS = 3500; // 3.5 seconds
+
 /**
  * GET /api/v1/admin/marketing-campaigns/live-monitor
- * Comprehensive live monitoring status: running jobs, scheduled queue, and today's summary.
+ * Comprehensive live monitoring status: running jobs (always real-time memory), scheduled queue, and today's summary.
  */
 const getLiveMonitor = asyncHandler(async (req, res) => {
-  // 1. In-memory active running jobs with real-time speed, ETA, and recent logs
+  // 1. In-memory active running jobs are ALWAYS 100% real-time (0ms latency, 0 DB queries)
   const activeJobs = getAllLiveJobs();
 
-  // 2. Upcoming scheduled campaigns from MongoDB
-  const scheduledCampaigns = await MarketingCampaign.find({
-    status: 'SCHEDULED',
-  })
-    .sort({ scheduledFor: 1 })
-    .select('-recipients')
-    .lean();
-
-  // Calculate countdown seconds for each scheduled campaign
   const nowMs = Date.now();
-  const scheduledWithCountdown = scheduledCampaigns.map((c) => {
+  if (!cachedMonitorDbData || nowMs - lastMonitorDbFetch > MONITOR_DB_CACHE_TTL_MS) {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const [scheduledCampaigns, recentCampaigns, totalDispatchedToday, totalScheduled] =
+      await Promise.all([
+        MarketingCampaign.find({ status: 'SCHEDULED' })
+          .sort({ scheduledFor: 1 })
+          .select('-recipients')
+          .lean(),
+        MarketingCampaign.find({ status: { $in: ['COMPLETED', 'RUNNING', 'FAILED'] } })
+          .sort({ updatedAt: -1 })
+          .limit(10)
+          .select('-recipients')
+          .lean(),
+        MarketingCampaign.aggregate([
+          { $match: { createdAt: { $gte: todayStart } } },
+          { $group: { _id: null, totalSent: { $sum: '$sentCount' }, totalFailed: { $sum: '$failedCount' } } },
+        ]),
+        MarketingCampaign.countDocuments({ status: 'SCHEDULED' }),
+      ]);
+
+    cachedMonitorDbData = {
+      scheduledCampaigns,
+      recentCampaigns,
+      totalScheduled,
+      totalSentToday: totalDispatchedToday[0]?.totalSent || 0,
+      totalFailedToday: totalDispatchedToday[0]?.totalFailed || 0,
+    };
+    lastMonitorDbFetch = nowMs;
+  }
+
+  // Calculate live countdown seconds relative to current wall-clock
+  const scheduledWithCountdown = (cachedMonitorDbData.scheduledCampaigns || []).map((c) => {
     const targetMs = c.scheduledFor ? new Date(c.scheduledFor).getTime() : nowMs;
     const diffSeconds = Math.max(0, Math.round((targetMs - nowMs) / 1000));
     return {
@@ -135,36 +164,15 @@ const getLiveMonitor = asyncHandler(async (req, res) => {
     };
   });
 
-  // 3. Recently completed or running campaigns in MongoDB
-  const recentCampaigns = await MarketingCampaign.find({
-    status: { $in: ['COMPLETED', 'RUNNING', 'FAILED'] },
-  })
-    .sort({ updatedAt: -1 })
-    .limit(10)
-    .select('-recipients')
-    .lean();
-
-  // 4. Aggregate counters for summary metrics
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-
-  const [totalDispatchedToday, totalScheduled] = await Promise.all([
-    MarketingCampaign.aggregate([
-      { $match: { createdAt: { $gte: todayStart } } },
-      { $group: { _id: null, totalSent: { $sum: '$sentCount' }, totalFailed: { $sum: '$failedCount' } } },
-    ]),
-    MarketingCampaign.countDocuments({ status: 'SCHEDULED' }),
-  ]);
-
   return sendSuccess(res, {
     activeJobs,
     scheduledCampaigns: scheduledWithCountdown,
-    recentCampaigns,
+    recentCampaigns: cachedMonitorDbData.recentCampaigns,
     summary: {
       activeWorkersCount: activeJobs.length,
-      scheduledCount: totalScheduled,
-      totalSentToday: totalDispatchedToday[0]?.totalSent || 0,
-      totalFailedToday: totalDispatchedToday[0]?.totalFailed || 0,
+      scheduledCount: cachedMonitorDbData.totalScheduled,
+      totalSentToday: cachedMonitorDbData.totalSentToday,
+      totalFailedToday: cachedMonitorDbData.totalFailedToday,
     },
     serverTime: new Date().toISOString(),
   });
