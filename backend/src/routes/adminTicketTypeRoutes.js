@@ -11,11 +11,11 @@ const { requireAuth, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.use(requireAuth, requireRole('superadmin', 'manager'));
+router.use(requireAuth);
 
-router.get('/', listTicketTypes);
-router.post('/', createTicketType);
-router.patch('/:id', updateTicketType);
-router.delete('/:id', deleteTicketType);
+router.get('/', requireRole('superadmin', 'manager', 'counter_staff'), listTicketTypes);
+router.post('/', requireRole('superadmin', 'manager'), createTicketType);
+router.patch('/:id', requireRole('superadmin', 'manager'), updateTicketType);
+router.delete('/:id', requireRole('superadmin', 'manager'), deleteTicketType);
 
 module.exports = router;

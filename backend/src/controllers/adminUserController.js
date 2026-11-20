@@ -7,7 +7,7 @@ const { hashPassword } = require('../utils/password');
 const { serializeUser } = require('../services/userSerializer');
 const { recordAudit } = require('../services/auditLog');
 
-const ROLES = ['superadmin', 'manager', 'checkin_staff'];
+const ROLES = ['superadmin', 'manager', 'counter_staff', 'checkin_staff'];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 function text(value) {

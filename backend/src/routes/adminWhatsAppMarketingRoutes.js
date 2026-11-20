@@ -24,7 +24,7 @@ const { requireAuth, requireRole } = require('../middleware/auth');
 const router = express.Router();
 
 router.use(requireAuth);
-router.use(requireRole('superadmin', 'manager'));
+router.use(requireRole('superadmin', 'manager', 'counter_staff'));
 
 router.get('/config', getMarketingConfig);
 router.get('/campaigns', getCampaigns);

@@ -16,14 +16,23 @@ const LOCKOUT_MINUTES = 15;
  * (see routes/adminAuthRoutes.js) on top of this per-account lockout.
  */
 const login = asyncHandler(async (req, res) => {
-  const email = String(req.body.email || '').toLowerCase().trim();
+  const rawInput = String(req.body.email || req.body.username || '').trim();
   const password = String(req.body.password || '');
 
-  if (!email || !password) {
-    throw ApiError.badRequest('Email and password are required.');
+  if (!rawInput || !password) {
+    throw ApiError.badRequest('Username or email and password are required.');
   }
 
-  const user = await User.findOne({ email }).select('+passwordHash');
+  const email = rawInput.toLowerCase();
+  const cleanInput = email.replace(/\s+/g, '');
+  const user = await User.findOne({
+    $or: [
+      { email },
+      { email: `${cleanInput}@prashanthhospitals.com` },
+      { name: new RegExp(`^${rawInput.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+      { name: new RegExp(`^${cleanInput.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
+    ],
+  }).select('+passwordHash');
   // Same message whether the account exists or not, so login can't be used
   // to enumerate admin emails.
   const invalidCredentials = () => ApiError.unauthorized('Incorrect email or password.');

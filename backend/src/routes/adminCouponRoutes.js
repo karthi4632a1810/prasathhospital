@@ -15,15 +15,15 @@ const { requireAuth, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.use(requireAuth, requireRole('superadmin', 'manager'));
+router.use(requireAuth);
 
-router.get('/', listCoupons);
-router.get('/generate-code', generateCode);
-router.post('/test-batch', createTestBatch);
-router.delete('/test-batch', purgeTestBatch);
-router.post('/series', createCouponSeries);
-router.post('/', createCoupon);
-router.patch('/:id', updateCoupon);
-router.delete('/:id', deleteCoupon);
+router.get('/', requireRole('superadmin', 'manager', 'counter_staff'), listCoupons);
+router.get('/generate-code', requireRole('superadmin', 'manager'), generateCode);
+router.post('/test-batch', requireRole('superadmin', 'manager'), createTestBatch);
+router.delete('/test-batch', requireRole('superadmin', 'manager'), purgeTestBatch);
+router.post('/series', requireRole('superadmin', 'manager'), createCouponSeries);
+router.post('/', requireRole('superadmin', 'manager'), createCoupon);
+router.patch('/:id', requireRole('superadmin', 'manager'), updateCoupon);
+router.delete('/:id', requireRole('superadmin', 'manager'), deleteCoupon);
 
 module.exports = router;

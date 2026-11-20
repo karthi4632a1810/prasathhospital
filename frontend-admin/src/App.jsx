@@ -23,6 +23,7 @@ import Help from './pages/Help';
 import ComingSoon from './pages/ComingSoon';
 
 const OPS = ['superadmin', 'manager'];
+const COUNTER_ROLES = ['superadmin', 'manager', 'counter_staff'];
 
 function Shielded({ children, roles }) {
   return (
@@ -82,7 +83,7 @@ export default function App() {
           <Route
             path="/registrations"
             element={
-              <Shielded roles={OPS}>
+              <Shielded roles={COUNTER_ROLES}>
                 <Registrations />
               </Shielded>
             }
@@ -90,7 +91,7 @@ export default function App() {
           <Route
             path="/id-cards"
             element={
-              <Shielded roles={OPS}>
+              <Shielded roles={COUNTER_ROLES}>
                 <IdCardStudio />
               </Shielded>
             }
@@ -98,7 +99,7 @@ export default function App() {
           <Route
             path="/communications"
             element={
-              <Shielded roles={OPS}>
+              <Shielded roles={COUNTER_ROLES}>
                 <Communications />
               </Shielded>
             }
@@ -106,7 +107,7 @@ export default function App() {
           <Route
             path="/whatsapp-marketing"
             element={
-              <Shielded roles={OPS}>
+              <Shielded roles={COUNTER_ROLES}>
                 <WhatsAppMarketing />
               </Shielded>
             }
@@ -122,7 +123,7 @@ export default function App() {
           <Route
             path="/checkin-locations"
             element={
-              <Shielded roles={OPS}>
+              <Shielded roles={COUNTER_ROLES}>
                 <CheckinLocations />
               </Shielded>
             }
@@ -130,7 +131,7 @@ export default function App() {
           <Route
             path="/feedback"
             element={
-              <Shielded roles={OPS}>
+              <Shielded roles={COUNTER_ROLES}>
                 <Feedback />
               </Shielded>
             }
@@ -138,7 +139,7 @@ export default function App() {
           <Route
             path="/topic-questions"
             element={
-              <Shielded roles={OPS}>
+              <Shielded roles={COUNTER_ROLES}>
                 <TopicQuestions />
               </Shielded>
             }
@@ -170,7 +171,7 @@ export default function App() {
           <Route
             path="/help"
             element={
-              <Shielded>
+              <Shielded roles={OPS}>
                 <Help />
               </Shielded>
             }

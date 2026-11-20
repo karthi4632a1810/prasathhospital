@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
 
-const ROLES = ['superadmin', 'manager', 'checkin_staff'];
+const ROLES = ['superadmin', 'manager', 'counter_staff', 'checkin_staff'];
 
 /**
  * An admin/staff account. Passwords are stored as bcrypt hashes only — the

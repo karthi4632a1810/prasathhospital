@@ -18,14 +18,14 @@ const { requireAuth, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
-// checkin_staff never needs the CMS — everything here is manager+.
-router.use(requireAuth, requireRole('superadmin', 'manager'));
+// checkin_staff and counter_staff can view events, manager+ can edit.
+router.use(requireAuth);
 
-router.get('/', listEvents);
-router.post('/', createEvent);
-router.get('/:id', getEvent);
-router.patch('/:id', updateEvent);
-router.delete('/:id', deleteEvent);
+router.get('/', requireRole('superadmin', 'manager', 'checkin_staff', 'counter_staff'), listEvents);
+router.post('/', requireRole('superadmin', 'manager'), createEvent);
+router.get('/:id', requireRole('superadmin', 'manager', 'checkin_staff', 'counter_staff'), getEvent);
+router.patch('/:id', requireRole('superadmin', 'manager'), updateEvent);
+router.delete('/:id', requireRole('superadmin', 'manager'), deleteEvent);
 
 router.put('/:id/speakers', replaceSpeakers);
 router.put('/:id/committee', replaceCommittee);

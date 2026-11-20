@@ -7,6 +7,6 @@ const { uploadSingleImage } = require('../middleware/upload');
 
 const router = express.Router();
 
-router.post('/', requireAuth, requireRole('superadmin', 'manager'), uploadSingleImage, uploadImage);
+router.post('/', requireAuth, requireRole('superadmin', 'manager', 'counter_staff'), uploadSingleImage, uploadImage);
 
 module.exports = router;

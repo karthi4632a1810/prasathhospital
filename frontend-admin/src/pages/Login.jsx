@@ -51,15 +51,15 @@ export default function Login() {
 
         <form className="login__form" onSubmit={handleSubmit}>
           <label className="field">
-            <span className="field__label">Email</span>
+            <span className="field__label">Username or Email</span>
             <input
               className="field__input"
-              type="email"
+              type="text"
               autoComplete="username"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@prashanthhospitals.com"
+              placeholder="counter 1 or you@prashanthhospitals.com"
             />
           </label>
 

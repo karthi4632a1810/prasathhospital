@@ -10,7 +10,7 @@ const router = express.Router();
 router.use(requireAuth);
 
 // Dashboard tiles are aggregate-only, so check-in staff can see them too.
-router.get('/overview', requireRole('superadmin', 'manager', 'checkin_staff'), getOverview);
+router.get('/overview', requireRole('superadmin', 'manager', 'checkin_staff', 'counter_staff'), getOverview);
 
 router.use(requireRole('superadmin', 'manager'));
 router.get('/breakdown', getBreakdown);

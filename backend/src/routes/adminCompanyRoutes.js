@@ -6,11 +6,11 @@ const { requireAuth, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.use(requireAuth, requireRole('superadmin', 'manager'));
+router.use(requireAuth);
 
-router.get('/', listCompanies);
-router.post('/', createCompany);
-router.patch('/:id', updateCompany);
-router.delete('/:id', deleteCompany);
+router.get('/', requireRole('superadmin', 'manager', 'counter_staff'), listCompanies);
+router.post('/', requireRole('superadmin', 'manager'), createCompany);
+router.patch('/:id', requireRole('superadmin', 'manager'), updateCompany);
+router.delete('/:id', requireRole('superadmin', 'manager'), deleteCompany);
 
 module.exports = router;

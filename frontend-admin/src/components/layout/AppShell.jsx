@@ -6,6 +6,7 @@ import './AppShell.css';
 // Roles that run day-to-day operations. Check-in staff only get the
 // dashboard numbers and the scanner (enforced again on every API route).
 export const OPS_ROLES = ['superadmin', 'manager'];
+export const COUNTER_ROLES = ['superadmin', 'manager', 'counter_staff'];
 
 const NAV_GROUPS = [
   {
@@ -22,8 +23,8 @@ const NAV_GROUPS = [
   {
     label: 'Registrations',
     items: [
-      { to: '/registrations', label: 'Registrations', icon: IconUsers, roles: OPS_ROLES },
-      { to: '/id-cards', label: 'ID Card Studio', icon: IconBadge, roles: OPS_ROLES },
+      { to: '/registrations', label: 'Registrations', icon: IconUsers, roles: COUNTER_ROLES },
+      { to: '/id-cards', label: 'ID Card Studio', icon: IconBadge, roles: COUNTER_ROLES },
       { to: '/companies', label: 'Companies', icon: IconBuilding, roles: OPS_ROLES },
       { to: '/coupons', label: 'Coupons', icon: IconTag, roles: OPS_ROLES },
     ],
@@ -31,17 +32,17 @@ const NAV_GROUPS = [
   {
     label: 'Communications',
     items: [
-      { to: '/communications', label: 'WATI & Email', icon: IconSend, roles: OPS_ROLES },
-      { to: '/whatsapp-marketing', label: 'WhatsApp Marketing', icon: IconWhatsApp, roles: OPS_ROLES },
+      { to: '/communications', label: 'WATI & Email', icon: IconSend, roles: COUNTER_ROLES },
+      { to: '/whatsapp-marketing', label: 'WhatsApp Marketing', icon: IconWhatsApp, roles: COUNTER_ROLES },
     ],
   },
   {
     label: 'Event day',
     items: [
       { to: '/checkin', label: 'Check-in Desk', icon: IconScan },
-      { to: '/checkin-locations', label: 'Check-in Locations', icon: IconMapPin, roles: OPS_ROLES },
-      { to: '/feedback', label: 'Feedback', icon: IconStar, roles: OPS_ROLES },
-      { to: '/topic-questions', label: 'Doctor Questions', icon: IconHelp, roles: OPS_ROLES },
+      { to: '/checkin-locations', label: 'Check-in Locations', icon: IconMapPin, roles: COUNTER_ROLES },
+      { to: '/feedback', label: 'Feedback', icon: IconStar, roles: COUNTER_ROLES },
+      { to: '/topic-questions', label: 'Doctor Questions', icon: IconHelp, roles: COUNTER_ROLES },
     ],
   },
   {
@@ -53,7 +54,7 @@ const NAV_GROUPS = [
     items: [
       { to: '/users', label: 'Users & roles', icon: IconShield, roles: ['superadmin'] },
       { to: '/audit-log', label: 'Audit log', icon: IconClock, roles: ['superadmin'] },
-      { to: '/help', label: 'Help', icon: IconHelp },
+      { to: '/help', label: 'Help', icon: IconHelp, roles: OPS_ROLES },
     ],
   },
 ];

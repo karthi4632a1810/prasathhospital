@@ -6,10 +6,11 @@ import { LoadingState, ErrorState } from '../../components/ui/States';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 
-const ROLES = ['superadmin', 'manager', 'checkin_staff'];
+const ROLES = ['superadmin', 'manager', 'counter_staff', 'checkin_staff'];
 const ROLE_LABELS = {
   superadmin: 'Super admin',
   manager: 'Manager',
+  counter_staff: 'Counter staff (Dashboard, Registrations, Communications, Event day)',
   checkin_staff: 'Check-in staff',
 };
 

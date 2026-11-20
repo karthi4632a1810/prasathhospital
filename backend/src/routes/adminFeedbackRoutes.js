@@ -6,6 +6,6 @@ const { requireAuth, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.get('/', requireAuth, requireRole('superadmin', 'manager'), listFeedback);
+router.get('/', requireAuth, requireRole('superadmin', 'manager', 'counter_staff'), listFeedback);
 
 module.exports = router;

@@ -16,7 +16,7 @@ const { requireAuth, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.use(requireAuth, requireRole('superadmin', 'manager'));
+router.use(requireAuth, requireRole('superadmin', 'manager', 'counter_staff'));
 
 router.get('/', listRegistrations);
 router.get('/export.csv', exportRegistrationsCsv);
