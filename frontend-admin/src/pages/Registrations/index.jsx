@@ -603,6 +603,23 @@ export default function Registrations() {
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                         <strong className="mono">{reg.registrationCode}</strong>
+                        {reg.badgeNo && (
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              fontWeight: 800,
+                              fontFamily: 'monospace',
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              background: '#eef2ff',
+                              color: '#4338ca',
+                              border: '1px solid #c7d2fe',
+                            }}
+                            title={`Registration order badge #${reg.badgeNo}`}
+                          >
+                            #{reg.badgeNo}
+                          </span>
+                        )}
                         {reg.isTest && (
                           <span
                             style={{

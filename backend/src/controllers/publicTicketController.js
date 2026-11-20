@@ -7,6 +7,7 @@ const { generateQrPngBuffer } = require('../utils/qrcode');
 const { streamTicketPdf } = require('../utils/ticketPdf');
 const { streamCertificatePdf } = require('../utils/certificatePdf');
 const { generateIdCardPdfBuffer } = require('../utils/idCardPdf');
+const { resolveRegistrationBadgeNo } = require('../services/badgeService');
 const env = require('../config/env');
 
 /**
@@ -40,8 +41,10 @@ function checkInUrlFor(qrToken) {
 /** GET /api/v1/tickets/:qrToken */
 const getTicket = asyncHandler(async (req, res) => {
   const reg = await findTicketOr404(req.params.qrToken);
+  const badgeNo = reg.badgeNo || (await resolveRegistrationBadgeNo(reg));
   return sendSuccess(res, {
     registrationCode: reg.registrationCode,
+    badgeNo,
     status: reg.status,
     attendee: {
       name: reg.attendee.name,
@@ -118,7 +121,12 @@ const getBadgePdf = asyncHandler(async (req, res) => {
   const includeTemplate = req.query.template === 'true' || req.query.preview === 'true';
   const showQr = req.query.showQr !== 'false' && req.query.noQr !== 'true';
   const showBadgeNo = req.query.showBadgeNo !== 'false' && req.query.noBadgeNo !== 'true';
-  const badgeNo = req.query.badgeNo || req.query.badgeNumber || null;
+  let badgeNo = req.query.badgeNo || req.query.badgeNumber;
+  if (!badgeNo) {
+    badgeNo = await resolveRegistrationBadgeNo(reg);
+  } else if (/^\d+$/.test(String(badgeNo).trim())) {
+    badgeNo = String(badgeNo).trim().padStart(4, '0');
+  }
   const buffer = await generateIdCardPdfBuffer(reg, {
     role,
     name,

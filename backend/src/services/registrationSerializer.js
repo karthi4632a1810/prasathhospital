@@ -41,6 +41,7 @@ function serializeRegistrationForPublic(reg, { event, ticketType, company } = {}
     },
     company: company ? { name: company.name } : null,
     couponCode: reg.couponCode || '',
+    badgeNo: reg.badgeNo || '',
     pricing: reg.pricing,
     qrToken: reg.qrToken || null,
     event: event ? { title: event.title, slug: event.slug, startDate: event.startDate, endDate: event.endDate } : undefined,
@@ -56,6 +57,7 @@ function serializeRegistrationForAdmin(reg) {
   return {
     ...obj,
     id: obj._id,
+    badgeNo: obj.badgeNo || '',
     event: reg.event && reg.event.title ? { id: reg.event._id, title: reg.event.title, slug: reg.event.slug } : obj.event,
     ticketType: reg.ticketType && reg.ticketType.name
       ? { id: reg.ticketType._id, name: reg.ticketType.name, code: reg.ticketType.code }

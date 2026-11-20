@@ -6,6 +6,7 @@ const Event = require('../models/Event');
 const ApiError = require('../utils/ApiError');
 const { sendSuccess, asyncHandler } = require('../utils/response');
 const { recordAudit } = require('../services/auditLog');
+const { resolveRegistrationBadgeNo } = require('../services/badgeService');
 
 /**
  * The scanner reads whatever the QR encodes — a full
@@ -361,10 +362,13 @@ const scanTicket = asyncHandler(async (req, res) => {
     });
   }
 
+  const badgeNo = await resolveRegistrationBadgeNo(reg);
+
   const payload = {
     id: String(reg._id),
     _id: reg._id,
     registrationCode: reg.registrationCode,
+    badgeNo,
     qrToken: reg.qrToken,
     attendee: {
       name: reg.attendee.name,

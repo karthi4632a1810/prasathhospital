@@ -151,11 +151,13 @@ const RegistrationSchema = new Schema(
     campaignSource: { type: String, trim: true, default: '' },
     notes: { type: String, trim: true, default: '' },
     isTest: { type: Boolean, default: false, index: true },
+    badgeNo: { type: String, trim: true, default: '' },
   },
   { timestamps: true }
 );
 
 RegistrationSchema.index({ event: 1, status: 1 });
+RegistrationSchema.index({ event: 1, createdAt: 1, _id: 1 });
 RegistrationSchema.index({ event: 1, createdAt: -1 });
 RegistrationSchema.index({ 'attendee.email': 1 });
 RegistrationSchema.index({ 'attendee.phone': 1 });
@@ -190,6 +192,19 @@ RegistrationSchema.virtual('isFree').get(function isFree() {
 RegistrationSchema.pre('validate', function assignCodesOnCreate(next) {
   if (this.isNew && !this.registrationCode) {
     this.registrationCode = `REG-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+  }
+  next();
+});
+
+RegistrationSchema.pre('save', async function assignBadgeNoOnCreate(next) {
+  if (this.isNew && !this.badgeNo) {
+    try {
+      const eventFilter = this.event ? { event: this.event } : {};
+      const count = await this.constructor.countDocuments(eventFilter);
+      this.badgeNo = String(count + 1).padStart(4, '0');
+    } catch {
+      // Continue even if count fails
+    }
   }
   next();
 });

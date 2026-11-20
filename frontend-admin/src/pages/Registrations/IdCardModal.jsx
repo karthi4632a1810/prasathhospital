@@ -245,8 +245,27 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
           >
             <div>
               <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>REGISTRATION ID</div>
-              <div style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '0.95rem', color: '#0f172a' }}>
-                {regCode}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '0.95rem', color: '#0f172a' }}>
+                  {regCode}
+                </span>
+                {registration.badgeNo && (
+                  <span
+                    style={{
+                      fontFamily: 'monospace',
+                      fontWeight: 800,
+                      fontSize: '0.78rem',
+                      color: '#4338ca',
+                      backgroundColor: '#eef2ff',
+                      padding: '1px 6px',
+                      borderRadius: '4px',
+                      border: '1px solid #c7d2fe',
+                    }}
+                    title="Order based on who registered first"
+                  >
+                    #{registration.badgeNo}
+                  </span>
+                )}
               </div>
             </div>
             <div>
@@ -453,7 +472,7 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
                   />
                 </div>
                 <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b', flex: 1, minWidth: '200px' }}>
-                  Printed centered between attendee name and QR code. Padded to 4 digits (e.g. <code>0001</code> to <code>9999</code>).
+                  Printed centered between attendee name and QR code. Automatically ordered by who registered first (e.g. <code>0001</code> for 1st registrant).
                 </p>
               </div>
             ) : (

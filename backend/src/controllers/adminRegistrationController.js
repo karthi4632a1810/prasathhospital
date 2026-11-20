@@ -8,6 +8,7 @@ const Registration = require('../models/Registration');
 const ApiError = require('../utils/ApiError');
 const { sendSuccess, asyncHandler } = require('../utils/response');
 const { serializeRegistrationForAdmin } = require('../services/registrationSerializer');
+const { resolveRegistrationBadgeNo, syncEventBadgeNumbers } = require('../services/badgeService');
 const { buildRegistrationFilter, buildSort } = require('../services/registrationQuery');
 const inventory = require('../services/inventory');
 const { releaseCoupon } = require('../services/coupon');
@@ -48,6 +49,16 @@ const listRegistrations = asyncHandler(async (req, res) => {
     Registration.countDocuments(filter),
   ]);
 
+  // Synchronize badge numbers based on registration order in background
+  syncEventBadgeNumbers(filter.event).catch(() => {});
+
+  // For any items missing badgeNo in this batch, resolve based on registration order
+  for (const r of registrations) {
+    if (!r.badgeNo && r.createdAt) {
+      r.badgeNo = await resolveRegistrationBadgeNo(r);
+    }
+  }
+
   return sendSuccess(res, registrations.map(serializeRegistrationForAdmin), {
     meta: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 },
   });
@@ -56,6 +67,9 @@ const listRegistrations = asyncHandler(async (req, res) => {
 /** GET /api/v1/admin/registrations/:id — includes the full delivery attempt log. */
 const getRegistration = asyncHandler(async (req, res) => {
   const reg = await findOr404(req.params.id);
+  if (!reg.badgeNo) {
+    reg.badgeNo = await resolveRegistrationBadgeNo(reg);
+  }
   return sendSuccess(res, serializeRegistrationForAdmin(reg));
 });
 
@@ -489,7 +503,12 @@ const getRegistrationBadgePdf = asyncHandler(async (req, res) => {
   const includeTemplate = req.query.template === 'true' || req.query.preview === 'true';
   const showQr = req.query.showQr !== 'false' && req.query.noQr !== 'true';
   const showBadgeNo = req.query.showBadgeNo !== 'false' && req.query.noBadgeNo !== 'true';
-  const badgeNo = req.query.badgeNo || req.query.badgeNumber || null;
+  let badgeNo = req.query.badgeNo || req.query.badgeNumber;
+  if (!badgeNo) {
+    badgeNo = await resolveRegistrationBadgeNo(reg);
+  } else if (/^\d+$/.test(String(badgeNo).trim())) {
+    badgeNo = String(badgeNo).trim().padStart(4, '0');
+  }
   const buffer = await generateIdCardPdfBuffer(reg, {
     role,
     name,
