@@ -7,6 +7,7 @@ const { generateQrPngBuffer } = require('../utils/qrcode');
 const { streamTicketPdf } = require('../utils/ticketPdf');
 const { streamCertificatePdf } = require('../utils/certificatePdf');
 const { generateIdCardPdfBuffer } = require('../utils/idCardPdf');
+const { generateCertificateBuffer } = require('../utils/certificateGenerator');
 const { resolveRegistrationBadgeNo } = require('../services/badgeService');
 const env = require('../config/env');
 
@@ -92,22 +93,33 @@ const getTicketPdf = asyncHandler(async (req, res) => {
   });
 });
 
-/** GET /api/v1/tickets/:qrToken/certificate.pdf — available once the event has concluded. */
+/** GET /api/v1/tickets/:qrToken/certificate (or .pdf, .png, .jpg) */
 const getCertificatePdf = asyncHandler(async (req, res) => {
   const reg = await findTicketOr404(req.params.qrToken);
   if (reg.status !== 'confirmed') throw ApiError.conflict('Certificates are only issued for confirmed registrations.');
-  if (reg.event.status !== 'completed') {
-    throw ApiError.conflict('Certificates are issued once the event has concluded.');
-  }
 
   if (!reg.certificateIssuedAt) {
     reg.certificateIssuedAt = new Date();
-    await reg.save();
+    await reg.save().catch(() => {});
   }
 
-  res.set('Content-Type', 'application/pdf');
-  res.set('Content-Disposition', `inline; filename="${reg.registrationCode}-certificate.pdf"`);
-  streamCertificatePdf(res, { event: reg.event, registration: reg });
+  const requestedFormat = (req.params.ext || req.query.format || 'pdf').toLowerCase().replace(/^\./, '');
+  const name = req.query.name || reg.attendee?.name || 'Delegate';
+  const isPreview = req.query.preview === 'true';
+
+  const { buffer, contentType, ext } = await generateCertificateBuffer({
+    name,
+    registrationCode: reg.registrationCode,
+    format: requestedFormat,
+  });
+
+  const safeName = String(name).replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const filename = `CIIM2026-CERTIFICATE-${reg.registrationCode}-${safeName}.${ext}`;
+
+  res.set('Content-Type', contentType);
+  res.set('Content-Disposition', `${isPreview ? 'inline' : 'attachment'}; filename="${filename}"`);
+  res.set('Cache-Control', 'public, max-age=60');
+  return res.send(buffer);
 });
 
 /** GET /api/v1/tickets/:qrToken/badge.pdf — Official Delegate ID Card / Badge */

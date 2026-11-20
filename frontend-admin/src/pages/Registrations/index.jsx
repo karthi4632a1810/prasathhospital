@@ -16,6 +16,7 @@ import {
 } from '../../components/StatusBadges';
 import RegistrationDetail from './RegistrationDetail';
 import IdCardModal from './IdCardModal';
+import CertificateModal from './CertificateModal';
 
 const EMPTY_FILTERS = {
   q: '',
@@ -47,6 +48,7 @@ export default function Registrations() {
   const [transferring, setTransferring] = useState(false);
   const [openId, setOpenId] = useState(null);
   const [idCardModalReg, setIdCardModalReg] = useState(null);
+  const [certificateModalReg, setCertificateModalReg] = useState(null);
   const [exporting, setExporting] = useState(false);
   const [exportingAttendance, setExportingAttendance] = useState(false);
   const [exportError, setExportError] = useState('');
@@ -567,7 +569,7 @@ export default function Registrations() {
                   <th>Email</th>
                   <th>WhatsApp</th>
                   <SortTh label="Check-in" field="checkedInAt" sort={sort} onSort={toggleSort} />
-                  <th style={{ textAlign: 'center', width: '95px' }}>ID Card</th>
+                  <th style={{ textAlign: 'center', width: '190px' }}>ID Card &amp; Certificate</th>
                 </tr>
               </thead>
               <tbody>
@@ -693,28 +695,52 @@ export default function Registrations() {
                       </div>
                     </td>
                     <td onClick={(e) => e.stopPropagation()} style={{ textAlign: 'center' }}>
-                      <button
-                        type="button"
-                        onClick={() => setIdCardModalReg(reg)}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          padding: '4px 10px',
-                          borderRadius: '6px',
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          backgroundColor: '#fdf2f8',
-                          color: '#be185d',
-                          border: '1px solid #fbcfe8',
-                          transition: 'all 120ms',
-                        }}
-                        title="Edit title/name and print/download ID Card"
-                      >
-                        <span>🪪</span>
-                        <span>Print ID</span>
-                      </button>
+                      <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center', justifyContent: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={() => setIdCardModalReg(reg)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            backgroundColor: '#fdf2f8',
+                            color: '#be185d',
+                            border: '1px solid #fbcfe8',
+                            transition: 'all 120ms',
+                          }}
+                          title="Print or download attendee ID badge"
+                        >
+                          <span>🪪</span>
+                          <span>ID Card</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setCertificateModalReg(reg)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            backgroundColor: '#f0fdf4',
+                            color: '#15803d',
+                            border: '1px solid #bbf7d0',
+                            transition: 'all 120ms',
+                          }}
+                          title="Download Certificate as PNG, JPG, or PDF"
+                        >
+                          <span>📜</span>
+                          <span>Certificate</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -826,6 +852,14 @@ export default function Registrations() {
         <IdCardModal
           registration={idCardModalReg}
           onClose={() => setIdCardModalReg(null)}
+          onUpdated={handleChanged}
+        />
+      )}
+
+      {certificateModalReg && (
+        <CertificateModal
+          registration={certificateModalReg}
+          onClose={() => setCertificateModalReg(null)}
           onUpdated={handleChanged}
         />
       )}

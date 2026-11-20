@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { checkinApi } from '../../lib/checkinApi';
 import Button from '../../components/ui/Button';
 import IdCardModal from '../Registrations/IdCardModal';
+import CertificateModal from '../Registrations/CertificateModal';
 import './CheckIn.css';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
@@ -72,6 +73,7 @@ export default function CheckIn() {
   const [copiedCode, setCopiedCode] = useState(false);
   const [printAttendee, setPrintAttendee] = useState(null);
   const [idCardModalReg, setIdCardModalReg] = useState(null);
+  const [certificateModalReg, setCertificateModalReg] = useState(null);
 
   const scannerRef = useRef(null);
   const scannerDivId = 'checkin-camera';
@@ -995,6 +997,20 @@ export default function CheckIn() {
                     <Button
                       variant="secondary"
                       size="sm"
+                      onClick={() => setCertificateModalReg(scanResult)}
+                      style={{
+                        backgroundColor: '#f0fdf4',
+                        borderColor: '#bbf7d0',
+                        color: '#15803d',
+                        fontWeight: 700,
+                      }}
+                      title="Download Certificate as PNG, JPG, or PDF"
+                    >
+                      📜 Certificate
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => handlePrintBadge(scanResult)}
                     >
                       🖨️ Print Slip
@@ -1133,6 +1149,20 @@ export default function CheckIn() {
                       onClick={() => setIdCardModalReg(scanResult)}
                     >
                       🪪 Download ID Card (PDF)
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setCertificateModalReg(scanResult)}
+                      style={{
+                        backgroundColor: '#f0fdf4',
+                        borderColor: '#bbf7d0',
+                        color: '#15803d',
+                        fontWeight: 700,
+                      }}
+                      title="Download Certificate as PNG, JPG, or PDF"
+                    >
+                      📜 Certificate
                     </Button>
                     <Button
                       variant="secondary"
@@ -1308,6 +1338,34 @@ export default function CheckIn() {
               setRecentScans((prev) =>
                 prev.map((item) =>
                   item.data?.registrationCode === (updated.registrationCode || idCardModalReg.registrationCode)
+                    ? {
+                        ...item,
+                        name: updated.attendee.name,
+                        data: {
+                          ...item.data,
+                          attendee: { ...item.data?.attendee, name: updated.attendee.name },
+                        },
+                      }
+                    : item
+                )
+              );
+            }
+          }}
+        />
+      )}
+
+      {certificateModalReg && (
+        <CertificateModal
+          registration={certificateModalReg}
+          onClose={() => setCertificateModalReg(null)}
+          onUpdated={(updated) => {
+            if (updated?.attendee?.name) {
+              setScanResult((prev) =>
+                prev ? { ...prev, attendee: { ...prev.attendee, name: updated.attendee.name } } : prev
+              );
+              setRecentScans((prev) =>
+                prev.map((item) =>
+                  item.data?.registrationCode === (updated.registrationCode || certificateModalReg.registrationCode)
                     ? {
                         ...item,
                         name: updated.attendee.name,

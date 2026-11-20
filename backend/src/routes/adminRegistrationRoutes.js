@@ -10,6 +10,7 @@ const {
   exportRegistrationsCsv,
   exportScannedAttendanceXlsx,
   getRegistrationBadgePdf,
+  getRegistrationCertificate,
 } = require('../controllers/adminRegistrationController');
 const { requireAuth, requireRole } = require('../middleware/auth');
 
@@ -22,6 +23,8 @@ router.get('/export.csv', exportRegistrationsCsv);
 router.get('/export-attendance.xlsx', exportScannedAttendanceXlsx);
 router.get('/:id', getRegistration);
 router.get('/:id/badge.pdf', getRegistrationBadgePdf);
+router.get('/:id/certificate', getRegistrationCertificate);
+router.get('/:id/certificate.:ext', getRegistrationCertificate);
 router.patch('/:id', updateRegistration);
 router.post('/:id/cancel', cancelRegistration);
 router.post('/:id/deliveries/:channel', retryDelivery);

@@ -6,6 +6,7 @@ import Button from '../../components/ui/Button';
 import { LoadingState, ErrorState } from '../../components/ui/States';
 import { DeliveryBadge, RegistrationStatusBadge } from '../../components/StatusBadges';
 import IdCardModal from './IdCardModal';
+import CertificateModal from './CertificateModal';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 const PUBLIC_SITE = (import.meta.env.VITE_PUBLIC_SITE_URL || '').replace(/\/$/, '');
@@ -27,6 +28,7 @@ export default function RegistrationDetail({ id, onClose, onChanged }) {
   const [flash, setFlash] = useState(null);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [idCardOpen, setIdCardOpen] = useState(false);
+  const [certificateOpen, setCertificateOpen] = useState(false);
   const [reason, setReason] = useState('');
   const [notes, setNotes] = useState('');
 
@@ -119,12 +121,20 @@ export default function RegistrationDetail({ id, onClose, onChanged }) {
           setNotes={setNotes}
           onSaveNotes={handleSaveNotes}
           onOpenIdCard={() => setIdCardOpen(true)}
+          onOpenCertificate={() => setCertificateOpen(true)}
         />
       )}
       {idCardOpen && reg && (
         <IdCardModal
           registration={reg}
           onClose={() => setIdCardOpen(false)}
+          onUpdated={(updated) => apply(updated, 'Attendee name updated.')}
+        />
+      )}
+      {certificateOpen && reg && (
+        <CertificateModal
+          registration={reg}
+          onClose={() => setCertificateOpen(false)}
           onUpdated={(updated) => apply(updated, 'Attendee name updated.')}
         />
       )}
@@ -146,6 +156,7 @@ function Body({
   setNotes,
   onSaveNotes,
   onOpenIdCard,
+  onOpenCertificate,
 }) {
   const isConfirmed = reg.status === 'confirmed';
   const canCancel = (isConfirmed || reg.status === 'pending_payment') && !reg.checkedInAt;
@@ -264,6 +275,21 @@ function Body({
                   }}
                 >
                   🪪 Print / Edit ID Card
+                </Button>
+              )}
+              {isConfirmed && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={onOpenCertificate}
+                  style={{
+                    backgroundColor: '#f0fdf4',
+                    borderColor: '#86efac',
+                    color: '#15803d',
+                    fontWeight: 700,
+                  }}
+                >
+                  📜 Download Certificate (PNG/JPG/PDF)
                 </Button>
               )}
               {ticketUrl && (

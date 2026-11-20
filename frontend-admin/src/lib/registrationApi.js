@@ -40,4 +40,17 @@ export const registrationApi = {
       filename || `ID-CARD-${id}.pdf`
     );
   },
+  downloadCertificate: (id, { name, format = 'pdf' } = {}, filename) => {
+    const fmt = (format || 'pdf').toLowerCase().replace(/^\./, '');
+    const q = toQuery({ name, format: fmt });
+    return downloadFile(
+      `/admin/registrations/${id}/certificate?${q}`,
+      filename || `CIIM2026-CERTIFICATE-${id}.${fmt}`
+    );
+  },
+  getCertificateUrl: (id, { name, format = 'pdf', preview = false } = {}) => {
+    const fmt = (format || 'pdf').toLowerCase().replace(/^\./, '');
+    const q = toQuery({ name, format: fmt, preview: preview ? 'true' : undefined });
+    return `/admin/registrations/${id}/certificate?${q}`;
+  },
 };

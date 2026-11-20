@@ -17,6 +17,7 @@ const { cleanAttendee } = require('./publicRegistrationController');
 const { recordAudit } = require('../services/auditLog');
 const { toCsv } = require('../utils/csv');
 const { generateIdCardPdfBuffer } = require('../utils/idCardPdf');
+const { generateCertificateBuffer } = require('../utils/certificateGenerator');
 
 function withRefs(query) {
   return query
@@ -525,6 +526,36 @@ const getRegistrationBadgePdf = asyncHandler(async (req, res) => {
   return res.send(buffer);
 });
 
+/**
+ * GET /api/v1/admin/registrations/:id/certificate
+ * GET /api/v1/admin/registrations/:id/certificate.:ext
+ * Download / preview attendee certificate in PDF, PNG, or JPG format.
+ */
+const getRegistrationCertificate = asyncHandler(async (req, res) => {
+  const reg = await findOr404(req.params.id);
+  if (reg.status !== 'confirmed') {
+    throw ApiError.conflict('Certificates are only available for confirmed registrations.');
+  }
+
+  const requestedFormat = (req.params.ext || req.query.format || 'pdf').toLowerCase().replace(/^\./, '');
+  const name = req.query.name || reg.attendee?.name || 'Delegate';
+  const isPreview = req.query.preview === 'true';
+
+  const { buffer, contentType, ext } = await generateCertificateBuffer({
+    name,
+    registrationCode: reg.registrationCode,
+    format: requestedFormat,
+  });
+
+  const safeName = String(name).replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const filename = `CIIM2026-CERTIFICATE-${reg.registrationCode}-${safeName}.${ext}`;
+
+  res.set('Content-Type', contentType);
+  res.set('Content-Disposition', `${isPreview ? 'inline' : 'attachment'}; filename="${filename}"`);
+  res.set('Cache-Control', 'private, max-age=60');
+  return res.send(buffer);
+});
+
 module.exports = {
   listRegistrations,
   getRegistration,
@@ -534,6 +565,7 @@ module.exports = {
   exportRegistrationsCsv,
   exportScannedAttendanceXlsx,
   getRegistrationBadgePdf,
+  getRegistrationCertificate,
   qrStatusOf,
   CSV_COLUMNS,
 };
