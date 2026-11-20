@@ -54,7 +54,7 @@ const listRegistrations = asyncHandler(async (req, res) => {
   ]);
 
   // Synchronize badge numbers based on registration order in background
-  syncEventBadgeNumbers(filter.event).catch(() => {});
+  syncEventBadgeNumbers(filter.event).catch(() => { });
 
   // For any items missing badgeNo in this batch, resolve based on registration order
   for (const r of registrations) {
@@ -643,7 +643,7 @@ const createRegistration = asyncHandler(async (req, res) => {
 
   // Notifications if requested
   if (sendNotifications) {
-    deliverTicket(registration, 'whatsapp').catch(() => {});
+    deliverTicket(registration, 'whatsapp').catch(() => { });
   }
 
   const populated = await withRefs(Registration.findById(registration._id));

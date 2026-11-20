@@ -29,16 +29,22 @@ export const idCardStudioApi = {
       filename
     ),
 
-  /** Download a single ID card PDF */
-  downloadSinglePdf: (
-    { name, role, code, badgeNo, template = false, showQr = true, showBadgeNo = true },
+  /** Download a single ID card file in PDF, PNG, or JPG */
+  downloadSingleFile: (
+    { name, role, code, badgeNo, template = false, showQr = true, showBadgeNo = true, format = 'pdf' },
     filename
-  ) =>
-    downloadPostFile(
+  ) => {
+    const ext = (format || 'pdf').toLowerCase().replace(/^\./, '');
+    return downloadPostFile(
       '/admin/id-cards/single-pdf',
-      { name, role, code, badgeNo, template, showQr, showBadgeNo },
-      filename || `${code || 'ID'}-${name || 'BADGE'}.pdf`
-    ),
+      { name, role, code, badgeNo, template, showQr, showBadgeNo, format: ext },
+      filename || `${code || 'ID'}-${name || 'BADGE'}.${ext}`
+    );
+  },
+
+  /** Download a single ID card PDF */
+  downloadSinglePdf: (params, filename) =>
+    idCardStudioApi.downloadSingleFile({ ...params, format: 'pdf' }, filename),
 
   /** Open single ID card in browser tab for direct print preview (Ctrl+P) */
   openSinglePdfTab: ({ name, role, code, badgeNo, template = false, showQr = true, showBadgeNo = true }) =>
@@ -50,6 +56,7 @@ export const idCardStudioApi = {
       template,
       showQr,
       showBadgeNo,
+      format: 'pdf',
     }),
 
   /** Open multi-page PDF in browser tab for direct print preview (Ctrl+P) */

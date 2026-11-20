@@ -1,12 +1,31 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { marketingCampaignApi } from '../../lib/marketingCampaignApi';
 import Button from '../../components/ui/Button';
 import './WhatsAppEmailMarketing.css';
 
 export default function WhatsAppEmailMarketing() {
-  const [activeTab, setActiveTab] = useState('delegate_reminder'); // 'delegate_reminder' | 'session_approve' | 'history'
+  const [activeTab, setActiveTab] = useState('live_monitor'); // 'live_monitor' | 'delegate_reminder' | 'session_approve'
 
-  // Audience Data
+  // Live Monitor Data
+  const [liveData, setLiveData] = useState({
+    activeJobs: [],
+    scheduledCampaigns: [],
+    recentCampaigns: [],
+    summary: { activeWorkersCount: 0, scheduledCount: 0, totalSentToday: 0, totalFailedToday: 0 },
+  });
+  const [loadingLive, setLoadingLive] = useState(false);
+
+  // Modal: Schedule All Sessions for Tomorrow
+  const [showScheduleAllModal, setShowScheduleAllModal] = useState(false);
+  const [scheduleAllTargetDate, setScheduleAllTargetDate] = useState('2026-11-21'); // Tomorrow: Day 1
+  const [scheduleAllDayIndex, setScheduleAllDayIndex] = useState(0); // 0 = Day 1
+  const [scheduleAllLeadTime, setScheduleAllLeadTime] = useState(15); // 15 mins before
+  const [scheduleAllSendWhatsApp, setScheduleAllSendWhatsApp] = useState(true);
+  const [scheduleAllSendEmail, setScheduleAllSendEmail] = useState(true);
+  const [scheduleAllTemplateId, setScheduleAllTemplateId] = useState('ciim_session_approve_1');
+  const [submittingScheduleAll, setSubmittingScheduleAll] = useState(false);
+
+  // Audience Data for single campaigns
   const [recipients, setRecipients] = useState([]);
   const [loadingRecipients, setLoadingRecipients] = useState(true);
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -25,11 +44,11 @@ export default function WhatsAppEmailMarketing() {
   const [scheduleMode, setScheduleMode] = useState('immediate'); // 'immediate' | 'scheduled'
   const [scheduledDateTime, setScheduledDateTime] = useState('');
 
-  // Tab 1: Delegate Reminder Form
+  // Tab 2: Delegate Reminder Form
   const [tab1TemplateId, setTab1TemplateId] = useState('ciim_delegate_reminder_1');
   const [tab1CustomMessage, setTab1CustomMessage] = useState('');
 
-  // Tab 2: Session Approval Form
+  // Tab 3: Single Session Approval Form
   const [tab2TemplateId, setTab2TemplateId] = useState('ciim_session_approve_1');
   const [customSessionTitle, setCustomSessionTitle] = useState('');
   const [customSessionTime, setCustomSessionTime] = useState('');
@@ -38,20 +57,38 @@ export default function WhatsAppEmailMarketing() {
   const [customSessionTrack, setCustomSessionTrack] = useState('Main Auditorium');
   const [tab2CustomMessage, setTab2CustomMessage] = useState('');
 
-  // Campaign History
-  const [campaigns, setCampaigns] = useState([]);
-  const [loadingCampaigns, setLoadingCampaigns] = useState(false);
-
   // Dispatch Action State
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', text }
 
-  // Load initial recipients & sessions
+  // Auto-polling for Live Monitor every 2.5s
+  useEffect(() => {
+    fetchLiveMonitor();
+    const interval = setInterval(() => {
+      fetchLiveMonitor(true);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Initial load of audience & sessions
   useEffect(() => {
     loadRecipients();
     loadSessions();
-    loadCampaigns();
   }, []);
+
+  async function fetchLiveMonitor(silent = false) {
+    if (!silent) setLoadingLive(true);
+    try {
+      const res = await marketingCampaignApi.getLiveMonitor();
+      if (res.data) {
+        setLiveData(res.data);
+      }
+    } catch (err) {
+      if (!silent) console.error('Failed to fetch live monitor', err);
+    } finally {
+      if (!silent) setLoadingLive(false);
+    }
+  }
 
   async function loadRecipients() {
     setLoadingRecipients(true);
@@ -59,7 +96,6 @@ export default function WhatsAppEmailMarketing() {
       const res = await marketingCampaignApi.getRecipients();
       const list = res.data?.recipients || [];
       setRecipients(list);
-      // Default to selecting all confirmed delegates
       setSelectedIds(new Set(list.map((r) => r.id)));
     } catch (err) {
       console.error('Failed to load recipients', err);
@@ -83,18 +119,6 @@ export default function WhatsAppEmailMarketing() {
       }
     } catch (err) {
       console.error('Failed to load sessions', err);
-    }
-  }
-
-  async function loadCampaigns() {
-    setLoadingCampaigns(true);
-    try {
-      const res = await marketingCampaignApi.getCampaigns();
-      setCampaigns(res.data?.campaigns || []);
-    } catch (err) {
-      console.error('Failed to load campaigns', err);
-    } finally {
-      setLoadingCampaigns(false);
     }
   }
 
@@ -137,7 +161,6 @@ export default function WhatsAppEmailMarketing() {
     return result;
   }, [recipients, tnmcFilter, searchQuery]);
 
-  // Select / Deselect helpers
   function toggleRecipient(id) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -158,7 +181,83 @@ export default function WhatsAppEmailMarketing() {
     setSelectedIds(new Set());
   }
 
-  // Submit Campaign
+  // Actions on Live Monitor
+  async function handleLaunchScheduledNow(id, name) {
+    if (!window.confirm(`Launch campaign "${name}" immediately now?`)) return;
+    try {
+      await marketingCampaignApi.launchScheduledNow(id);
+      setFeedback({ type: 'success', text: `Campaign "${name}" launched immediately!` });
+      fetchLiveMonitor();
+    } catch (err) {
+      alert(err.message || 'Failed to launch');
+    }
+  }
+
+  async function handlePauseCampaign(id) {
+    try {
+      await marketingCampaignApi.pauseCampaign(id);
+      fetchLiveMonitor();
+    } catch (err) {
+      alert(err.message || 'Failed to pause');
+    }
+  }
+
+  async function handleResumeCampaign(id) {
+    try {
+      await marketingCampaignApi.resumeCampaign(id);
+      fetchLiveMonitor();
+    } catch (err) {
+      alert(err.message || 'Failed to resume');
+    }
+  }
+
+  async function handleCancelCampaign(id) {
+    if (!window.confirm('Are you sure you want to cancel this campaign?')) return;
+    try {
+      await marketingCampaignApi.cancelCampaign(id);
+      fetchLiveMonitor();
+    } catch (err) {
+      alert(err.message || 'Failed to cancel');
+    }
+  }
+
+  // Action: Schedule All Sessions for Tomorrow
+  async function handleScheduleAllSubmit(e) {
+    e.preventDefault();
+    const channels = [];
+    if (scheduleAllSendWhatsApp) channels.push('whatsapp');
+    if (scheduleAllSendEmail) channels.push('email');
+
+    if (!channels.length) {
+      alert('Please select at least one channel (WhatsApp or Email).');
+      return;
+    }
+
+    setSubmittingScheduleAll(true);
+    try {
+      const res = await marketingCampaignApi.scheduleAllSessions({
+        targetDate: scheduleAllTargetDate,
+        dayIndex: scheduleAllDayIndex,
+        leadTimeMinutes: scheduleAllLeadTime,
+        channels,
+        templateId: scheduleAllTemplateId,
+      });
+
+      setFeedback({
+        type: 'success',
+        text: res.message || `Scheduled ${res.count} sessions for tomorrow!`,
+      });
+      setShowScheduleAllModal(false);
+      setActiveTab('live_monitor');
+      fetchLiveMonitor();
+    } catch (err) {
+      alert(err.message || 'Failed to schedule sessions.');
+    } finally {
+      setSubmittingScheduleAll(false);
+    }
+  }
+
+  // Action: Single Campaign Dispatch
   async function handleDispatch(e) {
     e.preventDefault();
     setFeedback(null);
@@ -226,7 +325,8 @@ export default function WhatsAppEmailMarketing() {
         type: 'success',
         text: res.message || 'Campaign submitted successfully!',
       });
-      loadCampaigns();
+      setActiveTab('live_monitor');
+      fetchLiveMonitor();
     } catch (err) {
       setFeedback({
         type: 'error',
@@ -237,15 +337,15 @@ export default function WhatsAppEmailMarketing() {
     }
   }
 
-  // Cancel campaign
-  async function handleCancelCampaign(id) {
-    if (!window.confirm('Are you sure you want to cancel this campaign?')) return;
-    try {
-      await marketingCampaignApi.cancelCampaign(id);
-      loadCampaigns();
-    } catch (err) {
-      alert(err.message || 'Failed to cancel');
+  function formatCountdown(seconds) {
+    if (seconds <= 0) return 'Due now (starting...)';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) {
+      return `Starts in ${h}h ${m}m ${s}s`;
     }
+    return `Starts in ${m}m ${s}s`;
   }
 
   const selectedCount = selectedIds.size;
@@ -257,13 +357,16 @@ export default function WhatsAppEmailMarketing() {
         <div>
           <h1 className="wem-header__title">WhatsApp &amp; Email Marketing</h1>
           <p className="wem-header__desc">
-            Broadcast WhatsApp and Email notifications to registered delegates, dispatch official
-            reminders, or schedule automated alerts for conference session times.
+            Live monitor active dispatches, schedule all tomorrow&apos;s sessions with automated reminders,
+            or launch instant broadcast campaigns to registered delegates.
           </p>
         </div>
         <div className="wem-badges">
+          <span className="wem-badge is-live">
+            <span className="wem-badge-dot"></span> Live Polling Active (2.5s)
+          </span>
           <span className="wem-badge is-green">
-            <span>●</span> WhatsApp (WATI) Connected
+            <span>●</span> WATI WhatsApp Online
           </span>
           <span className="wem-badge is-purple">
             <span>●</span> SMTP Mailer Active
@@ -273,6 +376,19 @@ export default function WhatsAppEmailMarketing() {
 
       {/* Main Tabs */}
       <div className="wem-tabs">
+        <button
+          type="button"
+          className={`wem-tab${activeTab === 'live_monitor' ? ' is-active' : ''}`}
+          onClick={() => {
+            setActiveTab('live_monitor');
+            fetchLiveMonitor();
+          }}
+        >
+          <span>📡 Live Monitor &amp; Scheduled Queue</span>
+          <span className="wem-tab__tag">
+            {liveData.activeJobs?.length ? `${liveData.activeJobs.length} Running` : `${liveData.scheduledCampaigns?.length || 0} Scheduled`}
+          </span>
+        </button>
         <button
           type="button"
           className={`wem-tab${activeTab === 'delegate_reminder' ? ' is-active' : ''}`}
@@ -286,97 +402,250 @@ export default function WhatsAppEmailMarketing() {
           className={`wem-tab${activeTab === 'session_approve' ? ' is-active' : ''}`}
           onClick={() => setActiveTab('session_approve')}
         >
-          <span>2. Session Approval &amp; Schedule</span>
-          <span className="wem-tab__tag">Session Agenda Time</span>
-        </button>
-        <button
-          type="button"
-          className={`wem-tab${activeTab === 'history' ? ' is-active' : ''}`}
-          onClick={() => {
-            setActiveTab('history');
-            loadCampaigns();
-          }}
-        >
-          <span>Campaign History &amp; Schedules</span>
-          <span className="wem-tab__tag">{campaigns.length}</span>
+          <span>2. Single Session Schedule</span>
+          <span className="wem-tab__tag">Agenda Slot</span>
         </button>
       </div>
 
       {/* Feedback Alert */}
       {feedback && (
         <div className={`wem-notice ${feedback.type === 'success' ? 'is-success' : 'is-warning'}`}>
-          <strong>{feedback.type === 'success' ? '✓ Success: ' : '⚠ Error: '}</strong>
+          <strong>{feedback.type === 'success' ? '✓ Success: ' : '⚠ Notice: '}</strong>
           {feedback.text}
         </div>
       )}
 
-      {/* TAB 3: History & Scheduled Campaigns */}
-      {activeTab === 'history' ? (
-        <div className="wem-audience">
-          <div className="wem-audience__toolbar">
-            <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--ink-900)' }}>
-              Dispatched &amp; Scheduled Campaigns
-            </h3>
-            <Button variant="secondary" onClick={loadCampaigns} disabled={loadingCampaigns}>
-              {loadingCampaigns ? 'Refreshing…' : '↻ Refresh Status'}
-            </Button>
+      {/* =========================================================================
+          TAB 1: LIVE MONITOR & SCHEDULED QUEUE
+         ========================================================================= */}
+      {activeTab === 'live_monitor' && (
+        <div>
+          {/* Top Metric Bar & Schedule All Button */}
+          <div className="wem-monitor-bar">
+            <div className="wem-monitor-stats">
+              <div className="wem-monitor-stat">
+                <span className="wem-monitor-stat__val">{liveData.activeJobs?.length || 0}</span>
+                <span className="wem-monitor-stat__label">Active Workers</span>
+              </div>
+              <div className="wem-monitor-stat">
+                <span className="wem-monitor-stat__val" style={{ color: '#fde047' }}>
+                  {liveData.scheduledCampaigns?.length || 0}
+                </span>
+                <span className="wem-monitor-stat__label">Sessions Scheduled</span>
+              </div>
+              <div className="wem-monitor-stat">
+                <span className="wem-monitor-stat__val" style={{ color: '#4ade80' }}>
+                  {liveData.summary?.totalSentToday || 0}
+                </span>
+                <span className="wem-monitor-stat__label">Dispatched Today</span>
+              </div>
+              <div className="wem-monitor-stat">
+                <span className="wem-monitor-stat__val" style={{ color: '#f87171' }}>
+                  {liveData.summary?.totalFailedToday || 0}
+                </span>
+                <span className="wem-monitor-stat__label">Failed / Retries</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="wem-btn-schedule-all"
+              onClick={() => setShowScheduleAllModal(true)}
+            >
+              <span>📅</span>
+              <span>Schedule All Sessions for Tomorrow (Day 1)</span>
+            </button>
           </div>
 
-          {!campaigns.length ? (
-            <p style={{ color: 'var(--ink-500)', padding: '24px 0', textAlign: 'center' }}>
-              No marketing campaigns dispatched yet. Use Tab 1 or Tab 2 to launch your first campaign.
-            </p>
-          ) : (
-            <div className="wem-campaign-list">
-              {campaigns.map((camp) => (
-                <div className="wem-campaign-item" key={camp._id}>
-                  <div>
-                    <h4 className="wem-campaign-title">{camp.campaignName}</h4>
-                    <div className="wem-campaign-meta">
-                      <span>
-                        <strong>Template:</strong> <code>{camp.templateId}</code>
-                      </span>
-                      <span>
-                        <strong>Channels:</strong> {(camp.channels || []).join(' & ').toUpperCase()}
-                      </span>
-                      <span>
-                        <strong>Total:</strong> {camp.totalRecipients || 0} delegates
-                      </span>
-                      <span>
-                        <strong>Sent:</strong> {camp.sentCount || 0} | <strong>Failed:</strong>{' '}
-                        {camp.failedCount || 0}
-                      </span>
-                      {camp.scheduledFor && (
-                        <span>
-                          <strong>Scheduled for:</strong>{' '}
-                          {new Date(camp.scheduledFor).toLocaleString('en-IN')}
-                        </span>
-                      )}
-                      <span>
-                        <strong>Created by:</strong> {camp.dispatcherName || 'Admin'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <span className={`wem-status-pill is-${camp.status}`}>{camp.status}</span>
-                    {['SCHEDULED', 'RUNNING'].includes(camp.status) && (
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => handleCancelCampaign(camp._id)}
-                      >
-                        Cancel
-                      </Button>
-                    )}
-                  </div>
+          <div className="wem-live-grid">
+            {/* Left Column: Live Running Instant Dispatches */}
+            <div>
+              <div className="wem-live-card">
+                <div className="wem-live-card__header">
+                  <h3 className="wem-live-card__title">
+                    <span>🚀</span> Live Instant Dispatches
+                  </h3>
+                  {liveData.activeJobs?.length > 0 && (
+                    <span className="wem-badge is-live">
+                      <span className="wem-badge-dot"></span> Processing Live
+                    </span>
+                  )}
                 </div>
-              ))}
+
+                {!liveData.activeJobs || liveData.activeJobs.length === 0 ? (
+                  <div style={{ padding: '36px 16px', textAlign: 'center', color: 'var(--ink-500)' }}>
+                    <p style={{ fontSize: '1.8rem', margin: '0 0 10px 0' }}>☕</p>
+                    <p style={{ margin: 0, fontWeight: 600 }}>No instant dispatches running right now.</p>
+                    <p style={{ margin: '6px 0 0 0', fontSize: '0.84rem' }}>
+                      Launch an instant campaign from Tab 1 or 2, or watch upcoming scheduled session
+                      timers on the right.
+                    </p>
+                  </div>
+                ) : (
+                  liveData.activeJobs.map((job) => (
+                    <div
+                      key={job.campaignId}
+                      style={{
+                        padding: '16px',
+                        borderRadius: '12px',
+                        background: '#faf7f9',
+                        border: '1px solid #ebd3e2',
+                        marginBottom: '16px',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#381b4e' }}>
+                            {job.campaignName}
+                          </h4>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--ink-500)' }}>
+                            Template: <code>{job.templateId}</code> • Channels:{' '}
+                            {(job.channels || []).join(' & ').toUpperCase()}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          {job.status === 'RUNNING' ? (
+                            <Button size="sm" variant="secondary" onClick={() => handlePauseCampaign(job.campaignId)}>
+                              ⏸ Pause
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="primary" onClick={() => handleResumeCampaign(job.campaignId)}>
+                              ▶ Resume
+                            </Button>
+                          )}
+                          <Button size="sm" variant="danger" onClick={() => handleCancelCampaign(job.campaignId)}>
+                            ❌ Cancel
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div className="wem-progress-box">
+                        <div className="wem-progress-info">
+                          <span>
+                            Progress: {job.percentage}% ({job.processedCount} of {job.totalRecipients})
+                          </span>
+                          <span style={{ color: '#166534' }}>Sent: {job.sentCount} | Failed: {job.failedCount}</span>
+                        </div>
+                        <div className="wem-progress-track">
+                          <div className="wem-progress-fill" style={{ width: `${job.percentage}%` }}></div>
+                        </div>
+                        <div className="wem-speed-metrics">
+                          <span>⚡ Speed: <strong>{job.speed} msg/sec</strong></span>
+                          <span>⏳ ETA: <strong>~{job.etaSeconds}s remaining</strong></span>
+                          <span>⏱ Elapsed: <strong>{job.elapsedSeconds}s</strong></span>
+                        </div>
+                      </div>
+
+                      {/* Real-time Recipient Stream */}
+                      {job.recentLogs && job.recentLogs.length > 0 && (
+                        <div>
+                          <p style={{ margin: '10px 0 4px 0', fontSize: '0.78rem', fontWeight: 700, color: '#381b4e' }}>
+                            Live Delivery Activity Stream:
+                          </p>
+                          <div className="wem-stream-feed">
+                            {job.recentLogs.map((log, lIdx) => (
+                              <div
+                                key={lIdx}
+                                className={`wem-stream-row ${log.success ? 'is-success' : 'is-failed'}`}
+                              >
+                                <span>
+                                  <strong>{log.name}</strong> ({log.phone})
+                                </span>
+                                <span>
+                                  {log.whatsappStatus === 'SENT' && <span style={{ color: '#16a34a', marginRight: '6px' }}>[WA ✓]</span>}
+                                  {log.emailStatus === 'SENT' && <span style={{ color: '#2563eb' }}>[Email ✓]</span>}
+                                  <small style={{ marginLeft: '8px', color: 'var(--ink-400)' }}>{log.time}</small>
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
-          )}
+
+            {/* Right Column: Live Scheduled Campaigns Queue */}
+            <div>
+              <div className="wem-live-card">
+                <div className="wem-live-card__header">
+                  <h3 className="wem-live-card__title">
+                    <span>⏰</span> Scheduled Sessions Queue ({liveData.scheduledCampaigns?.length || 0})
+                  </h3>
+                  <Button size="sm" variant="secondary" onClick={() => fetchLiveMonitor()}>
+                    ↻ Refresh
+                  </Button>
+                </div>
+
+                {!liveData.scheduledCampaigns || liveData.scheduledCampaigns.length === 0 ? (
+                  <div style={{ padding: '36px 16px', textAlign: 'center', color: 'var(--ink-500)' }}>
+                    <p style={{ fontSize: '1.8rem', margin: '0 0 10px 0' }}>📅</p>
+                    <p style={{ margin: 0, fontWeight: 600 }}>No sessions scheduled in queue.</p>
+                    <p style={{ margin: '6px 0 16px 0', fontSize: '0.84rem' }}>
+                      Click the button below to schedule all 19 Day 1 sessions for tomorrow automatically!
+                    </p>
+                    <Button variant="primary" onClick={() => setShowScheduleAllModal(true)}>
+                      Schedule All Sessions for Tomorrow
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="wem-scheduled-list">
+                    {liveData.scheduledCampaigns.map((sc) => (
+                      <div className="wem-scheduled-item" key={sc._id}>
+                        <div className="wem-scheduled-item__left">
+                          <h4 className="wem-scheduled-title">{sc.campaignName}</h4>
+                          <div className="wem-scheduled-sub">
+                            <span>
+                              🕒 <strong>Scheduled:</strong>{' '}
+                              {sc.scheduledFor ? new Date(sc.scheduledFor).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                            </span>
+                            <span>
+                              👥 <strong>Audience:</strong> {sc.totalRecipients} delegates
+                            </span>
+                            <span>
+                              📲 <strong>Channels:</strong> {(sc.channels || []).join(' + ').toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                          <span className="wem-countdown-pill">
+                            ⏳ {formatCountdown(sc.countdownSeconds)}
+                          </span>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <Button
+                              size="sm"
+                              variant="primary"
+                              onClick={() => handleLaunchScheduledNow(sc._id, sc.campaignName)}
+                            >
+                              ⚡ Launch Now
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="danger"
+                              onClick={() => handleCancelCampaign(sc._id)}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-      ) : (
-        /* TAB 1 & TAB 2 MAIN WORKFLOW */
+      )}
+
+      {/* =========================================================================
+          TAB 2 & TAB 3: SINGLE CAMPAIGN DISPATCH (REMINDER / SESSION)
+         ========================================================================= */}
+      {activeTab !== 'live_monitor' && (
         <form onSubmit={handleDispatch}>
           <div className="wem-grid">
             {/* Left Column: Template & Schedule Configuration Card */}
@@ -388,8 +657,7 @@ export default function WhatsAppEmailMarketing() {
                     : '2. Session Schedule Setup'}
                 </h3>
 
-                {/* Tab 1 Banner */}
-                {activeTab === 'delegate_reminder' && (
+                {activeTab === 'delegate_reminder' ? (
                   <div className="wem-notice is-info">
                     <span>ℹ</span>
                     <div>
@@ -400,10 +668,7 @@ export default function WhatsAppEmailMarketing() {
                       </p>
                     </div>
                   </div>
-                )}
-
-                {/* Tab 2 Banner */}
-                {activeTab === 'session_approve' && (
+                ) : (
                   <div className="wem-notice is-warning">
                     <span>💡</span>
                     <div>
@@ -427,7 +692,7 @@ export default function WhatsAppEmailMarketing() {
                       <input
                         type="checkbox"
                         checked={sendWhatsApp}
-                        onChange={() => {}}
+                        onChange={() => { }}
                         aria-label="WhatsApp Channel"
                       />
                       <div className="wem-channel-box__text">
@@ -443,7 +708,7 @@ export default function WhatsAppEmailMarketing() {
                       <input
                         type="checkbox"
                         checked={sendEmail}
-                        onChange={() => {}}
+                        onChange={() => { }}
                         aria-label="Email Channel"
                       />
                       <div className="wem-channel-box__text">
@@ -539,7 +804,7 @@ export default function WhatsAppEmailMarketing() {
                           type="text"
                           value={customSessionTime}
                           onChange={(e) => setCustomSessionTime(e.target.value)}
-                          placeholder="e.g. 09:30 - 10:15"
+                          placeholder="e.g. 08:30 - 08:40"
                         />
                       </div>
                       <div className="wem-field">
@@ -804,13 +1069,155 @@ export default function WhatsAppEmailMarketing() {
                   {submitting
                     ? 'Submitting Campaign…'
                     : scheduleMode === 'immediate'
-                    ? `🚀 Send Now to ${selectedCount} Delegates`
-                    : `⏰ Schedule Dispatch (${selectedCount})`}
+                      ? `🚀 Send Now to ${selectedCount} Delegates`
+                      : `⏰ Schedule Dispatch (${selectedCount})`}
                 </button>
               </div>
             </div>
           </div>
         </form>
+      )}
+
+      {/* =========================================================================
+          MODAL: SCHEDULE ALL SESSIONS FOR TOMORROW (BATCH TIMED SCHEDULER)
+         ========================================================================= */}
+      {showScheduleAllModal && (
+        <div className="wem-modal-overlay" onClick={() => setShowScheduleAllModal(false)}>
+          <div className="wem-modal-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="wem-modal-header">
+              <div>
+                <h3 className="wem-modal-title">📅 Schedule All Sessions for Tomorrow</h3>
+                <p className="wem-modal-sub">
+                  Automatically schedule timed WhatsApp &amp; Email reminders for every session of Day 1.
+                </p>
+              </div>
+              <button
+                type="button"
+                style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer' }}
+                onClick={() => setShowScheduleAllModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleScheduleAllSubmit}>
+              {/* Day & Date Selection */}
+              <div className="wem-field">
+                <label className="wem-field__label">Conference Day</label>
+                <select
+                  className="wem-field__select"
+                  value={scheduleAllDayIndex}
+                  onChange={(e) => {
+                    const idx = parseInt(e.target.value, 10);
+                    setScheduleAllDayIndex(idx);
+                    setScheduleAllTargetDate(idx === 0 ? '2026-11-21' : '2026-11-22');
+                  }}
+                >
+                  <option value={0}>Day 1 — Infertility Controversies (19 Sessions) — Saturday, 21 Nov 2026 (Tomorrow)</option>
+                  <option value={1}>Day 2 — Andrology &amp; Precision ART (18 Sessions) — Sunday, 22 Nov 2026</option>
+                </select>
+              </div>
+
+              <div className="wem-field">
+                <label className="wem-field__label">Target Date</label>
+                <input
+                  type="date"
+                  className="wem-field__input"
+                  value={scheduleAllTargetDate}
+                  onChange={(e) => setScheduleAllTargetDate(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Lead Time Offset */}
+              <div className="wem-field">
+                <label className="wem-field__label">Dispatch Timing Offset</label>
+                <select
+                  className="wem-field__select"
+                  value={scheduleAllLeadTime}
+                  onChange={(e) => setScheduleAllLeadTime(parseInt(e.target.value, 10))}
+                >
+                  <option value={15}>15 Minutes Before Each Session (Recommended)</option>
+                  <option value={30}>30 Minutes Before Each Session</option>
+                  <option value={10}>10 Minutes Before Each Session</option>
+                  <option value={0}>At Exact Session Start Time</option>
+                </select>
+                <span className="wem-field__hint">
+                  E.g. A session starting at 08:30 AM will be dispatched at 08:15 AM automatically.
+                </span>
+              </div>
+
+              {/* Channel Selector */}
+              <div className="wem-field">
+                <span className="wem-field__label">Delivery Channels</span>
+                <div className="wem-channels">
+                  <label
+                    className={`wem-channel-box${scheduleAllSendWhatsApp ? ' is-checked' : ''}`}
+                    onClick={() => setScheduleAllSendWhatsApp(!scheduleAllSendWhatsApp)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={scheduleAllSendWhatsApp}
+                      onChange={() => { }}
+                    />
+                    <div className="wem-channel-box__text">
+                      <span className="wem-channel-box__name">WhatsApp</span>
+                      <span className="wem-channel-box__sub">WATI Template</span>
+                    </div>
+                  </label>
+
+                  <label
+                    className={`wem-channel-box${scheduleAllSendEmail ? ' is-checked' : ''}`}
+                    onClick={() => setScheduleAllSendEmail(!scheduleAllSendEmail)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={scheduleAllSendEmail}
+                      onChange={() => { }}
+                    />
+                    <div className="wem-channel-box__text">
+                      <span className="wem-channel-box__name">Email</span>
+                      <span className="wem-channel-box__sub">HTML Mailer</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Template ID */}
+              <div className="wem-field">
+                <label className="wem-field__label">Template ID</label>
+                <input
+                  type="text"
+                  className="wem-field__input"
+                  value={scheduleAllTemplateId}
+                  onChange={(e) => setScheduleAllTemplateId(e.target.value)}
+                  placeholder="ciim_session_approve_1"
+                  required
+                />
+                <span className="wem-field__hint">
+                  Preset to <code>ciim_session_approve_1</code> (editable anytime).
+                </span>
+              </div>
+
+              <div className="wem-notice is-info">
+                <span>ℹ</span>
+                <div>
+                  <strong>Audience:</strong> Will schedule personalized session reminders for all{' '}
+                  <strong>{recipients.length} confirmed delegates</strong>.
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
+                <Button variant="secondary" onClick={() => setShowScheduleAllModal(false)} type="button">
+                  Cancel
+                </Button>
+                <Button variant="primary" type="submit" disabled={submittingScheduleAll}>
+                  {submittingScheduleAll ? 'Scheduling Sessions…' : '🚀 Confirm & Schedule All Sessions for Tomorrow'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

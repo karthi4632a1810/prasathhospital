@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Button from '../../components/ui/Button';
 import { registrationApi } from '../../lib/registrationApi';
+import { idCardStudioApi } from '../../lib/idCardStudioApi';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 
@@ -21,7 +22,7 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
     return 'DELEGATE';
   })();
 
-  const originalName = registration.attendee?.name || '';
+  const originalName = registration.attendee?.name || registration.name || '';
 
   const defaultBadgeNo = (() => {
     if (registration.badgeNo) return String(registration.badgeNo);
@@ -48,9 +49,15 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  const regCode = registration.registrationCode || registration.id;
+  const regCode = registration.registrationCode || registration.code || registration.id;
   const regId = registration.id || registration._id || regCode;
   const identifier = registration.qrToken || regCode;
+
+  const isDbRegistration = Boolean(
+    registration._id ||
+    (registration.id && /^[0-9a-fA-F]{24}$/.test(registration.id)) ||
+    (registration.registrationCode && String(registration.registrationCode).startsWith('REG-'))
+  );
 
   const handleBadgeNoBlur = () => {
     const trimmed = String(badgeNo || '').trim();
@@ -71,16 +78,29 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
   };
 
   const handleOpenPrintTab = () => {
-    const url = getPdfUrl(template);
-    window.open(url, '_blank');
+    if (isDbRegistration) {
+      const url = getPdfUrl(template);
+      window.open(url, '_blank');
+    } else {
+      idCardStudioApi.openSinglePdfTab({
+        name: name.trim(),
+        role: role.trim(),
+        code: regCode,
+        badgeNo: badgeNo.trim(),
+        template,
+        showQr,
+        showBadgeNo,
+      });
+    }
   };
 
-  const handleDownload = async () => {
+  const handleDownload = async (format = 'pdf') => {
     setBusy(true);
     setError('');
     setSuccessMsg('');
+    const ext = (format || 'pdf').toLowerCase().replace(/^\./, '');
     try {
-      if (saveToDb && name.trim()) {
+      if (isDbRegistration && saveToDb && name.trim()) {
         const cleanDbName = name.replace(/\s+/g, ' ').trim();
         if (cleanDbName !== originalName) {
           await registrationApi.update(regId, {
@@ -98,20 +118,36 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
       const safeName = (name.replace(/\s+/g, '_').trim() || regCode).replace(/[^a-zA-Z0-9_-]/g, '_');
       const qrSuffix = !showQr ? '-NO-QR' : '';
       const numPrefix = showBadgeNo && badgeNo ? `${badgeNo}-` : '';
-      const filename = `${numPrefix}${regCode}-${role}-${safeName}-ID-CARD${qrSuffix}.pdf`;
+      const filename = `${numPrefix}${regCode}-${role}-${safeName}-ID-CARD${qrSuffix}.${ext}`;
 
-      await registrationApi.downloadBadgePdf(
-        regId,
-        { role: role.trim(), name: name.trim(), template, showQr, showBadgeNo, badgeNo },
-        filename
-      );
+      if (isDbRegistration) {
+        await registrationApi.downloadBadge(
+          regId,
+          { role: role.trim(), name: name.trim(), template, showQr, showBadgeNo, badgeNo, format: ext },
+          filename
+        );
+      } else {
+        await idCardStudioApi.downloadSingleFile(
+          {
+            name: name.trim(),
+            role: role.trim(),
+            code: regCode,
+            badgeNo,
+            template,
+            showQr,
+            showBadgeNo,
+            format: ext,
+          },
+          filename
+        );
+      }
 
-      setSuccessMsg('ID Card PDF downloaded successfully!');
+      setSuccessMsg(`ID Card ${ext.toUpperCase()} downloaded successfully!`);
       setTimeout(() => {
         onClose();
       }, 1200);
     } catch (err) {
-      setError(err.message || 'Failed to download ID card PDF.');
+      setError(err.message || `Failed to download ID card ${ext.toUpperCase()}.`);
     } finally {
       setBusy(false);
     }
@@ -184,7 +220,7 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
             style={{
               background: 'none',
               border: 'none',
-              fontSize: '22px',
+              fontSize: 22,
               cursor: 'pointer',
               color: '#94a3b8',
               lineHeight: 1,
@@ -349,46 +385,45 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
                     border: 'none',
                     color: '#6366f1',
                     fontSize: '0.78rem',
+                    fontWeight: 600,
                     cursor: 'pointer',
-                    textDecoration: 'underline',
+                    padding: 0,
                   }}
                 >
-                  Reset to "{originalName}"
+                  ↺ Reset to "{originalName}"
                 </button>
               )}
             </div>
-            <textarea
-              rows={2}
+            <input
+              type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={'e.g. Dr Esther Rani\nStella Bhakiyathai.E'}
+              placeholder="Dr. Sneha Rajan"
               style={{
                 width: '100%',
-                padding: '10px 12px',
+                padding: '10px 14px',
                 borderRadius: '8px',
-                border: '1px solid #cbd5e1',
-                fontSize: '0.95rem',
-                fontWeight: 600,
+                border: '1.5px solid #cbd5e1',
+                fontSize: '1rem',
+                fontWeight: 700,
                 color: '#0f172a',
                 outline: 'none',
-                resize: 'vertical',
-                minHeight: '62px',
-                lineHeight: 1.4,
-                fontFamily: 'inherit',
               }}
             />
-            <p style={{ margin: '5px 0 0', fontSize: '0.78rem', color: '#64748b' }}>
-              Press <strong>Enter</strong> to split name across Line 1 and Line 2. Single-line long names will auto-balance.
-            </p>
+            {name.length > 22 && (
+              <p style={{ margin: '4px 0 0', fontSize: '0.76rem', color: '#d97706', fontWeight: 600 }}>
+                💡 Tip: Long name will automatically wrap or scale to 18 pt to fit standard badge stock.
+              </p>
+            )}
           </div>
 
-          {/* Field 3: 4-Digit Badge Number (Between Name & QR) */}
+          {/* Field 2b: 4-Digit Badge Number */}
           <div
             style={{
-              backgroundColor: '#fbfbfe',
-              border: '1px solid #e0e7ff',
+              backgroundColor: '#f8fafc',
+              border: '1px solid #e2e8f0',
               borderRadius: '10px',
-              padding: '12px 16px',
+              padding: '12px 14px',
               display: 'flex',
               flexDirection: 'column',
               gap: '10px',
@@ -472,7 +507,7 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
                   />
                 </div>
                 <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b', flex: 1, minWidth: '200px' }}>
-                  Printed centered between attendee name and QR code. Automatically ordered by who registered first (e.g. <code>0001</code> for 1st registrant).
+                  Printed centered between attendee name and QR code.
                 </p>
               </div>
             ) : (
@@ -606,7 +641,7 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
           </div>
 
           {/* Optional: Save to record */}
-          {name.trim() !== originalName && (
+          {isDbRegistration && name.trim() !== originalName && (
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.82rem', color: '#475569' }}>
               <input
                 type="checkbox"
@@ -634,7 +669,7 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
           <Button variant="ghost" size="sm" onClick={onClose} disabled={busy}>
             Cancel
           </Button>
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
             <Button
               variant="secondary"
               size="sm"
@@ -642,12 +677,42 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
               disabled={busy || !name.trim()}
               title="Open PDF in new tab to print directly via Ctrl+P"
             >
-              🖨️ Preview / Print
+              🖨️ Print Tab
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => handleDownload('png')}
+              disabled={busy || !name.trim()}
+              title="Download high-resolution PNG image"
+              style={{
+                fontWeight: 600,
+                color: '#0284c7',
+                borderColor: '#bae6fd',
+                backgroundColor: '#f0f9ff',
+              }}
+            >
+              🖼️ PNG
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => handleDownload('jpg')}
+              disabled={busy || !name.trim()}
+              title="Download JPG image"
+              style={{
+                fontWeight: 600,
+                color: '#b45309',
+                borderColor: '#fde68a',
+                backgroundColor: '#fffbeb',
+              }}
+            >
+              📷 JPG
             </Button>
             <Button
               variant="primary"
               size="sm"
-              onClick={handleDownload}
+              onClick={() => handleDownload('pdf')}
               disabled={busy || !name.trim()}
               style={{
                 backgroundColor: '#be185d',

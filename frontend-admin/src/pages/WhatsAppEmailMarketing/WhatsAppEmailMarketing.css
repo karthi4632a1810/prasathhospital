@@ -64,6 +64,37 @@
   color: #6b21a8;
 }
 
+.wem-badge.is-live {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1e40af;
+}
+
+.wem-badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: wem-pulse 2s infinite;
+}
+
+@keyframes wem-pulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+}
+
 /* Tabs */
 .wem-tabs {
   display: flex;
@@ -114,7 +145,238 @@
   color: #be185d;
 }
 
-/* Main Grid Layout */
+/* Live Monitor Summary Bar */
+.wem-monitor-bar {
+  background: linear-gradient(135deg, #231238 0%, #381b4e 100%);
+  color: #ffffff;
+  padding: 20px 24px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  box-shadow: 0 6px 24px rgba(35, 18, 56, 0.18);
+}
+
+.wem-monitor-stats {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.wem-monitor-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.wem-monitor-stat__val {
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #ffffff;
+}
+
+.wem-monitor-stat__label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #d1b4c7;
+  margin-top: 2px;
+}
+
+.wem-btn-schedule-all {
+  background: linear-gradient(135deg, #eb3f67 0%, #d4af37 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(235, 63, 103, 0.35);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wem-btn-schedule-all:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(235, 63, 103, 0.5);
+}
+
+/* Live Monitor Grid */
+.wem-live-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .wem-live-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Live Job Card */
+.wem-live-card {
+  background: #ffffff;
+  border: 1px solid var(--ink-200);
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  margin-bottom: 20px;
+}
+
+.wem-live-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.wem-live-card__title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #381b4e;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Progress Bar */
+.wem-progress-box {
+  margin: 16px 0;
+}
+
+.wem-progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--ink-700);
+}
+
+.wem-progress-track {
+  width: 100%;
+  height: 12px;
+  background: var(--ink-100);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.wem-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #381b4e 0%, #eb3f67 50%, #22c55e 100%);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.wem-speed-metrics {
+  display: flex;
+  gap: 18px;
+  font-size: 0.82rem;
+  color: var(--ink-600);
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+/* Activity Stream Feed */
+.wem-stream-feed {
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--ink-200);
+  border-radius: 10px;
+  margin-top: 14px;
+  font-size: 0.82rem;
+}
+
+.wem-stream-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--ink-100);
+}
+
+.wem-stream-row:last-child {
+  border-bottom: none;
+}
+
+.wem-stream-row.is-success {
+  background: #fbfdfb;
+}
+
+.wem-stream-row.is-failed {
+  background: #fef2f2;
+}
+
+/* Scheduled Session Card */
+.wem-scheduled-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.wem-scheduled-item {
+  background: #ffffff;
+  border: 1.5px solid var(--ink-200);
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  transition: border-color 0.15s;
+}
+
+.wem-scheduled-item:hover {
+  border-color: #eb3f67;
+}
+
+.wem-scheduled-item__left {
+  flex: 1;
+  min-width: 240px;
+}
+
+.wem-scheduled-title {
+  margin: 0 0 4px 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #381b4e;
+}
+
+.wem-scheduled-sub {
+  font-size: 0.82rem;
+  color: var(--ink-500);
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.wem-countdown-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #b45309;
+}
+
+/* Main Grid Layout for Tabs 2 & 3 */
 .wem-grid {
   display: grid;
   grid-template-columns: 420px 1fr;
@@ -497,64 +759,62 @@
   transform: none;
 }
 
-/* Campaigns Log List */
-.wem-campaign-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.wem-campaign-item {
-  background: #ffffff;
-  border: 1px solid var(--ink-200);
-  border-radius: 14px;
-  padding: 18px 22px;
+/* Modal for Schedule All Sessions for Tomorrow */
+.wem-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(35, 18, 56, 0.65);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: wem-fade-in 0.2s ease;
+}
+
+@keyframes wem-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.wem-modal-dialog {
+  background: #ffffff;
+  border-radius: 20px;
+  max-width: 640px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.wem-modal-header {
+  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  flex-wrap: wrap;
+  border-bottom: 1px solid var(--ink-200);
+  padding-bottom: 16px;
 }
 
-.wem-campaign-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--ink-900);
-  margin: 0 0 6px 0;
+.wem-modal-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #381b4e;
 }
 
-.wem-campaign-meta {
-  font-size: 0.85rem;
+.wem-modal-sub {
+  margin: 4px 0 0 0;
+  font-size: 0.88rem;
   color: var(--ink-500);
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-
-.wem-status-pill {
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.wem-status-pill.is-COMPLETED {
-  background: #f0fdf4;
-  color: #166534;
-}
-
-.wem-status-pill.is-RUNNING {
-  background: #eff6ff;
-  color: #1e40af;
-}
-
-.wem-status-pill.is-SCHEDULED {
-  background: #fffbeb;
-  color: #b45309;
-}
-
-.wem-status-pill.is-CANCELLED {
-  background: #fef2f2;
-  color: #991b1b;
 }

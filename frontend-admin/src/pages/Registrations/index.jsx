@@ -17,6 +17,7 @@ import {
 import RegistrationDetail from './RegistrationDetail';
 import IdCardModal from './IdCardModal';
 import CertificateModal from './CertificateModal';
+import InstantRegistrationModal from './InstantRegistrationModal';
 
 const EMPTY_FILTERS = {
   q: '',
@@ -48,6 +49,7 @@ export default function Registrations() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [transferring, setTransferring] = useState(false);
   const [openId, setOpenId] = useState(null);
+  const [showInstantRegModal, setShowInstantRegModal] = useState(false);
   const [idCardModalReg, setIdCardModalReg] = useState(null);
   const [certificateModalReg, setCertificateModalReg] = useState(null);
   const [exporting, setExporting] = useState(false);
@@ -233,6 +235,25 @@ export default function Registrations() {
               setPage(1);
             }}
           />
+          <Button
+            variant="primary"
+            size="sm"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              backgroundColor: '#059669',
+              borderColor: '#047857',
+              color: '#ffffff',
+              fontWeight: 700,
+              boxShadow: '0 2px 4px rgba(5, 150, 105, 0.25)',
+            }}
+            onClick={() => setShowInstantRegModal(true)}
+            title="Instant on-spot registration for TMNC or Non-TMNC attendees with badge generation"
+          >
+            <span>➕</span>
+            <span>Instant Registration</span>
+          </Button>
           <Button
             variant="secondary"
             size="sm"
@@ -977,6 +998,19 @@ export default function Registrations() {
 
       {openId && (
         <RegistrationDetail id={openId} onClose={() => setOpenId(null)} onChanged={handleChanged} />
+      )}
+
+      {showInstantRegModal && (
+        <InstantRegistrationModal
+          eventId={eventId}
+          onClose={() => setShowInstantRegModal(false)}
+          onCreated={() => {
+            load();
+          }}
+          onOpenIdCard={(newReg) => {
+            setIdCardModalReg(newReg);
+          }}
+        />
       )}
 
       {idCardModalReg && (

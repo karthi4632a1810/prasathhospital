@@ -100,7 +100,7 @@ const getCertificatePdf = asyncHandler(async (req, res) => {
 
   if (!reg.certificateIssuedAt) {
     reg.certificateIssuedAt = new Date();
-    await reg.save().catch(() => {});
+    await reg.save().catch(() => { });
   }
 
   const requestedFormat = (req.params.ext || req.query.format || 'pdf').toLowerCase().replace(/^\./, '');

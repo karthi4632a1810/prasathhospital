@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 import { idCardStudioApi } from '../../lib/idCardStudioApi';
 import Button from '../../components/ui/Button';
 import IdCardModal from '../Registrations/IdCardModal';
+import InstantBadgeModal from './InstantBadgeModal';
 import './IdCardStudio.css';
 
 const PRESET_ROLES = ['FACULTY', 'ORGANISING TEAM', 'DELEGATE'];
@@ -21,6 +22,7 @@ export default function IdCardStudio() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [customizeItem, setCustomizeItem] = useState(null);
+  const [showInstantModal, setShowInstantModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPasteModal, setShowPasteModal] = useState(false);
 
@@ -322,16 +324,18 @@ export default function IdCardStudio() {
   };
 
   // Single Item Actions
-  const handleDownloadSingle = async (item, idx) => {
-    setBusyAction(item.id);
+  const handleDownloadSingle = async (item, idx, format = 'pdf') => {
+    const ext = (format || 'pdf').toLowerCase().replace(/^\./, '');
+    const busyKey = `${item.id}-${ext}`;
+    setBusyAction(busyKey);
     setError('');
     try {
       const safeName = item.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_-]/g, '_');
       const qrSuffix = showQr ? '' : '-NO-QR';
       const badgeNo = item.badgeNo || String((idx !== undefined ? idx : 0) + 1).padStart(4, '0');
       const numPrefix = showBadgeNo && badgeNo ? `${badgeNo}-` : '';
-      const filename = `${numPrefix}${item.code || 'ID'}-${item.role}-${safeName}${qrSuffix}.pdf`;
-      await idCardStudioApi.downloadSinglePdf(
+      const filename = `${numPrefix}${item.code || 'ID'}-${item.role}-${safeName}${qrSuffix}.${ext}`;
+      await idCardStudioApi.downloadSingleFile(
         {
           name: item.name,
           role: item.role,
@@ -340,11 +344,12 @@ export default function IdCardStudio() {
           template: isSimulation,
           showQr,
           showBadgeNo,
+          format: ext,
         },
         filename
       );
     } catch (err) {
-      setError(err.message || 'Download failed.');
+      setError(err.message || `Download ${ext.toUpperCase()} failed.`);
     } finally {
       setBusyAction(null);
     }
@@ -498,6 +503,25 @@ export default function IdCardStudio() {
               accept=".xlsx,.xls,.csv"
               style={{ display: 'none' }}
             />
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowInstantModal(true)}
+              style={{
+                backgroundColor: '#be185d',
+                borderColor: '#9d174d',
+                color: '#ffffff',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 4px rgba(190, 24, 93, 0.25)',
+              }}
+              title="Instant ID card for Delegate or Faculty (with/without 4-digit #, with/without QR, PNG/JPG/PDF)"
+            >
+              <span>⚡</span>
+              <span>Instant ID Card</span>
+            </Button>
             <Button
               variant="primary"
               size="sm"
@@ -715,7 +739,7 @@ export default function IdCardStudio() {
                 <th>Attendee Doctor Name</th>
                 <th style={{ width: '180px' }}>Role / Badge Header</th>
                 <th style={{ width: '110px' }}>Badge Code</th>
-                <th style={{ width: '270px', textAlign: 'right' }}>Actions</th>
+                <th style={{ width: '340px', textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -773,13 +797,12 @@ export default function IdCardStudio() {
                     </td>
                     <td>
                       <select
-                        className={`idcard-role-select ${
-                          item.role === 'FACULTY'
+                        className={`idcard-role-select ${item.role === 'FACULTY'
                             ? 'idcard-role-select--faculty'
                             : item.role === 'ORGANISING TEAM'
-                            ? 'idcard-role-select--organising'
-                            : 'idcard-role-select--delegate'
-                        }`}
+                              ? 'idcard-role-select--organising'
+                              : 'idcard-role-select--delegate'
+                          }`}
                         value={item.role}
                         onChange={(e) => updateItem(item.id, { role: e.target.value })}
                       >
@@ -799,23 +822,44 @@ export default function IdCardStudio() {
                           onClick={() => handleOpenSinglePrint(item, idx)}
                           title="Open PDF in new tab for direct Ctrl+P print"
                         >
-                          🖨️ Print
+                          🖨️
                         </button>
                         <button
                           type="button"
                           className="idcard-action-btn idcard-action-btn--primary"
-                          onClick={() => handleDownloadSingle(item, idx)}
-                          disabled={busyAction === item.id}
+                          onClick={() => handleDownloadSingle(item, idx, 'pdf')}
+                          disabled={busyAction === `${item.id}-pdf`}
+                          title="Download PDF ID card"
                         >
-                          {busyAction === item.id ? '…' : '⬇️ PDF'}
+                          {busyAction === `${item.id}-pdf` ? '…' : '⬇️ PDF'}
+                        </button>
+                        <button
+                          type="button"
+                          className="idcard-action-btn"
+                          onClick={() => handleDownloadSingle(item, idx, 'png')}
+                          disabled={busyAction === `${item.id}-png`}
+                          title="Download high-resolution PNG image"
+                          style={{ color: '#0284c7', borderColor: '#bae6fd', backgroundColor: '#f0f9ff', fontWeight: 700 }}
+                        >
+                          {busyAction === `${item.id}-png` ? '…' : '🖼️ PNG'}
+                        </button>
+                        <button
+                          type="button"
+                          className="idcard-action-btn"
+                          onClick={() => handleDownloadSingle(item, idx, 'jpg')}
+                          disabled={busyAction === `${item.id}-jpg`}
+                          title="Download JPG badge image"
+                          style={{ color: '#b45309', borderColor: '#fde68a', backgroundColor: '#fffbeb', fontWeight: 700 }}
+                        >
+                          {busyAction === `${item.id}-jpg` ? '…' : '📷 JPG'}
                         </button>
                         <button
                           type="button"
                           className="idcard-action-btn"
                           onClick={() => setCustomizeItem(item)}
-                          title="Fine-tune name line breaks, header role, and preview"
+                          title="Fine-tune name line breaks, header role, QR code, and preview"
                         >
-                          ✏️ Customize
+                          ✏️
                         </button>
                         <button
                           type="button"
@@ -1047,6 +1091,21 @@ export default function IdCardStudio() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* 7. Instant ID Card Creator Modal */}
+      {showInstantModal && (
+        <InstantBadgeModal
+          defaultRole={defaultRole}
+          nextBadgeNo={String(items.length + 1).padStart(4, '0')}
+          onClose={() => setShowInstantModal(false)}
+          onAddToStudio={(newItem) => {
+            setItems((prev) => [newItem, ...prev]);
+            setSelectedIds((prev) => new Set([...prev, newItem.id]));
+            setSuccess(`Added "${newItem.name}" to studio table with badge #${newItem.badgeNo || 'N/A'}.`);
+            setTimeout(() => setSuccess(''), 3000);
+          }}
+        />
       )}
     </div>
   );
