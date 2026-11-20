@@ -19,10 +19,10 @@ export default function WhatsAppEmailMarketing() {
   const [showScheduleAllModal, setShowScheduleAllModal] = useState(false);
   const [scheduleAllTargetDate, setScheduleAllTargetDate] = useState('2026-11-21'); // Tomorrow: Day 1
   const [scheduleAllDayIndex, setScheduleAllDayIndex] = useState(0); // 0 = Day 1
-  const [scheduleAllLeadTime, setScheduleAllLeadTime] = useState(15); // 15 mins before
+  const [scheduleAllLeadTime, setScheduleAllLeadTime] = useState(5); // 5 mins before default (Meta approved)
   const [scheduleAllSendWhatsApp, setScheduleAllSendWhatsApp] = useState(true);
   const [scheduleAllSendEmail, setScheduleAllSendEmail] = useState(true);
-  const [scheduleAllTemplateId, setScheduleAllTemplateId] = useState('ciim_session_approve_1');
+  const [scheduleAllTemplateId, setScheduleAllTemplateId] = useState('ciim2026_session_alert_5min');
   const [submittingScheduleAll, setSubmittingScheduleAll] = useState(false);
 
   // Audience Data for single campaigns
@@ -49,7 +49,7 @@ export default function WhatsAppEmailMarketing() {
   const [tab1CustomMessage, setTab1CustomMessage] = useState('');
 
   // Tab 3: Single Session Approval Form
-  const [tab2TemplateId, setTab2TemplateId] = useState('ciim_session_approve_1');
+  const [tab2TemplateId, setTab2TemplateId] = useState('ciim2026_session_alert_5min');
   const [customSessionTitle, setCustomSessionTitle] = useState('');
   const [customSessionTime, setCustomSessionTime] = useState('');
   const [customSessionDate, setCustomSessionDate] = useState('21 Nov 2026');
@@ -784,11 +784,11 @@ export default function WhatsAppEmailMarketing() {
                       type="text"
                       value={tab2TemplateId}
                       onChange={(e) => setTab2TemplateId(e.target.value)}
-                      placeholder="e.g. ciim_session_approve_1"
+                      placeholder="e.g. ciim2026_session_alert_5min"
                       required
                     />
                     <span className="wem-field__hint">
-                      Enter the template ID once approved by Meta/WATI.
+                      Preset to <code>ciim2026_session_alert_5min</code> (Meta approved utility template for 5-minute session alerts).
                     </span>
                   </div>
                 )}
@@ -1172,13 +1172,14 @@ export default function WhatsAppEmailMarketing() {
                   value={scheduleAllLeadTime}
                   onChange={(e) => setScheduleAllLeadTime(parseInt(e.target.value, 10))}
                 >
-                  <option value={15}>15 Minutes Before Each Session (Recommended)</option>
-                  <option value={30}>30 Minutes Before Each Session</option>
+                  <option value={5}>5 Minutes Before Each Session (Recommended - Meta Approved)</option>
                   <option value={10}>10 Minutes Before Each Session</option>
+                  <option value={15}>15 Minutes Before Each Session</option>
+                  <option value={30}>30 Minutes Before Each Session</option>
                   <option value={0}>At Exact Session Start Time</option>
                 </select>
                 <span className="wem-field__hint">
-                  E.g. A session starting at 08:30 AM will be dispatched at 08:15 AM automatically.
+                  E.g. A session starting at 08:30 AM will be dispatched at 08:25 AM automatically (5 min lead).
                 </span>
               </div>
 
@@ -1226,11 +1227,11 @@ export default function WhatsAppEmailMarketing() {
                   className="wem-field__input"
                   value={scheduleAllTemplateId}
                   onChange={(e) => setScheduleAllTemplateId(e.target.value)}
-                  placeholder="ciim_session_approve_1"
+                  placeholder="ciim2026_session_alert_5min"
                   required
                 />
                 <span className="wem-field__hint">
-                  Preset to <code>ciim_session_approve_1</code> (editable anytime).
+                  Preset to <code>ciim2026_session_alert_5min</code> (Meta approved utility template).
                 </span>
               </div>
 

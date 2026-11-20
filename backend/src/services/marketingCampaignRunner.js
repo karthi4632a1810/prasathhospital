@@ -21,22 +21,62 @@ const activeMarketingJobs = new Map();
  */
 function buildWatiParams(campaign, recipient) {
   const cleanName = String(recipient.name || '').replace(/^Dr\.\s*/i, '').trim() || 'Delegate';
+  const templateName = String(campaign.templateId || '').toLowerCase();
+
+  const speakerText =
+    Array.isArray(campaign.sessionDetails?.speakerNames) && campaign.sessionDetails.speakerNames.length > 0
+      ? campaign.sessionDetails.speakerNames.join(', ')
+      : String(campaign.sessionDetails?.speakerNames || 'Conference Faculty');
+  const hallText = campaign.sessionDetails?.track || 'Main Auditorium';
+  const sessionTitle = campaign.sessionDetails?.sessionTitle || 'Scientific Session';
+  const sessionTime = campaign.sessionDetails?.sessionTime || '';
+  const sessionDate = campaign.sessionDetails?.sessionDate || '';
+
   const params = [
     { name: 'Name', value: cleanName },
     { name: 'DrName', value: cleanName },
     { name: '1', value: cleanName },
   ];
 
-  if (campaign.sessionDetails?.sessionTitle) {
-    params.push({ name: 'Session', value: campaign.sessionDetails.sessionTitle });
-    params.push({ name: '2', value: campaign.sessionDetails.sessionTitle });
+  if (sessionTitle) {
+    params.push({ name: 'Session', value: sessionTitle });
+    params.push({ name: '2', value: sessionTitle });
   }
-  if (campaign.sessionDetails?.sessionTime) {
-    params.push({ name: 'Time', value: campaign.sessionDetails.sessionTime });
-    params.push({ name: '3', value: campaign.sessionDetails.sessionTime });
-  }
-  if (campaign.sessionDetails?.sessionDate) {
-    params.push({ name: 'Date', value: campaign.sessionDetails.sessionDate });
+
+  // Handle template specific positional params
+  if (templateName.includes('session_alert_5min') || campaign.tab === 'session_approve') {
+    // Template ciim2026_session_alert_5min:
+    // {{1}} = Name
+    // {{2}} = Session
+    // {{3}} = Speaker
+    // {{4}} = Hall
+    params.push({ name: 'Speaker', value: speakerText });
+    params.push({ name: '3', value: speakerText });
+    params.push({ name: 'Hall', value: hallText });
+    params.push({ name: '4', value: hallText });
+
+    if (sessionTime) {
+      params.push({ name: 'Time', value: sessionTime });
+    }
+    if (sessionDate) {
+      params.push({ name: 'Date', value: sessionDate });
+    }
+  } else {
+    // Standard delegate reminder or general session templates
+    if (sessionTime) {
+      params.push({ name: 'Time', value: sessionTime });
+      params.push({ name: '3', value: sessionTime });
+    }
+    if (sessionDate) {
+      params.push({ name: 'Date', value: sessionDate });
+    }
+    if (speakerText) {
+      params.push({ name: 'Speaker', value: speakerText });
+    }
+    if (hallText) {
+      params.push({ name: 'Hall', value: hallText });
+      params.push({ name: '4', value: hallText });
+    }
   }
 
   // Merge any custom params from options
@@ -161,7 +201,9 @@ async function runMarketingCampaign(campaignId) {
       try {
         const phone = normalizePhone(recipient.phone);
         const watiParams = buildWatiParams(campaign, recipient);
-        const templateName = campaign.templateId || 'ciim_delegate_reminder_1';
+        const templateName =
+          campaign.templateId ||
+          (campaign.tab === 'session_approve' ? 'ciim2026_session_alert_5min' : 'ciim_delegate_reminder_1');
 
         const res = await sendWhatsAppTemplate({
           to: phone,

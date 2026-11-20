@@ -186,9 +186,9 @@ const scheduleAllSessions = asyncHandler(async (req, res) => {
   const {
     targetDate = '2026-11-21', // Tomorrow (Day 1)
     dayIndex = 0,
-    leadTimeMinutes = 15,
+    leadTimeMinutes = 5,
     channels = ['whatsapp', 'email'],
-    templateId = 'ciim_session_approve_1',
+    templateId = 'ciim2026_session_alert_5min',
     customMessage = '',
   } = req.body;
 
@@ -255,7 +255,7 @@ const scheduleAllSessions = asyncHandler(async (req, res) => {
     const campaign = await MarketingCampaign.create({
       campaignName: `Session: ${session.title} (${session.startTime})`,
       tab: 'session_approve',
-      templateId: templateId.trim() || 'ciim_session_approve_1',
+      templateId: templateId.trim() || 'ciim2026_session_alert_5min',
       channels,
       scheduleMode: 'scheduled',
       scheduledFor: scheduledTime,
@@ -267,7 +267,7 @@ const scheduleAllSessions = asyncHandler(async (req, res) => {
         track: session.track || 'Main Auditorium',
       },
       whatsappOptions: {
-        templateName: templateId.trim() || 'ciim_session_approve_1',
+        templateName: templateId.trim() || 'ciim2026_session_alert_5min',
       },
       emailOptions: {
         subject: `CIIM 2026: Session Schedule Details - ${session.title}`,
