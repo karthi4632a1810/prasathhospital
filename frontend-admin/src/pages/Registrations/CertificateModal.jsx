@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Button from '../../components/ui/Button';
 import { registrationApi } from '../../lib/registrationApi';
+import { getToken } from '../../lib/api';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 
@@ -22,6 +23,8 @@ export default function CertificateModal({ registration, onClose, onUpdated }) {
     if (name.trim()) params.set('name', name.trim());
     if (isPreview) params.set('preview', 'true');
     params.set('format', fmt);
+    const token = getToken();
+    if (token) params.set('token', token);
     return `${API_BASE}/api/v1/admin/registrations/${regId}/certificate.${fmt}?${params.toString()}`;
   };
 

@@ -525,7 +525,18 @@ export default function WhatsAppEmailMarketing() {
                           <span>
                             Progress: {job.percentage}% ({job.processedCount} of {job.totalRecipients})
                           </span>
-                          <span style={{ color: '#166534' }}>Sent: {job.sentCount} | Failed: {job.failedCount}</span>
+                          <span style={{ color: '#166534', fontWeight: 600 }}>
+                            Sent: {job.sentCount}
+                            {(job.whatsappSentCount > 0 || job.emailSentCount > 0) && (
+                              <small style={{ fontWeight: 'normal', color: 'var(--ink-500)', marginLeft: '6px' }}>
+                                (WA: {job.whatsappSentCount || 0}, Email: {job.emailSentCount || 0})
+                              </small>
+                            )}
+                            {' '}|{' '}
+                            <span style={{ color: job.failedCount > 0 ? '#b91c1c' : 'inherit' }}>
+                              Failed: {job.failedCount}
+                            </span>
+                          </span>
                         </div>
                         <div className="wem-progress-track">
                           <div className="wem-progress-fill" style={{ width: `${job.percentage}%` }}></div>
@@ -553,8 +564,32 @@ export default function WhatsAppEmailMarketing() {
                                   <strong>{log.name}</strong> ({log.phone})
                                 </span>
                                 <span>
-                                  {log.whatsappStatus === 'SENT' && <span style={{ color: '#16a34a', marginRight: '6px' }}>[WA ✓]</span>}
-                                  {log.emailStatus === 'SENT' && <span style={{ color: '#2563eb' }}>[Email ✓]</span>}
+                                  {log.whatsappStatus === 'SENT' && (
+                                    <span style={{ color: '#16a34a', marginRight: '6px', fontWeight: 700 }} title="WhatsApp Delivered">
+                                      [WA ✓]
+                                    </span>
+                                  )}
+                                  {log.whatsappStatus === 'FAILED' && (
+                                    <span
+                                      style={{ color: '#dc2626', marginRight: '6px', fontWeight: 700, fontSize: '0.75rem' }}
+                                      title={`WhatsApp Failed: ${log.whatsappError || 'Error'}`}
+                                    >
+                                      [WA ✗]
+                                    </span>
+                                  )}
+                                  {log.emailStatus === 'SENT' && (
+                                    <span style={{ color: '#2563eb', marginRight: '6px', fontWeight: 700 }} title="Email Delivered">
+                                      [Email ✓]
+                                    </span>
+                                  )}
+                                  {log.emailStatus === 'FAILED' && (
+                                    <span
+                                      style={{ color: '#dc2626', marginRight: '6px', fontWeight: 700, fontSize: '0.75rem' }}
+                                      title={`Email Failed: ${log.emailError || 'Error'}`}
+                                    >
+                                      [Email ✗]
+                                    </span>
+                                  )}
                                   <small style={{ marginLeft: '8px', color: 'var(--ink-400)' }}>{log.time}</small>
                                 </span>
                               </div>

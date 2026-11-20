@@ -410,18 +410,21 @@ async function processUserPrompt(promptText, user) {
         data: { name: clean },
         downloads: [
           {
-            label: 'Download PNG',
+            label: 'Certificate PNG',
             format: 'png',
+            name: clean,
             url: `/api/v1/admin/ai/download/certificate?name=${encoded}&format=png`,
           },
           {
-            label: 'Download JPG',
+            label: 'Certificate JPG',
             format: 'jpg',
+            name: clean,
             url: `/api/v1/admin/ai/download/certificate?name=${encoded}&format=jpg`,
           },
           {
-            label: 'Download PDF',
+            label: 'Certificate PDF',
             format: 'pdf',
+            name: clean,
             url: `/api/v1/admin/ai/download/certificate?name=${encoded}&format=pdf`,
           },
         ],
@@ -454,18 +457,21 @@ async function processUserPrompt(promptText, user) {
       data: { name: clean, role: 'DELEGATE', badgeNo: '0001' },
       downloads: [
         {
-          label: 'Download PNG',
+          label: 'ID Card PNG',
           format: 'png',
+          name: clean,
           url: `/api/v1/admin/ai/download/id-card?name=${encoded}&format=png&includeTemplate=true`,
         },
         {
-          label: 'Download JPG',
+          label: 'ID Card JPG',
           format: 'jpg',
+          name: clean,
           url: `/api/v1/admin/ai/download/id-card?name=${encoded}&format=jpg&includeTemplate=true`,
         },
         {
-          label: 'Download PDF',
+          label: 'ID Card PDF',
           format: 'pdf',
+          name: clean,
           url: `/api/v1/admin/ai/download/id-card?name=${encoded}&format=pdf&includeTemplate=true`,
         },
       ],

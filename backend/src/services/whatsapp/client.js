@@ -238,14 +238,35 @@ function sendWhatsAppMessage({ to, text }) {
 
 /**
  * Dispatches an approved template message.
+ * Accepts either an options object `{ to, name, language, bodyParams }`
+ * or positional arguments `(to, name, languageOrBodyParams, maybeBodyParams)`.
  */
-function sendWhatsAppTemplate({ to, name, language, bodyParams = [] }) {
+function sendWhatsAppTemplate(optsOrTo, nameArg, languageOrBodyParams, maybeBodyParams) {
   if (!isConfigured()) {
     if (!warned) {
       logger.warn('WhatsApp is not configured — ticket messages are skipped.');
       warned = true;
     }
     return Promise.resolve({ sent: false, reason: 'not_configured' });
+  }
+
+  let to, name, language, bodyParams;
+
+  if (optsOrTo && typeof optsOrTo === 'object' && !Array.isArray(optsOrTo)) {
+    to = optsOrTo.to;
+    name = optsOrTo.name;
+    language = optsOrTo.language;
+    bodyParams = optsOrTo.bodyParams || [];
+  } else {
+    to = optsOrTo;
+    name = nameArg;
+    if (Array.isArray(languageOrBodyParams)) {
+      bodyParams = languageOrBodyParams;
+      language = env.whatsappTemplateLanguage || 'en_GB';
+    } else {
+      language = languageOrBodyParams || env.whatsappTemplateLanguage || 'en_GB';
+      bodyParams = Array.isArray(maybeBodyParams) ? maybeBodyParams : [];
+    }
   }
 
   if (getProvider() === 'wati') {
@@ -256,7 +277,7 @@ function sendWhatsAppTemplate({ to, name, language, bodyParams = [] }) {
     type: 'template',
     template: {
       name,
-      language: { code: language },
+      language: { code: language || env.whatsappTemplateLanguage || 'en_GB' },
       components: [
         { type: 'body', parameters: bodyParams.map((text) => ({ type: 'text', text: String(text) })) },
       ],

@@ -53,7 +53,7 @@ function buildWatiParams(campaign, recipient) {
  * Calculates current execution statistics (speed, ETA, percentages)
  */
 function getJobProgressSnapshot(job) {
-  const processed = job.sentCount + job.failedCount;
+  const processed = job.processedCount || (job.sentCount + job.failedCount);
   const total = Math.max(1, job.totalRecipients);
   const percentage = Math.min(100, Math.round((processed / total) * 1000) / 10);
   const elapsedSeconds = Math.max(1, Math.round((Date.now() - job.startedAt.getTime()) / 1000));
@@ -73,11 +73,13 @@ function getJobProgressSnapshot(job) {
     processedCount: processed,
     sentCount: job.sentCount,
     failedCount: job.failedCount,
+    whatsappSentCount: job.whatsappSentCount || 0,
+    emailSentCount: job.emailSentCount || 0,
     percentage,
     speed,
     etaSeconds,
     elapsedSeconds,
-    recentLogs: (job.recentLogs || []).slice(-15),
+    recentLogs: (job.recentLogs || []).slice(-20),
   };
 }
 
@@ -99,6 +101,8 @@ async function runMarketingCampaign(campaignId) {
 
   let sentCount = campaign.sentCount || 0;
   let failedCount = campaign.failedCount || 0;
+  let whatsappSentCount = campaign.recipients.filter(r => r.whatsappStatus === 'SENT').length;
+  let emailSentCount = campaign.recipients.filter(r => r.emailStatus === 'SENT').length;
 
   // Register in-memory job for Live Monitor
   const job = {
@@ -112,6 +116,8 @@ async function runMarketingCampaign(campaignId) {
     totalRecipients: campaign.totalRecipients || campaign.recipients.length,
     sentCount,
     failedCount,
+    whatsappSentCount,
+    emailSentCount,
     startedAt: campaign.startedAt,
     recentLogs: [],
     isPaused: false,
@@ -140,40 +146,46 @@ async function runMarketingCampaign(campaignId) {
     }
 
     const recipient = campaign.recipients[i];
-    if (recipient.whatsappStatus === 'SENT' && recipient.emailStatus === 'SENT') {
-      sentCount++;
-      job.sentCount = sentCount;
+    const waAlreadySent = recipient.whatsappStatus === 'SENT';
+    const emailAlreadySent = recipient.emailStatus === 'SENT';
+
+    if ((!sendWhatsApp || waAlreadySent) && (!sendEmail || emailAlreadySent)) {
       continue;
     }
 
-    let overallSuccess = true;
+    let waSuccess = waAlreadySent;
+    let emailSuccess = emailAlreadySent;
 
     // 1. WhatsApp Dispatch
-    if (sendWhatsApp && recipient.whatsappStatus !== 'SENT') {
+    if (sendWhatsApp && !waAlreadySent) {
       try {
         const phone = normalizePhone(recipient.phone);
         const watiParams = buildWatiParams(campaign, recipient);
         const templateName = campaign.templateId || 'ciim_delegate_reminder_1';
 
-        const res = await sendWhatsAppTemplate(phone, templateName, watiParams);
+        const res = await sendWhatsAppTemplate({
+          to: phone,
+          name: templateName,
+          bodyParams: watiParams,
+        });
         if (res.sent) {
           recipient.whatsappStatus = 'SENT';
           recipient.whatsappMessageId = res.messageId || 'sent';
           recipient.whatsappError = null;
+          waSuccess = true;
+          whatsappSentCount++;
         } else {
           recipient.whatsappStatus = 'FAILED';
           recipient.whatsappError = res.error || 'Failed to send WhatsApp';
-          overallSuccess = false;
         }
       } catch (err) {
         recipient.whatsappStatus = 'FAILED';
         recipient.whatsappError = err.message || 'WhatsApp dispatch error';
-        overallSuccess = false;
       }
     }
 
     // 2. Email Dispatch
-    if (sendEmail && recipient.emailStatus !== 'SENT') {
+    if (sendEmail && !emailAlreadySent) {
       if (!recipient.email) {
         recipient.emailStatus = 'SKIPPED';
         recipient.emailError = 'No email address registered';
@@ -209,22 +221,25 @@ async function runMarketingCampaign(campaignId) {
             recipient.emailStatus = 'SENT';
             recipient.emailMessageId = mailRes.messageId || 'sent';
             recipient.emailError = null;
+            emailSuccess = true;
+            emailSentCount++;
           } else {
             recipient.emailStatus = 'FAILED';
             recipient.emailError = mailRes.error || 'Email dispatch failed';
-            overallSuccess = false;
           }
         } catch (err) {
           recipient.emailStatus = 'FAILED';
           recipient.emailError = err.message || 'Email dispatch error';
-          overallSuccess = false;
         }
       }
     }
 
     recipient.sentAt = new Date();
 
-    if (overallSuccess) {
+    const anySuccess = (sendWhatsApp && waSuccess) || (sendEmail && emailSuccess);
+    const allSuccess = (!sendWhatsApp || waSuccess) && (!sendEmail || emailSuccess);
+
+    if (anySuccess) {
       sentCount++;
     } else {
       failedCount++;
@@ -232,6 +247,8 @@ async function runMarketingCampaign(campaignId) {
 
     job.sentCount = sentCount;
     job.failedCount = failedCount;
+    job.whatsappSentCount = whatsappSentCount;
+    job.emailSentCount = emailSentCount;
 
     // Append to live monitoring stream
     job.recentLogs.push({
@@ -240,8 +257,10 @@ async function runMarketingCampaign(campaignId) {
       phone: recipient.phone,
       email: recipient.email,
       whatsappStatus: recipient.whatsappStatus,
+      whatsappError: recipient.whatsappError,
       emailStatus: recipient.emailStatus,
-      success: overallSuccess,
+      emailError: recipient.emailError,
+      success: allSuccess || anySuccess,
     });
     if (job.recentLogs.length > 50) {
       job.recentLogs.shift();

@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { aiApi } from '../../lib/aiApi';
+import { getToken } from '../../lib/api';
+import { downloadFile } from '../../lib/download';
 import Button from '../../components/ui/Button';
 import './AiChat.css';
 
@@ -88,9 +90,19 @@ export default function AiChat() {
     }
   }
 
-  function handleDownloadItem(download) {
-    if (download.url) {
-      window.open(download.url, '_blank');
+  async function handleDownloadItem(download) {
+    if (!download || !download.url) return;
+    try {
+      const apiPath = download.url.replace(/^\/?api\/v1/, '');
+      const fmt = (download.format || 'pdf').toLowerCase().replace(/^\./, '');
+      const safeLabel = (download.label || 'Pass').replace(/\s+/g, '_');
+      const filename = `CIIM2026_${safeLabel}.${fmt}`;
+      await downloadFile(apiPath, filename);
+    } catch {
+      const token = getToken();
+      const sep = download.url.includes('?') ? '&' : '?';
+      const authUrl = token ? `${download.url}${sep}token=${token}` : download.url;
+      window.open(authUrl, '_blank');
     }
   }
 
