@@ -178,6 +178,8 @@ export default function AiChat() {
 
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [downloadingKey, setDownloadingKey] = useState(null);
+  const [downloadNotice, setDownloadNotice] = useState(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -249,24 +251,89 @@ export default function AiChat() {
     }
   }
 
-  async function handleDownloadItem(download) {
+  async function handleDownloadItem(download, msgId) {
     if (!download || !download.url) return;
+    const key = `${download.label}_${download.format}_${msgId || ''}`;
+    setDownloadingKey(key);
+    setDownloadNotice(null);
+
+    const fmt = (download.format || 'png').toLowerCase().replace(/^\./, '');
+    const cleanName = (download.name || 'Delegate')
+      .replace(/^Dr\.\s*/i, '')
+      .replace(/\s+/g, '_')
+      .replace(/[^a-zA-Z0-9_-]/g, '_');
+    const safeLabel = (download.label || 'Card')
+      .replace(/\s+/g, '_')
+      .replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = `CIIM2026_${safeLabel}_${cleanName}.${fmt}`;
+
     try {
-      const apiPath = download.url.replace(/^\/?api\/v1/, '');
-      const fmt = (download.format || 'pdf').toLowerCase().replace(/^\./, '');
-      const safeLabel = (download.label || 'Pass').replace(/\s+/g, '_');
-      const filename = `CIIM2026_${safeLabel}.${fmt}`;
-      await downloadFile(apiPath, filename);
-    } catch {
-      const token = getToken();
-      const sep = download.url.includes('?') ? '&' : '?';
-      const authUrl = token ? `${download.url}${sep}token=${token}` : download.url;
-      window.open(authUrl, '_blank');
+      await downloadFile(download.url, filename);
+      setDownloadNotice({
+        type: 'success',
+        text: `Downloaded ${filename} successfully!`,
+      });
+      setTimeout(() => setDownloadNotice(null), 4000);
+    } catch (err) {
+      console.warn('downloadFile failed, trying authenticated direct download:', err);
+      try {
+        const token = getToken();
+        const sep = download.url.includes('?') ? '&' : '?';
+        const rawUrl = download.url.startsWith('/api/v1')
+          ? download.url
+          : `/api/v1${download.url.startsWith('/') ? download.url : `/${download.url}`}`;
+        const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+        const authUrl = `${base}${rawUrl}${sep}token=${encodeURIComponent(token || '')}`;
+
+        const fallbackLink = document.createElement('a');
+        fallbackLink.href = authUrl;
+        fallbackLink.download = filename;
+        fallbackLink.target = '_blank';
+        fallbackLink.rel = 'noopener noreferrer';
+        document.body.appendChild(fallbackLink);
+        fallbackLink.click();
+        setTimeout(() => {
+          try {
+            fallbackLink.remove();
+          } catch {}
+        }, 2000);
+
+        setDownloadNotice({
+          type: 'success',
+          text: `Download started: ${filename}`,
+        });
+        setTimeout(() => setDownloadNotice(null), 4000);
+      } catch {
+        setDownloadNotice({
+          type: 'error',
+          text: `Download failed: ${err.message || 'Please try again.'}`,
+        });
+      }
+    } finally {
+      setDownloadingKey(null);
     }
   }
 
-  function handleExcelDownload(fileId, filename) {
-    aiApi.downloadExcel(fileId, filename);
+  async function handleExcelDownload(fileId, filename) {
+    if (!fileId) return;
+    const key = `excel_${fileId}`;
+    setDownloadingKey(key);
+    setDownloadNotice(null);
+    try {
+      await aiApi.downloadExcel(fileId, filename);
+      setDownloadNotice({
+        type: 'success',
+        text: `Downloaded ${filename || 'Excel report'} successfully!`,
+      });
+      setTimeout(() => setDownloadNotice(null), 4000);
+    } catch (err) {
+      setDownloadNotice({
+        type: 'error',
+        text: `Failed to download Excel: ${err.message || 'File may have expired.'}`,
+      });
+    } finally {
+      setDownloadingKey(null);
+    }
   }
 
   function clearHistory() {
@@ -351,17 +418,40 @@ export default function AiChat() {
                     </h4>
                   </div>
                   <div className="aichat-buttons-group">
-                    {m.downloads.map((dl) => (
-                      <button
-                        key={dl.format}
-                        type="button"
-                        className={`aichat-btn-dl is-${dl.format}`}
-                        onClick={() => handleDownloadItem(dl)}
-                      >
-                        <span>⬇</span> {dl.label} (.{dl.format.toUpperCase()})
-                      </button>
-                    ))}
+                    {m.downloads.map((dl) => {
+                      const itemKey = `${dl.label}_${dl.format}_${m.id}`;
+                      const isDownloading = downloadingKey === itemKey;
+                      return (
+                        <button
+                          key={dl.format}
+                          type="button"
+                          className={`aichat-btn-dl is-${dl.format} ${isDownloading ? 'is-busy' : ''}`}
+                          onClick={() => handleDownloadItem(dl, m.id)}
+                          disabled={Boolean(downloadingKey)}
+                          title={`Download ${dl.label} (.${dl.format.toUpperCase()})`}
+                        >
+                          {isDownloading ? (
+                            <>
+                              <span className="aichat-spinner" />
+                              <span>Downloading…</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>⬇</span>
+                              <span>{dl.label} (.{dl.format.toUpperCase()})</span>
+                            </>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
+
+                  {downloadNotice && (
+                    <div className={`aichat-dl-notice is-${downloadNotice.type}`}>
+                      <span>{downloadNotice.type === 'success' ? '✅' : '⚠️'}</span>
+                      <span>{downloadNotice.text}</span>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -379,12 +469,22 @@ export default function AiChat() {
                   <div className="aichat-buttons-group">
                     <button
                       type="button"
-                      className="aichat-btn-dl is-excel"
+                      className={`aichat-btn-dl is-excel ${downloadingKey === `excel_${m.excelDownload.fileId}` ? 'is-busy' : ''}`}
                       onClick={() =>
                         handleExcelDownload(m.excelDownload.fileId, m.excelDownload.filename)
                       }
+                      disabled={Boolean(downloadingKey)}
                     >
-                      <span>📥</span> Download Excel (.XLSX)
+                      {downloadingKey === `excel_${m.excelDownload.fileId}` ? (
+                        <>
+                          <span className="aichat-spinner" />
+                          <span>Downloading Excel…</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>📥</span> Download Excel (.XLSX)
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>

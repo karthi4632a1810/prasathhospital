@@ -357,9 +357,57 @@
   font-size: 0.9rem;
 }
 
-.aichat-btn-dl:hover {
+.aichat-btn-dl:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.aichat-btn-dl:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.aichat-btn-dl.is-busy {
+  opacity: 0.85;
+}
+
+.aichat-btn-dl .aichat-spinner {
+  width: 13px;
+  height: 13px;
+  border-width: 2px;
+  border-color: rgba(0, 0, 0, 0.2);
+  border-top-color: currentColor;
+}
+
+.aichat-dl-notice {
+  margin-top: 10px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  animation: aichat-fade-in 0.2s ease-out;
+}
+
+.aichat-dl-notice.is-success {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.aichat-dl-notice.is-error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+@keyframes aichat-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ---------- Bottom Panel: Quick Prompts & Modern Input Dock ---------- */
