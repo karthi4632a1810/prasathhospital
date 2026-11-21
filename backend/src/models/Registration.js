@@ -152,6 +152,8 @@ const RegistrationSchema = new Schema(
     notes: { type: String, trim: true, default: '' },
     isTest: { type: Boolean, default: false, index: true },
     badgeNo: { type: String, trim: true, default: '' },
+    badgeRole: { type: String, trim: true, default: '' },
+    role: { type: String, trim: true, default: '' },
   },
   { timestamps: true }
 );

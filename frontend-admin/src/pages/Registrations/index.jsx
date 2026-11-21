@@ -18,6 +18,8 @@ import RegistrationDetail from './RegistrationDetail';
 import IdCardModal from './IdCardModal';
 import CertificateModal from './CertificateModal';
 import InstantRegistrationModal from './InstantRegistrationModal';
+import EditRegistrationModal from './EditRegistrationModal';
+import DeleteRegistrationModal from './DeleteRegistrationModal';
 
 const EMPTY_FILTERS = {
   q: '',
@@ -52,6 +54,8 @@ export default function Registrations() {
   const [showInstantRegModal, setShowInstantRegModal] = useState(false);
   const [idCardModalReg, setIdCardModalReg] = useState(null);
   const [certificateModalReg, setCertificateModalReg] = useState(null);
+  const [editModalReg, setEditModalReg] = useState(null);
+  const [deleteModalReg, setDeleteModalReg] = useState(null);
   const [exporting, setExporting] = useState(false);
   const [exportingAttendance, setExportingAttendance] = useState(false);
   const [exportError, setExportError] = useState('');
@@ -138,6 +142,25 @@ export default function Registrations() {
           }
         : r
     );
+  }
+
+  function handleDeleted(deletedId) {
+    setResult((r) =>
+      r
+        ? {
+            ...r,
+            data: r.data.filter((reg) => reg.id !== deletedId && reg._id !== deletedId),
+            meta: r.meta
+              ? { ...r.meta, total: Math.max(0, (r.meta.total || 1) - 1) }
+              : r.meta,
+          }
+        : r
+    );
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(deletedId);
+      return next;
+    });
   }
 
   const handleSendSelectedToWhatsApp = () => {
@@ -846,15 +869,37 @@ export default function Registrations() {
                       </div>
                     </td>
                     <td onClick={(e) => e.stopPropagation()} style={{ textAlign: 'center' }}>
-                      <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ display: 'inline-flex', gap: '5px', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          onClick={() => setEditModalReg(reg)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            padding: '4px 7px',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            backgroundColor: '#f1f5f9',
+                            color: '#334155',
+                            border: '1px solid #cbd5e1',
+                            transition: 'all 120ms',
+                          }}
+                          title="Edit attendee details and ID card number"
+                        >
+                          <span>✏️</span>
+                          <span>Edit</span>
+                        </button>
                         <button
                           type="button"
                           onClick={() => setIdCardModalReg(reg)}
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '4px',
-                            padding: '4px 8px',
+                            gap: '3px',
+                            padding: '4px 7px',
                             borderRadius: '6px',
                             fontSize: '11px',
                             fontWeight: 700,
@@ -867,7 +912,7 @@ export default function Registrations() {
                           title="Print or download attendee ID badge"
                         >
                           <span>🪪</span>
-                          <span>ID Card</span>
+                          <span>ID</span>
                         </button>
                         <button
                           type="button"
@@ -875,8 +920,8 @@ export default function Registrations() {
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '4px',
-                            padding: '4px 8px',
+                            gap: '3px',
+                            padding: '4px 7px',
                             borderRadius: '6px',
                             fontSize: '11px',
                             fontWeight: 700,
@@ -889,7 +934,28 @@ export default function Registrations() {
                           title="Download Certificate as PNG, JPG, or PDF"
                         >
                           <span>📜</span>
-                          <span>Certificate</span>
+                          <span>Cert</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteModalReg(reg)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            padding: '4px 7px',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            backgroundColor: '#fef2f2',
+                            color: '#b91c1c',
+                            border: '1px solid #fecaca',
+                            transition: 'all 120ms',
+                          }}
+                          title="Permanently delete registration"
+                        >
+                          <span>🗑️</span>
                         </button>
                       </div>
                     </td>
@@ -997,7 +1063,34 @@ export default function Registrations() {
       )}
 
       {openId && (
-        <RegistrationDetail id={openId} onClose={() => setOpenId(null)} onChanged={handleChanged} />
+        <RegistrationDetail
+          id={openId}
+          onClose={() => setOpenId(null)}
+          onChanged={handleChanged}
+          onDeleted={handleDeleted}
+        />
+      )}
+
+      {editModalReg && (
+        <EditRegistrationModal
+          registration={editModalReg}
+          onClose={() => setEditModalReg(null)}
+          onUpdated={(updated) => {
+            handleChanged(updated);
+            setEditModalReg(null);
+          }}
+        />
+      )}
+
+      {deleteModalReg && (
+        <DeleteRegistrationModal
+          registration={deleteModalReg}
+          onClose={() => setDeleteModalReg(null)}
+          onDeleted={(deletedId) => {
+            handleDeleted(deletedId);
+            setDeleteModalReg(null);
+          }}
+        />
       )}
 
       {showInstantRegModal && (

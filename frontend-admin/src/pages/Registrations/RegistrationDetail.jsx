@@ -7,6 +7,8 @@ import { LoadingState, ErrorState } from '../../components/ui/States';
 import { DeliveryBadge, RegistrationStatusBadge } from '../../components/StatusBadges';
 import IdCardModal from './IdCardModal';
 import CertificateModal from './CertificateModal';
+import EditRegistrationModal from './EditRegistrationModal';
+import DeleteRegistrationModal from './DeleteRegistrationModal';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 const PUBLIC_SITE = (import.meta.env.VITE_PUBLIC_SITE_URL || '').replace(/\/$/, '');
@@ -21,7 +23,7 @@ function formatAmount(amount, currency = 'INR') {
   }).format(amount ?? 0);
 }
 
-export default function RegistrationDetail({ id, onClose, onChanged }) {
+export default function RegistrationDetail({ id, onClose, onChanged, onDeleted }) {
   const [reg, setReg] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState('');
@@ -29,6 +31,8 @@ export default function RegistrationDetail({ id, onClose, onChanged }) {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [idCardOpen, setIdCardOpen] = useState(false);
   const [certificateOpen, setCertificateOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [reason, setReason] = useState('');
   const [notes, setNotes] = useState('');
 
@@ -122,20 +126,39 @@ export default function RegistrationDetail({ id, onClose, onChanged }) {
           onSaveNotes={handleSaveNotes}
           onOpenIdCard={() => setIdCardOpen(true)}
           onOpenCertificate={() => setCertificateOpen(true)}
+          onOpenEdit={() => setEditOpen(true)}
+          onOpenDelete={() => setDeleteOpen(true)}
+        />
+      )}
+      {editOpen && reg && (
+        <EditRegistrationModal
+          registration={reg}
+          onClose={() => setEditOpen(false)}
+          onUpdated={(updated) => apply(updated, 'Registration and ID card number updated successfully.')}
+        />
+      )}
+      {deleteOpen && reg && (
+        <DeleteRegistrationModal
+          registration={reg}
+          onClose={() => setDeleteOpen(false)}
+          onDeleted={(deletedId) => {
+            if (onDeleted) onDeleted(deletedId);
+            onClose();
+          }}
         />
       )}
       {idCardOpen && reg && (
         <IdCardModal
           registration={reg}
           onClose={() => setIdCardOpen(false)}
-          onUpdated={(updated) => apply(updated, 'Attendee name updated.')}
+          onUpdated={(updated) => apply(updated, 'ID Card & attendee updated.')}
         />
       )}
       {certificateOpen && reg && (
         <CertificateModal
           registration={reg}
           onClose={() => setCertificateOpen(false)}
-          onUpdated={(updated) => apply(updated, 'Attendee name updated.')}
+          onUpdated={(updated) => apply(updated, 'Certificate attendee updated.')}
         />
       )}
     </Drawer>
@@ -157,6 +180,8 @@ function Body({
   onSaveNotes,
   onOpenIdCard,
   onOpenCertificate,
+  onOpenEdit,
+  onOpenDelete,
 }) {
   const isConfirmed = reg.status === 'confirmed';
   const canCancel = (isConfirmed || reg.status === 'pending_payment') && !reg.checkedInAt;
@@ -182,11 +207,43 @@ function Body({
           display: 'flex',
           gap: 'var(--space-2)',
           flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           marginBottom: 'var(--space-5)',
         }}
       >
-        <RegistrationStatusBadge status={reg.status} />
-        {reg.checkedInAt && <span className="badge badge--success badge--sm">Checked in</span>}
+        <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center', flexWrap: 'wrap' }}>
+          <RegistrationStatusBadge status={reg.status} />
+          {reg.checkedInAt && <span className="badge badge--success badge--sm">Checked in</span>}
+        </div>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onOpenEdit}
+            style={{
+              backgroundColor: '#f8fafc',
+              borderColor: '#cbd5e1',
+              color: '#0f172a',
+              fontWeight: 700,
+              fontSize: '0.8rem',
+            }}
+          >
+            ✏️ Edit Registration
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onOpenDelete}
+            style={{
+              color: '#dc2626',
+              fontWeight: 700,
+              fontSize: '0.8rem',
+            }}
+          >
+            🗑️ Delete
+          </Button>
+        </div>
       </div>
 
       <div
@@ -200,6 +257,58 @@ function Body({
         <dl className="detail-list" style={{ flex: '1 1 300px' }}>
           <dt>Registration ID</dt>
           <dd className="mono">{reg.registrationCode}</dd>
+          <dt>ID Card Number</dt>
+          <dd>
+            {reg.badgeNo ? (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontFamily: 'monospace',
+                  fontWeight: 800,
+                  fontSize: '0.88rem',
+                  backgroundColor: '#eef2ff',
+                  color: '#3730a3',
+                  border: '1.5px solid #c7d2fe',
+                  padding: '2px 8px',
+                  borderRadius: '6px',
+                }}
+              >
+                #{reg.badgeNo}{' '}
+                <span
+                  style={{
+                    fontSize: '0.7rem',
+                    color: '#059669',
+                    backgroundColor: '#ecfdf5',
+                    padding: '1px 5px',
+                    borderRadius: '4px',
+                    border: '1px solid #a7f3d0',
+                  }}
+                >
+                  🔒 Fixed
+                </span>
+              </span>
+            ) : (
+              <span className="muted">Not assigned yet</span>
+            )}
+          </dd>
+          <dt>Category / Role</dt>
+          <dd>
+            <span
+              style={{
+                fontWeight: 700,
+                color: '#be185d',
+                backgroundColor: '#fdf2f8',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                border: '1px solid #fbcfe8',
+                fontSize: '0.82rem',
+              }}
+            >
+              {reg.badgeRole || reg.role || reg.attendee?.category || 'DELEGATE'}
+            </span>
+          </dd>
           <dt>Name</dt>
           <dd>{reg.attendee?.name}</dd>
           <dt>Mobile</dt>

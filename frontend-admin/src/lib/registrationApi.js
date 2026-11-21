@@ -14,6 +14,7 @@ export const registrationApi = {
   get: (id) => request(`/admin/registrations/${id}`),
   create: (body) => request('/admin/registrations', { method: 'POST', body }),
   update: (id, body) => request(`/admin/registrations/${id}`, { method: 'PATCH', body }),
+  delete: (id) => request(`/admin/registrations/${id}`, { method: 'DELETE' }),
   cancel: (id, reason) =>
     request(`/admin/registrations/${id}/cancel`, { method: 'POST', body: { reason } }),
   retryDelivery: (id, channel) =>

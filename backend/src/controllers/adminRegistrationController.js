@@ -77,28 +77,113 @@ const getRegistration = asyncHandler(async (req, res) => {
   return sendSuccess(res, serializeRegistrationForAdmin(reg));
 });
 
-/** PATCH /api/v1/admin/registrations/:id — staff notes and attendee corrections. */
+/** PATCH /api/v1/admin/registrations/:id — staff notes, attendee details, and badge/ID card number. */
 const updateRegistration = asyncHandler(async (req, res) => {
   const reg = await Registration.findById(req.params.id);
   if (!reg) throw ApiError.notFound('Registration not found');
   const body = req.body || {};
 
   if ('notes' in body) reg.notes = String(body.notes || '').slice(0, 2000);
+
+  // Badge / ID Card Number - once set, it is fixed to this attendee
+  if ('badgeNo' in body) {
+    const rawBadge = String(body.badgeNo ?? '').trim();
+    if (rawBadge && /^\d+$/.test(rawBadge)) {
+      reg.badgeNo = rawBadge.padStart(4, '0');
+    } else {
+      reg.badgeNo = rawBadge;
+    }
+  }
+
+  // Role / Badge Role
+  if ('badgeRole' in body || 'role' in body) {
+    const newRole = String(body.badgeRole || body.role || '').trim().toUpperCase();
+    if (newRole) {
+      reg.badgeRole = newRole;
+      reg.role = newRole;
+      if (reg.attendee) reg.attendee.category = newRole;
+    }
+  }
+
   if (body.attendee) {
-    const next = cleanAttendee({ ...reg.attendee.toObject(), ...body.attendee });
-    reg.attendee.name = next.name;
-    if (next.phone !== reg.attendee.phone) {
-      reg.attendee.phone = next.phone;
-      if (reg.activePhoneKey !== undefined) reg.activePhoneKey = Registration.activePhoneKeyFor(reg.event, next.phone);
+    const att = body.attendee;
+    if (att.name !== undefined && String(att.name).trim()) {
+      reg.attendee.name = String(att.name).replace(/\s+/g, ' ').trim();
     }
-    if (next.medicalCouncilRegNo !== reg.attendee.medicalCouncilRegNo) {
-      reg.attendee.medicalCouncilRegNo = next.medicalCouncilRegNo;
-      if (reg.activeCouncilKey !== undefined) reg.activeCouncilKey = Registration.activeCouncilKeyFor(reg.event, next.medicalCouncilRegNo);
+    if (att.title !== undefined) reg.attendee.title = String(att.title || '').trim();
+    if (att.firstName !== undefined) reg.attendee.firstName = String(att.firstName || '').trim();
+    if (att.lastName !== undefined) reg.attendee.lastName = String(att.lastName || '').trim();
+    if (att.gender !== undefined) reg.attendee.gender = String(att.gender || '').trim();
+    if (att.designation !== undefined) reg.attendee.designation = String(att.designation || '').trim();
+    if (att.institution !== undefined) reg.attendee.institution = String(att.institution || '').trim();
+    if (att.city !== undefined) reg.attendee.city = String(att.city || '').trim();
+    if (att.state !== undefined) reg.attendee.state = String(att.state || '').trim();
+    if (att.country !== undefined) reg.attendee.country = String(att.country || 'India').trim();
+    if (att.pincode !== undefined) reg.attendee.pincode = String(att.pincode || '').trim();
+    if (att.category !== undefined && String(att.category).trim()) {
+      const cat = String(att.category).trim().toUpperCase();
+      reg.attendee.category = cat;
+      reg.badgeRole = cat;
+      reg.role = cat;
     }
-    if (next.email !== reg.attendee.email) {
-      reg.attendee.email = next.email;
-      if (reg.activeKey !== undefined) reg.activeKey = Registration.activeKeyFor(reg.event, next.email);
+
+    if (att.phone !== undefined) {
+      const cleanPhone = String(att.phone || '').replace(/[\s()-]/g, '');
+      if (cleanPhone && cleanPhone !== reg.attendee.phone) {
+        reg.attendee.phone = cleanPhone;
+        if (reg.activePhoneKey !== undefined) reg.activePhoneKey = Registration.activePhoneKeyFor(reg.event, cleanPhone);
+      }
     }
+    if (att.medicalCouncilRegNo !== undefined) {
+      const cleanTnmc = String(att.medicalCouncilRegNo || '').trim();
+      reg.attendee.medicalCouncilRegNo = cleanTnmc;
+      if (reg.activeCouncilKey !== undefined) {
+        reg.activeCouncilKey = cleanTnmc && !['NA', 'N/A', 'NIL', 'NONE', '-'].includes(cleanTnmc.toUpperCase())
+          ? Registration.activeCouncilKeyFor(reg.event, cleanTnmc)
+          : null;
+      }
+    }
+    if (att.email !== undefined) {
+      const cleanEmail = String(att.email || '').trim().toLowerCase();
+      if (cleanEmail && cleanEmail !== reg.attendee.email) {
+        reg.attendee.email = cleanEmail;
+        if (reg.activeKey !== undefined) reg.activeKey = Registration.activeKeyFor(reg.event, cleanEmail);
+      }
+    }
+  }
+
+  // Direct top-level attendee shortcuts
+  if (body.name && (!body.attendee || !body.attendee.name)) {
+    reg.attendee.name = String(body.name).replace(/\s+/g, ' ').trim();
+  }
+  if (body.phone && (!body.attendee || !body.attendee.phone)) {
+    const cleanPhone = String(body.phone).replace(/[\s()-]/g, '');
+    if (cleanPhone && cleanPhone !== reg.attendee.phone) {
+      reg.attendee.phone = cleanPhone;
+      if (reg.activePhoneKey !== undefined) reg.activePhoneKey = Registration.activePhoneKeyFor(reg.event, cleanPhone);
+    }
+  }
+  if (body.email && (!body.attendee || !body.attendee.email)) {
+    const cleanEmail = String(body.email).trim().toLowerCase();
+    if (cleanEmail && cleanEmail !== reg.attendee.email) {
+      reg.attendee.email = cleanEmail;
+      if (reg.activeKey !== undefined) reg.activeKey = Registration.activeKeyFor(reg.event, cleanEmail);
+    }
+  }
+  if (body.medicalCouncilRegNo !== undefined && (!body.attendee || body.attendee.medicalCouncilRegNo === undefined)) {
+    const cleanTnmc = String(body.medicalCouncilRegNo).trim();
+    reg.attendee.medicalCouncilRegNo = cleanTnmc;
+    if (reg.activeCouncilKey !== undefined) {
+      reg.activeCouncilKey = cleanTnmc && !['NA', 'N/A', 'NIL', 'NONE', '-'].includes(cleanTnmc.toUpperCase())
+        ? Registration.activeCouncilKeyFor(reg.event, cleanTnmc)
+        : null;
+    }
+  }
+  if (body.institution && (!body.attendee || !body.attendee.institution)) {
+    reg.attendee.institution = String(body.institution).trim();
+  }
+  if (body.city && (!body.attendee || !body.attendee.city)) {
+    reg.attendee.city = String(body.city).trim();
   }
 
   try {
@@ -113,7 +198,50 @@ const updateRegistration = asyncHandler(async (req, res) => {
     throw err;
   }
   recordAudit(req, { action: 'registration.update', entityType: 'Registration', entityId: reg._id, meta: { fields: Object.keys(body) } });
-  return sendSuccess(res, serializeRegistrationForAdmin(await findOr404(reg._id)));
+  return sendSuccess(res, serializeRegistrationForAdmin(await findOr404(reg._id)), { message: 'Registration updated successfully.' });
+});
+
+/**
+ * DELETE /api/v1/admin/registrations/:id
+ * Permanently deletes the registration and releases ticket and coupon holds.
+ */
+const deleteRegistration = asyncHandler(async (req, res) => {
+  const reg = await Registration.findById(req.params.id);
+  if (!reg) throw ApiError.notFound('Registration not found');
+
+  const regCode = reg.registrationCode || String(req.params.id);
+  const attendeeName = reg.attendee?.name || 'Attendee';
+
+  if (reg.status === 'confirmed') {
+    await Promise.allSettled([
+      inventory.releaseTicketSale(reg.ticketType),
+      inventory.releaseEventSeat(reg.event),
+      releaseCoupon(reg.coupon),
+    ]);
+  } else if (reg.status === 'pending_payment') {
+    await inventory.releaseTicketHold(reg.ticketType).catch(() => {});
+  }
+
+  await Registration.findByIdAndDelete(reg._id);
+
+  recordAudit(req, {
+    action: 'registration.delete',
+    entityType: 'Registration',
+    entityId: reg._id,
+    meta: {
+      registrationCode: regCode,
+      name: attendeeName,
+      badgeNo: reg.badgeNo || '',
+      email: reg.attendee?.email || '',
+      phone: reg.attendee?.phone || '',
+    },
+  });
+
+  return sendSuccess(
+    res,
+    { deleted: true, id: reg._id, registrationCode: regCode },
+    { message: `Registration ${regCode} (${attendeeName}) has been deleted.` }
+  );
 });
 
 /**
@@ -750,6 +878,7 @@ module.exports = {
   getRegistration,
   createRegistration,
   updateRegistration,
+  deleteRegistration,
   cancelRegistration,
   retryDelivery,
   exportRegistrationsCsv,

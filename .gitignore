@@ -42,3 +42,7 @@ image*.png
 __pycache__/
 *.pyc
 
+new registor/
+*.xlsx
+
+

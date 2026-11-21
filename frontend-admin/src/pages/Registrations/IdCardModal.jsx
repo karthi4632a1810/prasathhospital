@@ -66,6 +66,40 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
     }
   };
 
+  const handleSaveAndLockBadge = async () => {
+    if (!isDbRegistration) return;
+    setBusy(true);
+    setError('');
+    setSuccessMsg('');
+    try {
+      const cleanDbName = name.replace(/\s+/g, ' ').trim() || originalName;
+      const cleanBadgeNo = String(badgeNo || '').trim();
+      const finalBadgeNo = /^\d+$/.test(cleanBadgeNo) ? cleanBadgeNo.padStart(4, '0') : cleanBadgeNo;
+      const finalRole = role.trim().toUpperCase();
+
+      const res = await registrationApi.update(regId, {
+        badgeNo: finalBadgeNo,
+        badgeRole: finalRole,
+        role: finalRole,
+        attendee: {
+          name: cleanDbName,
+          category: finalRole,
+        },
+      });
+
+      setBadgeNo(finalBadgeNo);
+      setSuccessMsg(`ID Card Badge #${finalBadgeNo} & Role ${finalRole} permanently locked to this attendee!`);
+
+      if (onUpdated) {
+        onUpdated(res.data);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to save and lock ID card number.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const getPdfUrl = (forTemplate = template) => {
     const params = new URLSearchParams();
     if (role) params.set('role', role);
@@ -100,18 +134,23 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
     setSuccessMsg('');
     const ext = (format || 'pdf').toLowerCase().replace(/^\./, '');
     try {
-      if (isDbRegistration && saveToDb && name.trim()) {
-        const cleanDbName = name.replace(/\s+/g, ' ').trim();
-        if (cleanDbName !== originalName) {
-          await registrationApi.update(regId, {
-            attendee: { name: cleanDbName },
-          });
-          if (onUpdated) {
-            onUpdated({
-              ...registration,
-              attendee: { ...registration.attendee, name: cleanDbName },
-            });
-          }
+      if (isDbRegistration && saveToDb) {
+        const cleanDbName = name.replace(/\s+/g, ' ').trim() || originalName;
+        const cleanBadgeNo = String(badgeNo || '').trim();
+        const finalBadgeNo = /^\d+$/.test(cleanBadgeNo) ? cleanBadgeNo.padStart(4, '0') : cleanBadgeNo;
+        const finalRole = role.trim().toUpperCase();
+
+        const res = await registrationApi.update(regId, {
+          badgeNo: finalBadgeNo,
+          badgeRole: finalRole,
+          role: finalRole,
+          attendee: {
+            name: cleanDbName,
+            category: finalRole,
+          },
+        });
+        if (onUpdated) {
+          onUpdated(res.data);
         }
       }
 
@@ -505,9 +544,29 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
                       outline: 'none',
                     }}
                   />
+                  {isDbRegistration && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      type="button"
+                      onClick={handleSaveAndLockBadge}
+                      disabled={busy}
+                      style={{
+                        backgroundColor: '#eef2ff',
+                        borderColor: '#c7d2fe',
+                        color: '#3730a3',
+                        fontWeight: 700,
+                        fontSize: '0.78rem',
+                        padding: '6px 12px',
+                      }}
+                      title="Permanently save and lock this ID card number and role to this attendee in the database"
+                    >
+                      {busy ? 'Saving…' : '🔒 Lock & Save ID'}
+                    </Button>
+                  )}
                 </div>
-                <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b', flex: 1, minWidth: '200px' }}>
-                  Printed centered between attendee name and QR code.
+                <p style={{ margin: 0, fontSize: '0.78rem', color: '#64748b', flex: 1, minWidth: '180px' }}>
+                  Printed on badge. Fixed once locked to this user.
                 </p>
               </div>
             ) : (
@@ -641,14 +700,14 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
           </div>
 
           {/* Optional: Save to record */}
-          {isDbRegistration && name.trim() !== originalName && (
+          {isDbRegistration && (
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.82rem', color: '#475569' }}>
               <input
                 type="checkbox"
                 checked={saveToDb}
                 onChange={(e) => setSaveToDb(e.target.checked)}
               />
-              <span>Also update attendee name in database record</span>
+              <span>Also update attendee name, role, and ID badge number in database</span>
             </label>
           )}
         </div>
