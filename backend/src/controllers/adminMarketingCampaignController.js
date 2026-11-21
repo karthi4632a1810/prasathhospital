@@ -180,17 +180,24 @@ const getLiveMonitor = asyncHandler(async (req, res) => {
 
 /**
  * POST /api/v1/admin/marketing-campaigns/schedule-all-sessions
- * Automatically creates timed scheduled campaigns for ALL sessions of tomorrow (or target day).
+ * Automatically creates timed scheduled campaigns for ALL scientific sessions of target day (Day 2 / Day 1).
  */
 const scheduleAllSessions = asyncHandler(async (req, res) => {
-  const {
-    targetDate = '2026-11-21', // Tomorrow (Day 1)
-    dayIndex = 0,
+  let {
+    targetDate,
+    dayIndex = 1, // Default to Day 2 (Today: 22 Nov 2026)
     leadTimeMinutes = 5,
     channels = ['whatsapp', 'email'],
     templateId = 'ciim2026_session_alert_5min',
     customMessage = '',
   } = req.body;
+
+  dayIndex = parseInt(dayIndex, 10);
+  if (isNaN(dayIndex) || dayIndex < 0) dayIndex = 1;
+
+  if (!targetDate) {
+    targetDate = dayIndex === 0 ? '2026-11-21' : '2026-11-22';
+  }
 
   const event =
     (await Event.findOne({ status: { $ne: 'draft' } }).lean()) ||
@@ -200,8 +207,9 @@ const scheduleAllSessions = asyncHandler(async (req, res) => {
   }
 
   const selectedDay = event.agenda[dayIndex];
+  // Include scientific sessions, keynotes, panels, and masterclasses; exclude meal/tea breaks
   const sessions = (selectedDay.items || []).filter(
-    (item) => item.type === 'session' || !item.type || item.type === 'keynote'
+    (item) => item.type !== 'break' && !item.title?.toLowerCase().includes('break')
   );
 
   if (!sessions.length) {
@@ -295,7 +303,7 @@ const scheduleAllSessions = asyncHandler(async (req, res) => {
   return sendSuccess(res, {
     count: createdCampaigns.length,
     scheduledCampaigns: createdCampaigns,
-    message: `Successfully scheduled all ${createdCampaigns.length} sessions for tomorrow (${targetDate}) with a ${leadTimeMinutes}-minute lead time!`,
+    message: `Successfully scheduled all ${createdCampaigns.length} sessions for Day ${dayIndex + 1} (${targetDate}) with a ${leadTimeMinutes}-minute lead time!`,
   });
 });
 

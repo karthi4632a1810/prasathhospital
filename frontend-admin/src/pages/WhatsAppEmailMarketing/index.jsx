@@ -51,15 +51,16 @@ export default function WhatsAppEmailMarketing() {
   });
   const [loadingLive, setLoadingLive] = useState(false);
 
-  // Modal: Schedule All Sessions for Tomorrow
+  // Modal: Bulk Schedule All Sessions (Day 1 / Day 2)
   const [showScheduleAllModal, setShowScheduleAllModal] = useState(false);
-  const [scheduleAllTargetDate, setScheduleAllTargetDate] = useState('2026-11-21'); // Tomorrow: Day 1
-  const [scheduleAllDayIndex, setScheduleAllDayIndex] = useState(0); // 0 = Day 1
+  const [scheduleAllTargetDate, setScheduleAllTargetDate] = useState('2026-11-22'); // Default: Day 2 (Today)
+  const [scheduleAllDayIndex, setScheduleAllDayIndex] = useState(1); // 1 = Day 2 (Today)
   const [scheduleAllLeadTime, setScheduleAllLeadTime] = useState(5); // 5 mins before default (Meta approved)
   const [scheduleAllSendWhatsApp, setScheduleAllSendWhatsApp] = useState(true);
   const [scheduleAllSendEmail, setScheduleAllSendEmail] = useState(true);
   const [scheduleAllTemplateId, setScheduleAllTemplateId] = useState('ciim2026_session_alert_5min');
   const [submittingScheduleAll, setSubmittingScheduleAll] = useState(false);
+  const [tab2DayFilter, setTab2DayFilter] = useState('DAY_2'); // Tab 2 Day Filter
 
   // Modal: Manual Schedule Setup with inputs & date-time
   const [showManualScheduleModal, setShowManualScheduleModal] = useState(false);
@@ -183,12 +184,15 @@ export default function WhatsAppEmailMarketing() {
       const list = res.data?.sessions || [];
       setSessions(list);
       if (list.length > 0) {
-        setSelectedSessionId(list[0].id);
-        setCustomSessionTitle(list[0].title);
-        setCustomSessionTime(`${list[0].startTime} - ${list[0].endTime}`);
-        setCustomSessionDate(list[0].dayDate || '21 Nov 2026');
-        setCustomSessionSpeaker((list[0].speakerNames || []).join(', '));
-        setCustomSessionTrack(list[0].track || 'Main Auditorium');
+        // Default to first session of Day 2 as today is Day 2 (Nov 22)
+        const day2First = list.find((s) => s.dayIndex === 1 || s.dayLabel?.includes('Day 2') || s.dayDate?.includes('22'));
+        const initial = day2First || list[0];
+        setSelectedSessionId(initial.id);
+        setCustomSessionTitle(initial.title);
+        setCustomSessionTime(`${initial.startTime} - ${initial.endTime}`);
+        setCustomSessionDate(initial.dayDate || '22 Nov 2026');
+        setCustomSessionSpeaker((initial.speakerNames || []).join(', '));
+        setCustomSessionTrack(initial.track || 'Main Auditorium');
       }
     } catch (err) {
       console.error('Failed to load sessions', err);
@@ -203,7 +207,7 @@ export default function WhatsAppEmailMarketing() {
     if (chosen) {
       setCustomSessionTitle(chosen.title);
       setCustomSessionTime(`${chosen.startTime} - ${chosen.endTime}`);
-      setCustomSessionDate(chosen.dayDate || '21 Nov 2026');
+      setCustomSessionDate(chosen.dayDate || (chosen.dayIndex === 1 ? '22 Nov 2026' : '21 Nov 2026'));
       setCustomSessionSpeaker((chosen.speakerNames || []).join(', '));
       setCustomSessionTrack(chosen.track || 'Main Auditorium');
     }
@@ -294,7 +298,7 @@ export default function WhatsAppEmailMarketing() {
     }
   }
 
-  // Action: Schedule All Sessions for Tomorrow
+  // Action: Schedule All Sessions for Selected Day
   async function handleScheduleAllSubmit(e) {
     e.preventDefault();
     const channels = [];
@@ -318,7 +322,7 @@ export default function WhatsAppEmailMarketing() {
 
       setFeedback({
         type: 'success',
-        text: res.message || `Scheduled ${res.count} sessions for tomorrow!`,
+        text: res.message || `Scheduled ${res.count} sessions for Day ${scheduleAllDayIndex + 1}!`,
       });
       setShowScheduleAllModal(false);
       setActiveTab('live_monitor');
@@ -471,6 +475,64 @@ export default function WhatsAppEmailMarketing() {
       }
     }
   };
+
+  // Open Bulk Schedule All Sessions Modal with day selection
+  function openScheduleAllModal(dayIdx = 1) {
+    setScheduleAllDayIndex(dayIdx);
+    setScheduleAllTargetDate(dayIdx === 1 ? '2026-11-22' : '2026-11-21');
+    setShowScheduleAllModal(true);
+  }
+
+  const scheduleAllSessionsList = useMemo(() => {
+    return sessions.filter((s) => {
+      if (s.type === 'break' || s.title?.toLowerCase().includes('break')) return false;
+      if (scheduleAllDayIndex === 0) {
+        return s.dayIndex === 0 || s.dayLabel?.includes('Day 1') || s.dayDate?.includes('21');
+      }
+      return s.dayIndex === 1 || s.dayLabel?.includes('Day 2') || s.dayDate?.includes('22');
+    });
+  }, [sessions, scheduleAllDayIndex]);
+
+  const day1SessionCount = useMemo(() => {
+    return sessions.filter((s) => {
+      if (s.type === 'break' || s.title?.toLowerCase().includes('break')) return false;
+      return s.dayIndex === 0 || s.dayLabel?.includes('Day 1') || s.dayDate?.includes('21');
+    }).length;
+  }, [sessions]);
+
+  const day2SessionCount = useMemo(() => {
+    return sessions.filter((s) => {
+      if (s.type === 'break' || s.title?.toLowerCase().includes('break')) return false;
+      return s.dayIndex === 1 || s.dayLabel?.includes('Day 2') || s.dayDate?.includes('22');
+    }).length;
+  }, [sessions]);
+
+  const tab2FilteredSessions = useMemo(() => {
+    if (tab2DayFilter === 'DAY_1') {
+      return sessions.filter(
+        (s) => s.dayIndex === 0 || s.dayLabel?.includes('Day 1') || s.dayDate?.includes('21')
+      );
+    }
+    if (tab2DayFilter === 'DAY_2') {
+      return sessions.filter(
+        (s) => s.dayIndex === 1 || s.dayLabel?.includes('Day 2') || s.dayDate?.includes('22')
+      );
+    }
+    return sessions;
+  }, [sessions, tab2DayFilter]);
+
+  function computeDispatchPreview(startTime, targetDate, leadMinutes) {
+    if (!startTime) return '';
+    try {
+      const [hh, mm] = startTime.split(':').map((v) => parseInt(v, 10) || 0);
+      const dateObj = new Date(`${targetDate}T${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:00+05:30`);
+      if (isNaN(dateObj.getTime())) return startTime;
+      const dispatchTime = new Date(dateObj.getTime() - leadMinutes * 60 * 1000);
+      return dispatchTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    } catch {
+      return startTime;
+    }
+  }
 
   // Open Manual Schedule Setup Modal with sensible defaults
   function handleOpenManualScheduleModal() {
@@ -876,10 +938,29 @@ export default function WhatsAppEmailMarketing() {
               <button
                 type="button"
                 className="wem-btn-schedule-all"
-                onClick={() => setShowScheduleAllModal(true)}
+                style={{
+                  background: 'linear-gradient(135deg, #eb3f67 0%, #d4af37 100%)',
+                  boxShadow: '0 4px 16px rgba(235, 63, 103, 0.4)',
+                }}
+                onClick={() => openScheduleAllModal(1)}
+                title="Schedule all sessions for Day 2 (Sunday, 22 Nov - Today)"
               >
                 <span>📅</span>
-                <span>Schedule All Sessions for Tomorrow (Day 1)</span>
+                <span>Schedule Day 2 Sessions (Today)</span>
+              </button>
+              <button
+                type="button"
+                className="wem-btn-schedule-all"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.16)',
+                  border: '1px solid rgba(255, 255, 255, 0.35)',
+                  boxShadow: 'none',
+                }}
+                onClick={() => openScheduleAllModal(0)}
+                title="Schedule sessions for Day 1 (Saturday, 21 Nov)"
+              >
+                <span>📅</span>
+                <span>Schedule Day 1 Sessions</span>
               </button>
             </div>
           </div>
@@ -1037,9 +1118,14 @@ export default function WhatsAppEmailMarketing() {
                   <h3 className="wem-live-card__title">
                     <span>⏰</span> Scheduled Sessions Queue ({liveData.scheduledCampaigns?.length || 0})
                   </h3>
-                  <Button size="sm" variant="secondary" onClick={() => fetchLiveMonitor()}>
-                    ↻ Refresh
-                  </Button>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <Button size="sm" variant="secondary" onClick={() => openScheduleAllModal(1)}>
+                      📅 Schedule Day 2
+                    </Button>
+                    <Button size="sm" variant="secondary" onClick={() => fetchLiveMonitor()}>
+                      ↻ Refresh
+                    </Button>
+                  </div>
                 </div>
 
                 {!liveData.scheduledCampaigns || liveData.scheduledCampaigns.length === 0 ? (
@@ -1057,8 +1143,15 @@ export default function WhatsAppEmailMarketing() {
                       >
                         ➕ Manual Schedule Setup
                       </Button>
-                      <Button variant="secondary" onClick={() => setShowScheduleAllModal(true)}>
-                        Schedule All Day 1 Sessions
+                      <Button
+                        variant="primary"
+                        onClick={() => openScheduleAllModal(1)}
+                        style={{ background: 'linear-gradient(135deg, #eb3f67 0%, #d4af37 100%)', border: 'none', color: '#fff' }}
+                      >
+                        📅 Schedule Day 2 Sessions (Today)
+                      </Button>
+                      <Button variant="secondary" onClick={() => openScheduleAllModal(0)}>
+                        Schedule Day 1 Sessions
                       </Button>
                     </div>
                   </div>
@@ -1247,16 +1340,44 @@ export default function WhatsAppEmailMarketing() {
                 {activeTab === 'session_approve' && (
                   <>
                     <div className="wem-field">
-                      <label className="wem-field__label" htmlFor="session-picker">
-                        Choose Session from Agenda ({sessions.length} sessions available)
-                      </label>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
+                        <label className="wem-field__label" htmlFor="session-picker" style={{ margin: 0 }}>
+                          Choose Session from Agenda ({tab2FilteredSessions.length} sessions)
+                        </label>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button
+                            type="button"
+                            className={`wem-chip${tab2DayFilter === 'DAY_2' ? ' is-active' : ''}`}
+                            onClick={() => setTab2DayFilter('DAY_2')}
+                            style={{ padding: '3px 10px', fontSize: '0.78rem' }}
+                          >
+                            🌟 Day 2 (Today)
+                          </button>
+                          <button
+                            type="button"
+                            className={`wem-chip${tab2DayFilter === 'DAY_1' ? ' is-active' : ''}`}
+                            onClick={() => setTab2DayFilter('DAY_1')}
+                            style={{ padding: '3px 10px', fontSize: '0.78rem' }}
+                          >
+                            Day 1 (21 Nov)
+                          </button>
+                          <button
+                            type="button"
+                            className={`wem-chip${tab2DayFilter === 'ALL' ? ' is-active' : ''}`}
+                            onClick={() => setTab2DayFilter('ALL')}
+                            style={{ padding: '3px 10px', fontSize: '0.78rem' }}
+                          >
+                            All
+                          </button>
+                        </div>
+                      </div>
                       <select
                         id="session-picker"
                         className="wem-field__select"
                         value={selectedSessionId}
                         onChange={handleSessionSelect}
                       >
-                        {sessions.map((s) => (
+                        {tab2FilteredSessions.map((s) => (
                           <option key={s.id} value={s.id}>
                             [{s.startTime} - {s.endTime}] {s.title} ({s.speakerNames.join(', ') || 'Faculty'})
                           </option>
@@ -1564,16 +1685,19 @@ export default function WhatsAppEmailMarketing() {
       )}
 
       {/* =========================================================================
-          MODAL: SCHEDULE ALL SESSIONS FOR TOMORROW (BATCH TIMED SCHEDULER)
+          MODAL: BULK SCHEDULE ALL SESSIONS (DAY 1 / DAY 2 TIMED SCHEDULER)
          ========================================================================= */}
       {showScheduleAllModal && (
         <div className="wem-modal-overlay" onClick={() => setShowScheduleAllModal(false)}>
-          <div className="wem-modal-dialog" onClick={(e) => e.stopPropagation()}>
+          <div className="wem-modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '680px' }}>
             <div className="wem-modal-header">
               <div>
-                <h3 className="wem-modal-title">📅 Schedule All Sessions for Tomorrow</h3>
+                <h3 className="wem-modal-title">
+                  📅 Bulk Schedule Sessions — {scheduleAllDayIndex === 1 ? 'Day 2 (Today, 22 Nov)' : 'Day 1 (21 Nov)'}
+                </h3>
                 <p className="wem-modal-sub">
-                  Automatically schedule timed WhatsApp &amp; Email reminders for every session of Day 1.
+                  Automatically calculate start times and schedule timed WhatsApp &amp; Email reminders for all scientific sessions of{' '}
+                  <strong>{scheduleAllDayIndex === 1 ? 'Day 2 (Today)' : 'Day 1'}</strong>.
                 </p>
               </div>
               <button
@@ -1586,54 +1710,92 @@ export default function WhatsAppEmailMarketing() {
             </div>
 
             <form onSubmit={handleScheduleAllSubmit}>
-              {/* Day & Date Selection */}
-              <div className="wem-field">
-                <label className="wem-field__label">Conference Day</label>
-                <select
-                  className="wem-field__select"
-                  value={scheduleAllDayIndex}
-                  onChange={(e) => {
-                    const idx = parseInt(e.target.value, 10);
-                    setScheduleAllDayIndex(idx);
-                    setScheduleAllTargetDate(idx === 0 ? '2026-11-21' : '2026-11-22');
+              {/* Day Selection Segmented Cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setScheduleAllDayIndex(1);
+                    setScheduleAllTargetDate('2026-11-22');
+                  }}
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    border: scheduleAllDayIndex === 1 ? '2px solid #eb3f67' : '1px solid #cbd5e1',
+                    backgroundColor: scheduleAllDayIndex === 1 ? '#fff1f2' : '#ffffff',
+                    color: scheduleAllDayIndex === 1 ? '#be123c' : '#475569',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease',
+                    boxShadow: scheduleAllDayIndex === 1 ? '0 2px 8px rgba(235, 63, 103, 0.15)' : 'none',
                   }}
                 >
-                  <option value={0}>Day 1 — Infertility Controversies (19 Sessions) — Saturday, 21 Nov 2026 (Tomorrow)</option>
-                  <option value={1}>Day 2 — Andrology &amp; Precision ART (18 Sessions) — Sunday, 22 Nov 2026</option>
-                </select>
-              </div>
-
-              <div className="wem-field">
-                <label className="wem-field__label">Target Date</label>
-                <input
-                  type="date"
-                  className="wem-field__input"
-                  value={scheduleAllTargetDate}
-                  onChange={(e) => setScheduleAllTargetDate(e.target.value)}
-                  required
-                />
-              </div>
-
-              {/* Lead Time Offset */}
-              <div className="wem-field">
-                <label className="wem-field__label">Dispatch Timing Offset</label>
-                <select
-                  className="wem-field__select"
-                  value={scheduleAllLeadTime}
-                  onChange={(e) => setScheduleAllLeadTime(parseInt(e.target.value, 10))}
+                  <div style={{ fontWeight: 700, fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>🌟</span>
+                    <span>Day 2 — Sunday, 22 Nov (Today)</span>
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: scheduleAllDayIndex === 1 ? '#9f1239' : '#64748b', marginTop: '3px' }}>
+                    Andrology &amp; ART • {day2SessionCount} Sessions
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setScheduleAllDayIndex(0);
+                    setScheduleAllTargetDate('2026-11-21');
+                  }}
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    border: scheduleAllDayIndex === 0 ? '2px solid #3b82f6' : '1px solid #cbd5e1',
+                    backgroundColor: scheduleAllDayIndex === 0 ? '#eff6ff' : '#ffffff',
+                    color: scheduleAllDayIndex === 0 ? '#1d4ed8' : '#475569',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease',
+                    boxShadow: scheduleAllDayIndex === 0 ? '0 2px 8px rgba(59, 130, 246, 0.15)' : 'none',
+                  }}
                 >
-                  <option value={5}>5 Minutes Before Each Session (Recommended - Meta Approved)</option>
-                  <option value={10}>10 Minutes Before Each Session</option>
-                  <option value={15}>15 Minutes Before Each Session</option>
-                  <option value={30}>30 Minutes Before Each Session</option>
-                  <option value={0}>At Exact Session Start Time</option>
-                </select>
-                <span className="wem-field__hint">
-                  E.g. A session starting at 08:30 AM will be dispatched at 08:25 AM automatically (5 min lead).
-                </span>
+                  <div style={{ fontWeight: 700, fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>📅</span>
+                    <span>Day 1 — Saturday, 21 Nov</span>
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: scheduleAllDayIndex === 0 ? '#1e40af' : '#64748b', marginTop: '3px' }}>
+                    Infertility • {day1SessionCount} Sessions
+                  </div>
+                </button>
               </div>
 
-              {/* Channel Selector */}
+              {/* Target Date & Lead Time */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="wem-field">
+                  <label className="wem-field__label">Target Date</label>
+                  <input
+                    type="date"
+                    className="wem-field__input"
+                    value={scheduleAllTargetDate}
+                    onChange={(e) => setScheduleAllTargetDate(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="wem-field">
+                  <label className="wem-field__label">Dispatch Timing Offset</label>
+                  <select
+                    className="wem-field__select"
+                    value={scheduleAllLeadTime}
+                    onChange={(e) => setScheduleAllLeadTime(parseInt(e.target.value, 10))}
+                  >
+                    <option value={5}>5 Minutes Before Each Session (Recommended)</option>
+                    <option value={10}>10 Minutes Before Each Session</option>
+                    <option value={15}>15 Minutes Before Each Session</option>
+                    <option value={30}>30 Minutes Before Each Session</option>
+                    <option value={0}>At Exact Session Start Time</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Delivery Channels */}
               <div className="wem-field">
                 <span className="wem-field__label">Delivery Channels</span>
                 <div className="wem-channels">
@@ -1685,7 +1847,80 @@ export default function WhatsAppEmailMarketing() {
                 </span>
               </div>
 
-              <div className="wem-notice is-info">
+              {/* Live Preview List of Sessions to be Scheduled */}
+              <div className="wem-field" style={{ marginTop: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label className="wem-field__label" style={{ margin: 0 }}>
+                    📋 Scientific Sessions to Queue ({scheduleAllSessionsList.length} Sessions)
+                  </label>
+                  <span style={{ fontSize: '0.76rem', color: '#64748b' }}>
+                    Offset: {scheduleAllLeadTime} mins before start
+                  </span>
+                </div>
+                <div
+                  style={{
+                    maxHeight: '170px',
+                    overflowY: 'auto',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    backgroundColor: '#f8fafc',
+                    padding: '8px 10px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                  }}
+                >
+                  {scheduleAllSessionsList.length === 0 ? (
+                    <div style={{ padding: '12px', textAlign: 'center', color: '#94a3b8', fontSize: '0.84rem' }}>
+                      No scientific sessions found for this day.
+                    </div>
+                  ) : (
+                    scheduleAllSessionsList.map((s, idx) => {
+                      const dispatchTime = computeDispatchPreview(s.startTime, scheduleAllTargetDate, scheduleAllLeadTime);
+                      return (
+                        <div
+                          key={s.id || idx}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '6px 10px',
+                            backgroundColor: '#ffffff',
+                            borderRadius: '6px',
+                            border: '1px solid #f1f5f9',
+                            fontSize: '0.82rem',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                            <span style={{ fontWeight: 700, color: '#0f172a', whiteSpace: 'nowrap', minWidth: '85px' }}>
+                              [{s.startTime} - {s.endTime}]
+                            </span>
+                            <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', color: '#334155' }}>
+                              {s.title}
+                            </span>
+                          </div>
+                          <span
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              backgroundColor: '#ecfdf5',
+                              color: '#065f46',
+                              fontWeight: 700,
+                              fontSize: '0.74rem',
+                              whiteSpace: 'nowrap',
+                              marginLeft: '8px',
+                            }}
+                          >
+                            ⏰ Dispatch: {dispatchTime}
+                          </span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              <div className="wem-notice is-info" style={{ marginTop: '12px' }}>
                 <span>ℹ</span>
                 <div>
                   <strong>Audience:</strong> Will schedule personalized session reminders for all{' '}
@@ -1697,8 +1932,19 @@ export default function WhatsAppEmailMarketing() {
                 <Button variant="secondary" onClick={() => setShowScheduleAllModal(false)} type="button">
                   Cancel
                 </Button>
-                <Button variant="primary" type="submit" disabled={submittingScheduleAll}>
-                  {submittingScheduleAll ? 'Scheduling Sessions…' : '🚀 Confirm & Schedule All Sessions for Tomorrow'}
+                <Button
+                  variant="primary"
+                  type="submit"
+                  disabled={submittingScheduleAll || scheduleAllSessionsList.length === 0}
+                  style={{
+                    background: scheduleAllDayIndex === 1 ? 'linear-gradient(135deg, #eb3f67 0%, #d4af37 100%)' : '#2563eb',
+                    border: 'none',
+                    fontWeight: 700,
+                  }}
+                >
+                  {submittingScheduleAll
+                    ? 'Scheduling Sessions…'
+                    : `🚀 Confirm & Schedule All ${scheduleAllSessionsList.length} Sessions for Day ${scheduleAllDayIndex + 1}`}
                 </Button>
               </div>
             </form>
