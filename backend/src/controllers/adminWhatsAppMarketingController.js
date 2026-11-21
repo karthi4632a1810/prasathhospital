@@ -9,6 +9,7 @@ const ApiError = require('../utils/ApiError');
 const { sendSuccess, asyncHandler } = require('../utils/response');
 const logger = require('../utils/logger');
 const campaignRunner = require('../services/whatsapp/campaignRunner');
+const { buildRegistrationFilter } = require('../services/registrationQuery');
 
 // Clean default poster preset (QR code options removed as requested)
 const IMAGE_PRESETS = [
@@ -976,15 +977,9 @@ const checkStatuses = asyncHandler(async (req, res) => {
  * supporting filtering by event and status.
  */
 const getRegistrationsAudience = asyncHandler(async (req, res) => {
-  const { event: eventId, status } = req.query;
-  const filter = {};
-  if (status && status !== 'all') {
-    filter.status = status;
-  } else if (!status) {
+  const filter = buildRegistrationFilter(req.query);
+  if (!req.query.status) {
     filter.status = { $ne: 'cancelled' };
-  }
-  if (eventId) {
-    filter.event = eventId;
   }
 
   const registrations = await Registration.find(filter)

@@ -1,11 +1,17 @@
 import { request } from './api';
 import { downloadCsv, downloadFile } from './download';
 
-/** Drops empty filters so the URL (and the CSV export) only carry what's set. */
+/** Drops empty filters and formats arrays as comma-separated values. */
 export function toQuery(params) {
-  const clean = Object.fromEntries(
-    Object.entries(params).filter(([, v]) => v !== '' && v !== null && v !== undefined)
-  );
+  const clean = {};
+  for (const [k, v] of Object.entries(params || {})) {
+    if (v === '' || v === null || v === undefined) continue;
+    if (Array.isArray(v)) {
+      if (v.length > 0) clean[k] = v.join(',');
+      continue;
+    }
+    clean[k] = v;
+  }
   return new URLSearchParams(clean).toString();
 }
 

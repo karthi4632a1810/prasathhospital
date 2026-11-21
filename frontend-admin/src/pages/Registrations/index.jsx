@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { registrationApi } from '../../lib/registrationApi';
 import { whatsappMarketingApi } from '../../lib/whatsappMarketingApi';
 import { companyApi } from '../../lib/companyApi';
 import { couponApi } from '../../lib/couponApi';
+import { ticketTypeApi } from '../../lib/ticketTypeApi';
+import { checkinApi } from '../../lib/checkinApi';
 import { useEvents, EventSelect } from '../../lib/useEvents';
 import { formatDateTime } from '../../lib/format';
 import { LoadingState, ErrorState, EmptyState } from '../../components/ui/States';
@@ -21,6 +23,212 @@ import InstantRegistrationModal from './InstantRegistrationModal';
 import EditRegistrationModal from './EditRegistrationModal';
 import DeleteRegistrationModal from './DeleteRegistrationModal';
 
+function LocationMultiSelect({
+  label,
+  icon,
+  locations = [],
+  selectedCodes = [],
+  disabledCodes = [],
+  disabledReason = 'Selected in opposing filter',
+  onChange,
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false);
+      }
+    }
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  const toggleCode = (code) => {
+    if (disabledCodes.includes(code)) return;
+    const exists = selectedCodes.includes(code);
+    const next = exists ? selectedCodes.filter((c) => c !== code) : [...selectedCodes, code];
+    onChange(next);
+  };
+
+  const clear = (e) => {
+    e.stopPropagation();
+    onChange([]);
+  };
+
+  const selectedCount = selectedCodes.length;
+
+  return (
+    <div className="field" ref={ref} style={{ position: 'relative', minWidth: '190px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span className="field__label" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span>{icon}</span>
+          <span>{label}</span>
+        </span>
+        {selectedCount > 0 && (
+          <button
+            type="button"
+            onClick={clear}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '0.72rem',
+              color: '#ef4444',
+              cursor: 'pointer',
+              fontWeight: 600,
+              padding: 0,
+            }}
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      <button
+        type="button"
+        className="field__input"
+        onClick={() => setOpen(!open)}
+        style={{
+          width: '100%',
+          textAlign: 'left',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          cursor: 'pointer',
+          background: selectedCount > 0 ? '#f0fdf4' : '#ffffff',
+          borderColor: selectedCount > 0 ? '#86efac' : '#cbd5e1',
+          padding: '7px 10px',
+          minHeight: '38px',
+          borderRadius: '6px',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            fontSize: '0.82rem',
+          }}
+        >
+          {selectedCount === 0 ? (
+            <span style={{ color: '#94a3b8' }}>Any / None</span>
+          ) : (
+            <span style={{ fontWeight: 600, color: '#166534' }}>
+              {selectedCount === 1
+                ? locations.find((l) => l.code === selectedCodes[0])?.name || selectedCodes[0]
+                : `${selectedCount} locations selected`}
+            </span>
+          )}
+        </div>
+        <span style={{ fontSize: '0.65rem', color: '#64748b', marginLeft: '6px' }}>{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 4px)',
+            left: 0,
+            zIndex: 9999,
+            minWidth: '260px',
+            maxWidth: '320px',
+            backgroundColor: '#ffffff',
+            borderRadius: '8px',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+            border: '1px solid #e2e8f0',
+            padding: '8px',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              color: '#64748b',
+              padding: '4px 6px 6px',
+              borderBottom: '1px solid #f1f5f9',
+              marginBottom: '6px',
+              display: 'flex',
+              justifyContent: 'space-between',
+            }}
+          >
+            <span>Active Checkpoints</span>
+            {selectedCount > 0 && <span>{selectedCount} selected</span>}
+          </div>
+
+          <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {locations.length === 0 ? (
+              <div style={{ fontSize: '0.78rem', color: '#94a3b8', padding: '8px' }}>
+                No active checkpoints configured.
+              </div>
+            ) : (
+              locations.map((loc) => {
+                const isSelected = selectedCodes.includes(loc.code);
+                const isDisabled = disabledCodes.includes(loc.code);
+
+                return (
+                  <label
+                    key={loc.code || loc.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '6px 8px',
+                      borderRadius: '6px',
+                      cursor: isDisabled ? 'not-allowed' : 'pointer',
+                      backgroundColor: isSelected
+                        ? '#eff6ff'
+                        : isDisabled
+                        ? '#f8fafc'
+                        : 'transparent',
+                      opacity: isDisabled ? 0.6 : 1,
+                      border: isSelected ? '1px solid #bfdbfe' : '1px solid transparent',
+                      transition: 'background 0.15s ease',
+                    }}
+                    title={isDisabled ? disabledReason : loc.name}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      disabled={isDisabled}
+                      onChange={() => toggleCode(loc.code)}
+                      style={{ cursor: isDisabled ? 'not-allowed' : 'pointer', accentColor: '#2563eb' }}
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontSize: '0.8rem',
+                          fontWeight: isSelected ? 700 : 500,
+                          color: isDisabled ? '#94a3b8' : '#1e293b',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {loc.name}
+                      </div>
+                      {isDisabled && (
+                        <div style={{ fontSize: '0.68rem', color: '#dc2626', fontWeight: 600 }}>
+                          (In other filter)
+                        </div>
+                      )}
+                    </div>
+                  </label>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const EMPTY_FILTERS = {
   q: '',
   company: '',
@@ -28,6 +236,10 @@ const EMPTY_FILTERS = {
   status: '',
   emailStatus: '',
   whatsappStatus: '',
+  ticketType: '',
+  checkedInLocations: [],
+  notCheckedInLocations: [],
+  checkinDate: '',
   checkedIn: '',
   lunchCheckedIn: '',
   tnmc: '',
@@ -47,6 +259,8 @@ export default function Registrations() {
   const [error, setError] = useState(null);
   const [companies, setCompanies] = useState([]);
   const [coupons, setCoupons] = useState([]);
+  const [ticketTypes, setTicketTypes] = useState([]);
+  const [activeLocations, setActiveLocations] = useState([]);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isAdminParam =
@@ -81,10 +295,29 @@ export default function Registrations() {
       .list({ event: eventId })
       .then((res) => setCoupons(res.data))
       .catch(() => {});
+
+    ticketTypeApi
+      .list(eventId)
+      .then((res) => setTicketTypes(res.data || []))
+      .catch(() => {});
+
+    checkinApi
+      .locations(eventId)
+      .then((res) => {
+        const list = res.data || [];
+        setActiveLocations(list.filter((l) => l.isActive));
+      })
+      .catch(() => {});
   }, [eventId]);
 
   const filtersKey = JSON.stringify(filters);
-  const query = { event: eventId, ...filters, sort };
+  const query = {
+    event: eventId,
+    ...filters,
+    checkedInLocations: filters.checkedInLocations?.join(','),
+    notCheckedInLocations: filters.notCheckedInLocations?.join(','),
+    sort,
+  };
 
   const load = useCallback(() => {
     if (!eventId) return;
@@ -203,7 +436,9 @@ export default function Registrations() {
       setTransferring(true);
       const res = await whatsappMarketingApi.getRegistrationsAudience({
         event: eventId,
-        status: filters.status || undefined,
+        ...filters,
+        checkedInLocations: filters.checkedInLocations?.join(','),
+        notCheckedInLocations: filters.notCheckedInLocations?.join(','),
       });
       const contacts = res?.data?.contacts || [];
       if (!contacts.length) {
@@ -235,10 +470,15 @@ export default function Registrations() {
 
   const registrations = result?.data || [];
   const meta = result?.meta;
-  const filtersActive = Object.values(filters).some(Boolean);
+  const filtersActive = Object.entries(filters).some(([k, v]) => {
+    if (Array.isArray(v)) return v.length > 0;
+    return Boolean(v);
+  });
   const couponOptions = filters.company
     ? coupons.filter((c) => c.company?.id === filters.company)
     : coupons;
+  const pgsTicket = ticketTypes.find((t) => /pg|resident|student/i.test(t.name || ''));
+  const regularTicket = ticketTypes.find((t) => /regular|delegate/i.test(t.name || ''));
 
   return (
     <div>
@@ -346,7 +586,7 @@ export default function Registrations() {
           <button
             type="button"
             onClick={() => {
-              setFilters((f) => ({ ...f, checkedIn: '', lunchCheckedIn: '', status: '' }));
+              setFilters(EMPTY_FILTERS);
               setPage(1);
             }}
             style={{
@@ -355,12 +595,88 @@ export default function Registrations() {
               fontSize: '0.78rem',
               fontWeight: 600,
               cursor: 'pointer',
-              border: !filters.checkedIn && !filters.lunchCheckedIn ? '2px solid #6366f1' : '1px solid #cbd5e1',
-              backgroundColor: !filters.checkedIn && !filters.lunchCheckedIn ? '#eef2ff' : '#ffffff',
-              color: !filters.checkedIn && !filters.lunchCheckedIn ? '#4338ca' : '#475569',
+              border: !filtersActive ? '2px solid #6366f1' : '1px solid #cbd5e1',
+              backgroundColor: !filtersActive ? '#eef2ff' : '#ffffff',
+              color: !filtersActive ? '#4338ca' : '#475569',
             }}
           >
             All Registrations
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const targetVal = pgsTicket?.id || pgsTicket?._id || 'PG Student / Resident';
+              setFilters((f) => ({ ...f, ticketType: f.ticketType === targetVal ? '' : targetVal }));
+              setPage(1);
+            }}
+            style={{
+              padding: '4px 12px',
+              borderRadius: '9999px',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              border:
+                filters.ticketType &&
+                (filters.ticketType === pgsTicket?.id ||
+                  filters.ticketType === pgsTicket?._id ||
+                  filters.ticketType === 'PG Student / Resident')
+                  ? '2px solid #0284c7'
+                  : '1px solid #cbd5e1',
+              backgroundColor:
+                filters.ticketType &&
+                (filters.ticketType === pgsTicket?.id ||
+                  filters.ticketType === pgsTicket?._id ||
+                  filters.ticketType === 'PG Student / Resident')
+                  ? '#f0f9ff'
+                  : '#ffffff',
+              color:
+                filters.ticketType &&
+                (filters.ticketType === pgsTicket?.id ||
+                  filters.ticketType === pgsTicket?._id ||
+                  filters.ticketType === 'PG Student / Resident')
+                  ? '#0369a1'
+                  : '#475569',
+            }}
+          >
+            🎓 PG Student / Resident
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const targetVal = regularTicket?.id || regularTicket?._id || 'Delegate — Regular';
+              setFilters((f) => ({ ...f, ticketType: f.ticketType === targetVal ? '' : targetVal }));
+              setPage(1);
+            }}
+            style={{
+              padding: '4px 12px',
+              borderRadius: '9999px',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              border:
+                filters.ticketType &&
+                (filters.ticketType === regularTicket?.id ||
+                  filters.ticketType === regularTicket?._id ||
+                  filters.ticketType === 'Delegate — Regular')
+                  ? '2px solid #059669'
+                  : '1px solid #cbd5e1',
+              backgroundColor:
+                filters.ticketType &&
+                (filters.ticketType === regularTicket?.id ||
+                  filters.ticketType === regularTicket?._id ||
+                  filters.ticketType === 'Delegate — Regular')
+                  ? '#ecfdf5'
+                  : '#ffffff',
+              color:
+                filters.ticketType &&
+                (filters.ticketType === regularTicket?.id ||
+                  filters.ticketType === regularTicket?._id ||
+                  filters.ticketType === 'Delegate — Regular')
+                  ? '#047857'
+                  : '#475569',
+            }}
+          >
+            🎟️ Delegate — Regular
           </button>
           <button
             type="button"
@@ -466,6 +782,55 @@ export default function Registrations() {
               placeholder="Name, email, mobile, registration ID, coupon…"
               value={filters.q}
               onChange={setFilter('q')}
+            />
+          </label>
+          <label className="field">
+            <span className="field__label">Pass / Ticket Type</span>
+            <select
+              className="field__select"
+              value={filters.ticketType}
+              onChange={setFilter('ticketType')}
+            >
+              <option value="">All Passes</option>
+              {ticketTypes.map((t) => (
+                <option key={t.id || t._id} value={t.id || t._id}>
+                  {t.name} {t.code ? `(${t.code})` : ''}
+                </option>
+              ))}
+            </select>
+          </label>
+          <LocationMultiSelect
+            label="Checked In At"
+            icon="📍"
+            locations={activeLocations}
+            selectedCodes={filters.checkedInLocations}
+            disabledCodes={filters.notCheckedInLocations}
+            disabledReason="Already selected in 'Not Checked In At'"
+            onChange={(codes) => {
+              setFilters((f) => ({ ...f, checkedInLocations: codes }));
+              setPage(1);
+            }}
+          />
+          <LocationMultiSelect
+            label="Not Checked In At"
+            icon="🚫"
+            locations={activeLocations}
+            selectedCodes={filters.notCheckedInLocations}
+            disabledCodes={filters.checkedInLocations}
+            disabledReason="Already selected in 'Checked In At'"
+            onChange={(codes) => {
+              setFilters((f) => ({ ...f, notCheckedInLocations: codes }));
+              setPage(1);
+            }}
+          />
+          <label className="field">
+            <span className="field__label">Check-in Date</span>
+            <input
+              className="field__input"
+              type="date"
+              value={filters.checkinDate}
+              onChange={setFilter('checkinDate')}
+              title="Filter attendees who checked in on this custom date"
             />
           </label>
           <label className="field">
