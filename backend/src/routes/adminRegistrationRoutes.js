@@ -7,6 +7,7 @@ const {
   createRegistration,
   updateRegistration,
   deleteRegistration,
+  toggleCheckinLocation,
   cancelRegistration,
   retryDelivery,
   exportRegistrationsCsv,
@@ -32,6 +33,7 @@ router.get('/:id/badge.pdf', getRegistrationBadgePdf);
 router.get('/:id/certificate', getRegistrationCertificate);
 router.get('/:id/certificate.:ext', getRegistrationCertificate);
 router.patch('/:id', updateRegistration);
+router.post('/:id/checkin-location', toggleCheckinLocation);
 router.delete('/:id', deleteRegistration);
 router.post('/:id/cancel', cancelRegistration);
 router.post('/:id/deliveries/:channel', retryDelivery);

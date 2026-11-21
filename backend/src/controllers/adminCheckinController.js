@@ -89,11 +89,11 @@ const listLocations = asyncHandler(async (req, res) => {
   const enriched = await Promise.all(
     locations.map(async (loc) => {
       let count = 0;
-      if (loc.code === 'ENTRY' || loc.isDefault) {
+      if (loc.code === 'ENTRY') {
         count = await Registration.countDocuments({
           event: eventId,
           status: 'confirmed',
-          $or: [{ 'checkins.locationCode': loc.code }, { checkedInAt: { $ne: null } }],
+          $or: [{ 'checkins.locationCode': 'ENTRY' }, { checkedInAt: { $ne: null } }],
         });
       } else {
         count = await Registration.countDocuments({
@@ -141,9 +141,10 @@ const createLocation = asyncHandler(async (req, res) => {
     throw ApiError.conflict(`Location with code "${cleanCode}" already exists for this event.`);
   }
 
-  // If this is set as default, unset other defaults for the same event
-  if (isDefault) {
-    await CheckinLocation.updateMany({ event }, { $set: { isDefault: false } });
+  let locationOrder = Number(order);
+  if (!locationOrder) {
+    const highest = await CheckinLocation.findOne({ event }).sort({ order: -1 });
+    locationOrder = (highest?.order || 0) + 1;
   }
 
   const location = await CheckinLocation.create({
@@ -153,9 +154,9 @@ const createLocation = asyncHandler(async (req, res) => {
     description: String(description || '').trim(),
     icon: String(icon || 'door').trim(),
     color: String(color || '#2563eb').trim(),
-    isDefault: Boolean(isDefault),
+    isDefault: false,
     isActive: isActive !== undefined ? Boolean(isActive) : true,
-    order: Number(order) || 0,
+    order: locationOrder,
     createdBy: req.user?._id,
   });
 
@@ -358,10 +359,8 @@ const scanTicket = asyncHandler(async (req, res) => {
   }
 
   if (!location) {
-    // Fall back to default location for this event (or first active location)
-    location =
-      (await CheckinLocation.findOne({ event: reg.event._id, isDefault: true, isActive: true })) ||
-      (await CheckinLocation.findOne({ event: reg.event._id, isActive: true }));
+    // Fall back to first active location in creation order
+    location = await CheckinLocation.findOne({ event: reg.event._id, isActive: true }).sort({ order: 1, createdAt: 1 });
   }
 
   // Fallback descriptor if none configured in DB
@@ -547,18 +546,18 @@ const getCheckinStats = asyncHandler(async (req, res) => {
       null;
   }
   if (!selectedLoc) {
-    selectedLoc = locations.find((l) => l.isDefault) || locations[0] || null;
+    selectedLoc = locations[0] || null;
   }
 
   // Calculate breakdown for all locations
   const locationBreakdown = await Promise.all(
     locations.map(async (loc) => {
       let count = 0;
-      if (loc.code === 'ENTRY' || loc.isDefault) {
+      if (loc.code === 'ENTRY') {
         count = await Registration.countDocuments({
           event: eventId,
           status: 'confirmed',
-          $or: [{ 'checkins.locationCode': loc.code }, { checkedInAt: { $ne: null } }],
+          $or: [{ 'checkins.locationCode': 'ENTRY' }, { checkedInAt: { $ne: null } }],
         });
       } else {
         count = await Registration.countDocuments({

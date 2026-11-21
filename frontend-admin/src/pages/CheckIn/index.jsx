@@ -109,11 +109,11 @@ export default function CheckIn() {
         const locs = res.data || [];
         setLocations(locs);
         const activeLocs = locs.filter((l) => l.isActive);
-        const defaultLoc = activeLocs.find((l) => l.isDefault) || activeLocs[0];
-        if (defaultLoc) {
+        const firstActiveLoc = activeLocs[0];
+        if (firstActiveLoc) {
           setActiveLocationId((prev) => {
             if (prev && activeLocs.some((l) => l.id === prev)) return prev;
-            return defaultLoc.id;
+            return firstActiveLoc.id;
           });
         }
       })
@@ -134,7 +134,6 @@ export default function CheckIn() {
   // Active location object
   const activeLocation =
     locations.find((l) => l.id === activeLocationId) ||
-    locations.find((l) => l.isDefault && l.isActive) ||
     locations.find((l) => l.isActive) ||
     null;
 
@@ -144,7 +143,12 @@ export default function CheckIn() {
       if (!rawValue) return;
       setScanning(true);
       try {
-        const res = await checkinApi.scan(rawValue, activeLocationId);
+        const targetLocId =
+          activeLocationId ||
+          activeLocation?.id ||
+          locations.find((l) => l.isActive && l.isDefault)?.id ||
+          locations.find((l) => l.isActive)?.id;
+        const res = await checkinApi.scan(rawValue, targetLocId);
         const isSuccess = res.data.result === 'success';
         const tone = isSuccess ? 'success' : 'warning';
         const resultData = { tone, ...res.data };

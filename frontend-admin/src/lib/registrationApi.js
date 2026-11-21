@@ -14,6 +14,11 @@ export const registrationApi = {
   get: (id) => request(`/admin/registrations/${id}`),
   create: (body) => request('/admin/registrations', { method: 'POST', body }),
   update: (id, body) => request(`/admin/registrations/${id}`, { method: 'PATCH', body }),
+  toggleCheckinLocation: (id, { locationId, locationCode, checked }) =>
+    request(`/admin/registrations/${id}/checkin-location`, {
+      method: 'POST',
+      body: { locationId, locationCode, checked },
+    }),
   delete: (id) => request(`/admin/registrations/${id}`, { method: 'DELETE' }),
   cancel: (id, reason) =>
     request(`/admin/registrations/${id}/cancel`, { method: 'POST', body: { reason } }),

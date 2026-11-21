@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { registrationApi } from '../../lib/registrationApi';
 import { whatsappMarketingApi } from '../../lib/whatsappMarketingApi';
 import { companyApi } from '../../lib/companyApi';
@@ -48,6 +48,10 @@ export default function Registrations() {
   const [companies, setCompanies] = useState([]);
   const [coupons, setCoupons] = useState([]);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isAdminParam =
+    searchParams.get('admin') === '1' ||
+    (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('admin') === '1');
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [transferring, setTransferring] = useState(false);
   const [openId, setOpenId] = useState(null);
@@ -258,25 +262,27 @@ export default function Registrations() {
               setPage(1);
             }}
           />
-          <Button
-            variant="primary"
-            size="sm"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              backgroundColor: '#059669',
-              borderColor: '#047857',
-              color: '#ffffff',
-              fontWeight: 700,
-              boxShadow: '0 2px 4px rgba(5, 150, 105, 0.25)',
-            }}
-            onClick={() => setShowInstantRegModal(true)}
-            title="Instant on-spot registration for TMNC or Non-TMNC attendees with badge generation"
-          >
-            <span>➕</span>
-            <span>Instant Registration</span>
-          </Button>
+          {isAdminParam && (
+            <Button
+              variant="primary"
+              size="sm"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                backgroundColor: '#059669',
+                borderColor: '#047857',
+                color: '#ffffff',
+                fontWeight: 700,
+                boxShadow: '0 2px 4px rgba(5, 150, 105, 0.25)',
+              }}
+              onClick={() => setShowInstantRegModal(true)}
+              title="Instant on-spot registration for TMNC or Non-TMNC attendees with badge generation"
+            >
+              <span>➕</span>
+              <span>Instant Registration</span>
+            </Button>
+          )}
           <Button
             variant="secondary"
             size="sm"
@@ -1065,6 +1071,7 @@ export default function Registrations() {
       {openId && (
         <RegistrationDetail
           id={openId}
+          isAdmin={isAdminParam}
           onClose={() => setOpenId(null)}
           onChanged={handleChanged}
           onDeleted={handleDeleted}
@@ -1093,7 +1100,7 @@ export default function Registrations() {
         />
       )}
 
-      {showInstantRegModal && (
+      {isAdminParam && showInstantRegModal && (
         <InstantRegistrationModal
           eventId={eventId}
           onClose={() => setShowInstantRegModal(false)}

@@ -74,7 +74,6 @@ export default function CheckinLocations() {
 
   const activeLocations = (locations || []).filter((l) => l.isActive);
   const totalScans = (locations || []).reduce((acc, l) => acc + (l.checkedInCount || 0), 0);
-  const defaultLoc = (locations || []).find((l) => l.isDefault) || null;
 
   return (
     <div className="locations-container">
@@ -118,13 +117,6 @@ export default function CheckinLocations() {
           <div className="location-stat-card__label">Total Scans Recorded</div>
           <div className="location-stat-card__value" style={{ color: 'var(--brand-700)' }}>
             {totalScans}
-          </div>
-        </div>
-        <div className="location-stat-card">
-          <div className="location-stat-card__label">Default Checkpoint</div>
-          <div className="location-stat-card__value" style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>🚪</span>
-            <span>{defaultLoc?.name || 'Main Entry Desk'}</span>
           </div>
         </div>
       </div>
@@ -176,11 +168,6 @@ export default function CheckinLocations() {
                     </td>
                     <td>
                       <div style={{ fontWeight: 600, color: 'var(--ink-900)' }}>{loc.name}</div>
-                      {loc.isDefault && (
-                        <span className="location-pill location-pill--default" style={{ marginTop: '4px' }}>
-                          ⭐ Default Entry
-                        </span>
-                      )}
                     </td>
                     <td>
                       <span className="location-code-badge">{loc.code}</span>
@@ -254,7 +241,6 @@ function LocationDrawer({ location, eventId, onClose, onSaved }) {
   const [description, setDescription] = useState(location?.description || '');
   const [icon, setIcon] = useState(location?.icon || 'door');
   const [color, setColor] = useState(location?.color || '#2563eb');
-  const [isDefault, setIsDefault] = useState(location ? Boolean(location.isDefault) : false);
   const [isActive, setIsActive] = useState(location ? Boolean(location.isActive) : true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -287,7 +273,6 @@ function LocationDrawer({ location, eventId, onClose, onSaved }) {
       description: description.trim(),
       icon,
       color,
-      isDefault,
       isActive,
     };
 
@@ -395,20 +380,6 @@ function LocationDrawer({ location, eventId, onClose, onSaved }) {
         </div>
 
         <label className="checkbox" style={{ marginTop: 'var(--space-3)' }}>
-          <input
-            type="checkbox"
-            checked={isDefault}
-            onChange={(e) => setIsDefault(e.target.checked)}
-          />
-          <span>
-            <strong>Default Entry Checkpoint</strong>
-            <span className="field__hint" style={{ margin: 0 }}>
-              (Pre-selected by default on the Check-in Desk scanner screen)
-            </span>
-          </span>
-        </label>
-
-        <label className="checkbox" style={{ marginTop: 'var(--space-2)' }}>
           <input
             type="checkbox"
             checked={isActive}

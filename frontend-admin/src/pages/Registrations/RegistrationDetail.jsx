@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { registrationApi } from '../../lib/registrationApi';
+import { checkinApi } from '../../lib/checkinApi';
 import { formatDateTime } from '../../lib/format';
 import Drawer from '../../components/ui/Drawer';
 import Button from '../../components/ui/Button';
@@ -23,10 +25,18 @@ function formatAmount(amount, currency = 'INR') {
   }).format(amount ?? 0);
 }
 
-export default function RegistrationDetail({ id, onClose, onChanged, onDeleted }) {
+export default function RegistrationDetail({ id, isAdmin: propIsAdmin, onClose, onChanged, onDeleted }) {
+  const [searchParams] = useSearchParams();
+  const isAdmin =
+    Boolean(propIsAdmin) ||
+    searchParams.get('admin') === '1' ||
+    (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('admin') === '1');
+
   const [reg, setReg] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState('');
+  const [busyLocation, setBusyLocation] = useState(null);
+  const [locations, setLocations] = useState([]);
   const [flash, setFlash] = useState(null);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [idCardOpen, setIdCardOpen] = useState(false);
@@ -49,10 +59,44 @@ export default function RegistrationDetail({ id, onClose, onChanged, onDeleted }
 
   useEffect(load, [load]);
 
+  // Load checkpoint locations for this event
+  useEffect(() => {
+    const evtId = reg?.event?.id || reg?.event?._id || (typeof reg?.event === 'string' ? reg.event : null);
+    if (!evtId) return;
+    checkinApi
+      .locations(evtId)
+      .then((res) => setLocations(res.data || []))
+      .catch(() => setLocations([]));
+  }, [reg?.event]);
+
   function apply(updated, message, tone = 'success') {
     setReg(updated);
     onChanged(updated);
     if (message) setFlash({ tone, message });
+  }
+
+  async function handleToggleLocation(loc, isChecked) {
+    if (!loc) return;
+    setBusyLocation(loc.code);
+    setFlash(null);
+    try {
+      const res = await registrationApi.toggleCheckinLocation(reg.id, {
+        locationId: loc.id,
+        locationCode: loc.code,
+        checked: isChecked,
+      });
+      apply(
+        res.data,
+        isChecked
+          ? `Marked checked in at "${loc.name}".`
+          : `Removed check-in from "${loc.name}". Attendee can now be scanned again at this checkpoint.`,
+        'success'
+      );
+    } catch (err) {
+      setFlash({ tone: 'error', message: err.message || 'Failed to update check-in.' });
+    } finally {
+      setBusyLocation(null);
+    }
   }
 
   async function handleRetry(channel) {
@@ -113,6 +157,10 @@ export default function RegistrationDetail({ id, onClose, onChanged, onDeleted }
       ) : (
         <Body
           reg={reg}
+          isAdmin={isAdmin}
+          locations={locations}
+          busyLocation={busyLocation}
+          onToggleLocation={handleToggleLocation}
           busy={busy}
           flash={flash}
           onRetry={handleRetry}
@@ -167,6 +215,10 @@ export default function RegistrationDetail({ id, onClose, onChanged, onDeleted }
 
 function Body({
   reg,
+  isAdmin,
+  locations = [],
+  busyLocation,
+  onToggleLocation,
   busy,
   flash,
   onRetry,
@@ -465,6 +517,159 @@ function Body({
                 </Button>
               )}
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* Checkpoint Check-in Status & Admin Location Controls */}
+      <div style={{ marginTop: 'var(--space-6)', marginBottom: 'var(--space-6)' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 'var(--space-2)',
+          }}
+        >
+          <p className="section-label" style={{ margin: 0 }}>📍 Checkpoint Locations &amp; Check-in</p>
+          {isAdmin && (
+            <span
+              style={{
+                fontSize: '0.72rem',
+                backgroundColor: '#ecfdf5',
+                color: '#047857',
+                border: '1px solid #a7f3d0',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                fontWeight: 700,
+              }}
+            >
+              ⚙️ Admin Edit Mode (?admin=1)
+            </span>
+          )}
+        </div>
+
+        {isAdmin ? (
+          /* Editable Checkpoint Checkbox List for ?admin=1 */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <p style={{ margin: '0 0 6px 0', fontSize: 'var(--text-xs)', color: 'var(--ink-500)' }}>
+              Check the box to record check-in at a location, or uncheck to remove check-in so this member can be scanned again at the desk.
+            </p>
+            {locations.length === 0 ? (
+              <p className="muted" style={{ fontSize: 'var(--text-xs)' }}>Loading checkpoints…</p>
+            ) : (
+              locations.map((loc) => {
+                const checkinItem = (reg.checkins || []).find((c) => c.locationCode === loc.code);
+                const isChecked = Boolean(checkinItem);
+                const isBusy = busyLocation === loc.code;
+
+                return (
+                  <label
+                    key={loc.id || loc.code}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      border: isChecked ? '1.5px solid #86efac' : '1px solid var(--ink-200)',
+                      backgroundColor: isChecked ? '#f0fdf4' : 'var(--white)',
+                      cursor: isBusy ? 'wait' : 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        disabled={isBusy}
+                        onChange={(e) => onToggleLocation(loc, e.target.checked)}
+                        style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#16a34a' }}
+                      />
+                      <div>
+                        <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--ink-900)' }}>
+                          {loc.name}
+                        </span>
+                        <span className="mono" style={{ fontSize: '0.75rem', color: 'var(--ink-500)', marginLeft: '6px' }}>
+                          ({loc.code})
+                        </span>
+                        {loc.isActive === false && (
+                          <span style={{ fontSize: '0.72rem', color: '#94a3b8', marginLeft: '6px' }}>(Inactive)</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      {isBusy ? (
+                        <span style={{ fontSize: '0.78rem', color: 'var(--ink-500)' }}>Updating…</span>
+                      ) : isChecked ? (
+                        <span style={{ fontSize: '0.8rem', color: '#15803d', fontWeight: 600 }}>
+                          ✅ Checked in {checkinItem?.checkedInAt ? `at ${new Date(checkinItem.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '0.78rem', color: 'var(--ink-400)' }}>
+                          ⚪ Not checked in
+                        </span>
+                      )}
+                    </div>
+                  </label>
+                );
+              })
+            )}
+          </div>
+        ) : (
+          /* Read-only Checkpoint View without ?admin=1 */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {reg.checkins && reg.checkins.length > 0 ? (
+              reg.checkins.map((c, i) => (
+                <div
+                  key={i}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '9px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #86efac',
+                    backgroundColor: '#f0fdf4',
+                  }}
+                >
+                  <span style={{ fontWeight: 600, fontSize: '0.88rem', color: '#15803d' }}>
+                    📍 {c.locationName || c.locationCode}
+                  </span>
+                  <span style={{ fontSize: '0.8rem', color: '#166534', fontWeight: 600 }}>
+                    ✅ Checked in at {formatDateTime(c.checkedInAt)}
+                  </span>
+                </div>
+              ))
+            ) : reg.checkedInAt ? (
+              <div
+                style={{
+                  padding: '9px 12px',
+                  borderRadius: '8px',
+                  border: '1px solid #86efac',
+                  backgroundColor: '#f0fdf4',
+                  color: '#15803d',
+                  fontSize: '0.88rem',
+                  fontWeight: 600,
+                }}
+              >
+                📍 Main Entry Desk · Checked in at {formatDateTime(reg.checkedInAt)}
+              </div>
+            ) : (
+              <div
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  border: '1px dashed var(--ink-200)',
+                  backgroundColor: 'var(--ink-50)',
+                  color: 'var(--ink-500)',
+                  fontSize: '0.85rem',
+                }}
+              >
+                ⚪ Not checked in at any checkpoint yet
+              </div>
+            )}
           </div>
         )}
       </div>

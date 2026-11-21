@@ -8,6 +8,7 @@ const mongoose = require('mongoose');
 const Event = require('../models/Event');
 const TicketType = require('../models/TicketType');
 const Registration = require('../models/Registration');
+const CheckinLocation = require('../models/CheckinLocation');
 const ApiError = require('../utils/ApiError');
 const { sendSuccess, asyncHandler } = require('../utils/response');
 const { serializeRegistrationForAdmin } = require('../services/registrationSerializer');
@@ -241,6 +242,111 @@ const deleteRegistration = asyncHandler(async (req, res) => {
     res,
     { deleted: true, id: reg._id, registrationCode: regCode },
     { message: `Registration ${regCode} (${attendeeName}) has been deleted.` }
+  );
+});
+
+/**
+ * POST /api/v1/admin/registrations/:id/checkin-location
+ * Body: { locationId, locationCode, checked: true | false }
+ * Toggles a checkpoint location check-in for this registration.
+ */
+const toggleCheckinLocation = asyncHandler(async (req, res) => {
+  const reg = await Registration.findById(req.params.id);
+  if (!reg) throw ApiError.notFound('Registration not found');
+
+  const { locationId, locationCode, checked } = req.body || {};
+  if (!locationId && !locationCode) {
+    throw ApiError.badRequest('A locationId or locationCode is required.');
+  }
+
+  let loc = null;
+  if (locationId) {
+    loc = await CheckinLocation.findById(locationId);
+  } else if (locationCode) {
+    loc = await CheckinLocation.findOne({
+      event: reg.event,
+      code: String(locationCode).trim().toUpperCase(),
+    });
+  }
+
+  if (!loc) {
+    throw ApiError.notFound('Checkpoint location not found.');
+  }
+
+  reg.checkins = reg.checkins || [];
+  const targetCode = loc.code;
+  const now = new Date();
+
+  if (checked) {
+    // Add check-in for this location if not already present
+    const existing = reg.checkins.find((c) => c.locationCode === targetCode);
+    if (!existing) {
+      const newCheckinItem = {
+        location: loc._id,
+        locationCode: loc.code,
+        locationName: loc.name,
+        checkedInAt: now,
+        checkedInBy: req.user?._id || null,
+      };
+      await Registration.updateOne(
+        { _id: reg._id },
+        {
+          $push: { checkins: newCheckinItem },
+          $set: {
+            checkedIn: true,
+            ...(reg.checkedInAt ? {} : { checkedInAt: now, checkedInBy: req.user?._id || null }),
+          },
+        }
+      );
+    }
+  } else {
+    // Remove check-in from this location
+    const remaining = reg.checkins.filter(
+      (c) => c.locationCode !== targetCode && String(c.location) !== String(loc._id)
+    );
+
+    const updateOps = {
+      $pull: {
+        checkins: {
+          $or: [{ locationCode: targetCode }, { location: loc._id }],
+        },
+      },
+    };
+
+    if (remaining.length === 0) {
+      updateOps.$set = {
+        checkedIn: false,
+        checkedInAt: null,
+        checkedInBy: null,
+      };
+    } else {
+      updateOps.$set = {
+        checkedIn: true,
+        checkedInAt: remaining[0].checkedInAt || now,
+      };
+    }
+
+    await Registration.updateOne({ _id: reg._id }, updateOps);
+  }
+
+  recordAudit(req, {
+    action: checked ? 'registration.checkin_manual_add' : 'registration.checkin_manual_remove',
+    entityType: 'Registration',
+    entityId: reg._id,
+    meta: {
+      registrationCode: reg.registrationCode,
+      location: loc.name,
+      locationCode: loc.code,
+      checked: Boolean(checked),
+      performedBy: req.user?.name || req.user?.email || 'Admin',
+    },
+  });
+
+  const updated = serializeRegistrationForAdmin(await findOr404(reg._id));
+  return sendSuccess(
+    res,
+    updated,
+    { message: checked ? `Marked checked in at ${loc.name}.` : `Removed check-in from ${loc.name}.` }
   );
 });
 
@@ -879,6 +985,7 @@ module.exports = {
   createRegistration,
   updateRegistration,
   deleteRegistration,
+  toggleCheckinLocation,
   cancelRegistration,
   retryDelivery,
   exportRegistrationsCsv,
