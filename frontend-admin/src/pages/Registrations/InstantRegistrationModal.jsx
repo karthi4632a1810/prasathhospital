@@ -473,13 +473,13 @@ export default function InstantRegistrationModal({ eventId, onClose, onCreated, 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                    Mobile Number
+                    Mobile Number <span style={{ color: '#94a3b8', fontWeight: 500 }}>(Optional)</span>
                   </label>
                   <input
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="9876543210"
+                    placeholder="Enter 10-digit mobile number"
                     style={{
                       width: '100%',
                       padding: '9px 12px',
@@ -500,7 +500,7 @@ export default function InstantRegistrationModal({ eventId, onClose, onCreated, 
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="doctor@hospital.com"
+                    placeholder="e.g. doctor@hospital.com"
                     style={{
                       width: '100%',
                       padding: '9px 12px',
