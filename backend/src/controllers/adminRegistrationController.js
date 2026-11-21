@@ -589,11 +589,14 @@ const createRegistration = asyncHandler(async (req, res) => {
       country: String(country).trim(),
     },
     badgeRole: assignedRole,
-    payment: {
-      method: 'cash',
-      status: 'completed',
-      paidAt: new Date(),
+    pricing: {
+      basePrice: ticketType?.price || 0,
+      discountAmount: ticketType?.price || 0,
+      taxAmount: 0,
+      totalAmount: 0,
+      currency: 'INR',
     },
+    payment: null,
   });
 
   // Assign badge number
