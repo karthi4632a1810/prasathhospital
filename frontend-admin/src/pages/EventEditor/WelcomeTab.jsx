@@ -64,7 +64,7 @@ export default function WelcomeTab({ event, onSaved }) {
                 className="field__input"
                 value={form.name}
                 onChange={set('name')}
-                placeholder="Dr. Geetha Haripriya"
+                placeholder="e.g. Dr. Geetha Haripriya"
               />
             </label>
 
@@ -74,7 +74,7 @@ export default function WelcomeTab({ event, onSaved }) {
                 className="field__input"
                 value={form.title}
                 onChange={set('title')}
-                placeholder="Chairperson, Prashanth Fertility and Research Centre Pvt. Ltd."
+                placeholder="e.g. Chairperson, Prashanth Fertility..."
               />
             </label>
           </div>

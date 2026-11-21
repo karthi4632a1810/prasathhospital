@@ -455,7 +455,7 @@ export default function InstantRegistrationModal({ eventId, onClose, onCreated, 
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Dr. Sneha Rajan"
+                  placeholder="e.g. Dr. Sneha Rajan"
                   style={{
                     width: '100%',
                     padding: '9px 12px',
@@ -543,7 +543,7 @@ export default function InstantRegistrationModal({ eventId, onClose, onCreated, 
                     type="text"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    placeholder="Chennai"
+                    placeholder="e.g. Chennai"
                     style={{
                       width: '100%',
                       padding: '8px 12px',

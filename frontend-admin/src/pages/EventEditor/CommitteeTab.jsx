@@ -46,7 +46,7 @@ export default function CommitteeTab({ event, onSaved }) {
                 <span className="field__label">Name</span>
                 <input
                   className="field__input"
-                  placeholder="Dr Jane Doe"
+                  placeholder="e.g. Dr. Jane Doe"
                   value={item.name}
                   onChange={(e) => update({ name: e.target.value })}
                 />
@@ -55,7 +55,7 @@ export default function CommitteeTab({ event, onSaved }) {
                 <span className="field__label">Role</span>
                 <input
                   className="field__input"
-                  placeholder="Organising Chairperson"
+                  placeholder="e.g. Organising Chairperson"
                   value={item.role}
                   onChange={(e) => update({ role: e.target.value })}
                 />

@@ -771,7 +771,7 @@ export default function IdCardStudio() {
                             updateItem(item.id, { badgeNo: v.padStart(4, '0') });
                           }
                         }}
-                        placeholder="0001"
+                        placeholder="e.g. 1001"
                         maxLength={10}
                         title="4-digit badge number (between name & QR code)"
                       />

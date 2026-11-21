@@ -52,7 +52,7 @@ export default function SpeakersTab({ event, onSaved }) {
                 <span className="field__label">Credentials</span>
                 <input
                   className="field__input"
-                  placeholder="MBBS, MD (OBG)"
+                  placeholder="e.g. MBBS, MD (OBG)"
                   value={item.credentials}
                   onChange={(e) => update({ credentials: e.target.value })}
                 />

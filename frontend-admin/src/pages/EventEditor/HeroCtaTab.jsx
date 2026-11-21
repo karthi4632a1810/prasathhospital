@@ -91,7 +91,7 @@ export default function HeroCtaTab({ event, onSaved }) {
                 className="field__input"
                 value={formHero.liveBadgeText}
                 onChange={(e) => setH('liveBadgeText', e.target.value)}
-                placeholder="Live Tele-Robotic Surgery"
+                placeholder="e.g. Live Tele-Robotic Surgery"
               />
             </label>
           )}
@@ -102,7 +102,7 @@ export default function HeroCtaTab({ event, onSaved }) {
               className="field__input"
               value={formHero.ctaText}
               onChange={(e) => setH('ctaText', e.target.value)}
-              placeholder="Register Now"
+              placeholder="e.g. Register Now"
             />
           </label>
         </div>
@@ -128,7 +128,7 @@ export default function HeroCtaTab({ event, onSaved }) {
                 className="field__input"
                 value={formCta.openTitle}
                 onChange={(e) => setC('openTitle', e.target.value)}
-                placeholder="Secure your seat"
+                placeholder="e.g. Secure your seat"
               />
             </label>
 
@@ -138,7 +138,7 @@ export default function HeroCtaTab({ event, onSaved }) {
                 className="field__input"
                 value={formCta.closedTitle}
                 onChange={(e) => setC('closedTitle', e.target.value)}
-                placeholder="Stay in the loop"
+                placeholder="e.g. Stay in the loop"
               />
             </label>
           </div>

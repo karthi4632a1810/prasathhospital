@@ -137,7 +137,7 @@ export default function ExhibitTab({ event, onSaved }) {
                 className="field__input"
                 value={header.contactEmail}
                 onChange={setH('contactEmail')}
-                placeholder="infociim@pfrcivf.com"
+                placeholder="e.g. infociim@pfrcivf.com"
               />
               <span className="field__hint">
                 Inquiry CTA button opens mailto: with this address.
@@ -150,7 +150,7 @@ export default function ExhibitTab({ event, onSaved }) {
                 className="field__input"
                 value={header.ctaText}
                 onChange={setH('ctaText')}
-                placeholder="Reserve your stall"
+                placeholder="e.g. Reserve your stall"
               />
             </label>
           </div>
@@ -188,7 +188,7 @@ export default function ExhibitTab({ event, onSaved }) {
                       className="field__input"
                       value={item.name}
                       onChange={(e) => update({ name: e.target.value })}
-                      placeholder="Gold Stall"
+                      placeholder="e.g. Gold Stall"
                     />
                   </label>
 
@@ -215,7 +215,7 @@ export default function ExhibitTab({ event, onSaved }) {
                       className="field__input"
                       value={item.price}
                       onChange={(e) => update({ price: e.target.value })}
-                      placeholder="₹5,00,000"
+                      placeholder="e.g. ₹5,00,000"
                     />
                   </label>
 

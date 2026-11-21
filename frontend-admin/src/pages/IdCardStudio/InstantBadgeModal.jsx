@@ -300,7 +300,7 @@ export default function InstantBadgeModal({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Dr. Sneha Rajan"
+              placeholder="e.g. Dr. Sneha Rajan"
               autoFocus
               style={{
                 width: '100%',
@@ -382,7 +382,7 @@ export default function InstantBadgeModal({
                   value={badgeNo}
                   onChange={(e) => setBadgeNo(e.target.value)}
                   onBlur={handleBadgeNoBlur}
-                  placeholder="0001"
+                  placeholder="e.g. 1001"
                   maxLength={10}
                   style={{
                     width: '110px',

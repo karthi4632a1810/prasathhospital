@@ -75,7 +75,7 @@ export default function Companies() {
             <span className="field__label">Search</span>
             <input
               className="field__input"
-              placeholder="Company name…"
+              placeholder="Search company name…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />

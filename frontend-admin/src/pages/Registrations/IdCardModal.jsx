@@ -437,7 +437,7 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Dr. Sneha Rajan"
+              placeholder="e.g. Dr. Sneha Rajan"
               style={{
                 width: '100%',
                 padding: '10px 14px',
@@ -527,7 +527,7 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
                     value={badgeNo}
                     onChange={(e) => setBadgeNo(e.target.value)}
                     onBlur={handleBadgeNoBlur}
-                    placeholder="0001"
+                    placeholder="e.g. 1001"
                     maxLength={10}
                     style={{
                       width: '120px',

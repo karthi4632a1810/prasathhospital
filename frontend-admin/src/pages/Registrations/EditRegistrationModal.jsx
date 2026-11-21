@@ -378,7 +378,7 @@ export default function EditRegistrationModal({ registration, onClose, onUpdated
                   type="text"
                   value={role}
                   onChange={(e) => setRole(e.target.value.toUpperCase())}
-                  placeholder="DELEGATE, FACULTY, etc."
+                  placeholder="e.g. DELEGATE or FACULTY"
                   style={{
                     width: '100%',
                     padding: '7px 10px',
@@ -413,7 +413,7 @@ export default function EditRegistrationModal({ registration, onClose, onUpdated
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Dr. John Doe"
+                placeholder="Enter attendee full name (e.g. Dr. Priya Raman)"
                 style={{
                   width: '100%',
                   padding: '9px 12px',
@@ -443,7 +443,7 @@ export default function EditRegistrationModal({ registration, onClose, onUpdated
                 type="text"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="9876543210"
+                placeholder="Enter 10-digit mobile number"
                 style={{
                   width: '100%',
                   padding: '9px 12px',
@@ -472,7 +472,7 @@ export default function EditRegistrationModal({ registration, onClose, onUpdated
                 type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="doctor@hospital.com"
+                placeholder="e.g. doctor@hospital.com"
                 style={{
                   width: '100%',
                   padding: '9px 12px',
@@ -650,7 +650,7 @@ export default function EditRegistrationModal({ registration, onClose, onUpdated
                 type="text"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                placeholder="Chennai"
+                placeholder="e.g. Chennai"
                 style={{
                   width: '100%',
                   padding: '8px 12px',
@@ -679,7 +679,7 @@ export default function EditRegistrationModal({ registration, onClose, onUpdated
                 type="text"
                 value={state}
                 onChange={(e) => setState(e.target.value)}
-                placeholder="Tamil Nadu"
+                placeholder="e.g. Tamil Nadu"
                 style={{
                   width: '100%',
                   padding: '8px 12px',

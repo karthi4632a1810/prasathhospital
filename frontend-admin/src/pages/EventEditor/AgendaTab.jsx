@@ -61,7 +61,7 @@ export default function AgendaTab({ event, onSaved }) {
                 <span className="field__label">Label</span>
                 <input
                   className="field__input"
-                  placeholder="Day 1 — Clinical Track"
+                  placeholder="e.g. Day 1 — Clinical Track"
                   value={day.label}
                   onChange={(e) => updateDay({ label: e.target.value })}
                 />
@@ -96,7 +96,7 @@ export default function AgendaTab({ event, onSaved }) {
                       <span className="field__label">Start</span>
                       <input
                         className="field__input"
-                        placeholder="09:30"
+                        placeholder="e.g. 09:30"
                         value={item.startTime}
                         onChange={(e) => updateItem({ startTime: e.target.value })}
                       />
@@ -105,7 +105,7 @@ export default function AgendaTab({ event, onSaved }) {
                       <span className="field__label">End</span>
                       <input
                         className="field__input"
-                        placeholder="10:15"
+                        placeholder="e.g. 10:15"
                         value={item.endTime}
                         onChange={(e) => updateItem({ endTime: e.target.value })}
                       />
