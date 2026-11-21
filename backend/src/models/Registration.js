@@ -151,6 +151,7 @@ const RegistrationSchema = new Schema(
     campaignSource: { type: String, trim: true, default: '' },
     notes: { type: String, trim: true, default: '' },
     isTest: { type: Boolean, default: false, index: true },
+    isInstant: { type: Boolean, default: false, index: true },
     badgeNo: { type: String, trim: true, default: '' },
     badgeRole: { type: String, trim: true, default: '' },
     role: { type: String, trim: true, default: '' },

@@ -810,6 +810,7 @@ const createRegistration = asyncHandler(async (req, res) => {
     registrationCode,
     qrToken,
     status: 'confirmed',
+    isInstant: true,
     attendee: {
       name: cleanName,
       title: title || 'Dr.',
@@ -833,8 +834,8 @@ const createRegistration = asyncHandler(async (req, res) => {
     payment: null,
   });
 
-  // Assign badge number
-  registration.badgeNo = await resolveRegistrationBadgeNo(registration);
+  // Assign badge number from 2001 series for instant on-spot registrations
+  registration.badgeNo = await resolveRegistrationBadgeNo(registration, { isInstant: true });
 
   // Auto check-in if requested
   if (autoCheckIn) {
