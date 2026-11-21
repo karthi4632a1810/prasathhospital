@@ -318,9 +318,30 @@ const scanTicket = asyncHandler(async (req, res) => {
     .populate('ticketType', 'name')
     .populate('company', 'name');
 
-  if (!reg) throw ApiError.notFound('No ticket found for this code.');
+  if (!reg) {
+    recordAudit(req, {
+      action: 'registration.checkin_invalid',
+      entityType: 'Registration',
+      meta: {
+        reason: 'ticket_not_found',
+        token,
+        scannedCode: req.body.qrToken,
+      },
+    });
+    throw ApiError.notFound('No ticket found for this code.');
+  }
 
   if (reg.status !== 'confirmed') {
+    recordAudit(req, {
+      action: 'registration.checkin_invalid',
+      entityType: 'Registration',
+      entityId: reg._id,
+      meta: {
+        reason: `status_${reg.status}`,
+        registrationCode: reg.registrationCode,
+        token,
+      },
+    });
     throw ApiError.conflict(STATUS_MESSAGES[reg.status] || 'This ticket is not valid.');
   }
 
@@ -413,6 +434,17 @@ const scanTicket = asyncHandler(async (req, res) => {
 
   if (existingForThisLoc || alreadyCheckedInLegacy) {
     const priorTime = existingForThisLoc ? existingForThisLoc.checkedInAt : reg.checkedInAt;
+    recordAudit(req, {
+      action: 'registration.checkin_duplicate',
+      entityType: 'Registration',
+      entityId: reg._id,
+      meta: {
+        registrationCode: reg.registrationCode,
+        location: locName,
+        locationCode: locCode,
+        firstCheckedInAt: priorTime,
+      },
+    });
     return sendSuccess(res, {
       result: 'already-checked-in',
       checkedInAt: priorTime,
