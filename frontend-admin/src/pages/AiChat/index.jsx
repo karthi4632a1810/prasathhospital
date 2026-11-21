@@ -7,6 +7,22 @@ import './AiChat.css';
 
 const QUICK_PROMPTS = [
   {
+    icon: '⚡',
+    label: 'DB Edit: Update Coupon',
+    prompt: 'update coupon PFRCCIIM006B2B max uses to 25',
+  },
+  {
+    icon: '✏️',
+    label: 'DB Edit: Badge Number',
+    prompt: 'update badge number of Dr Monisha to 0999',
+  },
+  {
+    icon: '🎓',
+    label: 'PG Students Checked-in (PDF / CSV / XLSX)',
+    prompt:
+      'fetch the pg student only who check in and with name , email and id card number in pdf and csv',
+  },
+  {
     icon: '🎓',
     label: 'Certificate for Karthikeyan',
     prompt: 'I want certificate for this name Karthikeyan',
@@ -26,11 +42,6 @@ const QUICK_PROMPTS = [
     icon: '📈',
     label: 'Overall Stats',
     prompt: 'How many delegates registered and checked in?',
-  },
-  {
-    icon: '🔍',
-    label: 'Non-TNMC Delegates',
-    prompt: 'Show attendees without TNMC',
   },
 ];
 
@@ -171,7 +182,7 @@ export default function AiChat() {
     {
       id: 'welcome',
       role: 'ai',
-      text: `Hello! I am your **CIIM 2026 Admin AI Assistant** powered by Groq & Gemini.\n\nAsk me anything in plain language or try these instant actions:\n\n- 🎓 **Instant Certificates**: *"I want certificate for this name Karthikeyan"* → Get PNG, JPG, and PDF download links!\n- 🪪 **Instant ID Cards**: *"Create instant ID card for Dr. Karthikeyan"* → Download ready in PNG, JPG, and PDF!\n- 📊 **Custom Excel Reports**: *"I want only TNMC registor user who have the scaned in and i waant only detail od name , email and phone in excel"* → Generates custom Excel with only those 3 columns!\n- 🔍 **Database Queries & Stats**: Total registrations, check-in stats, find attendees, or cancel registrations.`,
+      text: `Hello! I am your **CIIM 2026 Admin AI Assistant & Universal MongoDB Operator**.\n\nAsk me anything in plain language or try these instant actions:\n\n- ⚡ **Universal MongoDB Editing**: *"update coupon PFRCCIIM006B2B max uses to 25"*, *"update badge number of Dr Monisha to 0999"*, *"mark X as checked in"*, or edit ANY collection/field!\n- 📥 **Custom Multi-Format Exports**: *"fetch the pg student only who check in and with name, email and id card number"* → Instant PDF Report, CSV, and Excel downloads!\n- 🎓 **Instant Certificates**: *"I want certificate for this name Karthikeyan"* → Get PNG, JPG, and PDF download links!\n- 🪪 **Instant ID Cards**: *"Create instant ID card for Dr. Karthikeyan"* → Download ready in PNG, JPG, and PDF!\n- 🔍 **Database Queries & Shell**: Run raw \`db.<collection>.<action>()\`, query counts, or search any record.`,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -223,6 +234,7 @@ export default function AiChat() {
         text: aiData.reply || 'Request processed successfully.',
         action: aiData.action,
         downloads: aiData.downloads,
+        dataExport: aiData.dataExport,
         excelDownload: aiData.excelDownload,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
@@ -265,7 +277,7 @@ export default function AiChat() {
     const safeLabel = (download.label || 'Card')
       .replace(/\s+/g, '_')
       .replace(/[^a-zA-Z0-9_-]/g, '_');
-    const filename = `CIIM2026_${safeLabel}_${cleanName}.${fmt}`;
+    const filename = download.filename || `CIIM2026_${safeLabel}_${cleanName}.${fmt}`;
 
     try {
       await downloadFile(download.url, filename);
@@ -437,8 +449,16 @@ export default function AiChat() {
                             </>
                           ) : (
                             <>
-                              <span>⬇</span>
-                              <span>{dl.label} (.{dl.format.toUpperCase()})</span>
+                              <span>
+                                {dl.format === 'pdf'
+                                  ? '📄'
+                                  : dl.format === 'csv'
+                                  ? '📑'
+                                  : dl.format === 'xlsx' || dl.format === 'excel'
+                                  ? '📊'
+                                  : '⬇'}
+                              </span>
+                              <span>{dl.label}</span>
                             </>
                           )}
                         </button>
@@ -455,8 +475,8 @@ export default function AiChat() {
                 </div>
               )}
 
-              {/* Render Custom Excel Download */}
-              {m.excelDownload && (
+              {/* Render Custom Excel Download (fallback if no multi-format downloads) */}
+              {m.excelDownload && (!m.downloads || m.downloads.length === 0) && (
                 <div className="aichat-card-actions">
                   <div className="aichat-card-actions__header">
                     <h4 className="aichat-card-actions__title">

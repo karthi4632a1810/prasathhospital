@@ -349,6 +349,13 @@
   border: 1.5px solid #fecaca;
 }
 
+.aichat-btn-dl.is-csv {
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 1.5px solid #bae6fd;
+}
+
+.aichat-btn-dl.is-xlsx,
 .aichat-btn-dl.is-excel {
   background: #f0fdf4;
   color: #15803d;

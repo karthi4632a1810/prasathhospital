@@ -37,6 +37,11 @@ export const marketingCampaignApi = {
       body: data,
     }),
 
+  updateCampaign: (id, payload) =>
+    request(`/admin/marketing-campaigns/campaigns/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
   getCampaigns: () => request('/admin/marketing-campaigns'),
   getCampaign: (id) => request(`/admin/marketing-campaigns/${id}`),
   cancelCampaign: (id) =>

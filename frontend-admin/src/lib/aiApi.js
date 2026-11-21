@@ -34,4 +34,25 @@ export const aiApi = {
       filename || 'CIIM2026_Export.xlsx'
     );
   },
+
+  downloadExport: (fileId, filename) => {
+    return downloadFile(
+      `/admin/ai/download/export/${fileId}`,
+      filename || 'CIIM2026_Export'
+    );
+  },
+
+  downloadPdf: (fileId, filename) => {
+    return downloadFile(
+      `/admin/ai/download/export/${fileId}`,
+      filename || 'CIIM2026_Report.pdf'
+    );
+  },
+
+  downloadCsv: (fileId, filename) => {
+    return downloadFile(
+      `/admin/ai/download/export/${fileId}`,
+      filename || 'CIIM2026_Data.csv'
+    );
+  },
 };

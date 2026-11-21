@@ -95,22 +95,27 @@ const downloadIdCard = asyncHandler(async (req, res) => {
 });
 
 /**
+ * GET /api/v1/admin/ai/download/export/:fileId
  * GET /api/v1/admin/ai/download/excel/:fileId
+ * Serves generated PDF reports, CSV files, and Excel spreadsheets.
  */
-const downloadExcel = asyncHandler(async (req, res) => {
+const downloadExport = asyncHandler(async (req, res) => {
   const file = getFileFromStore(req.params.fileId);
   if (!file || !file.buffer) {
     throw ApiError.notFound('Export file expired or not found. Please re-run the query.');
   }
 
-  res.setHeader('Content-Type', file.contentType || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.setHeader('Content-Disposition', `attachment; filename="${file.filename || 'export.xlsx'}"`);
+  res.setHeader('Content-Type', file.contentType || 'application/octet-stream');
+  res.setHeader('Content-Disposition', `attachment; filename="${file.filename || 'export'}"`);
   return res.send(file.buffer);
 });
+
+const downloadExcel = downloadExport;
 
 module.exports = {
   chat,
   downloadCertificate,
   downloadIdCard,
   downloadExcel,
+  downloadExport,
 };

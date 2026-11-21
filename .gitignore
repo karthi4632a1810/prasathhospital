@@ -44,5 +44,9 @@ __pycache__/
 
 new registor/
 *.xlsx
+*.bak
+invalid/
+reports/
+new/*.pdf
 
 

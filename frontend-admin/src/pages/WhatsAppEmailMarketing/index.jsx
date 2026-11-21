@@ -25,6 +25,37 @@ export default function WhatsAppEmailMarketing() {
   const [scheduleAllTemplateId, setScheduleAllTemplateId] = useState('ciim2026_session_alert_5min');
   const [submittingScheduleAll, setSubmittingScheduleAll] = useState(false);
 
+  // Modal: Manual Schedule Setup with inputs & date-time
+  const [showManualScheduleModal, setShowManualScheduleModal] = useState(false);
+  const [manualCampaignName, setManualCampaignName] = useState('');
+  const [manualScheduledFor, setManualScheduledFor] = useState('');
+  const [manualTemplateId, setManualTemplateId] = useState('ciim2026_session_alert_5min');
+  const [manualSendWhatsApp, setManualSendWhatsApp] = useState(true);
+  const [manualSendEmail, setManualSendEmail] = useState(true);
+  const [manualSessionTitle, setManualSessionTitle] = useState('');
+  const [manualSessionTime, setManualSessionTime] = useState('');
+  const [manualSessionDate, setManualSessionDate] = useState('22 Nov 2026');
+  const [manualSessionSpeaker, setManualSessionSpeaker] = useState('');
+  const [manualSessionTrack, setManualSessionTrack] = useState('Main Auditorium');
+  const [manualCustomMessage, setManualCustomMessage] = useState('');
+  const [manualAudienceType, setManualAudienceType] = useState('ALL'); // 'ALL' | 'CHECKED_IN' | 'TNMC' | 'NON_TNMC'
+  const [submittingManualSchedule, setSubmittingManualSchedule] = useState(false);
+
+  // Modal: Edit Scheduled Campaign (before schedule started)
+  const [editingCampaign, setEditingCampaign] = useState(null);
+  const [editCampaignName, setEditCampaignName] = useState('');
+  const [editScheduledFor, setEditScheduledFor] = useState('');
+  const [editTemplateId, setEditTemplateId] = useState('ciim2026_session_alert_5min');
+  const [editSendWhatsApp, setEditSendWhatsApp] = useState(true);
+  const [editSendEmail, setEditSendEmail] = useState(true);
+  const [editSessionTitle, setEditSessionTitle] = useState('');
+  const [editSessionTime, setEditSessionTime] = useState('');
+  const [editSessionDate, setEditSessionDate] = useState('');
+  const [editSessionSpeaker, setEditSessionSpeaker] = useState('');
+  const [editSessionTrack, setEditSessionTrack] = useState('');
+  const [editCustomMessage, setEditCustomMessage] = useState('');
+  const [submittingEdit, setSubmittingEdit] = useState(false);
+
   // Audience Data for single campaigns
   const [recipients, setRecipients] = useState([]);
   const [loadingRecipients, setLoadingRecipients] = useState(true);
@@ -257,6 +288,175 @@ export default function WhatsAppEmailMarketing() {
     }
   }
 
+  // Helper to convert date to YYYY-MM-DDTHH:mm in local time for datetime-local input
+  function toLocalDatetimeInput(date) {
+    if (!date) return '';
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '';
+    const offsetMs = d.getTimezoneOffset() * 60000;
+    const local = new Date(d.getTime() - offsetMs);
+    return local.toISOString().slice(0, 16);
+  }
+
+  // Open Manual Schedule Setup Modal with sensible defaults
+  function handleOpenManualScheduleModal() {
+    const nextHour = new Date(Date.now() + 30 * 60 * 1000);
+    setManualScheduledFor(toLocalDatetimeInput(nextHour));
+    setManualCampaignName('Session Alert Broadcast');
+    setManualSessionTitle(customSessionTitle || 'Interactive Case Discussions');
+    setManualSessionTime(customSessionTime || '09:00 - 09:30 AM');
+    setManualSessionDate(customSessionDate || '22 Nov 2026');
+    setManualSessionSpeaker(customSessionSpeaker || '');
+    setManualSessionTrack(customSessionTrack || 'Main Auditorium');
+    setManualCustomMessage('');
+    setManualAudienceType('ALL');
+    setShowManualScheduleModal(true);
+  }
+
+  // Submit Manual Schedule Setup
+  async function handleManualScheduleSubmit(e) {
+    e.preventDefault();
+    const channels = [];
+    if (manualSendWhatsApp) channels.push('whatsapp');
+    if (manualSendEmail) channels.push('email');
+    if (!channels.length) {
+      alert('Please select at least one channel (WhatsApp or Email).');
+      return;
+    }
+
+    if (!manualScheduledFor) {
+      alert('Please select a scheduled date and time.');
+      return;
+    }
+
+    // Filter recipients based on audience choice
+    let targetRecipients = recipients;
+    if (manualAudienceType === 'CHECKED_IN') {
+      targetRecipients = recipients.filter((r) => r.isCheckedIn || r.checkedInAt);
+    } else if (manualAudienceType === 'TNMC') {
+      targetRecipients = recipients.filter((r) => Boolean(r.tnmcNumber && r.tnmcNumber.trim()));
+    } else if (manualAudienceType === 'NON_TNMC') {
+      targetRecipients = recipients.filter((r) => !r.tnmcNumber || !r.tnmcNumber.trim());
+    }
+
+    if (!targetRecipients.length) {
+      alert('No recipients matched the selected audience filter.');
+      return;
+    }
+
+    setSubmittingManualSchedule(true);
+    try {
+      const payload = {
+        tab: 'session_approve',
+        campaignName: manualCampaignName.trim() || `Scheduled: ${manualSessionTitle || 'Session'}`,
+        templateId: manualTemplateId.trim(),
+        channels,
+        scheduleMode: 'scheduled',
+        scheduledFor: new Date(manualScheduledFor).toISOString(),
+        sessionDetails: {
+          sessionTitle: manualSessionTitle.trim(),
+          sessionTime: manualSessionTime.trim(),
+          sessionDate: manualSessionDate.trim(),
+          speakerNames: manualSessionSpeaker ? manualSessionSpeaker.split(',').map((s) => s.trim()).filter(Boolean) : [],
+          track: manualSessionTrack.trim(),
+        },
+        whatsappOptions: {
+          templateName: manualTemplateId.trim(),
+        },
+        emailOptions: {
+          subject: `CIIM 2026: Schedule Details for ${manualSessionTitle || manualCampaignName}`,
+          customMessage: manualCustomMessage.trim(),
+        },
+        recipients: targetRecipients,
+      };
+
+      const res = await marketingCampaignApi.sendCampaign(payload);
+      setFeedback({
+        type: 'success',
+        text: res.message || 'Campaign scheduled successfully!',
+      });
+      setShowManualScheduleModal(false);
+      setActiveTab('live_monitor');
+      fetchLiveMonitor();
+    } catch (err) {
+      alert(err.message || 'Failed to schedule campaign.');
+    } finally {
+      setSubmittingManualSchedule(false);
+    }
+  }
+
+  // Open Edit Scheduled Campaign Modal (only allowed before campaign starts)
+  function handleOpenEditModal(sc) {
+    setEditingCampaign(sc);
+    setEditCampaignName(sc.campaignName || '');
+    setEditScheduledFor(toLocalDatetimeInput(sc.scheduledFor));
+    setEditTemplateId(sc.templateId || 'ciim2026_session_alert_5min');
+    setEditSendWhatsApp((sc.channels || []).includes('whatsapp'));
+    setEditSendEmail((sc.channels || []).includes('email'));
+    setEditSessionTitle(sc.sessionDetails?.sessionTitle || '');
+    setEditSessionTime(sc.sessionDetails?.sessionTime || '');
+    setEditSessionDate(sc.sessionDetails?.sessionDate || '');
+    setEditSessionSpeaker((sc.sessionDetails?.speakerNames || []).join(', '));
+    setEditSessionTrack(sc.sessionDetails?.track || 'Main Auditorium');
+    setEditCustomMessage(sc.emailOptions?.customMessage || '');
+  }
+
+  // Save changes to an existing scheduled campaign
+  async function handleSaveEdit(e) {
+    e.preventDefault();
+    if (!editingCampaign) return;
+
+    const channels = [];
+    if (editSendWhatsApp) channels.push('whatsapp');
+    if (editSendEmail) channels.push('email');
+    if (!channels.length) {
+      alert('Please select at least one channel (WhatsApp or Email).');
+      return;
+    }
+
+    if (!editScheduledFor) {
+      alert('Please enter a valid schedule date and time.');
+      return;
+    }
+
+    setSubmittingEdit(true);
+    try {
+      const payload = {
+        campaignName: editCampaignName.trim(),
+        scheduledFor: new Date(editScheduledFor).toISOString(),
+        channels,
+        templateId: editTemplateId.trim(),
+        sessionDetails: {
+          sessionTitle: editSessionTitle.trim(),
+          sessionTime: editSessionTime.trim(),
+          sessionDate: editSessionDate.trim(),
+          speakerNames: editSessionSpeaker ? editSessionSpeaker.split(',').map((s) => s.trim()).filter(Boolean) : [],
+          track: editSessionTrack.trim(),
+        },
+        emailOptions: {
+          subject: `CIIM 2026: ${editSessionTitle || editCampaignName}`,
+          customMessage: editCustomMessage.trim(),
+        },
+        whatsappOptions: {
+          templateName: editTemplateId.trim(),
+        },
+        customMessage: editCustomMessage.trim(),
+      };
+
+      const res = await marketingCampaignApi.updateCampaign(editingCampaign._id, payload);
+      setFeedback({
+        type: 'success',
+        text: res.message || 'Scheduled campaign updated successfully!',
+      });
+      setEditingCampaign(null);
+      fetchLiveMonitor();
+    } catch (err) {
+      alert(err.message || 'Failed to update scheduled campaign.');
+    } finally {
+      setSubmittingEdit(false);
+    }
+  }
+
   // Action: Single Campaign Dispatch
   async function handleDispatch(e) {
     e.preventDefault();
@@ -447,14 +647,30 @@ export default function WhatsAppEmailMarketing() {
               </div>
             </div>
 
-            <button
-              type="button"
-              className="wem-btn-schedule-all"
-              onClick={() => setShowScheduleAllModal(true)}
-            >
-              <span>📅</span>
-              <span>Schedule All Sessions for Tomorrow (Day 1)</span>
-            </button>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                type="button"
+                className="wem-btn-schedule-all"
+                style={{
+                  backgroundColor: '#059669',
+                  borderColor: '#047857',
+                  color: '#ffffff',
+                  boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)',
+                }}
+                onClick={handleOpenManualScheduleModal}
+              >
+                <span>➕</span>
+                <span>Manual Schedule Setup</span>
+              </button>
+              <button
+                type="button"
+                className="wem-btn-schedule-all"
+                onClick={() => setShowScheduleAllModal(true)}
+              >
+                <span>📅</span>
+                <span>Schedule All Sessions for Tomorrow (Day 1)</span>
+              </button>
+            </div>
           </div>
 
           <div className="wem-live-grid">
@@ -620,11 +836,20 @@ export default function WhatsAppEmailMarketing() {
                     <p style={{ fontSize: '1.8rem', margin: '0 0 10px 0' }}>📅</p>
                     <p style={{ margin: 0, fontWeight: 600 }}>No sessions scheduled in queue.</p>
                     <p style={{ margin: '6px 0 16px 0', fontSize: '0.84rem' }}>
-                      Click the button below to schedule all 19 Day 1 sessions for tomorrow automatically!
+                      Set up custom schedules manually with specific date &amp; time inputs, or schedule all sessions automatically!
                     </p>
-                    <Button variant="primary" onClick={() => setShowScheduleAllModal(true)}>
-                      Schedule All Sessions for Tomorrow
-                    </Button>
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                      <Button
+                        variant="primary"
+                        onClick={handleOpenManualScheduleModal}
+                        style={{ backgroundColor: '#059669', borderColor: '#047857' }}
+                      >
+                        ➕ Manual Schedule Setup
+                      </Button>
+                      <Button variant="secondary" onClick={() => setShowScheduleAllModal(true)}>
+                        Schedule All Day 1 Sessions
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div className="wem-scheduled-list">
@@ -635,7 +860,7 @@ export default function WhatsAppEmailMarketing() {
                           <div className="wem-scheduled-sub">
                             <span>
                               🕒 <strong>Scheduled:</strong>{' '}
-                              {sc.scheduledFor ? new Date(sc.scheduledFor).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                              {sc.scheduledFor ? new Date(sc.scheduledFor).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'N/A'}
                             </span>
                             <span>
                               👥 <strong>Audience:</strong> {sc.totalRecipients} delegates
@@ -650,13 +875,27 @@ export default function WhatsAppEmailMarketing() {
                           <span className="wem-countdown-pill">
                             ⏳ {formatCountdown(sc.countdownSeconds)}
                           </span>
-                          <div style={{ display: 'flex', gap: '6px' }}>
+                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                             <Button
                               size="sm"
                               variant="primary"
                               onClick={() => handleLaunchScheduledNow(sc._id, sc.campaignName)}
                             >
                               ⚡ Launch Now
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => handleOpenEditModal(sc)}
+                              style={{
+                                backgroundColor: '#f0fdf4',
+                                borderColor: '#86efac',
+                                color: '#166534',
+                                fontWeight: 700,
+                              }}
+                              title="Edit scheduled time, inputs, and message before it starts"
+                            >
+                              ✏️ Edit
                             </Button>
                             <Button
                               size="sm"
@@ -1249,6 +1488,435 @@ export default function WhatsAppEmailMarketing() {
                 </Button>
                 <Button variant="primary" type="submit" disabled={submittingScheduleAll}>
                   {submittingScheduleAll ? 'Scheduling Sessions…' : '🚀 Confirm & Schedule All Sessions for Tomorrow'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Manual Schedule Setup */}
+      {showManualScheduleModal && (
+        <div className="wem-modal-overlay" onClick={() => setShowManualScheduleModal(false)}>
+          <div className="wem-modal-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="wem-modal-header">
+              <div>
+                <h3 className="wem-modal-title">📅 Manual Schedule Setup</h3>
+                <p className="wem-modal-sub">
+                  Configure custom session parameters, broadcast date &amp; time, channels, and audience.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="wem-modal-close"
+                onClick={() => setShowManualScheduleModal(false)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  color: 'var(--ink-500)',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleManualScheduleSubmit}>
+              {/* Optional Quick Pre-fill from Agenda */}
+              {sessions.length > 0 && (
+                <div className="wem-field" style={{ marginBottom: '14px' }}>
+                  <label className="wem-field__label">Quick Pre-fill from Event Agenda (Optional)</label>
+                  <select
+                    className="wem-field__select"
+                    onChange={(e) => {
+                      const sel = sessions.find((s) => s.id === e.target.value);
+                      if (sel) {
+                        setManualCampaignName(`Session Alert: ${sel.title}`);
+                        setManualSessionTitle(sel.title);
+                        setManualSessionTime(`${sel.startTime} - ${sel.endTime}`);
+                        setManualSessionDate(sel.dayDate || '22 Nov 2026');
+                        setManualSessionSpeaker((sel.speakerNames || []).join(', '));
+                        setManualSessionTrack(sel.track || 'Main Auditorium');
+                      }
+                    }}
+                    defaultValue=""
+                  >
+                    <option value="">-- Choose a session to pre-populate details --</option>
+                    {sessions.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.startTime} - {s.endTime} | {s.title} ({s.track || 'Hall'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Campaign Name */}
+              <div className="wem-field">
+                <label className="wem-field__label">Campaign / Session Alert Name</label>
+                <input
+                  type="text"
+                  className="wem-field__input"
+                  value={manualCampaignName}
+                  onChange={(e) => setManualCampaignName(e.target.value)}
+                  placeholder="e.g. Keynote Alert: Advances in ART"
+                  required
+                />
+              </div>
+
+              {/* Scheduled Date and Time */}
+              <div className="wem-field">
+                <label className="wem-field__label">Scheduled Date &amp; Time (Local IST)</label>
+                <input
+                  type="datetime-local"
+                  className="wem-field__input"
+                  value={manualScheduledFor}
+                  onChange={(e) => setManualScheduledFor(e.target.value)}
+                  required
+                />
+                <span className="wem-field__hint">
+                  The automated runner will execute this campaign when this time is reached. You can edit it anytime beforehand.
+                </span>
+              </div>
+
+              {/* Delivery Channels */}
+              <div className="wem-field">
+                <span className="wem-field__label">Delivery Channels</span>
+                <div className="wem-channels">
+                  <label
+                    className={`wem-channel-box${manualSendWhatsApp ? ' is-checked' : ''}`}
+                    onClick={() => setManualSendWhatsApp(!manualSendWhatsApp)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={manualSendWhatsApp}
+                      onChange={() => {}}
+                    />
+                    <div className="wem-channel-box__text">
+                      <span className="wem-channel-box__name">WhatsApp</span>
+                      <span className="wem-channel-box__sub">WATI Template</span>
+                    </div>
+                  </label>
+
+                  <label
+                    className={`wem-channel-box${manualSendEmail ? ' is-checked' : ''}`}
+                    onClick={() => setManualSendEmail(!manualSendEmail)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={manualSendEmail}
+                      onChange={() => {}}
+                    />
+                    <div className="wem-channel-box__text">
+                      <span className="wem-channel-box__name">Email</span>
+                      <span className="wem-channel-box__sub">HTML Mailer</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Audience Selector */}
+              <div className="wem-field">
+                <label className="wem-field__label">Audience Target</label>
+                <select
+                  className="wem-field__select"
+                  value={manualAudienceType}
+                  onChange={(e) => setManualAudienceType(e.target.value)}
+                >
+                  <option value="ALL">All Registered Delegates ({recipients.length})</option>
+                  <option value="CHECKED_IN">
+                    Checked-In Only ({recipients.filter((r) => r.isCheckedIn || r.checkedInAt).length})
+                  </option>
+                  <option value="TNMC">
+                    TNMC Registered Doctors ({recipients.filter((r) => r.tnmcNumber && r.tnmcNumber.trim()).length})
+                  </option>
+                  <option value="NON_TNMC">
+                    Non-TNMC Delegates ({recipients.filter((r) => !r.tnmcNumber || !r.tnmcNumber.trim()).length})
+                  </option>
+                </select>
+              </div>
+
+              {/* Session Details */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="wem-field" style={{ gridColumn: 'span 2' }}>
+                  <label className="wem-field__label">Session Title</label>
+                  <input
+                    type="text"
+                    className="wem-field__input"
+                    value={manualSessionTitle}
+                    onChange={(e) => setManualSessionTitle(e.target.value)}
+                    placeholder="e.g. Understanding Ovarian Hyperstimulation"
+                    required
+                  />
+                </div>
+                <div className="wem-field">
+                  <label className="wem-field__label">Time Slot</label>
+                  <input
+                    type="text"
+                    className="wem-field__input"
+                    value={manualSessionTime}
+                    onChange={(e) => setManualSessionTime(e.target.value)}
+                    placeholder="e.g. 09:30 - 10:15 AM"
+                    required
+                  />
+                </div>
+                <div className="wem-field">
+                  <label className="wem-field__label">Date</label>
+                  <input
+                    type="text"
+                    className="wem-field__input"
+                    value={manualSessionDate}
+                    onChange={(e) => setManualSessionDate(e.target.value)}
+                    placeholder="e.g. 22 Nov 2026"
+                    required
+                  />
+                </div>
+                <div className="wem-field">
+                  <label className="wem-field__label">Speaker Name(s)</label>
+                  <input
+                    type="text"
+                    className="wem-field__input"
+                    value={manualSessionSpeaker}
+                    onChange={(e) => setManualSessionSpeaker(e.target.value)}
+                    placeholder="e.g. Dr. K. Prasath, Dr. V. Jayaraman"
+                  />
+                </div>
+                <div className="wem-field">
+                  <label className="wem-field__label">Hall / Track</label>
+                  <input
+                    type="text"
+                    className="wem-field__input"
+                    value={manualSessionTrack}
+                    onChange={(e) => setManualSessionTrack(e.target.value)}
+                    placeholder="e.g. Hall A / Main Auditorium"
+                  />
+                </div>
+              </div>
+
+              {/* WhatsApp Template ID */}
+              <div className="wem-field">
+                <label className="wem-field__label">WhatsApp Template ID</label>
+                <input
+                  type="text"
+                  className="wem-field__input"
+                  value={manualTemplateId}
+                  onChange={(e) => setManualTemplateId(e.target.value)}
+                  placeholder="ciim2026_session_alert_5min"
+                  required
+                />
+              </div>
+
+              {/* Custom Note */}
+              <div className="wem-field">
+                <label className="wem-field__label">Optional Announcement / Email Note</label>
+                <textarea
+                  className="wem-field__textarea"
+                  value={manualCustomMessage}
+                  onChange={(e) => setManualCustomMessage(e.target.value)}
+                  rows={2}
+                  placeholder="Add any special instructions or announcement to include..."
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
+                <Button variant="secondary" onClick={() => setShowManualScheduleModal(false)} type="button">
+                  Cancel
+                </Button>
+                <Button variant="primary" type="submit" disabled={submittingManualSchedule}>
+                  {submittingManualSchedule ? 'Scheduling…' : '⏰ Confirm & Schedule Campaign'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Edit Scheduled Campaign (Before Started) */}
+      {editingCampaign && (
+        <div className="wem-modal-overlay" onClick={() => setEditingCampaign(null)}>
+          <div className="wem-modal-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="wem-modal-header">
+              <div>
+                <h3 className="wem-modal-title">✏️ Edit Scheduled Campaign</h3>
+                <p className="wem-modal-sub">
+                  Adjust broadcast date, time, session parameters or channels before dispatch begins.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="wem-modal-close"
+                onClick={() => setEditingCampaign(null)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  color: 'var(--ink-500)',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit}>
+              {editingCampaign.countdownSeconds != null && (
+                <div className="wem-notice is-info" style={{ marginBottom: '14px' }}>
+                  <span>⏳</span>
+                  <div>
+                    <strong>Status: SCHEDULED</strong> —{' '}
+                    <span>{formatCountdown(editingCampaign.countdownSeconds)}</span>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--ink-600)', marginTop: '2px' }}>
+                      You can modify the schedule time or content freely until dispatch begins.
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Campaign Name */}
+              <div className="wem-field">
+                <label className="wem-field__label">Campaign Name</label>
+                <input
+                  type="text"
+                  className="wem-field__input"
+                  value={editCampaignName}
+                  onChange={(e) => setEditCampaignName(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Scheduled Date & Time */}
+              <div className="wem-field">
+                <label className="wem-field__label">Scheduled Date &amp; Time (Local IST)</label>
+                <input
+                  type="datetime-local"
+                  className="wem-field__input"
+                  value={editScheduledFor}
+                  onChange={(e) => setEditScheduledFor(e.target.value)}
+                  required
+                />
+                <span className="wem-field__hint">
+                  The campaign will be held and dispatched at this newly selected time.
+                </span>
+              </div>
+
+              {/* Delivery Channels */}
+              <div className="wem-field">
+                <span className="wem-field__label">Delivery Channels</span>
+                <div className="wem-channels">
+                  <label
+                    className={`wem-channel-box${editSendWhatsApp ? ' is-checked' : ''}`}
+                    onClick={() => setEditSendWhatsApp(!editSendWhatsApp)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={editSendWhatsApp}
+                      onChange={() => {}}
+                    />
+                    <div className="wem-channel-box__text">
+                      <span className="wem-channel-box__name">WhatsApp</span>
+                      <span className="wem-channel-box__sub">WATI Template</span>
+                    </div>
+                  </label>
+
+                  <label
+                    className={`wem-channel-box${editSendEmail ? ' is-checked' : ''}`}
+                    onClick={() => setEditSendEmail(!editSendEmail)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={editSendEmail}
+                      onChange={() => {}}
+                    />
+                    <div className="wem-channel-box__text">
+                      <span className="wem-channel-box__name">Email</span>
+                      <span className="wem-channel-box__sub">HTML Mailer</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Session Details */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div className="wem-field" style={{ gridColumn: 'span 2' }}>
+                  <label className="wem-field__label">Session Title</label>
+                  <input
+                    type="text"
+                    className="wem-field__input"
+                    value={editSessionTitle}
+                    onChange={(e) => setEditSessionTitle(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="wem-field">
+                  <label className="wem-field__label">Time Slot</label>
+                  <input
+                    type="text"
+                    className="wem-field__input"
+                    value={editSessionTime}
+                    onChange={(e) => setEditSessionTime(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="wem-field">
+                  <label className="wem-field__label">Date</label>
+                  <input
+                    type="text"
+                    className="wem-field__input"
+                    value={editSessionDate}
+                    onChange={(e) => setEditSessionDate(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="wem-field">
+                  <label className="wem-field__label">Speaker Name(s)</label>
+                  <input
+                    type="text"
+                    className="wem-field__input"
+                    value={editSessionSpeaker}
+                    onChange={(e) => setEditSessionSpeaker(e.target.value)}
+                  />
+                </div>
+                <div className="wem-field">
+                  <label className="wem-field__label">Hall / Track</label>
+                  <input
+                    type="text"
+                    className="wem-field__input"
+                    value={editSessionTrack}
+                    onChange={(e) => setEditSessionTrack(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Template ID */}
+              <div className="wem-field">
+                <label className="wem-field__label">WhatsApp Template ID</label>
+                <input
+                  type="text"
+                  className="wem-field__input"
+                  value={editTemplateId}
+                  onChange={(e) => setEditTemplateId(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Custom Note */}
+              <div className="wem-field">
+                <label className="wem-field__label">Optional Custom Note / Email Message</label>
+                <textarea
+                  className="wem-field__textarea"
+                  value={editCustomMessage}
+                  onChange={(e) => setEditCustomMessage(e.target.value)}
+                  rows={2}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
+                <Button variant="secondary" onClick={() => setEditingCampaign(null)} type="button">
+                  Cancel
+                </Button>
+                <Button variant="primary" type="submit" disabled={submittingEdit}>
+                  {submittingEdit ? 'Saving…' : '💾 Save Changes'}
                 </Button>
               </div>
             </form>

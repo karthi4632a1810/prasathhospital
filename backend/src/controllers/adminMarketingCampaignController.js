@@ -481,6 +481,94 @@ const cancelCampaign = asyncHandler(async (req, res) => {
   return sendSuccess(res, { message: 'Campaign cancelled successfully', campaign });
 });
 
+/**
+ * PUT /api/v1/admin/marketing-campaigns/campaigns/:id
+ * PUT /api/v1/admin/marketing-campaigns/:id
+ * Edits a scheduled campaign BEFORE it starts running.
+ */
+const updateScheduledCampaign = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const campaign = await MarketingCampaign.findById(id);
+  if (!campaign) {
+    throw ApiError.notFound('Campaign not found');
+  }
+
+  if (campaign.status !== 'SCHEDULED') {
+    throw ApiError.badRequest(
+      `Cannot edit a campaign with status "${campaign.status}". Only campaigns in "SCHEDULED" status can be edited before they start.`
+    );
+  }
+
+  const {
+    campaignName,
+    scheduledFor,
+    channels,
+    templateId,
+    sessionDetails,
+    whatsappOptions,
+    emailOptions,
+    customMessage,
+  } = req.body;
+
+  if (campaignName && campaignName.trim()) {
+    campaign.campaignName = campaignName.trim();
+  }
+
+  if (scheduledFor) {
+    const targetDate = new Date(scheduledFor);
+    if (isNaN(targetDate.getTime())) {
+      throw ApiError.badRequest('Invalid scheduled date & time provided.');
+    }
+    campaign.scheduledFor = targetDate;
+  }
+
+  if (channels && Array.isArray(channels) && channels.length > 0) {
+    campaign.channels = channels;
+  }
+
+  if (templateId && templateId.trim()) {
+    campaign.templateId = templateId.trim();
+    if (!campaign.whatsappOptions) campaign.whatsappOptions = {};
+    campaign.whatsappOptions.templateName = templateId.trim();
+  }
+
+  if (sessionDetails && typeof sessionDetails === 'object') {
+    campaign.sessionDetails = {
+      ...(campaign.sessionDetails || {}),
+      ...sessionDetails,
+    };
+  }
+
+  if (whatsappOptions && typeof whatsappOptions === 'object') {
+    campaign.whatsappOptions = {
+      ...(campaign.whatsappOptions || {}),
+      ...whatsappOptions,
+    };
+  }
+
+  if (emailOptions && typeof emailOptions === 'object') {
+    campaign.emailOptions = {
+      ...(campaign.emailOptions || {}),
+      ...emailOptions,
+    };
+  }
+
+  if (customMessage !== undefined) {
+    if (!campaign.emailOptions) campaign.emailOptions = {};
+    campaign.emailOptions.customMessage = String(customMessage).trim();
+  }
+
+  await campaign.save();
+
+  // Clear live monitor cache so changes reflect instantly
+  cachedMonitorDbData = null;
+
+  return sendSuccess(res, {
+    campaign,
+    message: `Scheduled campaign "${campaign.campaignName}" updated successfully.`,
+  });
+});
+
 module.exports = {
   getRecipients,
   getSessions,
@@ -490,6 +578,7 @@ module.exports = {
   pauseCampaign,
   resumeCampaign,
   createAndDispatchCampaign,
+  updateScheduledCampaign,
   listCampaigns,
   getCampaignDetails,
   cancelCampaign,

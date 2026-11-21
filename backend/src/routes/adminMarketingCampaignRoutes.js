@@ -10,6 +10,7 @@ const {
   pauseCampaign,
   resumeCampaign,
   createAndDispatchCampaign,
+  updateScheduledCampaign,
   listCampaigns,
   getCampaignDetails,
   cancelCampaign,
@@ -31,6 +32,9 @@ router.post('/campaigns/:id/resume', resumeCampaign);
 
 router.get('/', listCampaigns);
 router.get('/:id', getCampaignDetails);
+router.put('/campaigns/:id', updateScheduledCampaign);
+router.put('/:id', updateScheduledCampaign);
+router.patch('/campaigns/:id', updateScheduledCampaign);
 router.post('/send', createAndDispatchCampaign);
 router.post('/:id/cancel', cancelCampaign);
 
