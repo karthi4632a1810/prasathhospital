@@ -839,15 +839,35 @@ const createRegistration = asyncHandler(async (req, res) => {
 
   // Auto check-in if requested
   if (autoCheckIn) {
-    registration.checkedInAt = new Date();
+    let targetLoc = null;
+    try {
+      const activeLocs = await CheckinLocation.find({ event: event._id, isActive: true })
+        .sort({ order: 1, createdAt: 1 });
+      targetLoc =
+        activeLocs.find((l) => /entry|main/i.test(l.code) || /entry|main/i.test(l.name)) ||
+        activeLocs[0] ||
+        null;
+    } catch {
+      targetLoc = null;
+    }
+
+    const locId = targetLoc ? String(targetLoc._id) : null;
+    const locCode = targetLoc ? targetLoc.code : 'ENTRY';
+    const locName = targetLoc ? targetLoc.name : 'Main Entry Desk';
+
+    const now = new Date();
+    registration.checkedInAt = now;
     registration.checkedInBy = req.user?._id || null;
     registration.checkins = [
       {
-        locationId: 'registration_desk',
-        locationCode: 'DESK',
-        locationName: 'Registration Desk',
-        timestamp: new Date(),
+        location: targetLoc?._id || null,
+        locationId: locId,
+        locationCode: locCode,
+        locationName: locName,
+        checkedInAt: now,
+        timestamp: now,
         scannedBy: req.user?._id || null,
+        checkedInBy: req.user?._id || null,
         method: 'instant_registration',
       },
     ];

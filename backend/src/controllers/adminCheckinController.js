@@ -352,8 +352,9 @@ const scanTicket = asyncHandler(async (req, res) => {
   // Resolve target location
   let location = null;
   if (req.body.locationId) {
-    location = await CheckinLocation.findById(req.body.locationId);
-  } else if (req.body.locationCode) {
+    location = await CheckinLocation.findById(req.body.locationId).catch(() => null);
+  }
+  if (!location && req.body.locationCode) {
     const code = String(req.body.locationCode).trim().toUpperCase();
     location = await CheckinLocation.findOne({ event: reg.event._id, code });
   }
@@ -445,10 +446,10 @@ const scanTicket = asyncHandler(async (req, res) => {
       },
     });
     return sendSuccess(res, {
-      result: 'already-checked-in',
-      checkedInAt: priorTime,
-      message: `Already checked in at ${locName}!`,
       ...payload,
+      result: 'already-checked-in',
+      checkedInAt: priorTime || reg.checkedInAt || new Date(),
+      message: `Already checked in at ${locName}!`,
     });
   }
 

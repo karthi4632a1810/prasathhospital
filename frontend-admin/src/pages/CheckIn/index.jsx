@@ -80,6 +80,22 @@ export default function CheckIn() {
   const busyRef = useRef(false); // guards against camera rapid duplicate frames
   const isSwitchingRef = useRef(false);
   const facingRef = useRef('environment');
+  const activeLocationIdRef = useRef(activeLocationId);
+  const locationsRef = useRef(locations);
+  const soundEnabledRef = useRef(soundEnabled);
+  const onScanDetectRef = useRef(null);
+
+  useEffect(() => {
+    activeLocationIdRef.current = activeLocationId;
+  }, [activeLocationId]);
+
+  useEffect(() => {
+    locationsRef.current = locations;
+  }, [locations]);
+
+  useEffect(() => {
+    soundEnabledRef.current = soundEnabled;
+  }, [soundEnabled]);
 
   const toggleSound = () => {
     setSoundEnabled((prev) => {
@@ -108,11 +124,13 @@ export default function CheckIn() {
       .then((res) => {
         const locs = res.data || [];
         setLocations(locs);
+        locationsRef.current = locs;
         const activeLocs = locs.filter((l) => l.isActive);
         const firstActiveLoc = activeLocs[0];
         if (firstActiveLoc) {
           setActiveLocationId((prev) => {
             if (prev && activeLocs.some((l) => l.id === prev)) return prev;
+            activeLocationIdRef.current = firstActiveLoc.id;
             return firstActiveLoc.id;
           });
         }
@@ -137,26 +155,34 @@ export default function CheckIn() {
     locations.find((l) => l.isActive) ||
     null;
 
-  // Main submission handler
+  // Main submission handler - uses refs for active location so camera stream never has stale closures
   const submitScan = useCallback(
     async (rawValue) => {
       if (!rawValue) return;
       setScanning(true);
       try {
-        const targetLocId =
-          activeLocationId ||
-          activeLocation?.id ||
-          locations.find((l) => l.isActive && l.isDefault)?.id ||
-          locations.find((l) => l.isActive)?.id;
-        const res = await checkinApi.scan(rawValue, targetLocId);
+        const curLocId = activeLocationIdRef.current;
+        const curLocs = locationsRef.current || [];
+        const targetLoc =
+          curLocs.find((l) => l.id === curLocId) ||
+          curLocs.find((l) => l.isActive) ||
+          null;
+
+        const targetLocId = targetLoc?.id || curLocId;
+        const targetLocCode = targetLoc?.code;
+
+        const res = await checkinApi.scan(rawValue, {
+          locationId: targetLocId,
+          locationCode: targetLocCode,
+        });
         const isSuccess = res.data.result === 'success';
         const tone = isSuccess ? 'success' : 'warning';
         const resultData = { tone, ...res.data };
 
         setScanResult(resultData);
-        playScanAudio(tone, soundEnabled);
+        playScanAudio(tone, soundEnabledRef.current);
 
-        const locName = res.data.activeLocation?.name || activeLocation?.name || 'Checkpoint';
+        const locName = res.data.activeLocation?.name || targetLoc?.name || 'Checkpoint';
 
         // Append to recent scans session desk stream
         setRecentScans((prev) => [
@@ -183,7 +209,10 @@ export default function CheckIn() {
       } catch (err) {
         const errorData = { tone: 'error', message: err.message || 'Ticket code is invalid or cancelled.' };
         setScanResult(errorData);
-        playScanAudio('error', soundEnabled);
+        playScanAudio('error', soundEnabledRef.current);
+
+        const curLocs = locationsRef.current || [];
+        const currentTarget = curLocs.find((l) => l.id === activeLocationIdRef.current);
 
         setRecentScans((prev) => [
           {
@@ -197,7 +226,7 @@ export default function CheckIn() {
             ticketType: 'Unknown',
             company: '',
             code: '',
-            locationName: activeLocation?.name || 'Checkpoint',
+            locationName: currentTarget?.name || 'Checkpoint',
             tone: 'error',
             statusText: 'Rejected',
             data: errorData,
@@ -208,12 +237,12 @@ export default function CheckIn() {
         setScanning(false);
       }
     },
-    [activeLocationId, activeLocation, soundEnabled, loadStats]
+    [loadStats]
   );
 
-  // Camera frame detection callback
-  const handleCameraDetect = useCallback(
-    (rawValue) => {
+  // Sync scan detect ref whenever submitScan updates
+  useEffect(() => {
+    onScanDetectRef.current = (rawValue) => {
       if (busyRef.current || !rawValue) return;
       busyRef.current = true;
       submitScan(rawValue).finally(() => {
@@ -221,9 +250,8 @@ export default function CheckIn() {
           busyRef.current = false;
         }, 1800);
       });
-    },
-    [submitScan]
-  );
+    };
+  }, [submitScan]);
 
   // Safe stop helper that ensures hardware release
   const stopScannerInstance = useCallback(async () => {
@@ -307,7 +335,11 @@ export default function CheckIn() {
         scannerRef.current = instance;
 
         const scanConfig = { fps: 12, qrbox: { width: 240, height: 240 } };
-        const onDetect = (decodedText) => handleCameraDetect(decodedText);
+        const onDetect = (decodedText) => {
+          if (onScanDetectRef.current) {
+            onScanDetectRef.current(decodedText);
+          }
+        };
         const onIgnore = () => {};
 
         let actualFacing = targetFacing;
@@ -380,10 +412,10 @@ export default function CheckIn() {
         setIsSwitching(false);
       }
     },
-    [handleCameraDetect, stopScannerInstance]
+    [stopScannerInstance]
   );
 
-  // Initialize camera scanner on mount / retry
+  // Initialize camera scanner on mount / retry (never restarts on checkpoint selection changes)
   useEffect(() => {
     startScanner('environment');
 
@@ -550,6 +582,7 @@ export default function CheckIn() {
                   type="button"
                   className={`checkin-tab-btn${isSelected ? ' is-active' : ''}`}
                   onClick={() => {
+                    activeLocationIdRef.current = loc.id;
                     setActiveLocationId(loc.id);
                     setScanResult(null);
                   }}
@@ -1075,7 +1108,13 @@ export default function CheckIn() {
                         Pass already scanned at {scanResult.activeLocation?.name || 'this checkpoint'} today.
                       </strong>
                       <div style={{ marginTop: '2px', fontSize: '13px' }}>
-                        First scanned at {new Date(scanResult.checkedInAt).toLocaleTimeString('en-IN')} on {new Date(scanResult.checkedInAt).toLocaleDateString('en-IN')}. Please verify delegate identity.
+                        First scanned at{' '}
+                        {scanResult.checkedInAt &&
+                        !isNaN(new Date(scanResult.checkedInAt).getTime()) &&
+                        new Date(scanResult.checkedInAt).getFullYear() > 2000
+                          ? `${new Date(scanResult.checkedInAt).toLocaleTimeString('en-IN')} on ${new Date(scanResult.checkedInAt).toLocaleDateString('en-IN')}`
+                          : 'earlier today'}
+                        . Please verify delegate identity.
                       </div>
                     </div>
                   </div>
