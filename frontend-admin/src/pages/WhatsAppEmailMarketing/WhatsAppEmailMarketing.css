@@ -818,3 +818,225 @@
   font-size: 0.88rem;
   color: var(--ink-500);
 }
+
+/* Wide 2-Column Modal for Manual Schedule Setup with Live WATI Preview */
+.wem-modal-dialog--wide {
+  max-width: 1100px;
+  width: 96vw;
+  max-height: 92vh;
+  padding: 24px 28px;
+}
+
+.wem-modal-grid-2col {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 26px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .wem-modal-grid-2col {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+.wem-form-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wem-preview-col {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Agenda Day Filter Tabs */
+.wem-agenda-day-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.wem-agenda-day-tab {
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid var(--ink-200);
+  background: var(--ink-50, #f8fafc);
+  color: var(--ink-600);
+  transition: all 120ms;
+}
+
+.wem-agenda-day-tab:hover {
+  background: var(--ink-100);
+}
+
+.wem-agenda-day-tab.is-active {
+  background: #381b4e;
+  color: #ffffff;
+  border-color: #381b4e;
+}
+
+/* WhatsApp Phone / Chat Mockup */
+.wem-wa-phone {
+  background: #0b141a;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #233138;
+}
+
+.wem-wa-header {
+  background: #1f2c34;
+  color: #e9edef;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.wem-wa-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #00a884;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: #ffffff;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.wem-wa-header-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.wem-wa-header-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #e9edef;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.wem-wa-verified-badge {
+  color: #00a884;
+  font-size: 0.85rem;
+}
+
+.wem-wa-header-sub {
+  font-size: 0.74rem;
+  color: #8696a0;
+  margin-top: 1px;
+}
+
+.wem-wa-chat-body {
+  background-color: #efeae2;
+  background-image: radial-gradient(#d1d7db 1px, transparent 1px);
+  background-size: 16px 16px;
+  padding: 18px 14px;
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wem-wa-date-pill {
+  align-self: center;
+  background: rgba(255, 255, 255, 0.92);
+  color: #54656f;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(11, 20, 26, 0.08);
+}
+
+.wem-wa-bubble {
+  align-self: flex-start;
+  background: #ffffff;
+  border-radius: 10px;
+  border-top-left-radius: 2px;
+  padding: 12px 14px 8px 14px;
+  max-width: 96%;
+  box-shadow: 0 1px 2.5px rgba(11, 20, 26, 0.13);
+  position: relative;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #111b21;
+  font-size: 0.88rem;
+  line-height: 1.48;
+  word-break: break-word;
+}
+
+.wem-wa-bubble-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 0.68rem;
+  color: #667781;
+}
+
+.wem-wa-ticks {
+  color: #53bdeb;
+  font-size: 0.82rem;
+  font-weight: bold;
+}
+
+/* Param highlight chip in preview */
+.wem-preview-highlight {
+  background-color: #dbeafe;
+  color: #1e40af;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+/* WATI Params editor container */
+.wem-params-box {
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wem-param-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+@media (max-width: 600px) {
+  .wem-param-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
+.wem-param-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #6b21a8;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}

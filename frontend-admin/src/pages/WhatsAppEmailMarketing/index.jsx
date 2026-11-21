@@ -1,7 +1,43 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { marketingCampaignApi } from '../../lib/marketingCampaignApi';
+import { whatsappMarketingApi } from '../../lib/whatsappMarketingApi';
 import Button from '../../components/ui/Button';
 import './WhatsAppEmailMarketing.css';
+
+const DEFAULT_WATI_TEMPLATES = [
+  {
+    id: 'ciim2026_session_alert_5min',
+    name: 'ciim2026_session_alert_5min',
+    label: 'CIIM 2026: 5-Minute Session Alert (Utility)',
+    category: 'UTILITY',
+    params: ['1', '2', '3', '4'],
+    body: `*CIIM 2026 – Session Alert*\n\nDear Dr. {{1}},\n\nThe following scientific session will commence in 5 minutes:\n\nSession: {{2}}\nSpeaker: {{3}}\nHall: {{4}}\n\nPlease take your seat in the auditorium.\n\nRegards,\nOrganising Committee - CIIM 2026`,
+  },
+  {
+    id: 'ciim_delegate_reminder_1',
+    name: 'ciim_delegate_reminder_1',
+    label: 'CIIM 2026: Delegate Event Pass Reminder',
+    category: 'UTILITY',
+    params: ['1'],
+    body: `CIIM 2026 Delegate Reminder.\n\nDear Dr. {{1}},\n\nYour event pass is ready. Please present your badge QR at the entrance counter.\n\nRegards,\nOrganising Committee`,
+  },
+  {
+    id: 'ciim2026_2what_works',
+    name: 'ciim2026_2what_works',
+    label: 'CIIM 2026: What Works & What Doesn’t (Marketing)',
+    category: 'MARKETING',
+    params: ['Name'],
+    body: `A Personal Invitation to CIIM 2026 – Controversies in Infertility Management! ✨\n\nDear Dr. {{Name}},\n\nJoin us for groundbreaking discussions and debates at Chennai.\n\nWarm regards,\nDr. Geetha Haripriya`,
+  },
+  {
+    id: 'ciim2026_participant_qanda_v2',
+    name: 'ciim2026_participant_qanda_v2',
+    label: 'CIIM 2026: Participant Q&A (Utility)',
+    category: 'UTILITY',
+    params: ['Name'],
+    body: `CIIM 2026 – Controversies in Infertility Management\n\nDear Dr. {{Name}},\n\nDo you have questions for the scientific faculty? Submit your questions now.\n\nRegards,\nScientific Committee`,
+  },
+];
 
 export default function WhatsAppEmailMarketing() {
   const [activeTab, setActiveTab] = useState('live_monitor'); // 'live_monitor' | 'delegate_reminder' | 'session_approve'
@@ -40,6 +76,12 @@ export default function WhatsAppEmailMarketing() {
   const [manualCustomMessage, setManualCustomMessage] = useState('');
   const [manualAudienceType, setManualAudienceType] = useState('ALL'); // 'ALL' | 'CHECKED_IN' | 'TNMC' | 'NON_TNMC'
   const [submittingManualSchedule, setSubmittingManualSchedule] = useState(false);
+
+  // Day filter & WATI Params & Preview State for Manual Schedule
+  const [agendaDayFilter, setAgendaDayFilter] = useState('DAY_2'); // 'DAY_2' | 'DAY_1' | 'ALL'
+  const [watiTemplates, setWatiTemplates] = useState([]);
+  const [manualCustomParams, setManualCustomParams] = useState([]); // [{ key: '', value: '' }]
+  const [sampleRecipientName, setSampleRecipientName] = useState('Dr. Karthikeyan Dev');
 
   // Modal: Edit Scheduled Campaign (before schedule started)
   const [editingCampaign, setEditingCampaign] = useState(null);
@@ -298,18 +340,178 @@ export default function WhatsAppEmailMarketing() {
     return local.toISOString().slice(0, 16);
   }
 
+  // Load WATI config on mount
+  useEffect(() => {
+    whatsappMarketingApi
+      .getConfig()
+      .then((res) => {
+        if (res?.data?.templates?.length) {
+          setWatiTemplates(res.data.templates);
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not load WATI marketing config:', err);
+      });
+  }, []);
+
+  const allWatiTemplates = useMemo(() => {
+    const list = [...(watiTemplates || [])];
+    DEFAULT_WATI_TEMPLATES.forEach((def) => {
+      if (!list.some((t) => t.id === def.id || t.name === def.name)) {
+        list.push(def);
+      }
+    });
+    return list;
+  }, [watiTemplates]);
+
+  const filteredAgendaSessions = useMemo(() => {
+    if (agendaDayFilter === 'DAY_1') {
+      return sessions.filter(
+        (s) => s.dayIndex === 0 || s.dayLabel?.includes('Day 1') || s.dayDate?.includes('21')
+      );
+    }
+    if (agendaDayFilter === 'DAY_2') {
+      return sessions.filter(
+        (s) => s.dayIndex === 1 || s.dayLabel?.includes('Day 2') || s.dayDate?.includes('22')
+      );
+    }
+    return sessions;
+  }, [sessions, agendaDayFilter]);
+
+  const selectedWatiTemplate = useMemo(() => {
+    return (
+      allWatiTemplates.find((t) => t.id === manualTemplateId || t.name === manualTemplateId) ||
+      allWatiTemplates[0] ||
+      DEFAULT_WATI_TEMPLATES[0]
+    );
+  }, [allWatiTemplates, manualTemplateId]);
+
+  function formatWhatsAppPreview(text) {
+    if (!text) return '';
+    let escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    escaped = escaped.replace(/\*([^*]+)\*/g, '<strong>$1</strong>');
+    escaped = escaped.replace(/_([^_]+)_/g, '<em>$1</em>');
+    escaped = escaped.replace(/~([^~]+)~/g, '<del>$1</del>');
+    escaped = escaped.replace(/\n/g, '<br />');
+    return escaped;
+  }
+
+  const previewFormattedText = useMemo(() => {
+    const rawBody =
+      selectedWatiTemplate?.body ||
+      `*CIIM 2026 – Session Alert*\n\nDear Dr. {{1}},\n\nThe following scientific session will commence in 5 minutes:\n\nSession: {{2}}\nSpeaker: {{3}}\nHall: {{4}}\n\nPlease take your seat in the auditorium.\n\nRegards,\nOrganising Committee - CIIM 2026`;
+
+    const paramMap = {
+      '1': sampleRecipientName || 'Dr. Karthikeyan Dev',
+      'Name': sampleRecipientName || 'Dr. Karthikeyan Dev',
+      'DrName': sampleRecipientName || 'Dr. Karthikeyan Dev',
+      '2': manualSessionTitle || '[Session Title]',
+      'Session': manualSessionTitle || '[Session Title]',
+      '3': manualSessionSpeaker || '[Speaker Name]',
+      'Speaker': manualSessionSpeaker || '[Speaker Name]',
+      '4': manualSessionTrack || '[Hall Name]',
+      'Hall': manualSessionTrack || '[Hall Name]',
+      'Time': manualSessionTime || '[Time Slot]',
+      'Date': manualSessionDate || '[22 Nov 2026]',
+    };
+
+    manualCustomParams.forEach((cp) => {
+      if (cp.key && cp.key.trim()) {
+        paramMap[cp.key.trim()] = cp.value || `[${cp.key.trim()}]`;
+      }
+    });
+
+    let rendered = rawBody;
+    Object.entries(paramMap).forEach(([k, v]) => {
+      const re = new RegExp(`\\{\\{${k}\\}\\}`, 'g');
+      rendered = rendered.replace(re, v);
+    });
+
+    return rendered;
+  }, [
+    selectedWatiTemplate,
+    sampleRecipientName,
+    manualSessionTitle,
+    manualSessionSpeaker,
+    manualSessionTrack,
+    manualSessionTime,
+    manualSessionDate,
+    manualCustomParams,
+  ]);
+
+  // Handle Session Select from dropdown in Manual Setup
+  const handleAgendaSessionSelect = (sessionId) => {
+    const sel = sessions.find((s) => s.id === sessionId);
+    if (!sel) return;
+
+    setManualCampaignName(`Session Alert: ${sel.title}`);
+    setManualSessionTitle(sel.title);
+    setManualSessionTime(`${sel.startTime} - ${sel.endTime}`);
+    setManualSessionDate(sel.dayDate || '22 Nov 2026');
+    setManualSessionSpeaker((sel.speakerNames || []).join(', '));
+    setManualSessionTrack(sel.track || 'Main Auditorium');
+
+    if (sel.startTime) {
+      const isDay1 = sel.dayIndex === 0 || sel.dayDate?.includes('21');
+      const datePart = isDay1 ? '2026-11-21' : '2026-11-22';
+      const [hStr, mStr] = sel.startTime.split(':');
+      let h = parseInt(hStr, 10);
+      let m = parseInt(mStr, 10);
+      if (!isNaN(h) && !isNaN(m)) {
+        m -= 5;
+        if (m < 0) {
+          m += 60;
+          h -= 1;
+        }
+        const timeStr = `${String(Math.max(0, h)).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        setManualScheduledFor(`${datePart}T${timeStr}`);
+      }
+    }
+  };
+
   // Open Manual Schedule Setup Modal with sensible defaults
   function handleOpenManualScheduleModal() {
-    const nextHour = new Date(Date.now() + 30 * 60 * 1000);
-    setManualScheduledFor(toLocalDatetimeInput(nextHour));
-    setManualCampaignName('Session Alert Broadcast');
-    setManualSessionTitle(customSessionTitle || 'Interactive Case Discussions');
-    setManualSessionTime(customSessionTime || '09:00 - 09:30 AM');
-    setManualSessionDate(customSessionDate || '22 Nov 2026');
-    setManualSessionSpeaker(customSessionSpeaker || '');
-    setManualSessionTrack(customSessionTrack || 'Main Auditorium');
+    setAgendaDayFilter('DAY_2');
+    const day2Sessions = sessions.filter(
+      (s) => s.dayIndex === 1 || s.dayLabel?.includes('Day 2') || s.dayDate?.includes('22')
+    );
+    const defaultSession = day2Sessions[0] || sessions[0];
+
+    let scheduledIsoLocal = '';
+    if (defaultSession?.startTime) {
+      const isDay1 = defaultSession.dayIndex === 0 || defaultSession.dayDate?.includes('21');
+      const datePart = isDay1 ? '2026-11-21' : '2026-11-22';
+      const [hStr, mStr] = defaultSession.startTime.split(':');
+      let h = parseInt(hStr, 10);
+      let m = parseInt(mStr, 10);
+      if (!isNaN(h) && !isNaN(m)) {
+        m -= 5;
+        if (m < 0) {
+          m += 60;
+          h -= 1;
+        }
+        scheduledIsoLocal = `${datePart}T${String(Math.max(0, h)).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+      }
+    }
+    if (!scheduledIsoLocal) {
+      const nextHalfHour = new Date(Date.now() + 15 * 60 * 1000);
+      scheduledIsoLocal = toLocalDatetimeInput(nextHalfHour);
+    }
+
+    setManualScheduledFor(scheduledIsoLocal);
+    setManualCampaignName(defaultSession ? `Session Alert: ${defaultSession.title}` : 'Session Alert Broadcast');
+    setManualSessionTitle(defaultSession?.title || 'Adjuvants in Improving Fertility');
+    setManualSessionTime(defaultSession ? `${defaultSession.startTime} - ${defaultSession.endTime}` : '08:30 - 08:40 AM');
+    setManualSessionDate(defaultSession?.dayDate || '22 Nov 2026');
+    setManualSessionSpeaker((defaultSession?.speakerNames || []).join(', '));
+    setManualSessionTrack(defaultSession?.track || 'Main Auditorium');
     setManualCustomMessage('');
     setManualAudienceType('ALL');
+    setManualTemplateId('ciim2026_session_alert_5min');
+    setManualCustomParams([]);
     setShowManualScheduleModal(true);
   }
 
@@ -344,6 +546,14 @@ export default function WhatsAppEmailMarketing() {
       return;
     }
 
+    // Build custom params object
+    const customParamsObj = {};
+    manualCustomParams.forEach((cp) => {
+      if (cp.key && cp.key.trim()) {
+        customParamsObj[cp.key.trim()] = cp.value || '';
+      }
+    });
+
     setSubmittingManualSchedule(true);
     try {
       const payload = {
@@ -362,6 +572,7 @@ export default function WhatsAppEmailMarketing() {
         },
         whatsappOptions: {
           templateName: manualTemplateId.trim(),
+          customParams: Object.keys(customParamsObj).length > 0 ? customParamsObj : undefined,
         },
         emailOptions: {
           subject: `CIIM 2026: Schedule Details for ${manualSessionTitle || manualCampaignName}`,
@@ -1495,15 +1706,18 @@ export default function WhatsAppEmailMarketing() {
         </div>
       )}
 
-      {/* Modal: Manual Schedule Setup */}
+      {/* Modal: Manual Schedule Setup with 2-Column Live WATI Preview */}
       {showManualScheduleModal && (
         <div className="wem-modal-overlay" onClick={() => setShowManualScheduleModal(false)}>
-          <div className="wem-modal-dialog" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="wem-modal-dialog wem-modal-dialog--wide"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="wem-modal-header">
               <div>
-                <h3 className="wem-modal-title">📅 Manual Schedule Setup</h3>
+                <h3 className="wem-modal-title">📅 Manual Schedule Setup &amp; Live WATI Preview</h3>
                 <p className="wem-modal-sub">
-                  Configure custom session parameters, broadcast date &amp; time, channels, and audience.
+                  Select Day 2 agenda session, customize WATI template parameters, and preview the live message before broadcast.
                 </p>
               </div>
               <button
@@ -1523,208 +1737,513 @@ export default function WhatsAppEmailMarketing() {
             </div>
 
             <form onSubmit={handleManualScheduleSubmit}>
-              {/* Optional Quick Pre-fill from Agenda */}
-              {sessions.length > 0 && (
-                <div className="wem-field" style={{ marginBottom: '14px' }}>
-                  <label className="wem-field__label">Quick Pre-fill from Event Agenda (Optional)</label>
-                  <select
-                    className="wem-field__select"
-                    onChange={(e) => {
-                      const sel = sessions.find((s) => s.id === e.target.value);
-                      if (sel) {
-                        setManualCampaignName(`Session Alert: ${sel.title}`);
-                        setManualSessionTitle(sel.title);
-                        setManualSessionTime(`${sel.startTime} - ${sel.endTime}`);
-                        setManualSessionDate(sel.dayDate || '22 Nov 2026');
-                        setManualSessionSpeaker((sel.speakerNames || []).join(', '));
-                        setManualSessionTrack(sel.track || 'Main Auditorium');
-                      }
-                    }}
-                    defaultValue=""
-                  >
-                    <option value="">-- Choose a session to pre-populate details --</option>
-                    {sessions.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.startTime} - {s.endTime} | {s.title} ({s.track || 'Hall'})
+              <div className="wem-modal-grid-2col">
+                {/* Left Column: Schedule & WATI Configuration */}
+                <div className="wem-form-col">
+                  {/* Quick Pre-fill from Agenda with Day 2 filter */}
+                  {sessions.length > 0 && (
+                    <div className="wem-field">
+                      <label className="wem-field__label">Quick Pre-fill from Event Agenda</label>
+
+                      {/* Day 1 vs Day 2 Filter Chips */}
+                      <div className="wem-agenda-day-tabs">
+                        <button
+                          type="button"
+                          className={`wem-agenda-day-tab${agendaDayFilter === 'DAY_2' ? ' is-active' : ''}`}
+                          onClick={() => setAgendaDayFilter('DAY_2')}
+                        >
+                          🌟 Day 2 (Today — 22 Nov)
+                        </button>
+                        <button
+                          type="button"
+                          className={`wem-agenda-day-tab${agendaDayFilter === 'DAY_1' ? ' is-active' : ''}`}
+                          onClick={() => setAgendaDayFilter('DAY_1')}
+                        >
+                          Day 1 (21 Nov)
+                        </button>
+                        <button
+                          type="button"
+                          className={`wem-agenda-day-tab${agendaDayFilter === 'ALL' ? ' is-active' : ''}`}
+                          onClick={() => setAgendaDayFilter('ALL')}
+                        >
+                          All Sessions ({sessions.length})
+                        </button>
+                      </div>
+
+                      <select
+                        className="wem-field__select"
+                        onChange={(e) => handleAgendaSessionSelect(e.target.value)}
+                        defaultValue=""
+                      >
+                        <option value="">
+                          -- Choose {agendaDayFilter === 'DAY_2' ? 'Day 2' : (agendaDayFilter === 'DAY_1' ? 'Day 1' : '')} session to pre-fill --
+                        </option>
+                        {filteredAgendaSessions.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.startTime} - {s.endTime} | {s.title} ({s.track || 'Main Auditorium'})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Campaign Name */}
+                  <div className="wem-field">
+                    <label className="wem-field__label">Campaign / Session Alert Name</label>
+                    <input
+                      type="text"
+                      className="wem-field__input"
+                      value={manualCampaignName}
+                      onChange={(e) => setManualCampaignName(e.target.value)}
+                      placeholder="e.g. Session Alert: Advancements in IVF Lab"
+                      required
+                    />
+                  </div>
+
+                  {/* Scheduled Date and Time */}
+                  <div className="wem-field">
+                    <label className="wem-field__label">Scheduled Date &amp; Time (Local IST)</label>
+                    <input
+                      type="datetime-local"
+                      className="wem-field__input"
+                      value={manualScheduledFor}
+                      onChange={(e) => setManualScheduledFor(e.target.value)}
+                      required
+                    />
+                    <span className="wem-field__hint">
+                      Runner will dispatch when this time is reached. Auto-calculated to 5 mins before session start.
+                    </span>
+                  </div>
+
+                  {/* Delivery Channels */}
+                  <div className="wem-field">
+                    <span className="wem-field__label">Delivery Channels</span>
+                    <div className="wem-channels">
+                      <label
+                        className={`wem-channel-box${manualSendWhatsApp ? ' is-checked' : ''}`}
+                        onClick={() => setManualSendWhatsApp(!manualSendWhatsApp)}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={manualSendWhatsApp}
+                          onChange={() => {}}
+                        />
+                        <div className="wem-channel-box__text">
+                          <span className="wem-channel-box__name">WhatsApp</span>
+                          <span className="wem-channel-box__sub">WATI Template</span>
+                        </div>
+                      </label>
+
+                      <label
+                        className={`wem-channel-box${manualSendEmail ? ' is-checked' : ''}`}
+                        onClick={() => setManualSendEmail(!manualSendEmail)}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={manualSendEmail}
+                          onChange={() => {}}
+                        />
+                        <div className="wem-channel-box__text">
+                          <span className="wem-channel-box__name">Email</span>
+                          <span className="wem-channel-box__sub">HTML Mailer</span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Audience Selector */}
+                  <div className="wem-field">
+                    <label className="wem-field__label">Audience Target</label>
+                    <select
+                      className="wem-field__select"
+                      value={manualAudienceType}
+                      onChange={(e) => setManualAudienceType(e.target.value)}
+                    >
+                      <option value="ALL">All Registered Delegates ({recipients.length})</option>
+                      <option value="CHECKED_IN">
+                        Checked-In Only ({recipients.filter((r) => r.isCheckedIn || r.checkedInAt).length})
                       </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+                      <option value="TNMC">
+                        TNMC Registered Doctors ({recipients.filter((r) => r.tnmcNumber && r.tnmcNumber.trim()).length})
+                      </option>
+                      <option value="NON_TNMC">
+                        Non-TNMC Delegates ({recipients.filter((r) => !r.tnmcNumber || !r.tnmcNumber.trim()).length})
+                      </option>
+                    </select>
+                  </div>
 
-              {/* Campaign Name */}
-              <div className="wem-field">
-                <label className="wem-field__label">Campaign / Session Alert Name</label>
-                <input
-                  type="text"
-                  className="wem-field__input"
-                  value={manualCampaignName}
-                  onChange={(e) => setManualCampaignName(e.target.value)}
-                  placeholder="e.g. Keynote Alert: Advances in ART"
-                  required
-                />
-              </div>
-
-              {/* Scheduled Date and Time */}
-              <div className="wem-field">
-                <label className="wem-field__label">Scheduled Date &amp; Time (Local IST)</label>
-                <input
-                  type="datetime-local"
-                  className="wem-field__input"
-                  value={manualScheduledFor}
-                  onChange={(e) => setManualScheduledFor(e.target.value)}
-                  required
-                />
-                <span className="wem-field__hint">
-                  The automated runner will execute this campaign when this time is reached. You can edit it anytime beforehand.
-                </span>
-              </div>
-
-              {/* Delivery Channels */}
-              <div className="wem-field">
-                <span className="wem-field__label">Delivery Channels</span>
-                <div className="wem-channels">
-                  <label
-                    className={`wem-channel-box${manualSendWhatsApp ? ' is-checked' : ''}`}
-                    onClick={() => setManualSendWhatsApp(!manualSendWhatsApp)}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={manualSendWhatsApp}
-                      onChange={() => {}}
-                    />
-                    <div className="wem-channel-box__text">
-                      <span className="wem-channel-box__name">WhatsApp</span>
-                      <span className="wem-channel-box__sub">WATI Template</span>
+                  {/* Session Details Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <div className="wem-field" style={{ gridColumn: 'span 2' }}>
+                      <label className="wem-field__label">Session Title</label>
+                      <input
+                        type="text"
+                        className="wem-field__input"
+                        value={manualSessionTitle}
+                        onChange={(e) => setManualSessionTitle(e.target.value)}
+                        placeholder="e.g. Advancements in IVF Lab"
+                        required
+                      />
                     </div>
-                  </label>
-
-                  <label
-                    className={`wem-channel-box${manualSendEmail ? ' is-checked' : ''}`}
-                    onClick={() => setManualSendEmail(!manualSendEmail)}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={manualSendEmail}
-                      onChange={() => {}}
-                    />
-                    <div className="wem-channel-box__text">
-                      <span className="wem-channel-box__name">Email</span>
-                      <span className="wem-channel-box__sub">HTML Mailer</span>
+                    <div className="wem-field">
+                      <label className="wem-field__label">Time Slot</label>
+                      <input
+                        type="text"
+                        className="wem-field__input"
+                        value={manualSessionTime}
+                        onChange={(e) => setManualSessionTime(e.target.value)}
+                        placeholder="e.g. 08:40 - 08:50 AM"
+                        required
+                      />
                     </div>
-                  </label>
+                    <div className="wem-field">
+                      <label className="wem-field__label">Date</label>
+                      <input
+                        type="text"
+                        className="wem-field__input"
+                        value={manualSessionDate}
+                        onChange={(e) => setManualSessionDate(e.target.value)}
+                        placeholder="e.g. 22 Nov 2026"
+                        required
+                      />
+                    </div>
+                    <div className="wem-field">
+                      <label className="wem-field__label">Speaker Name(s)</label>
+                      <input
+                        type="text"
+                        className="wem-field__input"
+                        value={manualSessionSpeaker}
+                        onChange={(e) => setManualSessionSpeaker(e.target.value)}
+                        placeholder="e.g. Dr. K. Prasath, Dr. V. Jayaraman"
+                      />
+                    </div>
+                    <div className="wem-field">
+                      <label className="wem-field__label">Hall / Track</label>
+                      <input
+                        type="text"
+                        className="wem-field__input"
+                        value={manualSessionTrack}
+                        onChange={(e) => setManualSessionTrack(e.target.value)}
+                        placeholder="e.g. Main Auditorium"
+                      />
+                    </div>
+                  </div>
+
+                  {/* WATI Template Selection & Parameters */}
+                  {manualSendWhatsApp && (
+                    <div className="wem-field">
+                      <label className="wem-field__label">WATI WhatsApp Template</label>
+                      <select
+                        className="wem-field__select"
+                        value={manualTemplateId}
+                        onChange={(e) => setManualTemplateId(e.target.value)}
+                      >
+                        {allWatiTemplates.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.label || t.name} ({t.id})
+                          </option>
+                        ))}
+                      </select>
+
+                      {/* WATI Template Parameters Editor */}
+                      <div className="wem-params-box" style={{ marginTop: '10px' }}>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#4c1d95', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span>⚙️ WATI Template Parameters</span>
+                          <span style={{ fontSize: '0.74rem', color: '#7c3aed', fontWeight: 600 }}>
+                            {selectedWatiTemplate?.params?.length || 4} Parameters Mapped
+                          </span>
+                        </div>
+
+                        {/* Standard 4 Params for ciim2026_session_alert_5min */}
+                        {manualTemplateId === 'ciim2026_session_alert_5min' ? (
+                          <>
+                            <div className="wem-param-row">
+                              <span className="wem-param-label">Param 1 (Name):</span>
+                              <input
+                                type="text"
+                                className="wem-field__input"
+                                value="[Recipient Name (Dr. ...)]"
+                                disabled
+                                style={{ backgroundColor: '#f1f5f9', color: '#64748b', fontSize: '0.85rem' }}
+                              />
+                            </div>
+                            <div className="wem-param-row">
+                              <span className="wem-param-label">Param 2 (Session):</span>
+                              <input
+                                type="text"
+                                className="wem-field__input"
+                                value={manualSessionTitle}
+                                onChange={(e) => setManualSessionTitle(e.target.value)}
+                                placeholder="Session Name"
+                                style={{ fontSize: '0.85rem' }}
+                              />
+                            </div>
+                            <div className="wem-param-row">
+                              <span className="wem-param-label">Param 3 (Speaker):</span>
+                              <input
+                                type="text"
+                                className="wem-field__input"
+                                value={manualSessionSpeaker}
+                                onChange={(e) => setManualSessionSpeaker(e.target.value)}
+                                placeholder="Speaker Name"
+                                style={{ fontSize: '0.85rem' }}
+                              />
+                            </div>
+                            <div className="wem-param-row">
+                              <span className="wem-param-label">Param 4 (Hall):</span>
+                              <input
+                                type="text"
+                                className="wem-field__input"
+                                value={manualSessionTrack}
+                                onChange={(e) => setManualSessionTrack(e.target.value)}
+                                placeholder="Main Auditorium"
+                                style={{ fontSize: '0.85rem' }}
+                              />
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            {selectedWatiTemplate?.params?.map((pName, idx) => (
+                              <div key={pName} className="wem-param-row">
+                                <span className="wem-param-label">Param {idx + 1} ({pName}):</span>
+                                <input
+                                  type="text"
+                                  className="wem-field__input"
+                                  placeholder={`Value for ${pName}`}
+                                  value={
+                                    ['name', '1', 'drname'].includes(pName.toLowerCase())
+                                      ? '[Recipient Name]'
+                                      : (manualCustomParams.find((cp) => cp.key === pName)?.value ?? '')
+                                  }
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setManualCustomParams((prev) => {
+                                      const next = prev.filter((cp) => cp.key !== pName);
+                                      next.push({ key: pName, value: val });
+                                      return next;
+                                    });
+                                  }}
+                                  disabled={['name', '1', 'drname'].includes(pName.toLowerCase())}
+                                  style={{
+                                    backgroundColor: ['name', '1', 'drname'].includes(pName.toLowerCase()) ? '#f1f5f9' : '#ffffff',
+                                    fontSize: '0.85rem',
+                                  }}
+                                />
+                              </div>
+                            ))}
+                          </>
+                        )}
+
+                        {/* Extra Custom Parameters */}
+                        {manualCustomParams.filter(cp => !selectedWatiTemplate?.params?.includes(cp.key)).map((cp, idx) => (
+                          <div key={idx} className="wem-param-row">
+                            <input
+                              type="text"
+                              className="wem-field__input"
+                              placeholder="Param Key"
+                              value={cp.key}
+                              onChange={(e) => {
+                                const newKey = e.target.value;
+                                setManualCustomParams((prev) => {
+                                  const copy = [...prev];
+                                  copy[idx].key = newKey;
+                                  return copy;
+                                });
+                              }}
+                              style={{ fontSize: '0.82rem' }}
+                            />
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <input
+                                type="text"
+                                className="wem-field__input"
+                                placeholder="Param Value"
+                                value={cp.value}
+                                onChange={(e) => {
+                                  const newVal = e.target.value;
+                                  setManualCustomParams((prev) => {
+                                    const copy = [...prev];
+                                    copy[idx].value = newVal;
+                                    return copy;
+                                  });
+                                }}
+                                style={{ fontSize: '0.82rem', flex: 1 }}
+                              />
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                type="button"
+                                onClick={() => {
+                                  setManualCustomParams((prev) => prev.filter((_, i) => i !== idx));
+                                }}
+                                style={{ color: '#ef4444' }}
+                              >
+                                ✕
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '2px' }}>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            type="button"
+                            onClick={() => {
+                              setManualCustomParams((prev) => [...prev, { key: '', value: '' }]);
+                            }}
+                            style={{ fontSize: '0.76rem', padding: '4px 10px' }}
+                          >
+                            ➕ Add Custom Param
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Optional Custom Note / Email Message */}
+                  {manualSendEmail && (
+                    <div className="wem-field">
+                      <label className="wem-field__label">Optional Announcement / Email Note</label>
+                      <textarea
+                        className="wem-field__textarea"
+                        value={manualCustomMessage}
+                        onChange={(e) => setManualCustomMessage(e.target.value)}
+                        rows={2}
+                        placeholder="Add special instructions or note for the HTML mailer..."
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Right Column: Live WATI Template WhatsApp Preview */}
+                <div className="wem-preview-col">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '4px' }}>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#381b4e' }}>
+                      💬 Live WhatsApp Message Preview
+                    </span>
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        color: '#059669',
+                        backgroundColor: '#ecfdf5',
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        border: '1px solid #a7f3d0',
+                      }}
+                    >
+                      WATI Approved
+                    </span>
+                  </div>
+
+                  {/* Realistic WhatsApp Phone Mockup */}
+                  <div className="wem-wa-phone">
+                    <div className="wem-wa-header">
+                      <div className="wem-wa-avatar">🩺</div>
+                      <div className="wem-wa-header-info">
+                        <div className="wem-wa-header-name">
+                          CIIM 2026 Alerts <span className="wem-wa-verified-badge">✓</span>
+                        </div>
+                        <div className="wem-wa-header-sub">Official Broadcast Channel · +91 99400 30935</div>
+                      </div>
+                    </div>
+
+                    <div className="wem-wa-chat-body">
+                      <div className="wem-wa-date-pill">Today, 22 Nov 2026</div>
+
+                      <div className="wem-wa-bubble">
+                        <div
+                          dangerouslySetInnerHTML={{
+                            __html: formatWhatsAppPreview(previewFormattedText),
+                          }}
+                        />
+                        <div className="wem-wa-bubble-footer">
+                          <span>
+                            {manualScheduledFor
+                              ? new Date(manualScheduledFor).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                              : '08:35 AM'}
+                          </span>
+                          <span className="wem-wa-ticks">✓✓</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Summary & Simulation Box */}
+                  <div
+                    style={{
+                      backgroundColor: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '12px',
+                      padding: '12px 14px',
+                      fontSize: '0.78rem',
+                      color: '#475569',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '7px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <strong>Template ID:</strong>
+                      <code style={{ color: '#4338ca', fontWeight: 700, fontSize: '0.8rem' }}>{selectedWatiTemplate?.name}</code>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <strong>Preview Recipient:</strong>
+                      <input
+                        type="text"
+                        value={sampleRecipientName}
+                        onChange={(e) => setSampleRecipientName(e.target.value)}
+                        placeholder="Dr. Karthikeyan Dev"
+                        style={{
+                          fontSize: '0.78rem',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          border: '1px solid #cbd5e1',
+                          width: '160px',
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <strong>Channels:</strong>
+                      <span>
+                        {manualSendWhatsApp && '📱 WhatsApp'}
+                        {manualSendWhatsApp && manualSendEmail && ' + '}
+                        {manualSendEmail && '📧 Email'}
+                        {!manualSendWhatsApp && !manualSendEmail && '⚠️ None selected'}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <strong>Target Audience:</strong>
+                      <span style={{ fontWeight: 700, color: '#0f172a' }}>
+                        {manualAudienceType === 'ALL' && `All Registered (${recipients.length})`}
+                        {manualAudienceType === 'CHECKED_IN' && `Checked-In (${recipients.filter((r) => r.isCheckedIn || r.checkedInAt).length})`}
+                        {manualAudienceType === 'TNMC' && `TNMC Doctors (${recipients.filter((r) => r.tnmcNumber && r.tnmcNumber.trim()).length})`}
+                        {manualAudienceType === 'NON_TNMC' && `Non-TNMC (${recipients.filter((r) => !r.tnmcNumber || !r.tnmcNumber.trim()).length})`}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Audience Selector */}
-              <div className="wem-field">
-                <label className="wem-field__label">Audience Target</label>
-                <select
-                  className="wem-field__select"
-                  value={manualAudienceType}
-                  onChange={(e) => setManualAudienceType(e.target.value)}
-                >
-                  <option value="ALL">All Registered Delegates ({recipients.length})</option>
-                  <option value="CHECKED_IN">
-                    Checked-In Only ({recipients.filter((r) => r.isCheckedIn || r.checkedInAt).length})
-                  </option>
-                  <option value="TNMC">
-                    TNMC Registered Doctors ({recipients.filter((r) => r.tnmcNumber && r.tnmcNumber.trim()).length})
-                  </option>
-                  <option value="NON_TNMC">
-                    Non-TNMC Delegates ({recipients.filter((r) => !r.tnmcNumber || !r.tnmcNumber.trim()).length})
-                  </option>
-                </select>
-              </div>
-
-              {/* Session Details */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div className="wem-field" style={{ gridColumn: 'span 2' }}>
-                  <label className="wem-field__label">Session Title</label>
-                  <input
-                    type="text"
-                    className="wem-field__input"
-                    value={manualSessionTitle}
-                    onChange={(e) => setManualSessionTitle(e.target.value)}
-                    placeholder="e.g. Understanding Ovarian Hyperstimulation"
-                    required
-                  />
-                </div>
-                <div className="wem-field">
-                  <label className="wem-field__label">Time Slot</label>
-                  <input
-                    type="text"
-                    className="wem-field__input"
-                    value={manualSessionTime}
-                    onChange={(e) => setManualSessionTime(e.target.value)}
-                    placeholder="e.g. 09:30 - 10:15 AM"
-                    required
-                  />
-                </div>
-                <div className="wem-field">
-                  <label className="wem-field__label">Date</label>
-                  <input
-                    type="text"
-                    className="wem-field__input"
-                    value={manualSessionDate}
-                    onChange={(e) => setManualSessionDate(e.target.value)}
-                    placeholder="e.g. 22 Nov 2026"
-                    required
-                  />
-                </div>
-                <div className="wem-field">
-                  <label className="wem-field__label">Speaker Name(s)</label>
-                  <input
-                    type="text"
-                    className="wem-field__input"
-                    value={manualSessionSpeaker}
-                    onChange={(e) => setManualSessionSpeaker(e.target.value)}
-                    placeholder="e.g. Dr. K. Prasath, Dr. V. Jayaraman"
-                  />
-                </div>
-                <div className="wem-field">
-                  <label className="wem-field__label">Hall / Track</label>
-                  <input
-                    type="text"
-                    className="wem-field__input"
-                    value={manualSessionTrack}
-                    onChange={(e) => setManualSessionTrack(e.target.value)}
-                    placeholder="e.g. Hall A / Main Auditorium"
-                  />
-                </div>
-              </div>
-
-              {/* WhatsApp Template ID */}
-              <div className="wem-field">
-                <label className="wem-field__label">WhatsApp Template ID</label>
-                <input
-                  type="text"
-                  className="wem-field__input"
-                  value={manualTemplateId}
-                  onChange={(e) => setManualTemplateId(e.target.value)}
-                  placeholder="ciim2026_session_alert_5min"
-                  required
-                />
-              </div>
-
-              {/* Custom Note */}
-              <div className="wem-field">
-                <label className="wem-field__label">Optional Announcement / Email Note</label>
-                <textarea
-                  className="wem-field__textarea"
-                  value={manualCustomMessage}
-                  onChange={(e) => setManualCustomMessage(e.target.value)}
-                  rows={2}
-                  placeholder="Add any special instructions or announcement to include..."
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
+              {/* Modal Footer Actions */}
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '12px',
+                  marginTop: '20px',
+                  borderTop: '1px solid var(--ink-200)',
+                  paddingTop: '16px',
+                }}
+              >
                 <Button variant="secondary" onClick={() => setShowManualScheduleModal(false)} type="button">
                   Cancel
                 </Button>
                 <Button variant="primary" type="submit" disabled={submittingManualSchedule}>
-                  {submittingManualSchedule ? 'Scheduling…' : '⏰ Confirm & Schedule Campaign'}
+                  {submittingManualSchedule ? 'Scheduling Campaign…' : '⏰ Confirm & Schedule Campaign'}
                 </Button>
               </div>
             </form>
