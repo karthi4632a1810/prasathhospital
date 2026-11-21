@@ -27,32 +27,22 @@ export default function InstantRegistrationModal({ eventId, onClose, onCreated, 
     e.preventDefault();
     setError('');
 
-    const cleanName = name.replace(/\s+/g, ' ').trim();
-    if (!cleanName || cleanName === 'Dr.' || cleanName === 'Dr') {
-      setError('Please enter the attendee’s full doctor/delegate name.');
-      return;
-    }
+    // Permissive: allow anything, fallback to generic if empty
+    const rawName = name ? name.replace(/\s+/g, ' ').trim() : '';
+    const cleanName = rawName || 'Delegate';
 
-    const cleanPhone = phone.replace(/[\s()-]/g, '');
-    if (!cleanPhone || cleanPhone.length < 10) {
-      setError('Please enter a valid 10-digit mobile number.');
-      return;
-    }
-
-    if (hasTnmc && !medicalCouncilRegNo.trim()) {
-      setError('Please enter the TMNC / Medical Council registration number or choose "No TMNC".');
-      return;
-    }
+    const cleanPhone = phone ? String(phone).replace(/[\s()-]/g, '') : '';
+    const finalPhone = cleanPhone || `999${Date.now().toString().slice(-7)}`;
 
     setBusy(true);
     try {
       const res = await registrationApi.create({
         eventId,
         name: cleanName,
-        phone: cleanPhone,
+        phone: finalPhone,
         email: email.trim() || undefined,
-        medicalCouncilRegNo: hasTnmc ? medicalCouncilRegNo.trim() : '',
-        hasTnmc,
+        medicalCouncilRegNo: medicalCouncilRegNo.trim() || '',
+        hasTnmc: Boolean(hasTnmc && medicalCouncilRegNo.trim()),
         role,
         category: role,
         institution: institution.trim() || undefined,
@@ -398,14 +388,13 @@ export default function InstantRegistrationModal({ eventId, onClose, onCreated, 
               {hasTnmc && (
                 <div style={{ backgroundColor: '#f0fdf4', padding: '12px 14px', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#166534', marginBottom: '6px' }}>
-                    TMNC Registration Number <span style={{ color: '#be185d' }}>*</span>
+                    TMNC Registration Number
                   </label>
                   <input
                     type="text"
                     value={medicalCouncilRegNo}
                     onChange={(e) => setMedicalCouncilRegNo(e.target.value.toUpperCase())}
                     placeholder="e.g. KMC/00270/2018 or 123456"
-                    required={hasTnmc}
                     style={{
                       width: '100%',
                       padding: '8px 12px',
@@ -427,7 +416,7 @@ export default function InstantRegistrationModal({ eventId, onClose, onCreated, 
               {/* Role / Category Selection */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                  Badge Role / Category <span style={{ color: '#be185d' }}>*</span>
+                  Badge Role / Category
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                   {PRESET_ROLES.map((r) => {
@@ -460,14 +449,13 @@ export default function InstantRegistrationModal({ eventId, onClose, onCreated, 
               {/* Attendee Name */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                  Attendee Full Name <span style={{ color: '#be185d' }}>*</span>
+                  Attendee Full Name
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Dr. Sneha Rajan"
-                  required
                   style={{
                     width: '100%',
                     padding: '9px 12px',
@@ -485,14 +473,13 @@ export default function InstantRegistrationModal({ eventId, onClose, onCreated, 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
-                    Mobile Number <span style={{ color: '#be185d' }}>*</span>
+                    Mobile Number
                   </label>
                   <input
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="9876543210"
-                    required
                     style={{
                       width: '100%',
                       padding: '9px 12px',

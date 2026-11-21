@@ -519,29 +519,22 @@ const createRegistration = asyncHandler(async (req, res) => {
     sendNotifications = false,
   } = req.body;
 
-  if (!name || !String(name).trim()) {
-    throw ApiError.badRequest('Attendee name is required.');
-  }
-  if (!phone || !String(phone).trim()) {
-    throw ApiError.badRequest('Attendee phone number is required.');
-  }
+  const cleanName = (name && String(name).trim()) || 'Delegate';
+  const cleanPhone = (phone && String(phone).replace(/[\s()-]/g, '')) || `999${Date.now().toString().slice(-7)}`;
 
-  const cleanPhone = String(phone).replace(/[\s()-]/g, '');
-  const cleanName = String(name).trim();
-
-  // Find event
+  // Find event - always allow registration regardless of event dates/status
   let event = null;
   if (eventId && mongoose.isValidObjectId(eventId)) {
     event = await Event.findById(eventId);
   }
   if (!event) {
-    event = await Event.findOne({ status: { $in: ['published', 'active'] } }).sort({ startDate: -1 });
+    event = await Event.findOne({ status: { $in: ['published', 'active', 'registration-closed', 'completed'] } }).sort({ startDate: -1 });
   }
   if (!event) {
     event = await Event.findOne().sort({ createdAt: -1 });
   }
   if (!event) {
-    throw ApiError.badRequest('No active event found to register attendee.');
+    throw ApiError.badRequest('No event found to register attendee.');
   }
 
   // Find ticket type
