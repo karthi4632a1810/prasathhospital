@@ -15,10 +15,12 @@ const { resolveRegistrationBadgeNo } = require('../services/badgeService');
  * the token is just the last path segment.
  */
 function extractToken(raw) {
-  const str = String(raw || '').trim();
+  let str = String(raw || '').trim();
   if (!str) return '';
+  // Strip query string, hash, and trailing slashes
+  str = str.split('?')[0].split('#')[0].replace(/\/+$/, '').trim();
   const parts = str.split('/').filter(Boolean);
-  return parts[parts.length - 1];
+  return parts[parts.length - 1] || '';
 }
 
 const STATUS_MESSAGES = {
@@ -290,12 +292,25 @@ const scanTicket = asyncHandler(async (req, res) => {
   if (!token) throw ApiError.badRequest('No QR token provided.');
 
   let query = null;
-  if (/^[a-f0-9]{16,64}$/i.test(token)) {
+  if (/^[a-f0-9]{48}$/i.test(token)) {
     query = { qrToken: token.toLowerCase() };
   } else if (/^REG-[A-Z0-9_-]+$/i.test(token)) {
     query = { registrationCode: token.toUpperCase() };
+  } else if (/^[0-9a-fA-F]{24}$/.test(token)) {
+    query = { _id: token };
+  } else if (/^\d{1,4}$/.test(token)) {
+    const padded = token.padStart(4, '0');
+    query = { $or: [{ badgeNo: token }, { badgeNo: padded }] };
   } else {
-    throw ApiError.notFound('No ticket found for this code.');
+    const padded = /^\d+$/.test(token) ? token.padStart(4, '0') : token;
+    query = {
+      $or: [
+        { qrToken: token.toLowerCase() },
+        { registrationCode: token.toUpperCase() },
+        { badgeNo: token },
+        { badgeNo: padded },
+      ],
+    };
   }
 
   const reg = await Registration.findOne(query)

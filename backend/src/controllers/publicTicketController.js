@@ -15,16 +15,40 @@ const env = require('../config/env');
  * The ticket can be looked up either by:
  * 1. Unguessable 48-char crypto hex qrToken (standard link sent via WhatsApp/email)
  * 2. Registration Code (e.g. REG-FDD9528D) for direct lookup & admin desk access
+ * 3. 24-char MongoDB _id
+ * 4. 4-digit badge number (e.g. 0001 to 0998)
+ * 5. Full ticket URL or scanned QR string containing any of the above
  */
 async function findTicketOr404(identifier) {
-  const raw = String(identifier || '').trim();
+  let raw = String(identifier || '').trim();
+  if (!raw) throw ApiError.notFound('Ticket not found');
+
+  // Strip query string, hash, trailing slashes, or URL path wrapper
+  raw = raw.split('?')[0].split('#')[0].replace(/\/+$/, '').trim();
+  const parts = raw.split('/').filter(Boolean);
+  raw = parts[parts.length - 1] || raw;
+
   let query = null;
   if (/^[a-f0-9]{48}$/i.test(raw)) {
     query = { qrToken: raw.toLowerCase() };
   } else if (/^REG-[A-Z0-9_-]+$/i.test(raw)) {
     query = { registrationCode: raw.toUpperCase() };
+  } else if (/^[0-9a-fA-F]{24}$/.test(raw)) {
+    query = { _id: raw };
+  } else if (/^\d{1,4}$/.test(raw)) {
+    const padded = raw.padStart(4, '0');
+    query = { $or: [{ badgeNo: raw }, { badgeNo: padded }] };
   } else {
-    throw ApiError.notFound('Ticket not found');
+    // Tolerant fallback across token, code, and badge number
+    const padded = /^\d+$/.test(raw) ? raw.padStart(4, '0') : raw;
+    query = {
+      $or: [
+        { qrToken: raw.toLowerCase() },
+        { registrationCode: raw.toUpperCase() },
+        { badgeNo: raw },
+        { badgeNo: padded },
+      ],
+    };
   }
 
   const reg = await Registration.findOne(query)
@@ -35,8 +59,16 @@ async function findTicketOr404(identifier) {
   return reg;
 }
 
+function getPublicSiteUrl() {
+  let siteUrl = (process.env.PUBLIC_SITE_URL || env.publicSiteUrl || '').replace(/\/$/, '');
+  if (!siteUrl || siteUrl.includes('localhost') || siteUrl.includes('127.0.0.1')) {
+    siteUrl = 'https://ciim.prashanthfertility.com';
+  }
+  return siteUrl;
+}
+
 function checkInUrlFor(qrToken) {
-  return `${env.publicSiteUrl}/tickets/${qrToken}`;
+  return `${getPublicSiteUrl()}/tickets/${qrToken}`;
 }
 
 /** GET /api/v1/tickets/:qrToken */

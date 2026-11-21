@@ -5,13 +5,12 @@ const mongoose = require('mongoose');
 const env = require('./env');
 const logger = require('../utils/logger');
 
-// If using MongoDB Atlas SRV URI on Windows systems with local ISP DNS issues, fallback to Google & Cloudflare DNS
-if (process.platform === 'win32' && env.mongoUri && env.mongoUri.startsWith('mongodb+srv')) {
-  try {
-    dns.setServers(['8.8.8.8', '1.1.1.1']);
-  } catch {
-    // ignore
-  }
+// Fallback to Google & Cloudflare DNS and prefer IPv4 for reliable Atlas SRV resolution
+try {
+  dns.setDefaultResultOrder('ipv4first');
+  dns.setServers(['8.8.8.8', '1.1.1.1']);
+} catch {
+  // ignore
 }
 
 mongoose.set('strictQuery', true);
@@ -34,6 +33,7 @@ async function connectDatabase(uri = env.mongoUri) {
 
   connectionPromise = mongoose
     .connect(uri, {
+      family: 4,
       serverSelectionTimeoutMS: 10000,
       maxPoolSize: 20,
       autoIndex: !env.isProduction,

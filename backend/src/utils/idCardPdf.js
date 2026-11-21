@@ -29,12 +29,25 @@ function cleanDoctorName(name) {
 }
 
 function getCheckInUrl(registration, fallbackIndex = 1) {
-  const siteUrl = (env.publicSiteUrl || 'https://ciim.prashanthfertility.com').replace(/\/$/, '');
+  let siteUrl = (process.env.PUBLIC_SITE_URL || env.publicSiteUrl || '').replace(/\/$/, '');
+  if (!siteUrl || siteUrl.includes('localhost') || siteUrl.includes('127.0.0.1')) {
+    siteUrl = 'https://ciim.prashanthfertility.com';
+  }
+
+  const doc = registration && typeof registration.toObject === 'function'
+    ? registration.toObject()
+    : (registration || {});
+
   const token =
-    registration.qrToken ||
-    registration.registrationCode ||
-    registration.code ||
-    `CIIM-${String(registration.role || 'FACULTY').replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase()}-${String(fallbackIndex).padStart(3, '0')}`;
+    doc.qrToken ||
+    registration?.qrToken ||
+    doc.registrationCode ||
+    registration?.registrationCode ||
+    doc.code ||
+    registration?.code ||
+    (doc._id ? String(doc._id) : (registration?._id ? String(registration._id) : null)) ||
+    `CIIM-${String(doc.role || registration?.role || 'DELEGATE').replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase()}-${String(fallbackIndex).padStart(3, '0')}`;
+
   return `${siteUrl}/tickets/${token}`;
 }
 
@@ -348,13 +361,20 @@ async function generateIdCardPdfBuffer(registration, options = {}) {
     }
   }
 
+  const docObj = registration && typeof registration.toObject === 'function'
+    ? registration.toObject()
+    : (registration || {});
+
   const mergedItem = {
-    ...registration,
-    role: options.role || registration.role || registration.badgeRole,
-    name: options.name || registration.name || registration.attendee?.name,
-    showQr: options.showQr !== undefined ? options.showQr : registration.showQr,
-    showBadgeNo: options.showBadgeNo !== undefined ? options.showBadgeNo : (options.showBadgeNumber !== undefined ? options.showBadgeNumber : registration.showBadgeNo),
-    badgeNo: options.badgeNo || options.badgeNumber || registration.badgeNo || registration.badgeNumber,
+    ...docObj,
+    _id: docObj._id || registration?._id,
+    qrToken: docObj.qrToken || registration?.qrToken,
+    registrationCode: docObj.registrationCode || registration?.registrationCode || docObj.code || registration?.code,
+    role: options.role || docObj.role || registration?.role || docObj.badgeRole || registration?.badgeRole,
+    name: options.name || docObj.name || registration?.name || docObj.attendee?.name || registration?.attendee?.name,
+    showQr: options.showQr !== undefined ? options.showQr : (docObj.showQr !== undefined ? docObj.showQr : registration?.showQr),
+    showBadgeNo: options.showBadgeNo !== undefined ? options.showBadgeNo : (options.showBadgeNumber !== undefined ? options.showBadgeNumber : (docObj.showBadgeNo !== undefined ? docObj.showBadgeNo : registration?.showBadgeNo)),
+    badgeNo: options.badgeNo || options.badgeNumber || docObj.badgeNo || registration?.badgeNo || registration?.badgeNumber,
   };
 
   const showQr = options.showQr !== false && !options.noQr && mergedItem.showQr !== false;
@@ -403,12 +423,16 @@ async function generateMultiPageIdCardPdfBuffer(items, options = {}) {
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
+    const docObj = item && typeof item.toObject === 'function' ? item.toObject() : (item || {});
     const page = doc.addPage([width, height]);
     const mergedItem = {
-      ...item,
-      role: item.role || options.role,
-      name: item.name || item.attendee?.name,
-      badgeNo: item.badgeNo || item.badgeNumber || String(i + 1).padStart(4, '0'),
+      ...docObj,
+      _id: docObj._id || item?._id,
+      qrToken: docObj.qrToken || item?.qrToken,
+      registrationCode: docObj.registrationCode || item?.registrationCode || docObj.code || item?.code,
+      role: options.role || docObj.role || item?.role || docObj.badgeRole || item?.badgeRole,
+      name: options.name || docObj.name || item?.name || docObj.attendee?.name || item?.attendee?.name,
+      badgeNo: options.badgeNo || options.badgeNumber || docObj.badgeNo || item?.badgeNo || item?.badgeNumber || String(i + 1).padStart(4, '0'),
     };
     const itemShowQr = item.showQr !== undefined ? (item.showQr !== false && !item.noQr) : globalShowQr;
     const itemShowBadgeNo = item.showBadgeNo !== undefined ? (item.showBadgeNo !== false && !item.noBadgeNo) : globalShowBadgeNo;
@@ -493,13 +517,20 @@ async function generateIdCardImageBuffer(registration, options = {}) {
   const heightPx = 1500;
   const format = String(options.format || 'png').toLowerCase().replace(/^\./, '');
 
+  const docObj = registration && typeof registration.toObject === 'function'
+    ? registration.toObject()
+    : (registration || {});
+
   const mergedItem = {
-    ...registration,
-    role: options.role || registration.role || registration.badgeRole,
-    name: options.name || registration.name || registration.attendee?.name,
-    showQr: options.showQr !== undefined ? options.showQr : registration.showQr,
-    showBadgeNo: options.showBadgeNo !== undefined ? options.showBadgeNo : (options.showBadgeNumber !== undefined ? options.showBadgeNumber : registration.showBadgeNo),
-    badgeNo: options.badgeNo || options.badgeNumber || registration.badgeNo || registration.badgeNumber,
+    ...docObj,
+    _id: docObj._id || registration?._id,
+    qrToken: docObj.qrToken || registration?.qrToken,
+    registrationCode: docObj.registrationCode || registration?.registrationCode || docObj.code || registration?.code,
+    role: options.role || docObj.role || registration?.role || docObj.badgeRole || registration?.badgeRole,
+    name: options.name || docObj.name || registration?.name || docObj.attendee?.name || registration?.attendee?.name,
+    showQr: options.showQr !== undefined ? options.showQr : (docObj.showQr !== undefined ? docObj.showQr : registration?.showQr),
+    showBadgeNo: options.showBadgeNo !== undefined ? options.showBadgeNo : (options.showBadgeNumber !== undefined ? options.showBadgeNumber : (docObj.showBadgeNo !== undefined ? docObj.showBadgeNo : registration?.showBadgeNo)),
+    badgeNo: options.badgeNo || options.badgeNumber || docObj.badgeNo || registration?.badgeNo || registration?.badgeNumber,
   };
 
   const shouldDrawQr = options.showQr !== false && !options.noQr && mergedItem.showQr !== false;
