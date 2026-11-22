@@ -228,7 +228,7 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
             </dt>
             <dd>
               <span className="hero__fact-label">DATES</span>
-              <strong>21 Nov 2026 – 24 Nov 2026</strong>
+              <strong>21 Nov 2026 – 22 Nov 2026</strong>
             </dd>
           </div>
 
