@@ -626,6 +626,7 @@ module.exports = {
   getCheckinStats,
   listCheckinEvents,
   listLocations,
+  ensureDefaultLocations,
   createLocation,
   updateLocation,
   deleteLocation,

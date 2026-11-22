@@ -3,11 +3,13 @@
 const Registration = require('../models/Registration');
 const Coupon = require('../models/Coupon');
 const Company = require('../models/Company');
+const CheckinLocation = require('../models/CheckinLocation');
 const ApiError = require('../utils/ApiError');
 const { sendSuccess, asyncHandler } = require('../utils/response');
 const { toCsv } = require('../utils/csv');
 const { buildRegistrationFilter, objectId } = require('../services/registrationQuery');
 const { couponState } = require('./adminCouponController');
+const { ensureDefaultLocations } = require('./adminCheckinController');
 const { recordAudit } = require('../services/auditLog');
 
 /**
@@ -171,18 +173,58 @@ const getOverview = asyncHandler(async (req, res) => {
   const eventId = requireEvent(req.query);
   const match = { event: eventId };
 
-  const [byStatus, checkedIn, lunchCheckedIn, emailRows, whatsappRows, breakdown] = await Promise.all([
+  await ensureDefaultLocations(eventId, req.user?._id);
+
+  const [byStatus, checkedIn, lunchCheckedIn, emailRows, whatsappRows, breakdown, locations] = await Promise.all([
     Registration.aggregate([{ $match: match }, { $group: { _id: '$status', count: { $sum: 1 } } }]),
     Registration.countDocuments({ ...match, status: 'confirmed', checkedInAt: { $ne: null } }),
     Registration.countDocuments({ ...match, status: 'confirmed', 'checkins.locationCode': 'LUNCH' }),
     Registration.aggregate([{ $match: { ...match, status: 'confirmed' } }, { $group: { _id: EMAIL_STATUS, count: { $sum: 1 } } }]),
     Registration.aggregate([{ $match: { ...match, status: 'confirmed' } }, { $group: { _id: WHATSAPP_STATUS, count: { $sum: 1 } } }]),
     buildBreakdown(eventId, {}),
+    CheckinLocation.find({ event: eventId }).sort({ order: 1, createdAt: 1 }).lean(),
   ]);
 
   const statusCounts = { pending_payment: 0, confirmed: 0, cancelled: 0, refunded: 0 };
   for (const row of byStatus) statusCounts[row._id] = row.count;
   const confirmed = statusCounts.confirmed;
+
+  // Enrich each checkpoint location with its live confirmed checked-in count
+  const locationStats = await Promise.all(
+    locations.map(async (loc) => {
+      let count = 0;
+      if (loc.code === 'ENTRY') {
+        count = await Registration.countDocuments({
+          event: eventId,
+          status: 'confirmed',
+          $or: [{ 'checkins.locationCode': 'ENTRY' }, { checkedInAt: { $ne: null } }],
+        });
+      } else {
+        count = await Registration.countDocuments({
+          event: eventId,
+          status: 'confirmed',
+          'checkins.locationCode': loc.code,
+        });
+      }
+
+      return {
+        id: loc._id,
+        name: loc.name,
+        code: loc.code,
+        description: loc.description || '',
+        icon: loc.icon || 'door',
+        color: loc.color || '#2563eb',
+        isDefault: Boolean(loc.isDefault),
+        isActive: Boolean(loc.isActive),
+        order: loc.order || 0,
+        checkedInCount: count,
+        rate: confirmed > 0 ? Math.round((count / confirmed) * 100) : 0,
+        remaining: Math.max(confirmed - count, 0),
+      };
+    })
+  );
+
+  const activeLocations = locationStats.filter((l) => l.isActive);
 
   const activeCoupons = breakdown.coupons.filter((c) => c.state === 'active' || c.state === 'scheduled');
   const allocated = activeCoupons.reduce((sum, c) => sum + c.allocated, 0);
@@ -204,7 +246,11 @@ const getOverview = asyncHandler(async (req, res) => {
       lunchCheckedIn,
       lunchRemaining: Math.max(confirmed - lunchCheckedIn, 0),
       lunchRate: confirmed > 0 ? Math.round((lunchCheckedIn / confirmed) * 100) : 0,
+      locations: locationStats,
+      activeLocations,
     },
+    locations: locationStats,
+    activeLocations,
     delivery: { email: deliveryCounts(emailRows), whatsapp: deliveryCounts(whatsappRows) },
     coupons: {
       count: activeCoupons.length,
