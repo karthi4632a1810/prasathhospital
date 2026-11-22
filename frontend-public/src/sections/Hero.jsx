@@ -130,8 +130,8 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
 
   const heroStyle = theme?.heroImageUrl
     ? {
-        backgroundImage: `linear-gradient(135deg, rgba(16,21,43,0.92), rgba(61,16,13,0.82)), url(${theme.heroImageUrl})`,
-      }
+      backgroundImage: `linear-gradient(135deg, rgba(16,21,43,0.92), rgba(61,16,13,0.82)), url(${theme.heroImageUrl})`,
+    }
     : undefined;
 
   const locationLine =
@@ -143,10 +143,10 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
   const days =
     event.startDate && event.endDate
       ? Math.round(
-          (new Date(event.endDate).setHours(0, 0, 0, 0) -
-            new Date(event.startDate).setHours(0, 0, 0, 0)) /
-            86400000
-        ) + 1
+        (new Date(event.endDate).setHours(0, 0, 0, 0) -
+          new Date(event.startDate).setHours(0, 0, 0, 0)) /
+        86400000
+      ) + 1
       : 0;
   const facultyCount = (event.speakers?.length || 0) + (event.committee?.length || 0);
   const stats = [
@@ -228,7 +228,7 @@ export default function Hero({ event, onRegister, canRegister, onShare }) {
             </dt>
             <dd>
               <span className="hero__fact-label">DATES</span>
-              <strong>{formatDateRange(event.startDate, event.endDate)}</strong>
+              <strong>21 Nov 2026 – 24 Nov 2026</strong>
             </dd>
           </div>
 
