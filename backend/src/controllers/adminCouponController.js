@@ -4,10 +4,12 @@ const Coupon = require('../models/Coupon');
 const Company = require('../models/Company');
 const Event = require('../models/Event');
 const Registration = require('../models/Registration');
+const User = require('../models/User');
 const Feedback = require('../models/Feedback');
 const inventory = require('../services/inventory');
 const ApiError = require('../utils/ApiError');
 const { sendSuccess, asyncHandler } = require('../utils/response');
+const { toCsv } = require('../utils/csv');
 const { recordAudit } = require('../services/auditLog');
 const { generateUniqueCouponCode } = require('../services/couponCode');
 
@@ -560,6 +562,144 @@ const deleteCoupon = asyncHandler(async (req, res) => {
   return sendSuccess(res, null, { message });
 });
 
+const COUPON_EXPORT_COLUMNS = [
+  { key: 'code', label: 'Coupon Code' },
+  { key: 'companyName', label: 'Company' },
+  { key: 'stateLabel', label: 'State' },
+  { key: 'isActiveStr', label: 'Active Status' },
+  { key: 'maxAllowedRegistrations', label: 'Total Allocated' },
+  { key: 'usageCount', label: 'Used Registrations' },
+  { key: 'remaining', label: 'Remaining Places' },
+  { key: 'startDateStr', label: 'Start Date' },
+  { key: 'expiryDateStr', label: 'Expiry Date' },
+  { key: 'description', label: 'Description' },
+  { key: 'typeLabel', label: 'Type' },
+  { key: 'createdByName', label: 'Created By' },
+  { key: 'createdAtStr', label: 'Created Date' },
+];
+
+function prepareCouponExportRows(coupons) {
+  return coupons.map((c) => {
+    const s = serializeCoupon(c);
+    return {
+      code: s.code,
+      companyName: s.company?.name || 'N/A',
+      state: s.state,
+      stateLabel: s.state.toUpperCase(),
+      isActive: s.isActive,
+      isActiveStr: s.isActive ? 'Active' : 'Inactive',
+      maxAllowedRegistrations: s.maxAllowedRegistrations,
+      usageCount: s.usageCount,
+      remaining: s.remaining,
+      startDate: s.startDate,
+      startDateStr: s.startDate ? new Date(s.startDate).toLocaleString('en-IN') : '',
+      expiryDate: s.expiryDate,
+      expiryDateStr: s.expiryDate ? new Date(s.expiryDate).toLocaleString('en-IN') : '',
+      description: s.description || '',
+      isTest: s.isTest,
+      typeLabel: s.isTest ? 'Test Mode' : 'Production',
+      createdByName: s.createdBy?.name || '',
+      createdAt: s.createdAt,
+      createdAtStr: s.createdAt ? new Date(s.createdAt).toLocaleString('en-IN') : '',
+    };
+  });
+}
+
+/** GET /api/v1/admin/coupons/export.csv?event=&company=&state=&type=&q= */
+const exportCouponsCsv = asyncHandler(async (req, res) => {
+  const filter = {};
+  if (req.query.event) filter.event = req.query.event;
+  if (req.query.company) filter.company = req.query.company;
+  if (req.query.q) filter.code = new RegExp(escapeRegex(String(req.query.q).trim().toUpperCase()));
+  if (req.query.type === 'test') {
+    filter.$or = [{ isTest: true }, { code: /^TEST-|^CIIMTEST/i }];
+  } else if (req.query.type === 'prod') {
+    filter.isTest = { $ne: true };
+    filter.code = { $not: /^TEST-|^CIIMTEST/i };
+  }
+
+  const coupons = await populated(Coupon.find(filter).sort({ createdAt: -1 }));
+  let rows = prepareCouponExportRows(coupons);
+  if (req.query.state) {
+    rows = rows.filter((c) => c.state === req.query.state);
+  }
+
+  if (req.user?._id) {
+    recordAudit(req, {
+      action: 'coupon.export_csv',
+      entityType: 'Coupon',
+      meta: { count: rows.length, filter: req.query },
+    });
+  }
+
+  const stateTag = req.query.state ? `_${req.query.state}` : '';
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const filename = `Coupons${stateTag}_${dateStr}.csv`;
+
+  res.set('Content-Type', 'text/csv; charset=utf-8');
+  res.set('Content-Disposition', `attachment; filename="${filename}"`);
+  return res.send(toCsv(rows, COUPON_EXPORT_COLUMNS));
+});
+
+/** GET /api/v1/admin/coupons/export.xlsx?event=&company=&state=&type=&q= */
+const exportCouponsXlsx = asyncHandler(async (req, res) => {
+  const filter = {};
+  if (req.query.event) filter.event = req.query.event;
+  if (req.query.company) filter.company = req.query.company;
+  if (req.query.q) filter.code = new RegExp(escapeRegex(String(req.query.q).trim().toUpperCase()));
+  if (req.query.type === 'test') {
+    filter.$or = [{ isTest: true }, { code: /^TEST-|^CIIMTEST/i }];
+  } else if (req.query.type === 'prod') {
+    filter.isTest = { $ne: true };
+    filter.code = { $not: /^TEST-|^CIIMTEST/i };
+  }
+
+  const coupons = await populated(Coupon.find(filter).sort({ createdAt: -1 }));
+  let rows = prepareCouponExportRows(coupons);
+  if (req.query.state) {
+    rows = rows.filter((c) => c.state === req.query.state);
+  }
+
+  if (req.user?._id) {
+    recordAudit(req, {
+      action: 'coupon.export_xlsx',
+      entityType: 'Coupon',
+      meta: { count: rows.length, filter: req.query },
+    });
+  }
+
+  const stateTag = req.query.state ? `_${req.query.state}` : '';
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const filename = `Coupons${stateTag}_${dateStr}.xlsx`;
+
+  const excelRows = rows.map((r, idx) => ({
+    '#': idx + 1,
+    'Coupon Code': r.code,
+    'Company': r.companyName,
+    'State': r.stateLabel,
+    'Status': r.isActiveStr,
+    'Total Allocated': r.maxAllowedRegistrations,
+    'Used Count': r.usageCount,
+    'Remaining Places': r.remaining,
+    'Start Date': r.startDateStr,
+    'Expiry Date': r.expiryDateStr,
+    'Description': r.description,
+    'Type': r.typeLabel,
+    'Created By': r.createdByName,
+    'Created Date': r.createdAtStr,
+  }));
+
+  const XLSX = require('xlsx');
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(excelRows);
+  XLSX.utils.book_append_sheet(wb, ws, 'Coupons');
+  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+  res.set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.set('Content-Disposition', `attachment; filename="${filename}"`);
+  return res.send(buffer);
+});
+
 module.exports = {
   listCoupons,
   createCoupon,
@@ -570,4 +710,6 @@ module.exports = {
   deleteCoupon,
   generateCode,
   couponState,
+  exportCouponsCsv,
+  exportCouponsXlsx,
 };

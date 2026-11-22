@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import * as XLSX from 'xlsx';
 import { couponApi } from '../../lib/couponApi';
 import { companyApi } from '../../lib/companyApi';
 import { useEvents, EventSelect } from '../../lib/useEvents';
@@ -20,6 +21,7 @@ export default function Coupons() {
   const [generatingTest, setGeneratingTest] = useState(false);
   const [purgeConfirmOpen, setPurgeConfirmOpen] = useState(false);
   const [purging, setPurging] = useState(false);
+  const [exporting, setExporting] = useState(null); // 'csv' | 'xlsx' | null
 
   useEffect(() => {
     companyApi
@@ -113,6 +115,60 @@ export default function Coupons() {
     }
   }
 
+  async function handleExport(format = 'csv') {
+    if (!coupons || coupons.length === 0) {
+      alert('No coupons found to export for the selected filter.');
+      return;
+    }
+    setExporting(format);
+    try {
+      const exportRows = coupons.map((c, idx) => ({
+        '#': idx + 1,
+        'Coupon Code': c.code,
+        'Company': c.company?.name || 'N/A',
+        'State': (c.state || '').toUpperCase(),
+        'Status': c.isActive ? 'Active' : 'Inactive',
+        'Total Allocated': c.maxAllowedRegistrations,
+        'Used Count': c.usageCount,
+        'Remaining Places': c.remaining != null ? c.remaining : Math.max(c.maxAllowedRegistrations - c.usageCount, 0),
+        'Start Date': c.startDate ? formatDateTime(c.startDate) : '',
+        'Expiry Date': c.expiryDate ? formatDateTime(c.expiryDate) : '',
+        'Description': c.description || '',
+        'Type': c.isTest ? 'Test Mode' : 'Production',
+        'Created By': c.createdBy?.name || '',
+        'Created Date': c.createdAt ? formatDateTime(c.createdAt) : '',
+      }));
+
+      const stateTag = filters.state ? `_${filters.state.toUpperCase()}` : '_ALL';
+      const companyObj = (companies || []).find((comp) => comp.id === filters.company);
+      const companyTag = companyObj ? `_${companyObj.name.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const fileName = `Coupons${companyTag}${stateTag}_${exportRows.length}items_${dateStr}`;
+
+      const ws = XLSX.utils.json_to_sheet(exportRows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Coupons');
+
+      if (format === 'csv') {
+        const csvContent = XLSX.utils.sheet_to_csv(ws);
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${fileName}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        XLSX.writeFile(wb, `${fileName}.xlsx`);
+      }
+      notify('success', `Exported ${exportRows.length} coupon(s) to ${format.toUpperCase()} successfully!`);
+    } catch (err) {
+      notify('error', err.message || 'Failed to export coupons.');
+    } finally {
+      setExporting(null);
+    }
+  }
+
   const setFilter = (key) => (e) => setFilters((f) => ({ ...f, [key]: e.target.value }));
 
   if (eventsError) return <ErrorState message={eventsError} />;
@@ -146,8 +202,35 @@ export default function Coupons() {
               ` ${allUsed} of ${totals.allocated} places used across ${activeCoupons.length} active coupons${inactiveCoupons.length > 0 ? ` (${inactiveCoupons.length} inactive)` : ''}${testCouponsCount > 0 ? ` • ${testCouponsCount} test coupon(s)` : ''}.`}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
           <EventSelect events={events} eventId={eventId} onChange={setEventId} />
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => handleExport('csv')}
+            disabled={Boolean(exporting) || !coupons || coupons.length === 0}
+            title="Download currently filtered coupons as CSV (.csv)"
+          >
+            {exporting === 'csv' ? 'Exporting…' : `Export CSV${coupons ? ` (${coupons.length})` : ''}`}
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: '#0284c7',
+              borderColor: '#7dd3fc',
+              fontWeight: 600,
+            }}
+            onClick={() => handleExport('xlsx')}
+            disabled={Boolean(exporting) || !coupons || coupons.length === 0}
+            title="Download currently filtered coupons in Excel spreadsheet format (.xlsx)"
+          >
+            <span>📊</span>
+            <span>{exporting === 'xlsx' ? 'Exporting…' : 'Export Excel (.xlsx)'}</span>
+          </Button>
           <Button
             variant="purple"
             size="sm"
@@ -200,6 +283,81 @@ export default function Coupons() {
       )}
 
       <div className="card" style={{ marginBottom: 'var(--space-5)' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '8px',
+            padding: '12px 16px 0',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+          }}
+        >
+          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b' }}>Quick Filter:</span>
+          <button
+            type="button"
+            onClick={() => setFilters((f) => ({ ...f, state: '' }))}
+            style={{
+              padding: '4px 12px',
+              borderRadius: '9999px',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              border: !filters.state ? '1.5px solid #0284c7' : '1px solid #cbd5e1',
+              backgroundColor: !filters.state ? '#f0f9ff' : '#ffffff',
+              color: !filters.state ? '#0284c7' : '#64748b',
+              cursor: 'pointer',
+            }}
+          >
+            All States
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilters((f) => ({ ...f, state: 'active' }))}
+            style={{
+              padding: '4px 12px',
+              borderRadius: '9999px',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              border: filters.state === 'active' ? '1.5px solid #16a34a' : '1px solid #cbd5e1',
+              backgroundColor: filters.state === 'active' ? '#f0fdf4' : '#ffffff',
+              color: filters.state === 'active' ? '#15803d' : '#64748b',
+              cursor: 'pointer',
+            }}
+          >
+            🟢 Active Coupons Only ({activeCoupons.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilters((f) => ({ ...f, state: 'exhausted' }))}
+            style={{
+              padding: '4px 12px',
+              borderRadius: '9999px',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              border: filters.state === 'exhausted' ? '1.5px solid #d97706' : '1px solid #cbd5e1',
+              backgroundColor: filters.state === 'exhausted' ? '#fffbeb' : '#ffffff',
+              color: filters.state === 'exhausted' ? '#b45309' : '#64748b',
+              cursor: 'pointer',
+            }}
+          >
+            Fully Used / Exhausted
+          </button>
+          <button
+            type="button"
+            onClick={() => setFilters((f) => ({ ...f, state: 'inactive' }))}
+            style={{
+              padding: '4px 12px',
+              borderRadius: '9999px',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              border: filters.state === 'inactive' ? '1.5px solid #dc2626' : '1px solid #cbd5e1',
+              backgroundColor: filters.state === 'inactive' ? '#fef2f2' : '#ffffff',
+              color: filters.state === 'inactive' ? '#b91c1c' : '#64748b',
+              cursor: 'pointer',
+            }}
+          >
+            Inactive ({inactiveCoupons.length})
+          </button>
+        </div>
         <div className="toolbar">
           <label className="field field--grow">
             <span className="field__label">Search code</span>
