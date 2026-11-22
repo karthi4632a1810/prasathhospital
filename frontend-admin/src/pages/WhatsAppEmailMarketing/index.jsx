@@ -6,9 +6,18 @@ import './WhatsAppEmailMarketing.css';
 
 const DEFAULT_WATI_TEMPLATES = [
   {
+    id: 'ciim2026_day_session_alert',
+    name: 'ciim2026_day_session_alert',
+    label: 'CIIM 2026: Day Session Alert (2 Params: Session & Faculty)',
+    category: 'UTILITY',
+    params: ['1', '2'],
+    paramLabels: ['Session Name', 'Faculty Name'],
+    body: `*CIIM 2026 – Session Alert* 📢\n\nThe following scientific session will commence shortly:\n\n📌 *Session:* {{1}}\n👨‍⚕️ *Faculty:* {{2}}\n\nPlease take your seat in the hall.\n\nWarm regards,\nOrganising Committee - CIIM 2026`,
+  },
+  {
     id: 'ciim2026_session_alert_5min',
     name: 'ciim2026_session_alert_5min',
-    label: 'CIIM 2026: 5-Minute Session Alert (Utility)',
+    label: 'CIIM 2026: 5-Minute Session Alert (4 Params: Name, Session, Speaker, Hall)',
     category: 'UTILITY',
     params: ['1', '2', '3', '4'],
     body: `*CIIM 2026 – Session Alert*\n\nDear Dr. {{1}},\n\nThe following scientific session will commence in 5 minutes:\n\nSession: {{2}}\nSpeaker: {{3}}\nHall: {{4}}\n\nPlease take your seat in the auditorium.\n\nRegards,\nOrganising Committee - CIIM 2026`,
@@ -408,19 +417,34 @@ export default function WhatsAppEmailMarketing() {
       selectedWatiTemplate?.body ||
       `*CIIM 2026 – Session Alert*\n\nDear Dr. {{1}},\n\nThe following scientific session will commence in 5 minutes:\n\nSession: {{2}}\nSpeaker: {{3}}\nHall: {{4}}\n\nPlease take your seat in the auditorium.\n\nRegards,\nOrganising Committee - CIIM 2026`;
 
-    const paramMap = {
-      '1': sampleRecipientName || 'Dr. Karthikeyan Dev',
-      'Name': sampleRecipientName || 'Dr. Karthikeyan Dev',
-      'DrName': sampleRecipientName || 'Dr. Karthikeyan Dev',
-      '2': manualSessionTitle || '[Session Title]',
-      'Session': manualSessionTitle || '[Session Title]',
-      '3': manualSessionSpeaker || '[Speaker Name]',
-      'Speaker': manualSessionSpeaker || '[Speaker Name]',
-      '4': manualSessionTrack || '[Hall Name]',
-      'Hall': manualSessionTrack || '[Hall Name]',
-      'Time': manualSessionTime || '[Time Slot]',
-      'Date': manualSessionDate || '[22 Nov 2026]',
-    };
+    const isTwoParamTemplate =
+      manualTemplateId === 'ciim2026_day_session_alert' ||
+      selectedWatiTemplate?.id === 'ciim2026_day_session_alert' ||
+      (selectedWatiTemplate?.params?.length === 2 && !selectedWatiTemplate?.params?.includes('3'));
+
+    const paramMap = isTwoParamTemplate
+      ? {
+          '1': manualSessionTitle || '[Session Name]',
+          '2': manualSessionSpeaker || '[Faculty / Speaker Name]',
+          'session_name': manualSessionTitle || '[Session Name]',
+          'faculty_name': manualSessionSpeaker || '[Faculty / Speaker Name]',
+          'Session': manualSessionTitle || '[Session Name]',
+          'Faculty': manualSessionSpeaker || '[Faculty / Speaker Name]',
+          'Speaker': manualSessionSpeaker || '[Faculty / Speaker Name]',
+        }
+      : {
+          '1': sampleRecipientName || 'Dr. Karthikeyan Dev',
+          'Name': sampleRecipientName || 'Dr. Karthikeyan Dev',
+          'DrName': sampleRecipientName || 'Dr. Karthikeyan Dev',
+          '2': manualSessionTitle || '[Session Title]',
+          'Session': manualSessionTitle || '[Session Title]',
+          '3': manualSessionSpeaker || '[Speaker Name]',
+          'Speaker': manualSessionSpeaker || '[Speaker Name]',
+          '4': manualSessionTrack || '[Hall Name]',
+          'Hall': manualSessionTrack || '[Hall Name]',
+          'Time': manualSessionTime || '[Time Slot]',
+          'Date': manualSessionDate || '[22 Nov 2026]',
+        };
 
     manualCustomParams.forEach((cp) => {
       if (cp.key && cp.key.trim()) {
@@ -1834,16 +1858,31 @@ export default function WhatsAppEmailMarketing() {
               {/* Template ID */}
               <div className="wem-field">
                 <label className="wem-field__label">Template ID</label>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '6px' }}>
+                  <select
+                    className="wem-field__select"
+                    value={scheduleAllTemplateId}
+                    onChange={(e) => setScheduleAllTemplateId(e.target.value)}
+                    style={{ flex: 1, fontSize: '0.85rem' }}
+                  >
+                    <option value="ciim2026_day_session_alert">
+                      ciim2026_day_session_alert (2 Params: Session & Faculty)
+                    </option>
+                    <option value="ciim2026_session_alert_5min">
+                      ciim2026_session_alert_5min (4 Params: Name, Session, Speaker, Hall)
+                    </option>
+                  </select>
+                </div>
                 <input
                   type="text"
                   className="wem-field__input"
                   value={scheduleAllTemplateId}
                   onChange={(e) => setScheduleAllTemplateId(e.target.value)}
-                  placeholder="ciim2026_session_alert_5min"
+                  placeholder="e.g. ciim2026_day_session_alert"
                   required
                 />
                 <span className="wem-field__hint">
-                  Preset to <code>ciim2026_session_alert_5min</code> (Meta approved utility template).
+                  Selected template: <code>{scheduleAllTemplateId}</code>
                 </span>
               </div>
 
@@ -2200,8 +2239,33 @@ export default function WhatsAppEmailMarketing() {
                           </span>
                         </div>
 
-                        {/* Standard 4 Params for ciim2026_session_alert_5min */}
-                        {manualTemplateId === 'ciim2026_session_alert_5min' ? (
+                        {/* 2 Params for ciim2026_day_session_alert */}
+                        {manualTemplateId === 'ciim2026_day_session_alert' ? (
+                          <>
+                            <div className="wem-param-row">
+                              <span className="wem-param-label">Param 1 (Session Name):</span>
+                              <input
+                                type="text"
+                                className="wem-field__input"
+                                value={manualSessionTitle}
+                                onChange={(e) => setManualSessionTitle(e.target.value)}
+                                placeholder="e.g. Ovulation Induction Protocols"
+                                style={{ fontSize: '0.85rem' }}
+                              />
+                            </div>
+                            <div className="wem-param-row">
+                              <span className="wem-param-label">Param 2 (Faculty Name):</span>
+                              <input
+                                type="text"
+                                className="wem-field__input"
+                                value={manualSessionSpeaker}
+                                onChange={(e) => setManualSessionSpeaker(e.target.value)}
+                                placeholder="e.g. Dr. Geetha Haripriya"
+                                style={{ fontSize: '0.85rem' }}
+                              />
+                            </div>
+                          </>
+                        ) : manualTemplateId === 'ciim2026_session_alert_5min' ? (
                           <>
                             <div className="wem-param-row">
                               <span className="wem-param-label">Param 1 (Name):</span>

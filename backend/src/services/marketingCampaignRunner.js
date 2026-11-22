@@ -38,6 +38,32 @@ function buildWatiParams(campaign, recipient) {
     { name: '1', value: cleanName },
   ];
 
+  if (
+    templateName.includes('day_session_alert') ||
+    templateName.includes('session_faculty') ||
+    templateName.includes('session_2param') ||
+    templateName === 'ciim2026_day_session_alert'
+  ) {
+    // 2-Param Template (Session Name and Faculty Name only):
+    // {{1}} = Session Name
+    // {{2}} = Faculty Name
+    const twoParams = [
+      { name: '1', value: sessionTitle },
+      { name: '2', value: speakerText },
+      { name: 'session_name', value: sessionTitle },
+      { name: 'faculty_name', value: speakerText },
+      { name: 'Session', value: sessionTitle },
+      { name: 'Faculty', value: speakerText },
+      { name: 'Speaker', value: speakerText },
+    ];
+    if (campaign.whatsappOptions?.customParams) {
+      Object.entries(campaign.whatsappOptions.customParams).forEach(([k, v]) => {
+        twoParams.push({ name: String(k), value: String(v) });
+      });
+    }
+    return twoParams;
+  }
+
   if (sessionTitle) {
     params.push({ name: 'Session', value: sessionTitle });
     params.push({ name: '2', value: sessionTitle });
