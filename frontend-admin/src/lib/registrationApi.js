@@ -70,4 +70,14 @@ export const registrationApi = {
     const q = toQuery({ name, format: fmt, preview: preview ? 'true' : undefined });
     return `/admin/registrations/${id}/certificate?${q}`;
   },
+  logBadgeAction: (id, body) =>
+    request(`/admin/registrations/${id}/badge/log`, { method: 'POST', body }),
+  getBadgeLogs: (params) => request(`/admin/registrations/badge-logs?${toQuery(params)}`),
+  exportBadgeLogsXlsx: () => {
+    const dateStr = new Date().toISOString().slice(0, 10);
+    return downloadFile(
+      '/admin/registrations/badge-logs/export.xlsx',
+      `ID_Card_Print_Download_Logs_${dateStr}.xlsx`
+    );
+  },
 };

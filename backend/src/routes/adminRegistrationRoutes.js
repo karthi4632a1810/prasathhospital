@@ -15,6 +15,9 @@ const {
   getRegistrationBadge,
   getRegistrationBadgePdf,
   getRegistrationCertificate,
+  logRegistrationBadgeAction,
+  listBadgeLogs,
+  exportBadgeLogsXlsx,
 } = require('../controllers/adminRegistrationController');
 const { requireAuth, requireRole } = require('../middleware/auth');
 
@@ -26,6 +29,9 @@ router.get('/', listRegistrations);
 router.post('/', createRegistration);
 router.get('/export.csv', exportRegistrationsCsv);
 router.get('/export-attendance.xlsx', exportScannedAttendanceXlsx);
+router.get('/badge-logs', listBadgeLogs);
+router.get('/badge-logs/export.xlsx', exportBadgeLogsXlsx);
+router.post('/:id/badge/log', logRegistrationBadgeAction);
 router.get('/:id', getRegistration);
 router.get('/:id/badge', getRegistrationBadge);
 router.get('/:id/badge.:ext', getRegistrationBadge);

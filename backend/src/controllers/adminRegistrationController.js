@@ -8,6 +8,7 @@ const mongoose = require('mongoose');
 const Event = require('../models/Event');
 const TicketType = require('../models/TicketType');
 const Registration = require('../models/Registration');
+const AuditLog = require('../models/AuditLog');
 const CheckinLocation = require('../models/CheckinLocation');
 const ApiError = require('../utils/ApiError');
 const { sendSuccess, asyncHandler } = require('../utils/response');
@@ -924,6 +925,24 @@ const getRegistrationBadge = asyncHandler(async (req, res) => {
   const qrSuffix = !showQr ? '-NO-QR' : '';
   const numPrefix = showBadgeNo && badgeNo ? `${badgeNo}-` : '';
 
+  if (req.user?._id) {
+    const isPrint = req.query.actionType === 'print' || req.query.print === 'true';
+    const actionName = isPrint ? 'registration.badge_print_tab' : `registration.badge_download_${format}`;
+    recordAudit(req, {
+      action: actionName,
+      entityType: 'Registration',
+      entityId: reg._id,
+      meta: {
+        registrationCode: reg.registrationCode,
+        badgeNo,
+        name: name || reg.attendee?.name,
+        role: role || reg.role || reg.badgeRole || 'DELEGATE',
+        format,
+        actionType: isPrint ? 'print_tab' : 'download',
+      },
+    });
+  }
+
   if (format === 'png') {
     const buffer = await generateIdCardImageBuffer(reg, {
       role,
@@ -1000,6 +1019,96 @@ const getRegistrationCertificate = asyncHandler(async (req, res) => {
   return res.send(buffer);
 });
 
+/** POST /api/v1/admin/registrations/:id/badge/log — explicit log from ID card modal */
+const logRegistrationBadgeAction = asyncHandler(async (req, res) => {
+  const reg = await findOr404(req.params.id);
+  const actionType = req.body.actionType || 'print'; // 'print' | 'download'
+  const format = String(req.body.format || 'pdf').toLowerCase().replace(/^\./, '');
+  const role = req.body.role || reg.role || reg.badgeRole || 'DELEGATE';
+  const name = req.body.name || reg.attendee?.name;
+  let badgeNo = req.body.badgeNo || reg.badgeNo;
+  if (!badgeNo) {
+    badgeNo = await resolveRegistrationBadgeNo(reg);
+  } else if (/^\d+$/.test(String(badgeNo).trim())) {
+    badgeNo = String(badgeNo).trim().padStart(4, '0');
+  }
+
+  const isPrint = actionType === 'print';
+  const actionName = isPrint ? 'registration.badge_print_tab' : `registration.badge_download_${format}`;
+
+  if (req.user?._id) {
+    recordAudit(req, {
+      action: actionName,
+      entityType: 'Registration',
+      entityId: reg._id,
+      meta: {
+        registrationCode: reg.registrationCode,
+        badgeNo,
+        name,
+        role,
+        format,
+        actionType: isPrint ? 'print_tab' : 'download',
+        source: 'IdCardModal',
+      },
+    });
+  }
+
+  return sendSuccess(res, { logged: true, action: actionName });
+});
+
+/** GET /api/v1/admin/registrations/badge-logs — list all badge print/download audit logs */
+const listBadgeLogs = asyncHandler(async (req, res) => {
+  const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
+  const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 50, 1), 500);
+  const skip = (page - 1) * limit;
+
+  const filter = {
+    action: { $regex: /^registration\.badge_/i },
+  };
+
+  const [logs, total] = await Promise.all([
+    AuditLog.find(filter).sort({ at: -1 }).skip(skip).limit(limit).lean(),
+    AuditLog.countDocuments(filter),
+  ]);
+
+  return sendSuccess(res, logs, { meta: { total, page, limit, totalPages: Math.ceil(total / limit) || 1 } });
+});
+
+/** GET /api/v1/admin/registrations/badge-logs/export.xlsx */
+const exportBadgeLogsXlsx = asyncHandler(async (req, res) => {
+  const filter = {
+    action: { $regex: /^registration\.badge_/i },
+  };
+
+  const logs = await AuditLog.find(filter).sort({ at: -1 }).lean();
+
+  const excelRows = logs.map((l, idx) => {
+    const isPrint = l.action.includes('print');
+    return {
+      '#': idx + 1,
+      'Date & Time (IST)': new Date(l.at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      'Staff / Counter': l.actorName || 'Desk Staff',
+      'Action': isPrint ? 'Print Tab (Direct Print)' : 'Download File',
+      'Format': (l.meta?.format || 'PDF').toUpperCase(),
+      'Registration Code': l.meta?.registrationCode || 'N/A',
+      'Badge Number': l.meta?.badgeNo ? `#${l.meta.badgeNo}` : 'N/A',
+      'Attendee Name': l.meta?.name || 'N/A',
+      'Badge Role': l.meta?.role || 'DELEGATE',
+      'IP Address': l.ip || 'N/A',
+    };
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(excelRows);
+  XLSX.utils.book_append_sheet(wb, ws, 'ID Card Print & Download Logs');
+  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+  const dateStr = new Date().toISOString().slice(0, 10);
+  res.set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.set('Content-Disposition', `attachment; filename="ID_Card_Print_Download_Logs_${dateStr}.xlsx"`);
+  return res.send(buffer);
+});
+
 module.exports = {
   listRegistrations,
   getRegistration,
@@ -1014,6 +1123,9 @@ module.exports = {
   getRegistrationBadge,
   getRegistrationBadgePdf,
   getRegistrationCertificate,
+  logRegistrationBadgeAction,
+  listBadgeLogs,
+  exportBadgeLogsXlsx,
   qrStatusOf,
   CSV_COLUMNS,
 };

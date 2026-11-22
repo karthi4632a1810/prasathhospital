@@ -276,6 +276,7 @@ export default function Registrations() {
   const [deleteModalReg, setDeleteModalReg] = useState(null);
   const [exporting, setExporting] = useState(false);
   const [exportingAttendance, setExportingAttendance] = useState(false);
+  const [exportingBadgeLogs, setExportingBadgeLogs] = useState(false);
   const [exportError, setExportError] = useState('');
 
   useEffect(() => {
@@ -367,6 +368,18 @@ export default function Registrations() {
       setExportError(err.message || 'Failed to export scanned attendance.');
     } finally {
       setExportingAttendance(false);
+    }
+  }
+
+  async function handleExportBadgeLogs() {
+    setExportingBadgeLogs(true);
+    setExportError('');
+    try {
+      await registrationApi.exportBadgeLogsXlsx();
+    } catch (err) {
+      setExportError(err.message || 'Failed to export ID card print/download logs.');
+    } finally {
+      setExportingBadgeLogs(false);
     }
   }
 
@@ -548,6 +561,25 @@ export default function Registrations() {
           >
             <span>📋</span>
             <span>{exportingAttendance ? 'Exporting…' : 'Export Scanned Attendance (.xlsx)'}</span>
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: '#831843',
+              borderColor: '#fbcfe8',
+              backgroundColor: '#fdf2f8',
+              fontWeight: 600,
+            }}
+            onClick={handleExportBadgeLogs}
+            disabled={exportingBadgeLogs}
+            title="Download log of all ID card PDF downloads and Print Tab actions (.xlsx)"
+          >
+            <span>🪪</span>
+            <span>{exportingBadgeLogs ? 'Exporting…' : 'ID Card Print Logs (.xlsx)'}</span>
           </Button>
           <Button
             variant="secondary"

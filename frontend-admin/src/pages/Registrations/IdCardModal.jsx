@@ -112,6 +112,17 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
   };
 
   const handleOpenPrintTab = () => {
+    if (regId) {
+      registrationApi
+        .logBadgeAction(regId, {
+          actionType: 'print',
+          format: 'pdf',
+          role: role.trim(),
+          name: name.trim(),
+          badgeNo: String(badgeNo || '').trim(),
+        })
+        .catch(() => {});
+    }
     if (isDbRegistration) {
       const url = getPdfUrl(template);
       window.open(url, '_blank');
@@ -134,6 +145,17 @@ export default function IdCardModal({ registration, onClose, onUpdated, initialS
     setSuccessMsg('');
     const ext = (format || 'pdf').toLowerCase().replace(/^\./, '');
     try {
+      if (regId) {
+        registrationApi
+          .logBadgeAction(regId, {
+            actionType: 'download',
+            format: ext,
+            role: role.trim(),
+            name: name.trim(),
+            badgeNo: String(badgeNo || '').trim(),
+          })
+          .catch(() => {});
+      }
       if (isDbRegistration && saveToDb) {
         const cleanDbName = name.replace(/\s+/g, ' ').trim() || originalName;
         const cleanBadgeNo = String(badgeNo || '').trim();
